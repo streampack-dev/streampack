@@ -1,0 +1,69 @@
+.DS_Store
+*~
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.log
+*.log-*
+node_modules/
+dist/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Environment ###
+.env
+.env.properties
+
+### Data dumps ###
+export.json
+factoids.json
+
+### Frontend ###
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
+### Reference UI ###
+reference-ui/node_modules/
+reference-ui/dist/
+
+### Playwright ###
+.playwright-mcp/
+newspaper-*.png
+current-state.png
+text-size-*.png
+
+CLAUDE.md
+.claude
+.mcp.json
+.codex
+lat.md
+.agents
