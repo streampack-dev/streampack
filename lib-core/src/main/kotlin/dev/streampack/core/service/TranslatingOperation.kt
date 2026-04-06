@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationOutcome
 import kotlin.reflect.KClass
 import org.springframework.messaging.Message
 

@@ -1,13 +1,13 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.Declined
-import com.enigmastation.streampack.core.model.OperationOutcome
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.model.RedactionRule
-import com.enigmastation.streampack.core.model.Role
-import com.enigmastation.streampack.core.model.ThrottlePolicy
+import dev.streampack.core.model.Declined
+import dev.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.RedactionRule
+import dev.streampack.core.model.Role
+import dev.streampack.core.model.ThrottlePolicy
 import java.time.Duration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

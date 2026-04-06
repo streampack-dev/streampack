@@ -1,13 +1,13 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.entity.ServiceBinding
-import com.enigmastation.streampack.core.entity.User
-import com.enigmastation.streampack.core.model.Protocol
-import com.enigmastation.streampack.core.model.Role
-import com.enigmastation.streampack.core.model.UserStatus
-import com.enigmastation.streampack.core.repository.ServiceBindingRepository
-import com.enigmastation.streampack.core.repository.UserRepository
+import dev.streampack.core.entity.ServiceBinding
+import dev.streampack.core.entity.User
+import dev.streampack.core.model.Protocol
+import dev.streampack.core.model.Role
+import dev.streampack.core.model.UserStatus
+import dev.streampack.core.repository.ServiceBindingRepository
+import dev.streampack.core.repository.UserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull

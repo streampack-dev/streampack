@@ -1,5 +1,5 @@
 /* Joseph B. Ottinger (C)2026 */
-package com.enigmastation.streampack.core.extensions
+package dev.streampack.core.extensions
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

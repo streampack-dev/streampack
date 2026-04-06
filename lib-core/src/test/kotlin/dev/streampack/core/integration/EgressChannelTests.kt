@@ -1,11 +1,11 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.integration
 
-import com.enigmastation.streampack.core.model.OperationOutcome
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Protocol
-import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.service.Operation
+import dev.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Protocol
+import dev.streampack.core.model.Provenance
+import dev.streampack.core.service.Operation
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

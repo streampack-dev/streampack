@@ -1,12 +1,12 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.operation
 
-import com.enigmastation.streampack.core.model.EditProfileRequest
-import com.enigmastation.streampack.core.model.OperationOutcome
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.repository.UserRepository
-import com.enigmastation.streampack.core.service.TypedOperation
+import dev.streampack.core.model.EditProfileRequest
+import dev.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Provenance
+import dev.streampack.core.repository.UserRepository
+import dev.streampack.core.service.TypedOperation
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 

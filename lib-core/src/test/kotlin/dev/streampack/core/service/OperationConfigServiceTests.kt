@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.repository.OperationConfigRepository
+import dev.streampack.core.repository.OperationConfigRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull

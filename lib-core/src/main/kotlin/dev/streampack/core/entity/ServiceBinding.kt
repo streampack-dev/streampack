@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.entity
 
-import com.enigmastation.streampack.core.model.Protocol
+import dev.streampack.core.model.Protocol
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType

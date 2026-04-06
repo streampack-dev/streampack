@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.repository
 
-import com.enigmastation.streampack.core.entity.ServiceBinding
-import com.enigmastation.streampack.core.model.Protocol
+import dev.streampack.core.entity.ServiceBinding
+import dev.streampack.core.model.Protocol
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query

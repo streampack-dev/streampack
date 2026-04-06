@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.Protocol
-import com.enigmastation.streampack.core.model.Provenance
+import dev.streampack.core.model.Protocol
+import dev.streampack.core.model.Provenance
 
 /**
  * Common contract for all protocol adapters (IRC, Slack, Discord, etc.).

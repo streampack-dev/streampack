@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.config.StreampackProperties
-import com.enigmastation.streampack.core.model.Role
-import com.enigmastation.streampack.core.model.UserPrincipal
+import dev.streampack.core.config.StreampackProperties
+import dev.streampack.core.model.Role
+import dev.streampack.core.model.UserPrincipal
 import io.jsonwebtoken.Jwts
 import java.security.MessageDigest
 import java.util.Date

@@ -1,18 +1,18 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.operation
 
-import com.enigmastation.streampack.core.extensions.compress
-import com.enigmastation.streampack.core.model.LinkProtocolRequest
-import com.enigmastation.streampack.core.model.OperationOutcome
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Protocol
-import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.model.Role
-import com.enigmastation.streampack.core.repository.UserRepository
-import com.enigmastation.streampack.core.service.IdentityProvider
-import com.enigmastation.streampack.core.service.IdentityResolution
-import com.enigmastation.streampack.core.service.TranslatingOperation
-import com.enigmastation.streampack.core.service.UserRegistrationService
+import dev.streampack.core.extensions.compress
+import dev.streampack.core.model.LinkProtocolRequest
+import dev.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Protocol
+import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.Role
+import dev.streampack.core.repository.UserRepository
+import dev.streampack.core.service.IdentityProvider
+import dev.streampack.core.service.IdentityResolution
+import dev.streampack.core.service.TranslatingOperation
+import dev.streampack.core.service.UserRegistrationService
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 

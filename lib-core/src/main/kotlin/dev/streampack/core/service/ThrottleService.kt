@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.ThrottlePolicy
+import dev.streampack.core.model.ThrottlePolicy
 import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

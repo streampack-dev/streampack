@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.SecretRef
+import dev.streampack.core.model.SecretRef
 
 /** Utility helpers for environment-keyed secret references. */
 object SecretRefEnvironment {

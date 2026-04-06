@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.integration
 
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.service.MessageLogService
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Provenance
+import dev.streampack.core.service.MessageLogService
 import org.springframework.stereotype.Component
 
 /** Captures all outbound operation results to the protocol-agnostic message log */

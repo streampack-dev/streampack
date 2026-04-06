@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.repository
 
-import com.enigmastation.streampack.core.entity.ChannelControlOptions
+import dev.streampack.core.entity.ChannelControlOptions
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query

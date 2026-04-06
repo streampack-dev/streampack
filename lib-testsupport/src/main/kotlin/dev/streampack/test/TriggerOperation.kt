@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.test
 
-import com.enigmastation.streampack.core.model.OperationOutcome
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.service.TypedOperation
+import dev.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.service.TypedOperation
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 

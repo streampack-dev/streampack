@@ -1,2 +1,2 @@
 org.springframework.boot.EnvironmentPostProcessor=\
-  com.enigmastation.streampack.core.config.OperationConfigEnvironmentPostProcessor
+  dev.streampack.core.config.OperationConfigEnvironmentPostProcessor

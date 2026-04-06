@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.config.StreampackProperties
-import com.enigmastation.streampack.core.entity.OneTimeCode
-import com.enigmastation.streampack.core.repository.OneTimeCodeRepository
+import dev.streampack.core.config.StreampackProperties
+import dev.streampack.core.entity.OneTimeCode
+import dev.streampack.core.repository.OneTimeCodeRepository
 import java.security.SecureRandom
 import java.time.Instant
 import org.slf4j.LoggerFactory

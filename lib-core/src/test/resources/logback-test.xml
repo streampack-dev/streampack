@@ -26,7 +26,7 @@
     </appender>
 
     <!-- Streampack application logging -->
-    <logger name="com.enigmastation.streampack" level="DEBUG" />
+    <logger name="dev.streampack" level="DEBUG" />
 
     <!-- Quiet down noisy frameworks -->
     <logger name="org.hibernate" level="WARN" />

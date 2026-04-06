@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.Protocol
+import dev.streampack.core.model.Protocol
 
 /** Describes how a protocol adapter identifies users, enabling admin help and discovery */
 data class IdentityDescription(

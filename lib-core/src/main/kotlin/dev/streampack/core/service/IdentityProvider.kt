@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.Protocol
+import dev.streampack.core.model.Protocol
 
 /**
  * Optional contract for protocol adapters that provenance user identities. Implementations validate

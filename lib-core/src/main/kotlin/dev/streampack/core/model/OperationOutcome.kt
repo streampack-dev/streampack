@@ -4,9 +4,8 @@ package dev.streampack.core.model
 /**
  * What an operation can produce when it processes a message.
  *
- * This is the return type of
- * [Operation.execute()][com.enigmastation.streampack.core.service.Operation.execute]. It separates
- * into two families:
+ * This is the return type of [Operation.execute()][dev.streampack.core.service.Operation.execute].
+ * It separates into two families:
  * - [OperationResult] (Success, Error, NotHandled) -- terminal outcomes that leave the operation
  *   chain and reach the caller via the EventGateway.
  * - [Declined] -- a non-terminal signal consumed by the OperationService. It continues the chain

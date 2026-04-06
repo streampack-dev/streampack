@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.repository
 
-import com.enigmastation.streampack.core.entity.User
-import com.enigmastation.streampack.core.model.Role
-import com.enigmastation.streampack.core.model.UserStatus
+import dev.streampack.core.entity.User
+import dev.streampack.core.model.Role
+import dev.streampack.core.model.UserStatus
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals

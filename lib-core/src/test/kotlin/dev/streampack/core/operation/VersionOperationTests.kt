@@ -1,10 +1,10 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.operation
 
-import com.enigmastation.streampack.core.integration.EventGateway
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Protocol
-import com.enigmastation.streampack.core.model.Provenance
+import dev.streampack.core.integration.EventGateway
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Protocol
+import dev.streampack.core.model.Provenance
 import java.util.Properties
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

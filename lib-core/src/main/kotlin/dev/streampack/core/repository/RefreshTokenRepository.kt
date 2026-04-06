@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.repository
 
-import com.enigmastation.streampack.core.entity.RefreshToken
+import dev.streampack.core.entity.RefreshToken
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository

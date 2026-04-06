@@ -1,14 +1,14 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.integration
 
-import com.enigmastation.streampack.core.model.LoggingRequest
-import com.enigmastation.streampack.core.model.MessageDirection
-import com.enigmastation.streampack.core.model.OperationOutcome
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Protocol
-import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.repository.MessageLogRepository
-import com.enigmastation.streampack.core.service.Operation
+import dev.streampack.core.model.LoggingRequest
+import dev.streampack.core.model.MessageDirection
+import dev.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Protocol
+import dev.streampack.core.model.Provenance
+import dev.streampack.core.repository.MessageLogRepository
+import dev.streampack.core.service.Operation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test

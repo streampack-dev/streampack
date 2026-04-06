@@ -1,14 +1,14 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.operation
 
-import com.enigmastation.streampack.core.integration.EgressTransformer
-import com.enigmastation.streampack.core.model.OperationOutcome
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.model.Role
-import com.enigmastation.streampack.core.service.Operation
-import com.enigmastation.streampack.core.service.OperationConfigService
-import com.enigmastation.streampack.core.service.TypedOperation
+import dev.streampack.core.integration.EgressTransformer
+import dev.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.Role
+import dev.streampack.core.service.Operation
+import dev.streampack.core.service.OperationConfigService
+import dev.streampack.core.service.TypedOperation
 import org.springframework.context.annotation.Lazy
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component

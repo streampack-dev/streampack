@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.integration.EgressTransformer
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
+import dev.streampack.core.integration.EgressTransformer
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Provenance
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 

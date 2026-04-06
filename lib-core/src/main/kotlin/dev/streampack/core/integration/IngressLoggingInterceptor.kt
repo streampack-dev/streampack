@@ -1,10 +1,10 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.integration
 
-import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.model.RedactionRule
-import com.enigmastation.streampack.core.service.MessageLogService
-import com.enigmastation.streampack.core.service.Operation
+import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.RedactionRule
+import dev.streampack.core.service.MessageLogService
+import dev.streampack.core.service.Operation
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.ChannelInterceptor

@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.MessageDirection
-import com.enigmastation.streampack.core.repository.MessageLogRepository
+import dev.streampack.core.model.MessageDirection
+import dev.streampack.core.repository.MessageLogRepository
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

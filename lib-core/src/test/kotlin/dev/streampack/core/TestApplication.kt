@@ -5,6 +5,4 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 
 /** Test-only application class required by @DataJpaTest as a scan root */
-@SpringBootApplication
-@ConfigurationPropertiesScan("com.enigmastation.streampack")
-class TestApplication
+@SpringBootApplication @ConfigurationPropertiesScan("dev.streampack") class TestApplication

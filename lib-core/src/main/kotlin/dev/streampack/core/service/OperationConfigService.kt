@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.entity.OperationConfig
-import com.enigmastation.streampack.core.repository.OperationConfigRepository
+import dev.streampack.core.entity.OperationConfig
+import dev.streampack.core.repository.OperationConfigRepository
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory

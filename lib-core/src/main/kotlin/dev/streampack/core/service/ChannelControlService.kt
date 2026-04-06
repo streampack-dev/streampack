@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.entity.ChannelControlOptions
-import com.enigmastation.streampack.core.repository.ChannelControlOptionsRepository
+import dev.streampack.core.entity.ChannelControlOptions
+import dev.streampack.core.repository.ChannelControlOptionsRepository
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

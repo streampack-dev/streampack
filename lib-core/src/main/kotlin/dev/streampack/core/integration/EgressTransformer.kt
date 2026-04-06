@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.integration
 
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Provenance
 
 /**
  * Transforms operation results before they reach the egress channel. Analogous to [Operation] but

@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.Protocol
-import com.enigmastation.streampack.core.repository.RefreshTokenRepository
+import dev.streampack.core.model.Protocol
+import dev.streampack.core.repository.RefreshTokenRepository
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals

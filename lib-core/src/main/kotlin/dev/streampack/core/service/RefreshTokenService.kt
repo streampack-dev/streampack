@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.config.StreampackProperties
-import com.enigmastation.streampack.core.entity.RefreshToken
-import com.enigmastation.streampack.core.repository.RefreshTokenRepository
+import dev.streampack.core.config.StreampackProperties
+import dev.streampack.core.entity.RefreshToken
+import dev.streampack.core.repository.RefreshTokenRepository
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.time.Duration

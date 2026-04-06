@@ -1,14 +1,14 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.config.StreampackProperties
-import com.enigmastation.streampack.core.integration.EventGateway
-import com.enigmastation.streampack.core.model.Declined
-import com.enigmastation.streampack.core.model.FanOut
-import com.enigmastation.streampack.core.model.LoggingRequest
-import com.enigmastation.streampack.core.model.OperationOutcome
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
+import dev.streampack.core.config.StreampackProperties
+import dev.streampack.core.integration.EventGateway
+import dev.streampack.core.model.Declined
+import dev.streampack.core.model.FanOut
+import dev.streampack.core.model.LoggingRequest
+import dev.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Provenance
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit

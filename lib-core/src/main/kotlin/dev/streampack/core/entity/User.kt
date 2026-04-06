@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.entity
 
-import com.enigmastation.streampack.core.model.Role
-import com.enigmastation.streampack.core.model.UserPrincipal
-import com.enigmastation.streampack.core.model.UserStatus
+import dev.streampack.core.model.Role
+import dev.streampack.core.model.UserPrincipal
+import dev.streampack.core.model.UserStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType

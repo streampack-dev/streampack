@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.model.Protocol
-import com.enigmastation.streampack.core.model.UserPrincipal
-import com.enigmastation.streampack.core.repository.ServiceBindingRepository
+import dev.streampack.core.model.Protocol
+import dev.streampack.core.model.UserPrincipal
+import dev.streampack.core.repository.ServiceBindingRepository
 import org.springframework.stereotype.Service
 
 /** Resolves protocol-specific external identities to authenticated user principals */

@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.repository
 
-import com.enigmastation.streampack.core.entity.MessageLog
-import com.enigmastation.streampack.core.model.MessageDirection
+import dev.streampack.core.entity.MessageLog
+import dev.streampack.core.model.MessageDirection
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.domain.Page

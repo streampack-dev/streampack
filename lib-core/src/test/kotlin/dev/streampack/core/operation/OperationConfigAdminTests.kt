@@ -1,16 +1,16 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.operation
 
-import com.enigmastation.streampack.core.TestChannelConfiguration
-import com.enigmastation.streampack.core.integration.EventGateway
-import com.enigmastation.streampack.core.model.OperationOutcome
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Protocol
-import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.model.Role
-import com.enigmastation.streampack.core.model.UserPrincipal
-import com.enigmastation.streampack.core.service.Operation
-import com.enigmastation.streampack.core.service.OperationConfigService
+import dev.streampack.core.TestChannelConfiguration
+import dev.streampack.core.integration.EventGateway
+import dev.streampack.core.model.OperationOutcome
+import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Protocol
+import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.Role
+import dev.streampack.core.model.UserPrincipal
+import dev.streampack.core.service.Operation
+import dev.streampack.core.service.OperationConfigService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf

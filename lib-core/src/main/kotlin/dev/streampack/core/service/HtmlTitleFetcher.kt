@@ -1,10 +1,10 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.enigmastation.streampack.core.json.JacksonMappers
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import dev.streampack.core.json.JacksonMappers
 import java.net.URI
 import java.net.URLEncoder
 import java.util.Optional
