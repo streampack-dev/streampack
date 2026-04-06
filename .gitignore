@@ -9,6 +9,7 @@ target/
 *.log-*
 node_modules/
 dist/
+*.versionsBackup
 
 ### STS ###
 .apt_generated
