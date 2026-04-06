@@ -1,0 +1,1 @@
+Diataxis is a way of thinking about and doing documentation. It establishes four needs, and four forms of documentation: tutorials, how-to guides, technical reference, and explanation. It solves problems related to content (what to write), style (how to write it), and architecture.

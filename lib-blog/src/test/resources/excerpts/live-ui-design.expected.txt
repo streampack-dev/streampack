@@ -1,0 +1,1 @@
+I've been trying to think about access control and data access patterns for ByteCode.news. The actual app is a set of REST endpoints with as complete a specification as I could work out (and it's published at https://api.bytecode.news). UIs would be able to do whatever they wanted, however they wanted, as long as they interacted with the REST endpoints.

@@ -1,0 +1,1 @@
+In a number of applications I work with, I use JSON everywhere, as a sort of lingua franca. I typically do this with Jackson, and with Spring Boot 4's primary use of Jackson 3, it hit me that I might want to consider migrating from Jackson 2 to Jackson 3. But then I realized... when I said I use JSON everywhere, I really mean it.

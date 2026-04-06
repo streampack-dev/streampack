@@ -42,9 +42,16 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>lib-ai</module>
+        <module>lib-blog</module>
         <module>lib-core</module>
-        <module>lib-testsupport</module>
+        <module>lib-factoid</module>
         <module>lib-irc</module>
+        <module>lib-slack</module>
+        <module>lib-polling</module>
+        <module>lib-startrader</module>
+        <module>lib-taxonomy</module>
+        <module>lib-testsupport</module>
         <module>service-irc</module>
     </modules>
 

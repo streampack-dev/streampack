@@ -1,0 +1,228 @@
+{
+  "commodityBasePrices": {
+    "ORE": 15.0,
+    "ORGANICS": 8.0,
+    "FUEL": 18.0,
+    "ALLOYS": 40.0,
+    "CHEMICALS": 28.0,
+    "COMPONENTS": 60.0,
+    "MACHINES": 90.0,
+    "TECH": 110.0,
+    "MEDICINE": 70.0,
+    "TEXTILES": 22.0,
+    "FOOD": 12.0,
+    "LUXURY": 150.0
+  },
+  "productionMatrix": {
+    "ORE": { "FUEL": 0.08, "FOOD": 0.04, "MACHINES": 0.12, "MEDICINE": 0.03, "CHEMICALS": 0.01 },
+    "ORGANICS": { "FUEL": 0.06, "FOOD": 0.10, "MACHINES": 0.04, "MEDICINE": 0.03 },
+    "FUEL": { "MACHINES": 0.05, "ALLOYS": 0.04 },
+    "ALLOYS": { "ORE": 0.60, "FUEL": 0.15, "CHEMICALS": 0.06, "MACHINES": 0.06 },
+    "CHEMICALS": { "ORGANICS": 0.35, "FUEL": 0.10 },
+    "COMPONENTS": { "ALLOYS": 0.38, "CHEMICALS": 0.10, "TECH": 0.08 },
+    "MACHINES": { "ALLOYS": 0.37, "COMPONENTS": 0.27, "FUEL": 0.15 },
+    "TECH": { "COMPONENTS": 0.30, "CHEMICALS": 0.15, "MACHINES": 0.10 },
+    "MEDICINE": { "CHEMICALS": 0.25, "ORGANICS": 0.25, "TECH": 0.10 },
+    "TEXTILES": { "ORGANICS": 0.25, "CHEMICALS": 0.06 },
+    "FOOD": { "ORGANICS": 0.08, "FUEL": 0.02, "MACHINES": 0.02, "CHEMICALS": 0.02 },
+    "LUXURY": { "TECH": 0.35, "TEXTILES": 0.30, "CHEMICALS": 0.15, "MACHINES": 0.15 }
+  },
+  "planets": [
+    {
+      "name": "SOL", "fixed": true, "x": 50.0, "y": 50.0, "z": 50.0,
+      "production": {
+        "MACHINES": 1.5, "TECH": 1.2, "COMPONENTS": 0.8,
+        "ALLOYS": 0.4, "CHEMICALS": 0.3, "FUEL": 0.2,
+        "ORE": 0.2, "ORGANICS": 0.2, "FOOD": 0.7,
+        "MEDICINE": 0.3, "TEXTILES": 0.2, "LUXURY": 0.3
+      },
+      "population": 1000.0
+    },
+    {
+      "name": "YORK",
+      "production": {
+        "FOOD": 1.8, "ORGANICS": 1.5, "TEXTILES": 1.0,
+        "MEDICINE": 0.4, "CHEMICALS": 0.3, "FUEL": 0.2,
+        "ORE": 0.2, "ALLOYS": 0.1, "COMPONENTS": 0.1,
+        "MACHINES": 0.2, "TECH": 0.1, "LUXURY": 0.2
+      },
+      "population": 850.0
+    },
+    {
+      "name": "BOYD",
+      "production": {
+        "ORE": 1.6, "FUEL": 1.3, "ALLOYS": 0.9,
+        "CHEMICALS": 0.4, "MACHINES": 0.3, "COMPONENTS": 0.3,
+        "ORGANICS": 0.2, "FOOD": 0.6, "TEXTILES": 0.1,
+        "MEDICINE": 0.1, "TECH": 0.2, "LUXURY": 0.1
+      },
+      "population": 700.0
+    },
+    {
+      "name": "IVAN",
+      "production": {
+        "CHEMICALS": 1.7, "MEDICINE": 1.2, "ORGANICS": 0.6,
+        "TECH": 0.4, "FOOD": 0.7, "TEXTILES": 0.3,
+        "ORE": 0.2, "FUEL": 0.2, "ALLOYS": 0.2,
+        "COMPONENTS": 0.2, "MACHINES": 0.1, "LUXURY": 0.2
+      },
+      "population": 750.0
+    },
+    {
+      "name": "REEF",
+      "production": {
+        "ORGANICS": 1.8, "FOOD": 1.4, "MEDICINE": 0.5,
+        "TEXTILES": 0.5, "CHEMICALS": 0.3, "FUEL": 0.2,
+        "ORE": 0.2, "ALLOYS": 0.1, "COMPONENTS": 0.1,
+        "MACHINES": 0.1, "TECH": 0.1, "LUXURY": 0.2
+      },
+      "population": 600.0
+    },
+    {
+      "name": "HOOK",
+      "production": {
+        "ALLOYS": 1.5, "MACHINES": 1.0, "ORE": 0.8,
+        "FUEL": 0.5, "COMPONENTS": 0.4, "CHEMICALS": 0.2,
+        "ORGANICS": 0.2, "FOOD": 0.5, "TEXTILES": 0.1,
+        "MEDICINE": 0.1, "TECH": 0.2, "LUXURY": 0.1
+      },
+      "population": 800.0
+    },
+    {
+      "name": "STAN",
+      "production": {
+        "FUEL": 1.7, "ORE": 1.0, "CHEMICALS": 0.7,
+        "ALLOYS": 0.4, "MACHINES": 0.3, "COMPONENTS": 0.2,
+        "ORGANICS": 0.2, "FOOD": 0.5, "TEXTILES": 0.2,
+        "MEDICINE": 0.1, "TECH": 0.1, "LUXURY": 0.1
+      },
+      "population": 650.0
+    },
+    {
+      "name": "TASK",
+      "production": {
+        "TECH": 1.6, "COMPONENTS": 1.3, "MACHINES": 0.7,
+        "ALLOYS": 0.4, "CHEMICALS": 0.3, "FUEL": 0.2,
+        "ORE": 0.2, "ORGANICS": 0.2, "FOOD": 0.5,
+        "MEDICINE": 0.2, "TEXTILES": 0.1, "LUXURY": 0.3
+      },
+      "population": 900.0
+    },
+    {
+      "name": "SINK",
+      "production": {
+        "TEXTILES": 1.5, "FOOD": 1.0, "ORGANICS": 0.8,
+        "CHEMICALS": 0.3, "MEDICINE": 0.3, "FUEL": 0.2,
+        "ORE": 0.2, "ALLOYS": 0.1, "COMPONENTS": 0.1,
+        "MACHINES": 0.1, "TECH": 0.1, "LUXURY": 0.3
+      },
+      "population": 550.0
+    },
+    {
+      "name": "SAND",
+      "production": {
+        "ORE": 1.9, "ALLOYS": 1.1, "FUEL": 0.5,
+        "MACHINES": 0.4, "COMPONENTS": 0.3, "CHEMICALS": 0.3,
+        "ORGANICS": 0.1, "FOOD": 0.5, "TEXTILES": 0.1,
+        "MEDICINE": 0.1, "TECH": 0.2, "LUXURY": 0.1
+      },
+      "population": 500.0
+    },
+    {
+      "name": "QUIN",
+      "production": {
+        "LUXURY": 1.4, "TECH": 0.9, "TEXTILES": 0.7,
+        "COMPONENTS": 0.4, "CHEMICALS": 0.3, "ORGANICS": 0.3,
+        "ORE": 0.1, "FUEL": 0.2, "ALLOYS": 0.2,
+        "MACHINES": 0.2, "FOOD": 0.6, "MEDICINE": 0.2
+      },
+      "population": 950.0
+    },
+    {
+      "name": "GAOL",
+      "production": {
+        "FUEL": 1.5, "CHEMICALS": 1.1, "ORE": 0.6,
+        "ALLOYS": 0.4, "MACHINES": 0.3, "COMPONENTS": 0.2,
+        "ORGANICS": 0.2, "FOOD": 0.6, "TEXTILES": 0.2,
+        "MEDICINE": 0.2, "TECH": 0.1, "LUXURY": 0.1
+      },
+      "population": 600.0
+    },
+    {
+      "name": "KIRK",
+      "production": {
+        "ORE": 1.8, "ALLOYS": 1.3, "MACHINES": 0.4,
+        "FUEL": 0.5, "COMPONENTS": 0.3, "CHEMICALS": 0.2,
+        "ORGANICS": 0.1, "FOOD": 0.5, "TEXTILES": 0.1,
+        "MEDICINE": 0.1, "TECH": 0.2, "LUXURY": 0.1
+      },
+      "population": 800.0
+    },
+    {
+      "name": "KRIS",
+      "production": {
+        "MEDICINE": 1.5, "CHEMICALS": 1.0, "ORGANICS": 0.9,
+        "FOOD": 0.7, "TECH": 0.3, "TEXTILES": 0.3,
+        "ORE": 0.2, "FUEL": 0.2, "ALLOYS": 0.1,
+        "COMPONENTS": 0.1, "MACHINES": 0.1, "LUXURY": 0.2
+      },
+      "population": 700.0
+    },
+    {
+      "name": "FATE",
+      "production": {
+        "COMPONENTS": 1.4, "TECH": 1.1, "ALLOYS": 0.6,
+        "MACHINES": 0.5, "CHEMICALS": 0.3, "ORE": 0.3,
+        "FUEL": 0.2, "ORGANICS": 0.2, "FOOD": 0.5,
+        "MEDICINE": 0.2, "TEXTILES": 0.1, "LUXURY": 0.2
+      },
+      "population": 750.0
+    }
+  ],
+  "npcDampening": {
+    "baseFireProbability": 0.15,
+    "priceDeviationMultiplier": 2.5,
+    "maxAdjustmentFraction": 0.20,
+    "minimumReferenceSupply": 25.0
+  },
+  "events": [
+    { "id": "PLAGUE", "commodity": "MEDICINE", "consumptionMultiplier": 3.0, "minDuration": 4, "maxDuration": 12, "weight": 1.0 },
+    { "id": "FAMINE", "commodity": "FOOD", "consumptionMultiplier": 2.5, "minDuration": 3, "maxDuration": 10, "weight": 2.0 },
+    { "id": "BOOM", "commodity": "LUXURY", "consumptionMultiplier": 2.0, "minDuration": 5, "maxDuration": 15, "weight": 1.0 },
+    { "id": "WAR", "commodity": "FUEL", "consumptionMultiplier": 2.5, "minDuration": 4, "maxDuration": 8, "weight": 0.5 },
+    { "id": "INDUSTRIAL_ACCIDENT", "commodity": "MACHINES", "consumptionMultiplier": 2.0, "minDuration": 2, "maxDuration": 6, "weight": 1.0 },
+    { "id": "TECH_REVOLUTION", "commodity": "TECH", "consumptionMultiplier": 2.0, "minDuration": 6, "maxDuration": 12, "weight": 0.5 },
+    { "id": "BLIGHT", "commodity": "ORGANICS", "consumptionMultiplier": 2.5, "minDuration": 3, "maxDuration": 9, "weight": 2.0 },
+    { "id": "MINING_COLLAPSE", "commodity": "ORE", "consumptionMultiplier": 2.0, "minDuration": 3, "maxDuration": 8, "weight": 1.0 },
+    { "id": "CONSTRUCTION_BOOM", "commodity": "ALLOYS", "consumptionMultiplier": 2.0, "minDuration": 4, "maxDuration": 10, "weight": 1.0 },
+    { "id": "EQUIPMENT_FAILURE", "commodity": "COMPONENTS", "consumptionMultiplier": 2.0, "minDuration": 3, "maxDuration": 7, "weight": 1.0 },
+    { "id": "CHEMICAL_SPILL", "commodity": "CHEMICALS", "consumptionMultiplier": 2.5, "minDuration": 3, "maxDuration": 8, "weight": 1.0 },
+    { "id": "FASHION_CRAZE", "commodity": "TEXTILES", "consumptionMultiplier": 1.5, "minDuration": 5, "maxDuration": 12, "weight": 1.5 },
+    { "id": "BUMPER_CROP", "commodity": "FOOD", "productionMultiplier": 2.5, "minDuration": 4, "maxDuration": 10, "weight": 1.5 },
+    { "id": "MINING_VEIN", "commodity": "ORE", "productionMultiplier": 2.0, "minDuration": 5, "maxDuration": 12, "weight": 1.0 },
+    { "id": "MEDICAL_BREAKTHROUGH", "commodity": "MEDICINE", "productionMultiplier": 2.0, "minDuration": 4, "maxDuration": 10, "weight": 0.5 },
+    { "id": "TECH_BREAKTHROUGH", "commodity": "TECH", "productionMultiplier": 2.0, "minDuration": 5, "maxDuration": 10, "weight": 0.5 },
+    { "id": "FUEL_DISCOVERY", "commodity": "FUEL", "productionMultiplier": 2.0, "minDuration": 4, "maxDuration": 10, "weight": 1.0 },
+    { "id": "ORGANIC_BLOOM", "commodity": "ORGANICS", "productionMultiplier": 2.0, "minDuration": 3, "maxDuration": 8, "weight": 1.5 },
+    { "id": "TEXTILE_INNOVATION", "commodity": "TEXTILES", "productionMultiplier": 1.8, "minDuration": 4, "maxDuration": 10, "weight": 1.0 },
+    { "id": "REFINERY_UPGRADE", "commodity": "ALLOYS", "productionMultiplier": 1.8, "minDuration": 4, "maxDuration": 8, "weight": 0.8 },
+    { "id": "CHEMICAL_SYNTHESIS", "commodity": "CHEMICALS", "productionMultiplier": 1.8, "minDuration": 3, "maxDuration": 8, "weight": 0.8 },
+    { "id": "FACTORY_EXPANSION", "commodity": "MACHINES", "productionMultiplier": 1.8, "minDuration": 4, "maxDuration": 8, "weight": 0.8 },
+    { "id": "COMPONENT_WINDFALL", "commodity": "COMPONENTS", "productionMultiplier": 1.8, "minDuration": 3, "maxDuration": 7, "weight": 0.8 },
+    { "id": "LUXURY_TREND", "commodity": "LUXURY", "productionMultiplier": 1.5, "minDuration": 5, "maxDuration": 12, "weight": 0.5 }
+  ],
+  "populationConsumptionRates": {
+    "FOOD": 0.001,
+    "MEDICINE": 0.0005,
+    "TEXTILES": 0.0003,
+    "LUXURY": 0.0003,
+    "FUEL": 0.0005,
+    "ORE": 0.0004,
+    "ORGANICS": 0.0003,
+    "CHEMICALS": 0.0001,
+    "COMPONENTS": 0.0001,
+    "ALLOYS": 0.0001,
+    "MACHINES": 0.0002,
+    "TECH": 0.0002
+  }
+}

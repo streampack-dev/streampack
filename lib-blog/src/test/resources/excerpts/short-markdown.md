@@ -1,0 +1,4 @@
+# Heading
+
+This is a short article with **bold** text.
+It should keep both sentences in the summary.

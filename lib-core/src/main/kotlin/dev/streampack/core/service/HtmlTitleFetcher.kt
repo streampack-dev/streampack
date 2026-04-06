@@ -84,12 +84,12 @@ class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
         val json = pageFetcher.fetch(oembedUrl) ?: return null
         return try {
             val tree = mapper.readTree(json)
-            val title = tree.get("title")?.asText()
+            val title = tree.get("title")?.asString()
             if (title.isNullOrBlank()) {
                 logger.debug("YouTube oembed returned no title for {}", url)
                 null
             } else {
-                val author = tree.get("author_name")?.asText()?.takeIf { it.isNotBlank() }
+                val author = tree.get("author_name")?.asString()?.takeIf { it.isNotBlank() }
                 val formatted =
                     if (author != null) "YouTube: $title | $author" else "YouTube: $title"
                 logger.debug("Found YouTube title via oembed for {}: {}", url, formatted)
