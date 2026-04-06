@@ -38,12 +38,12 @@ release level="patch":
         ;;
     esac
 
-    current="$({{maven}} -q -N help:evaluate -Dexpression=project.version -DforceStdout)"
+    current="$(./mvnw -q -N help:evaluate -Dexpression=project.version -DforceStdout | tail -n 1)"
     base="${current%-SNAPSHOT}"
 
     IFS=. read -r major minor patch <<<"$base"
     if [[ -z "${major:-}" || -z "${minor:-}" || -z "${patch:-}" ]]; then
-      echo "current version is not semantic: $current" >&2
+      printf 'current version is not semantic: <%s>\n' "$current" >&2
       exit 1
     fi
 
