@@ -6,11 +6,11 @@
     <parent>
         <groupId>dev.streampack</groupId>
         <artifactId>streampack-parent</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.6</version>
     </parent>
 
     <artifactId>lib-core</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.6</version>
 
     <dependencies>
         <dependency>
