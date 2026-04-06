@@ -1,0 +1,59 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/nevet
+      DB_USERNAME: nevet
+      DB_PASSWORD: nevet
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+      BLOG_BASE_URL: ${BLOG_BASE_URL:-http://localhost:3001}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS: ${STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS:-false}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_WEBHOOK_SECRET_KEY: ${GITHUB_WEBHOOK_SECRET_KEY:-}
+      GITHUB_WEBHOOK_BASE_URL: ${GITHUB_WEBHOOK_BASE_URL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      MAIL_HOST: ${MAIL_HOST:-localhost}
+      MAIL_PORT: ${MAIL_PORT:-25}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_AUTH: ${MAIL_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      MAIL_FROM: ${MAIL_FROM:-noreply@bytecode.news}
+      CONSOLE_ENABLED: ${CONSOLE_ENABLED:-false}
+      IRC_ENABLED: ${IRC_ENABLED:-false}
+      DISCORD_ENABLED: ${DISCORD_ENABLED:-false}
+      DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:-}
+      DISCORD_PUBLIC_KEY: ${DISCORD_PUBLIC_KEY:-}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      DISCORD_PERMISSIONS_VALUE: ${DISCORD_PERMISSIONS_VALUE:-3072}
+      SLACK_ENABLED: ${SLACK_ENABLED:-false}
+      AI_ENABLED: ${AI_ENABLED:-false}
+    ports:
+      - "8080:8080"
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nevet
+      POSTGRES_USER: nevet
+      POSTGRES_PASSWORD: nevet
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+
+volumes:
+  pgdata:
