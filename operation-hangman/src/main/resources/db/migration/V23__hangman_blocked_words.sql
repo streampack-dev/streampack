@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS hangman_blocked_words (
+    id UUID PRIMARY KEY,
+    word VARCHAR(255) NOT NULL UNIQUE
+);

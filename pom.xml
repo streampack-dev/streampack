@@ -38,7 +38,7 @@
 
     <groupId>dev.streampack</groupId>
     <artifactId>streampack-parent</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -52,7 +52,37 @@
         <module>lib-startrader</module>
         <module>lib-taxonomy</module>
         <module>lib-testsupport</module>
+        <module>lib-web</module>
+        <module>operation-21</module>
+        <module>operation-ask</module>
+        <module>operation-cal</module>
+        <module>operation-calc</module>
+        <module>operation-dictionary</module>
+        <module>operation-factoid</module>
+        <module>operation-hangman</module>
+        <module>operation-ideas</module>
+        <module>operation-karma</module>
+        <module>operation-markov</module>
+        <module>operation-poetry</module>
+        <module>operation-safecracker</module>
+        <module>operation-sentiment</module>
+        <module>operation-specs</module>
+        <module>operation-tell</module>
+        <module>operation-urltitle</module>
+        <module>operation-weather</module>
+        <module>service-blog</module>
+        <module>service-bridge</module>
+        <module>service-console</module>
+        <module>service-discord</module>
+        <module>service-factoid</module>
+        <module>service-features</module>
+        <module>service-github</module>
         <module>service-irc</module>
+        <module>service-karma</module>
+        <module>service-mail</module>
+        <module>service-mcp</module>
+        <module>service-rss</module>
+        <module>service-slack</module>
     </modules>
 
     <dependencyManagement>

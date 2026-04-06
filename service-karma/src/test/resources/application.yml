@@ -1,0 +1,25 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    url: jdbc:tc:postgresql:17://nevet
+    hikari:
+      maximum-pool-size: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    clean-disabled: true
+    enabled: true
+    out-of-order: true
+  mail:
+    host: localhost
+    port: 3025
+
+streampack:
+  base-url: http://localhost:8080
+
+springdoc:
+  api-docs:
+    enabled: true

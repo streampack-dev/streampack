@@ -34,6 +34,11 @@ interface PostRepository : JpaRepository<Post, UUID> {
     @Query("SELECT p FROM Post p WHERE p.id = :id AND p.deleted = false")
     fun findActiveById(id: UUID): Post?
 
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.title = :title AND p.deleted = false"
+    )
+    fun findByTitleWithAuthor(title: String): Post?
+
     /** Published posts with eagerly loaded authors for RSS feed generation */
     @Query(
         "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC"
