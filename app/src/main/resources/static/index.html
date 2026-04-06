@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>bytecode.news API</title>
+    <meta name="description" content="REST API for bytecode.news, a community-driven JVM ecosystem news site">
+    <style>
+        :root {
+            --text: #1a1a2e;
+            --bg: #fafafa;
+            --surface: #fff;
+            --border: #ddd;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --muted: #555;
+            --code-bg: #f0f0f0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text: #e0e0e0;
+                --bg: #121212;
+                --surface: #1e1e1e;
+                --border: #333;
+                --accent: #60a5fa;
+                --accent-hover: #93bbfd;
+                --muted: #999;
+                --code-bg: #2a2a2a;
+            }
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+            margin: 0;
+            padding: 2rem 1rem;
+        }
+
+        main {
+            max-width: 40rem;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            margin: 0 0 0.25rem;
+        }
+
+        header p {
+            color: var(--muted);
+            margin: 0;
+        }
+
+        section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            margin: 0 0 0.75rem;
+        }
+
+        p {
+            margin: 0 0 0.75rem;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover, a:focus {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15em 0.35em;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        nav li:last-child {
+            margin-bottom: 0;
+        }
+
+        footer {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <h1>bytecode.news API</h1>
+            <p>Content hub and knowledge management for the JVM ecosystem</p>
+        </header>
+
+        <section>
+            <h2>About</h2>
+            <p>
+                This is the REST API for <strong>bytecode.news</strong>, a community-driven news and knowledge site
+                focused on the JVM ecosystem.
+                Built on Enterprise Application Integration principles using Spring Boot and Spring Integration.
+            </p>
+            <p>
+                The API is designed to be consumed by any frontend.
+                Multiple reference implementations demonstrate different approaches to the same backend.
+            </p>
+        </section>
+
+        <section>
+            <h2>API Documentation</h2>
+            <nav>
+                <ul>
+                    <li><a href="/swagger-ui.html">Interactive API Explorer</a> - Swagger UI</li>
+                    <li><a href="/v3/api-docs">OpenAPI Specification</a> - machine-readable JSON schema</li>
+                    <li><a href="/features">Features Endpoint</a> - runtime capability discovery</li>
+                </ul>
+            </nav>
+        </section>
+
+        <section>
+            <h2>Source</h2>
+            <p>
+                The project is open source on GitHub at
+                <a href="https://github.com/jottinger/bytecode.news">jottinger/bytecode.news</a>.
+            </p>
+            <p>
+                Contributions are welcome.
+                All user-submitted content is licensed under
+                <a href="https://creativecommons.org/licenses/by-sa/4.0/">Creative Commons CC BY-SA 4.0</a>.
+            </p>
+        </section>
+
+        <section>
+            <h2>Authentication</h2>
+            <p>
+                The API uses stateless JWT authentication.
+                Obtain a token via email OTP or OIDC (Google, GitHub), then include it as a
+                <code>Bearer</code> token in the <code>Authorization</code> header.
+                See the <a href="/swagger-ui.html">API Explorer</a> for endpoint details.
+            </p>
+        </section>
+
+        <footer>
+            <p>Powered by Nevet</p>
+        </footer>
+    </main>
+</body>
+</html>

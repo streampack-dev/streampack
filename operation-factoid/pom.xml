@@ -6,7 +6,7 @@
     <parent>
         <groupId>dev.streampack</groupId>
         <artifactId>streampack-parent</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </parent>
 
     <artifactId>operation-factoid</artifactId>
@@ -20,22 +20,18 @@
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-core</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-taxonomy</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-factoid</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-testsupport</artifactId>
-            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

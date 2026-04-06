@@ -6,22 +6,20 @@
     <parent>
         <groupId>dev.streampack</groupId>
         <artifactId>streampack-parent</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </parent>
 
     <artifactId>lib-blog</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 
     <dependencies>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-core</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-taxonomy</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
@@ -30,7 +28,6 @@
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-testsupport</artifactId>
-            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>

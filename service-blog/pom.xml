@@ -6,7 +6,7 @@
     <parent>
         <groupId>dev.streampack</groupId>
         <artifactId>streampack-parent</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </parent>
 
     <artifactId>service-blog</artifactId>
@@ -15,38 +15,31 @@
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-core</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-testsupport</artifactId>
-            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-blog</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-taxonomy</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-ai</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-web</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-factoid</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -76,9 +69,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.icegreen</groupId>
+            <artifactId>greenmail-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>operation-factoid</artifactId>
-            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

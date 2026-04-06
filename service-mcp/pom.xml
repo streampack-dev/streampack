@@ -7,7 +7,7 @@
     <parent>
         <groupId>dev.streampack</groupId>
         <artifactId>streampack-parent</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </parent>
 
     <artifactId>service-mcp</artifactId>
@@ -22,12 +22,10 @@
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-blog</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>operation-factoid</artifactId>
-            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -36,7 +34,6 @@
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-testsupport</artifactId>
-            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -1,0 +1,104 @@
+spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:.env.properties
+      - optional:file:../.env[.properties]
+      - optional:file:../.env.properties
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/nevet}
+    username: ${DB_USERNAME:nevet}
+    password: ${DB_PASSWORD:nevet}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    clean-disabled: true
+    enabled: true
+    out-of-order: true
+  threads:
+    virtual:
+      enabled: true
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:25}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_AUTH:false}
+          starttls:
+            enabled: ${MAIL_STARTTLS:false}
+            required: ${MAIL_STARTTLS:false}
+  ai: {}
+  application:
+    name: nevet
+    version: 3.0
+streampack:
+  base-url: ${BASE_URL:http://localhost:8080}
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production}
+  console:
+    enabled: ${CONSOLE_ENABLED:false}
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:noreply@bytecode.news}
+  irc:
+    enabled: ${IRC_ENABLED:false}
+    identity: ${IRC_IDENTITY:Nevet IRC Bridge}
+    adaptive-send-delay-enabled: ${IRC_ADAPTIVE_SEND_DELAY_ENABLED:true}
+    min-send-delay-ms: ${IRC_MIN_SEND_DELAY_MS:120}
+    max-send-delay-ms: ${IRC_MAX_SEND_DELAY_MS:1000}
+    send-delay-ramp-up-factor: ${IRC_SEND_DELAY_RAMP_UP_FACTOR:1.1}
+    send-delay-ramp-down-factor: ${IRC_SEND_DELAY_RAMP_DOWN_FACTOR:0.9}
+    send-delay-ms: ${IRC_SEND_DELAY_MS:900}
+  blog:
+    anonymous-submission: ${ANONYMOUS_SUBMISSION:false}
+    site-name: ${BLOG_SITE_NAME:Nevet}
+    base-url: ${BLOG_BASE_URL:http://localhost:3001}
+  karma:
+    immune-subjects: ${KARMA_IMMUNE_SUBJECTS:nevet}
+  weather:
+    api-key: ${OPENWEATHERMAP_API_KEY:change-me}
+  discord:
+    enabled: ${DISCORD_ENABLED:false}
+    application-id: ${DISCORD_APPLICATION_ID:no-id}
+    public-key: ${DISCORD_PUBLIC_KEY:no-key}
+    permissions: 3072
+    token: ${DISCORD_BOT_TOKEN:no-token}
+    signal-character: "!"
+  slack:
+    enabled: ${SLACK_ENABLED:false}
+    signal-character: ${SLACK_SIGNAL:!}
+  security:
+    enforce-external-secrets: ${STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS:true}
+  ai:
+    enabled: ${AI_ENABLED:false}
+    api-key: ${ANTHROPIC_API_KEY:}
+  github:
+    poll-interval: ${GITHUB_POLL_INTERVAL:PT60M}
+    webhook-secret-key: ${GITHUB_WEBHOOK_SECRET_KEY:change-me}
+    webhook-base-url: ${GITHUB_WEBHOOK_BASE_URL:change-me}
+    delivery-dedupe-ttl: ${GITHUB_WEBHOOK_DEDUPE_TTL:PT6H}
+management:
+  info:
+    git:
+      mode: full
+    build:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: info,health
+
+springdoc:
+  api-docs:
+    enabled: true
+
+logging:
+  exception-conversion-word: "%wEx{0}"
+
+server:
+  server-header: ""
