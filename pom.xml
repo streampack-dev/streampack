@@ -45,6 +45,7 @@
         <module>lib-core</module>
         <module>lib-testsupport</module>
         <module>lib-irc</module>
+        <module>service-irc</module>
     </modules>
 
     <dependencyManagement>
