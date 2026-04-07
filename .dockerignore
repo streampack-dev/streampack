@@ -1,0 +1,5 @@
+*
+!Dockerfile
+!target/
+!target/docker/
+!target/docker/app.jar
