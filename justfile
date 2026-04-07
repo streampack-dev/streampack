@@ -25,6 +25,83 @@ coverage:
 native:
     ./mvnw -pl app -am -Pnative -DskipTests package
 
+# Log in to the Docker registry. Uses DOCKER_USERNAME/DOCKER_PASSWORD first, then ~/.m2/settings.xml.
+docker-login:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    registry="${IMAGE_REGISTRY:-nexus.streampack.dev}"
+    username="${DOCKER_USERNAME:-}"
+    password="${DOCKER_PASSWORD:-}"
+
+    if [[ -z "$username" || -z "$password" ]]; then
+      settings="${MAVEN_SETTINGS:-$HOME/.m2/settings.xml}"
+      server_id="${MAVEN_DOCKER_SERVER_ID:-nexus-streampack}"
+
+      if [[ ! -f "$settings" ]]; then
+        echo "No Maven settings file found at $settings; set DOCKER_USERNAME and DOCKER_PASSWORD instead." >&2
+        exit 1
+      fi
+      if ! command -v xmllint >/dev/null 2>&1; then
+        echo "xmllint is required to read $settings; set DOCKER_USERNAME and DOCKER_PASSWORD instead." >&2
+        exit 1
+      fi
+
+      username="$(xmllint --xpath "string(/*[local-name()='settings']/*[local-name()='servers']/*[local-name()='server'][*[local-name()='id']='$server_id']/*[local-name()='username'])" "$settings")"
+      password="$(xmllint --xpath "string(/*[local-name()='settings']/*[local-name()='servers']/*[local-name()='server'][*[local-name()='id']='$server_id']/*[local-name()='password'])" "$settings")"
+
+      if [[ -z "$username" || -z "$password" ]]; then
+        echo "No credentials found for Maven server '$server_id' in $settings; set MAVEN_DOCKER_SERVER_ID or DOCKER_USERNAME/DOCKER_PASSWORD." >&2
+        exit 1
+      fi
+      if [[ "$password" == \{* ]]; then
+        echo "Maven server '$server_id' appears to use an encrypted password; set DOCKER_PASSWORD or run docker login manually." >&2
+        exit 1
+      fi
+    fi
+
+    printf '%s' "$password" | docker login "$registry" --username "$username" --password-stdin
+
+# Build and push a multi-platform JVM app image. Override IMAGE_REGISTRY/IMAGE_REPOSITORY as needed.
+image tag="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    version="{{tag}}"
+    if [[ -z "$version" ]]; then
+      version="$(./mvnw -q -N help:evaluate -Dexpression=project.version -DforceStdout | tail -n 1)"
+    fi
+
+    registry="${IMAGE_REGISTRY:-nexus.streampack.dev}"
+    repository="${IMAGE_REPOSITORY:-images/app}"
+    image="${registry}/${repository}"
+    platforms="${DOCKER_PLATFORMS:-linux/amd64,linux/arm64}"
+    builder="${DOCKER_BUILDX_BUILDER:-streampack-builder}"
+
+    {{maven}} -pl app -am -DskipTests clean package
+
+    if [[ "${DOCKER_LOGIN:-true}" == "true" ]]; then
+      just docker-login
+    fi
+
+    if ! docker buildx inspect "$builder" >/dev/null 2>&1; then
+      docker buildx create --name "$builder" --use >/dev/null
+    else
+      docker buildx use "$builder" >/dev/null
+    fi
+    docker buildx inspect --bootstrap >/dev/null
+
+    tags=(-t "${image}:${version}")
+    if [[ "${DOCKER_PUSH_LATEST:-false}" == "true" ]]; then
+      tags+=(-t "${image}:latest")
+    fi
+
+    docker buildx build \
+      --platform "$platforms" \
+      "${tags[@]}" \
+      --push \
+      .
+
 # Bump the project version and deploy. Defaults to a patch release.
 release level="patch":
     #!/usr/bin/env bash
