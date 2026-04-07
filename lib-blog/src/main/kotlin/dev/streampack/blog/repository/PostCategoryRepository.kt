@@ -13,6 +13,11 @@ interface PostCategoryRepository : JpaRepository<PostCategory, UUID> {
     @Query("SELECT pc FROM PostCategory pc WHERE pc.post.id = :postId")
     fun findByPost(postId: UUID): List<PostCategory>
 
+    @Query(
+        "SELECT pc.category.name FROM PostCategory pc WHERE pc.post.id = :postId ORDER BY pc.category.name"
+    )
+    fun findNamesByPost(postId: UUID): List<String>
+
     @Query("SELECT pc FROM PostCategory pc WHERE pc.category.id = :categoryId")
     fun findByCategory(categoryId: UUID): List<PostCategory>
 

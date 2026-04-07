@@ -13,6 +13,9 @@ interface PostTagRepository : JpaRepository<PostTag, UUID> {
     @Query("SELECT pt FROM PostTag pt WHERE pt.post.id = :postId")
     fun findByPost(postId: UUID): List<PostTag>
 
+    @Query("SELECT pt.tag.name FROM PostTag pt WHERE pt.post.id = :postId ORDER BY pt.tag.name")
+    fun findNamesByPost(postId: UUID): List<String>
+
     @Query("SELECT pt FROM PostTag pt WHERE pt.tag.id = :tagId")
     fun findByTag(tagId: UUID): List<PostTag>
 

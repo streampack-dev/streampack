@@ -49,8 +49,8 @@ class FindDraftsOperation(
                     excerpt = post.excerpt,
                     authorDisplayName = post.author?.displayName ?: "Anonymous",
                     publishedAt = post.publishedAt,
-                    tags = postTagRepository.findByPost(post.id).map { it.tag.name },
-                    categories = postCategoryRepository.findByPost(post.id).map { it.category.name },
+                    tags = postTagRepository.findNamesByPost(post.id),
+                    categories = postCategoryRepository.findNamesByPost(post.id),
                 )
             }
 

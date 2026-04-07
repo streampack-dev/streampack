@@ -14,9 +14,9 @@ import org.springframework.messaging.Message
  * Operations that need raw message access or want to accept multiple payload types should implement
  * [Operation] directly instead.
  */
-abstract class TypedOperation<T : Any>(val payloadType: KClass<T>) : Operation {
+abstract class TypedOperation<T : Any>(private val payloadType: KClass<T>) : Operation {
 
-    final override fun canHandle(message: Message<*>): Boolean {
+    override fun canHandle(message: Message<*>): Boolean {
         if (!payloadType.isInstance(message.payload)) return false
         @Suppress("UNCHECKED_CAST")
         return canHandle(message.payload as T, message)

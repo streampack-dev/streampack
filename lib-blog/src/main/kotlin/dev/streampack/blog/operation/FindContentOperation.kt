@@ -23,9 +23,11 @@ import java.util.UUID
 import org.springframework.data.domain.PageRequest
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 /** Retrieves blog content by slug, ID, or paginated published listing */
 @Component
+@Transactional(readOnly = true)
 class FindContentOperation(
     private val postRepository: PostRepository,
     private val slugRepository: SlugRepository,
@@ -265,8 +267,8 @@ class FindContentOperation(
     }
 
     private fun tagNamesForPost(postId: UUID): List<String> =
-        postTagRepository.findByPost(postId).map { it.tag.name }
+        postTagRepository.findNamesByPost(postId)
 
     private fun categoryNamesForPost(postId: UUID): List<String> =
-        postCategoryRepository.findByPost(postId).map { it.category.name }
+        postCategoryRepository.findNamesByPost(postId)
 }

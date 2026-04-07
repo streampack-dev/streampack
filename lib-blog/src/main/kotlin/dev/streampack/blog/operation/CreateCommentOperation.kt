@@ -53,7 +53,7 @@ class CreateCommentOperation(
         val post =
             postRepository.findActiveById(payload.postId)
                 ?: return OperationResult.Error("Post not found")
-        val categories = postCategoryRepository.findByPost(post.id).map { it.category.name }
+        val categories = postCategoryRepository.findNamesByPost(post.id)
         if (categories.any { it.equals("_sidebar", ignoreCase = true) }) {
             return OperationResult.Error("Comments are disabled for sidebar content")
         }
