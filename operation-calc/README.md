@@ -13,3 +13,10 @@
 The operation uses the shared command parser for `calc` and passes the expression after the command token to the calculator service.
 
 The operation is addressed and uses operation group `calc`.
+
+## Example Flows
+
+- Evaluate a simple expression:
+  `calc 2+3`
+- Evaluate a grouped expression:
+  `calc (42/3.14)*4`

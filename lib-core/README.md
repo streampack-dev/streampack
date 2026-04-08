@@ -30,3 +30,18 @@
 ## Notes
 
 Protocol-specific identity resolution goes through `ServiceBindingRepository` and `UserResolutionService`. Service binding lookups fetch the bound `User` eagerly because protocol adapters resolve users outside repository transaction scopes.
+
+## Example Flows
+
+- Bootstrap an operator account:
+  `create user alice alice@example.com Alice admin`
+- Link that operator to IRC:
+  `link user alice irc libera alice@example.com`
+- Inspect available identity providers first:
+  `link help` or `link help irc`
+- Disable a noisy operation globally:
+  `operation disable urltitle`
+- Disable a group only in one channel:
+  `channel disable urltitle for irc://libera/%23java`
+- Re-enable a service after maintenance:
+  `service enable irc`

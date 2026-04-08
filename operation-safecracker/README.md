@@ -13,3 +13,12 @@
 Game state is stored per provenance URI through `ProvenanceStateService`. `SafecrackerTimerService` tracks active timers and cleans up timed-out games.
 
 The operation is addressed and uses operation group `safecracker`.
+
+## Example Flows
+
+- Start a game:
+  `safecracker`
+- Make a guess:
+  `safecracker 3 0 3 0`
+- Give up and reveal the code:
+  `safecracker concede`

@@ -13,3 +13,12 @@
 Game state is stored through `ProvenanceStateService`, keyed by the current provenance URI. Each channel or DM context therefore has an independent game.
 
 The operation is addressed and uses operation group `21-matches`.
+
+## Example Flows
+
+- Start a game in a channel:
+  `21`
+- Take two matches:
+  `21 take 2`
+- Concede the current game:
+  `21 concede`

@@ -21,3 +21,5 @@ DISCORD_PERMISSIONS_VALUE=3072
 ```
 
 Protocol identities map to Streampack users through service bindings. This lets one user have HTTP, IRC, Discord, and Slack identities while sharing the same role and permissions model.
+
+For a concrete end-to-end bring-up, see [Run the infobot on IRC](../../tutorials/run-infobot-on-irc.md).

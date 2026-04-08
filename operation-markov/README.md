@@ -13,3 +13,9 @@
 The operation reads up to 1000 recent messages for the sender within the current protocol family, then delegates generation to `MarkovChainService`.
 
 The operation is addressed and uses operation group `markov`.
+
+## Example Flows
+
+- Generate a sentence in one user's style:
+  `be alice`
+- Use it only after enough message history exists for that sender

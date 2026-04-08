@@ -15,3 +15,11 @@ The operation is active only when `streampack.ai.enabled=true` and requires `ADM
 If the requested target differs from the source channel, the result is routed to the requester by direct-message provenance.
 
 The operation is addressed and uses operation group `sentiment`.
+
+## Example Flows
+
+- Analyze the current channel:
+  `sentiment #java`
+- Analyze another provenance URI as an admin:
+  `sentiment irc://libera/%23java`
+- Expect cross-channel results to come back privately rather than to the target channel

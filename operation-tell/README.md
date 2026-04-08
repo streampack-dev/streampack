@@ -17,3 +17,12 @@ Targets are resolved relative to the source provenance:
 - `tell irc://libera/%23java hello` uses the explicit URI.
 
 The operation uses operation group `tell`.
+
+## Example Flows
+
+- Send a private note on the current protocol/service:
+  `tell alice build is green`
+- Send to a channel on the current protocol/service:
+  `tell #java release is live`
+- Send to an explicit provenance:
+  `tell irc://libera/%23java deploy is complete`

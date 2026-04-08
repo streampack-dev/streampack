@@ -14,3 +14,14 @@
 Game state is stored through `ProvenanceStateService`, so each channel or DM context has an independent game. Word selection and blocklist management are delegated to `HangmanService`.
 
 The play operation uses operation group `hangman`; the admin operation uses `hangman-admin`.
+
+## Example Flows
+
+- Start a game:
+  `hangman`
+- Guess a letter:
+  `hangman e`
+- Attempt a solve:
+  `hangman solve compiler`
+- Block an unsuitable word:
+  `hangman block slur`

@@ -13,3 +13,12 @@
 The operation runs at priority `95`, after factoid lookup. On a successful lookup it seeds factoids for the selector and selector URL so future lookups can be served from the factoid store.
 
 The operation is addressed and uses operation group `specs`.
+
+## Example Flows
+
+- Look up an RFC:
+  `rfc 2616`
+- Use compact form:
+  `jep456`
+- Repeat later:
+  seeded factoids can satisfy later requests without another external fetch

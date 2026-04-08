@@ -14,3 +14,12 @@
 `UrlTitleOperation` is unaddressed and only runs for protocols enabled in `UrlTitleProperties`. It suppresses results for ignored hosts and for titles that are too similar to the URL.
 
 The module uses operation group `urltitle`.
+
+## Example Flows
+
+- Paste a URL in chat:
+  the operation will emit a title if the host is not ignored and the title is not redundant
+- View ignored hosts:
+  `url ignore list`
+- Suppress a noisy host:
+  `url ignore add example.com`

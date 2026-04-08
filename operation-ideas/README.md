@@ -15,3 +15,20 @@
 `ArticleOperation` stores per-user session state through `ProvenanceStateService` and uses `MessageLogService` to include recent channel logs when requested. AI enrichment is optional and depends on an available `AiService`.
 
 The module bridges chat-originated ideas into the blog content model. It depends on blog repositories and typed blog content requests.
+
+## Example Flows
+
+- Start an idea session:
+  `article Better JVM startup stories`
+- Add body text:
+  `content We should compare CDS, CRaC, and native-image tradeoffs.`
+- Pull recent logs into the draft:
+  `logs 30m`
+- Enable AI summarization/tags:
+  `includeai`
+- Finalize the draft:
+  `done`
+- Seed a draft from a source URL:
+  `suggest https://inside.java/2026/04/example`
+- Review current idea queue:
+  `ideas`
