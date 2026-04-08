@@ -1,7 +1,10 @@
 # Streampack
 
-A content hub and knowledge management system built on Enterprise Application Integration (EAI) principles.
-The initial deployment target is [bytecode.news](https://bytecode.news), a community-driven JVM ecosystem news site.
+Streampack is an event-driven application platform built around `lib-core`.
+The repository also ships `server-streampack`, a bundled runnable server used for the Bytecode News deployment.
+
+`server-streampack` includes the blog/site API, feeds, authentication, MCP support, GitHub/RSS integrations, and the bundled infobot capabilities.
+Those are a distribution of Streampack, not the boundary of what Streampack is.
 
 ## Prerequisites
 
@@ -101,7 +104,7 @@ Build the bootable JAR and start it:
 
 ```bash
 ./mvnw clean package -DskipTests
-java -jar app/target/app-1.0.jar
+java -jar server-streampack/target/server-streampack-*-exec.jar
 ```
 
 On first boot, Flyway runs all database migrations and a superadmin account is created automatically.
@@ -116,7 +119,7 @@ The interactive console lets you send commands directly to the operation pipelin
 Enable it by setting `CONSOLE_ENABLED=true` in your `.env.properties` or as an environment variable:
 
 ```bash
-CONSOLE_ENABLED=true java -jar app/target/app-1.0.jar
+CONSOLE_ENABLED=true java -jar server-streampack/target/server-streampack-*-exec.jar
 ```
 
 The console presents a `>` prompt.
@@ -136,25 +139,24 @@ Type `exit` or `quit` to stop.
 
 | Module | Purpose |
 |--------|---------|
-| `lib-core` | Shared domain model, event system, user management |
+| `lib-core` | Platform core: operations, provenance, protocols, users, event flow |
 | `lib-blog` | Blog domain entities and repositories |
-| `lib-test` | Shared test infrastructure (Testcontainers config, test channel override) |
+| `lib-testsupport` | Shared test infrastructure and HTTP-test reset support |
 | `operation-calc` | Calculator operation for algebraic expressions |
 | `service-blog` | HTTP adapter, REST controllers, blog operations |
 | `service-console` | Interactive console adapter |
-| `app` | Assembly module - produces the bootable JAR |
+| `server-streampack` | Bundled runnable server distribution |
 
 ## Documentation
 
-| Document | Audience | Description |
-|----------|----------|-------------|
-| [User Guide](docs/user-guide.md) | End users | Complete command reference for all bot operations |
-| [API Reference](docs/api-reference.md) | Frontend developers | REST endpoint documentation, request/response shapes |
-| [Content Authoring](docs/content-authoring.md) | Authors / editors | Markdown guidance for posts and comments, including admonition syntax |
-| [Architecture](docs/architecture.md) | Backend contributors | Messaging pipeline, operation system, module design |
-| [Deployment](docs/deployment.md) | Ops / self-hosters | Local setup, production deployment, adapter configuration |
-| [Authentication](docs/authentication.md) | All | OTP, OIDC, JWT, account lifecycle |
-| [MCP Guide](docs/mcp.md) | AI/tool integrators | MCP endpoint connection, tool discovery, and JSON-RPC usage |
+Documentation is organized using the Diataxis model:
+
+| Area | Start here |
+|------|------------|
+| Tutorials | [Deploy `server-streampack`](docs/tutorials/deploy-server-streampack.md), [write your first operation](docs/tutorials/write-your-first-operation.md) |
+| How-to | [Configure deployment environment](docs/how-to/deploy/configure-env.md), [build and publish the container](docs/how-to/deploy/build-and-publish-container.md) |
+| Reference | [Modules](docs/reference/modules.md), [environment variables](docs/reference/environment-variables.md), [OpenAPI](docs/openapi.json) |
+| Explanation | [What is Streampack?](docs/explanation/what-is-streampack.md), [platform vs bundled server](docs/explanation/platform-vs-server-streampack.md) |
 
 ## License
 

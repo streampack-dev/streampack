@@ -21,9 +21,9 @@ coverage:
     {{maven}} clean verify
     @echo "Coverage report: coverage-report/target/site/jacoco-aggregate/index.html"
 
-# Build a GraalVM native executable for app. This uses mvnw, not mvnd if it's present.
+# Build a GraalVM native executable for server-streampack. This uses mvnw, not mvnd if it's present.
 native:
-    ./mvnw -pl app -am -Pnative -DskipTests package
+    ./mvnw -pl server-streampack -am -Pnative -DskipTests package
 
 # Log in to the Docker registry. Uses DOCKER_USERNAME/DOCKER_PASSWORD first, then ~/.m2/settings.xml.
 docker-login:
@@ -62,7 +62,7 @@ docker-login:
 
     printf '%s' "$password" | docker login "$registry" --username "$username" --password-stdin
 
-# Build and push a multi-platform JVM app image. Override IMAGE_REGISTRY/IMAGE_REPOSITORY as needed.
+# Build and push a multi-platform JVM server-streampack image. Override IMAGE_REGISTRY/IMAGE_REPOSITORY as needed.
 image tag="":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -73,12 +73,15 @@ image tag="":
     fi
 
     registry="${IMAGE_REGISTRY:-nexus.streampack.dev}"
-    repository="${IMAGE_REPOSITORY:-images/app}"
+    repository="${IMAGE_REPOSITORY:-images/server-streampack}"
     image="${registry}/${repository}"
     platforms="${DOCKER_PLATFORMS:-linux/amd64,linux/arm64}"
     builder="${DOCKER_BUILDX_BUILDER:-streampack-builder}"
 
-    {{maven}} -pl app -am -DskipTests clean package
+    {{maven}} -pl server-streampack -am -DskipTests clean package
+
+    mkdir -p target/docker
+    cp "server-streampack/target/server-streampack-${version}-exec.jar" target/docker/server-streampack.jar
 
     if [[ "${DOCKER_LOGIN:-true}" == "true" ]]; then
       just docker-login

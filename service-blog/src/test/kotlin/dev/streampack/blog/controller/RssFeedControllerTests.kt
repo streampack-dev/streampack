@@ -9,6 +9,7 @@ import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestChannelConfiguration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -21,12 +22,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for RSS/Atom feed endpoints */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 @Import(TestChannelConfiguration::class)
 class RssFeedControllerTests {
 

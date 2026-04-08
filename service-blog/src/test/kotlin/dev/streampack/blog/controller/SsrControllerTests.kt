@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.controller
 
+import dev.streampack.blog.entity.Category
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.entity.PostCategory
 import dev.streampack.blog.entity.Slug
@@ -12,6 +13,7 @@ import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestChannelConfiguration
 import java.time.Instant
 import java.time.ZoneOffset
@@ -25,12 +27,11 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for server-side rendered HTML pages */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 @Import(TestChannelConfiguration::class)
 class SsrControllerTests {
 
@@ -78,7 +79,9 @@ class SsrControllerTests {
         slugRepository.save(Slug(path = slugPath, post = publishedPost, canonical = true))
 
         // Set up a system page
-        val pagesCategory = categoryRepository.findByName("_pages")!!
+        val pagesCategory =
+            categoryRepository.findByName("_pages")
+                ?: categoryRepository.save(Category(name = "_pages", slug = "_pages"))
         val aboutPost =
             postRepository.save(
                 Post(

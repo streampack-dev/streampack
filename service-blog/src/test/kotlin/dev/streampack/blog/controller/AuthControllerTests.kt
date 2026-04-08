@@ -14,6 +14,7 @@ import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.RefreshTokenService
 import dev.streampack.core.service.UserRegistrationService
+import dev.streampack.test.ResetDatabaseBeforeEach
 import jakarta.servlet.http.Cookie
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.*
@@ -25,12 +26,11 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.*
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for /auth endpoints, exercising the full MVC stack */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 class AuthControllerTests {
 
     companion object {

@@ -51,7 +51,7 @@ class CreateCommentOperation(
         }
 
         val post =
-            postRepository.findActiveById(payload.postId)
+            postRepository.findActiveByIdWithAuthor(payload.postId)
                 ?: return OperationResult.Error("Post not found")
         val categories = postCategoryRepository.findNamesByPost(post.id)
         if (categories.any { it.equals("_sidebar", ignoreCase = true) }) {
@@ -61,11 +61,8 @@ class CreateCommentOperation(
         val parentComment =
             if (payload.parentCommentId != null) {
                 val parent =
-                    commentRepository.findById(payload.parentCommentId).orElse(null)
+                    commentRepository.findActiveByIdWithAuthor(payload.parentCommentId)
                         ?: return OperationResult.Error("Parent comment not found")
-                if (parent.deleted) {
-                    return OperationResult.Error("Cannot reply to a deleted comment")
-                }
                 if (parent.post.id != post.id) {
                     return OperationResult.Error("Parent comment belongs to a different post")
                 }

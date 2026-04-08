@@ -18,6 +18,7 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestChannelConfiguration
 import java.time.Instant
 import org.junit.jupiter.api.BeforeEach
@@ -30,11 +31,10 @@ import org.springframework.messaging.support.MessageBuilder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
-import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 @Import(TestChannelConfiguration::class)
 class TaxonomyControllerTests {
 

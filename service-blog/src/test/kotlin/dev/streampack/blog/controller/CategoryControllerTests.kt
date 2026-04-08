@@ -3,6 +3,7 @@ package dev.streampack.blog.controller
 
 import dev.streampack.blog.entity.Category
 import dev.streampack.blog.repository.CategoryRepository
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestChannelConfiguration
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -12,12 +13,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for public category listing endpoint */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 @Import(TestChannelConfiguration::class)
 class CategoryControllerTests {
 
@@ -28,6 +28,8 @@ class CategoryControllerTests {
     fun setUp() {
         categoryRepository.save(Category(name = "Kotlin", slug = "kotlin"))
         categoryRepository.save(Category(name = "Java", slug = "java"))
+        categoryRepository.save(Category(name = "_pages", slug = "_pages"))
+        categoryRepository.save(Category(name = "_sidebar", slug = "_sidebar"))
         categoryRepository.save(Category(name = "Archived", slug = "archived", deleted = true))
     }
 

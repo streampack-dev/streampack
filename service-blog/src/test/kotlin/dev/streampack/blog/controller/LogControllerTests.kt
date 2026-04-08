@@ -8,6 +8,7 @@ import dev.streampack.core.repository.ChannelControlOptionsRepository
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.MessageLogService
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestChannelConfiguration
 import java.time.Instant
 import org.junit.jupiter.api.BeforeEach
@@ -18,11 +19,10 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 @Import(TestChannelConfiguration::class)
 class LogControllerTests {
 

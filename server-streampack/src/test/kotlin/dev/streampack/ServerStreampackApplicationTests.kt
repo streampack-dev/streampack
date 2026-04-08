@@ -10,11 +10,11 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Import
 
 @SpringBootTest(
-    classes = [NevetApplication::class],
+    classes = [ServerStreampackApplication::class],
     properties = ["spring.main.allow-bean-definition-overriding=true"],
 )
 @Import(TestChannelConfiguration::class)
-class NevetApplicationTests {
+class ServerStreampackApplicationTests {
 
     @Autowired lateinit var context: ApplicationContext
 

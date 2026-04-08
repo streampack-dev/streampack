@@ -55,7 +55,7 @@ class EditCommentOperation(
         val renderedHtml = markdownRenderingService.render(payload.markdownSource)
         val now = Instant.now()
 
-        val updated =
+        val saved =
             commentRepository.save(
                 comment.copy(
                     markdownSource = payload.markdownSource,
@@ -63,6 +63,9 @@ class EditCommentOperation(
                     updatedAt = now,
                 )
             )
+        val updated =
+            commentRepository.findActiveByIdWithAuthor(saved.id)
+                ?: return OperationResult.Error("Comment not found")
 
         logger.info("Comment edited: {}", updated.id)
 

@@ -7,6 +7,7 @@ import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
+import dev.streampack.test.ResetDatabaseBeforeEach
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -17,12 +18,11 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.post
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for admin category management endpoints */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 class AdminCategoryControllerTests {
 
     @Autowired lateinit var mockMvc: MockMvc

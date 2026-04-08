@@ -10,6 +10,7 @@ import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
+import dev.streampack.test.ResetDatabaseBeforeEach
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -22,12 +23,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for admin comment deletion endpoints */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 class AdminCommentControllerTests {
 
     @Autowired lateinit var mockMvc: MockMvc

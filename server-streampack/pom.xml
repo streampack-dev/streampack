@@ -6,10 +6,10 @@
     <parent>
         <groupId>dev.streampack</groupId>
         <artifactId>streampack-parent</artifactId>
-        <version>1.0.8</version>
+        <version>1.1.1</version>
     </parent>
 
-    <artifactId>app</artifactId>
+    <artifactId>server-streampack</artifactId>
 
     <dependencies>
         <dependency>
@@ -247,7 +247,7 @@
                         </executions>
                         <configuration>
                             <imageName>${project.artifactId}</imageName>
-                            <mainClass>dev.streampack.NevetApplicationKt</mainClass>
+                            <mainClass>dev.streampack.ServerStreampackApplicationKt</mainClass>
                             <buildArgs>
                                 <buildArg>--no-fallback</buildArg>
                             </buildArgs>

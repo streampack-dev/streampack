@@ -11,9 +11,11 @@ import dev.streampack.core.service.TypedOperation
 import jakarta.persistence.EntityManager
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 /** Admin permanently deletes a comment; DB cascades to child comments */
 @Component
+@Transactional
 class HardDeleteCommentOperation(
     private val commentRepository: CommentRepository,
     private val entityManager: EntityManager,

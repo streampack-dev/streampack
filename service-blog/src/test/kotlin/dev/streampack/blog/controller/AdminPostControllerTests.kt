@@ -8,6 +8,7 @@ import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
+import dev.streampack.test.ResetDatabaseBeforeEach
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import org.junit.jupiter.api.Assertions.*
@@ -18,12 +19,11 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.*
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for admin post management endpoints */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 class AdminPostControllerTests {
 
     @Autowired lateinit var mockMvc: MockMvc

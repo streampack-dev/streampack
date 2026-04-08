@@ -2,4 +2,4 @@
 !Dockerfile
 !target/
 !target/docker/
-!target/docker/app.jar
+!target/docker/server-streampack.jar

@@ -8,6 +8,7 @@ import dev.streampack.core.model.UserStatus
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.UserRegistrationService
+import dev.streampack.test.ResetDatabaseBeforeEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,12 +19,11 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.put
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for admin user management endpoints, verifying privilege enforcement */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 class AdminUserControllerTests {
 
     @Autowired lateinit var mockMvc: MockMvc

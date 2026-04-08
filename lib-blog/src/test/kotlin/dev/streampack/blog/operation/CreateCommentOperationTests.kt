@@ -248,7 +248,7 @@ class CreateCommentOperationTests {
     }
 
     @Test
-    fun `deleted parent comment returns error`() {
+    fun `deleted parent comment returns not found`() {
         val deletedParent =
             commentRepository.save(
                 Comment(
@@ -264,7 +264,7 @@ class CreateCommentOperationTests {
         val result = eventGateway.process(createMessage(request, replyUser))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Cannot reply to a deleted comment", (result as OperationResult.Error).message)
+        assertEquals("Parent comment not found", (result as OperationResult.Error).message)
     }
 
     @Test

@@ -1,13 +1,13 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.controller
 
+import dev.streampack.test.ResetDatabaseBeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest(
     properties =
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional
         ]
 )
 @AutoConfigureMockMvc
-@Transactional
+@ResetDatabaseBeforeEach
 class ApiVersionHeaderFilterTests {
 
     @Autowired lateinit var mockMvc: MockMvc

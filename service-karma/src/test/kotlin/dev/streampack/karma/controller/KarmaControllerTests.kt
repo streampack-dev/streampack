@@ -2,6 +2,7 @@
 package dev.streampack.karma.controller
 
 import dev.streampack.karma.service.KarmaService
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -11,11 +12,10 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
-@Transactional
+@ResetDatabaseBeforeEach
 @Import(TestSecurityConfiguration::class)
 class KarmaControllerTests {
 

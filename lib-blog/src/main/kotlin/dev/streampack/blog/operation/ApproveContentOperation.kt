@@ -43,7 +43,7 @@ class ApproveContentOperation(
         }
 
         val now = Instant.now()
-        val approved =
+        val saved =
             postRepository.save(
                 post.copy(
                     status = PostStatus.APPROVED,
@@ -51,6 +51,9 @@ class ApproveContentOperation(
                     updatedAt = now,
                 )
             )
+        val approved =
+            postRepository.findActiveByIdWithAuthor(saved.id)
+                ?: return OperationResult.Error("Post not found")
 
         val canonicalSlug = slugRepository.findCanonical(approved.id)
 

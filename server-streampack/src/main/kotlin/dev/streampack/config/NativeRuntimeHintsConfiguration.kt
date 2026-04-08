@@ -8,8 +8,8 @@ import org.springframework.context.annotation.ImportRuntimeHints
 
 /**
  * Placeholder for native-image tuning. As reflection, proxy, and resource issues are discovered
- * during GraalVM adoption, register them here so the app-native profile remains the single source
- * of truth for AOT hints.
+ * during GraalVM adoption, register them here so the native profile remains the single source of
+ * truth for AOT hints.
  */
 @Configuration(proxyBeanMethods = false)
 @ImportRuntimeHints(NativeRuntimeHints::class)

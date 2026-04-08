@@ -20,7 +20,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 @ConfigurationPropertiesScan("dev.streampack")
 @EntityScan("dev.streampack")
 @EnableJpaRepositories("dev.streampack")
-class NevetApplication(
+class ServerStreampackApplication(
     @Autowired(required = false) private val gitProperties: GitProperties?,
     @Autowired(required = false) private val buildProperties: BuildProperties?,
     @Value("\${spring.application.name:}") private val applicationName: String,
@@ -60,5 +60,5 @@ class NevetApplication(
 }
 
 fun main(args: Array<String>) {
-    runApplication<NevetApplication>(*args)
+    runApplication<ServerStreampackApplication>(*args)
 }

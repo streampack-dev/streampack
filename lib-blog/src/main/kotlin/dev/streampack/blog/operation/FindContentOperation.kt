@@ -127,18 +127,19 @@ class FindContentOperation(
 
         val summaries =
             pageResult.content.map { post ->
-                val canonicalSlug = slugRepository.findCanonical(post.id)
+                val resolvedPost = postRepository.findActiveByIdWithAuthor(post.id) ?: post
+                val canonicalSlug = slugRepository.findCanonical(resolvedPost.id)
                 ContentSummary(
-                    id = post.id,
-                    title = post.title,
+                    id = resolvedPost.id,
+                    title = resolvedPost.title,
                     slug = canonicalSlug?.path ?: "",
-                    excerpt = post.excerpt,
-                    authorDisplayName = post.author?.displayName ?: "Anonymous",
-                    publishedAt = post.publishedAt,
-                    sortOrder = post.sortOrder,
-                    commentCount = commentRepository.countActiveByPost(post.id).toInt(),
-                    tags = tagNamesForPost(post.id),
-                    categories = categoryNamesForPost(post.id),
+                    excerpt = resolvedPost.excerpt,
+                    authorDisplayName = resolvedPost.author?.displayName ?: "Anonymous",
+                    publishedAt = resolvedPost.publishedAt,
+                    sortOrder = resolvedPost.sortOrder,
+                    commentCount = commentRepository.countActiveByPost(resolvedPost.id).toInt(),
+                    tags = tagNamesForPost(resolvedPost.id),
+                    categories = categoryNamesForPost(resolvedPost.id),
                 )
             }
 

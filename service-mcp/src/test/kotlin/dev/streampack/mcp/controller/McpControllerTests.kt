@@ -8,6 +8,7 @@ import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.factoid.model.FactoidAttributeType
 import dev.streampack.factoid.service.FactoidService
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
 import java.time.Instant
 import org.junit.jupiter.api.BeforeEach
@@ -19,12 +20,11 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for the read-only MCP JSON-RPC endpoint. */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
-@Transactional
+@ResetDatabaseBeforeEach
 @Import(TestSecurityConfiguration::class)
 class McpControllerTests {
 

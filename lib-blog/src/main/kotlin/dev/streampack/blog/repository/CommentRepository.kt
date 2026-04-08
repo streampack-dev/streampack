@@ -6,6 +6,7 @@ import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 
 /** Retrieves comments for thread display and user history */
 interface CommentRepository : JpaRepository<Comment, UUID> {
@@ -40,5 +41,8 @@ interface CommentRepository : JpaRepository<Comment, UUID> {
     @Query("UPDATE Comment c SET c.author.id = :toUserId WHERE c.author.id = :fromUserId")
     fun reassignAuthor(fromUserId: UUID, toUserId: UUID)
 
-    @Modifying @Query("DELETE FROM Comment c WHERE c.id = :id") fun hardDeleteById(id: UUID)
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM Comment c WHERE c.id = :id")
+    fun hardDeleteById(id: UUID)
 }

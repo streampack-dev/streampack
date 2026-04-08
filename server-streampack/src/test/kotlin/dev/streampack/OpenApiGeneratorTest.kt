@@ -16,9 +16,9 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.ObjectNode
 
-/** Fetches the OpenAPI spec from the running app and writes it to docs/openapi.json */
+/** Fetches the OpenAPI spec from the running server and writes it to docs/openapi.json */
 @SpringBootTest(
-    classes = [NevetApplication::class],
+    classes = [ServerStreampackApplication::class],
     properties = ["spring.main.allow-bean-definition-overriding=true"],
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
 )

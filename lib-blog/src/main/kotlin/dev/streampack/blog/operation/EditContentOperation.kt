@@ -56,7 +56,10 @@ class EditContentOperation(
             return OperationResult.Error("Not authorized to edit this post")
         }
 
-        val updated = postRepository.save(payload.applyTo(post, markdownRenderingService))
+        val saved = postRepository.save(payload.applyTo(post, markdownRenderingService))
+        val updated =
+            postRepository.findActiveByIdWithAuthor(saved.id)
+                ?: return OperationResult.Error("Post not found")
 
         val tagNames = replaceTags(updated, payload.tags ?: emptyList())
         val categoryNames = replaceCategories(updated, payload.categoryIds ?: emptyList())

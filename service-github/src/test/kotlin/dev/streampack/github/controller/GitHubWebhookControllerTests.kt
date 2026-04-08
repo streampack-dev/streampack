@@ -10,6 +10,7 @@ import dev.streampack.github.model.DeliveryMode
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.github.repository.GitHubSubscriptionRepository
 import dev.streampack.github.service.WebhookSecretCipher
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
 import java.net.URLEncoder
 import java.util.concurrent.CopyOnWriteArrayList
@@ -31,11 +32,10 @@ import org.springframework.http.MediaType
 import org.springframework.messaging.SubscribableChannel
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
-import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
-@Transactional
+@ResetDatabaseBeforeEach
 @Import(TestSecurityConfiguration::class)
 class GitHubWebhookControllerTests {
 

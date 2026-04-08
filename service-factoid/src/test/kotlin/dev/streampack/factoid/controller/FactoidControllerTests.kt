@@ -4,6 +4,7 @@ package dev.streampack.factoid.controller
 import dev.streampack.factoid.model.FactoidAttributeType
 import dev.streampack.factoid.repository.FactoidRepository
 import dev.streampack.factoid.service.FactoidService
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -13,12 +14,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for the read-only factoid REST endpoints */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
-@Transactional
+@ResetDatabaseBeforeEach
 @Import(TestSecurityConfiguration::class)
 class FactoidControllerTests {
 
