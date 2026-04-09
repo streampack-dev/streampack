@@ -34,6 +34,12 @@ interface PostRepository : JpaRepository<Post, UUID> {
     @Query("SELECT p FROM Post p WHERE p.id = :id AND p.deleted = false")
     fun findActiveById(id: UUID): Post?
 
+    /** Candidate posts whose markdown mentions the supplied term, for exact follow-up matching. */
+    @Query(
+        "SELECT p FROM Post p WHERE p.deleted = false AND LOWER(p.markdownSource) LIKE LOWER(CONCAT('%', :term, '%'))"
+    )
+    fun findCandidatesByMarkdownContaining(term: String): List<Post>
+
     @Query(
         "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.title = :title AND p.deleted = false"
     )

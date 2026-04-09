@@ -2,20 +2,25 @@
 package dev.streampack.factoid.operation
 
 import dev.streampack.core.extensions.compress
+import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.TranslatingOperation
 import dev.streampack.factoid.model.FactoidAttributeType
+import dev.streampack.factoid.model.FactoidUpdatedEvent
 import dev.streampack.factoid.model.FactoidVerbSetRequest
 import dev.streampack.factoid.service.FactoidService
 import org.springframework.messaging.Message
+import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
 /** Handles "factoid set selector.attribute value" - always requires explicit attribute */
 @Component
-class SetFactoidVerbOperation(private val factoidService: FactoidService) :
-    TranslatingOperation<FactoidVerbSetRequest>(FactoidVerbSetRequest::class) {
+class SetFactoidVerbOperation(
+    private val factoidService: FactoidService,
+    private val eventGateway: EventGateway,
+) : TranslatingOperation<FactoidVerbSetRequest>(FactoidVerbSetRequest::class) {
 
     override val priority: Int = 70
     override val addressed: Boolean = true
@@ -39,6 +44,11 @@ class SetFactoidVerbOperation(private val factoidService: FactoidService) :
                 factoidService.save(payload.selector, payload.attribute, payload.value, senderNick)
         ) {
             is FactoidService.SaveResult.Ok -> {
+                eventGateway.send(
+                    MessageBuilder.withPayload(FactoidUpdatedEvent(payload.selector))
+                        .copyHeadersIfAbsent(message.headers)
+                        .build()
+                )
                 logger.debug("Factoid '{}' updated by {}", payload.selector, senderNick)
                 OperationResult.Success("ok, $senderNick: updated ${payload.selector}.")
             }
