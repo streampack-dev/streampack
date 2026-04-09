@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.service
 
+import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.model.AddRepoOutcome
 import dev.streampack.github.model.DeliveryMode
 import dev.streampack.github.repository.GitHubRepoRepository
@@ -18,7 +19,7 @@ class GitHubWebhookAdminService(
 
     private val secureRandom = SecureRandom()
 
-    fun enableWebhook(ownerRepo: String): WebhookEnableOutcome {
+    fun enableWebhook(ownerRepo: String, privateMode: Boolean = false): WebhookEnableOutcome {
         val parts = ownerRepo.split("/")
         if (parts.size != 2 || parts[0].isBlank() || parts[1].isBlank()) {
             return WebhookEnableOutcome.InvalidRepo("Expected owner/repo")
@@ -27,13 +28,17 @@ class GitHubWebhookAdminService(
         val name = parts[1]
         val repo =
             repoRepository.findByOwnerAndName(owner, name)
-                ?: when (val addOutcome = subscriptionService.addRepo("$owner/$name", null)) {
-                    is AddRepoOutcome.Added -> addOutcome.repo
-                    is AddRepoOutcome.AlreadyExists -> addOutcome.repo
-                    is AddRepoOutcome.InvalidRepo ->
-                        return WebhookEnableOutcome.InvalidRepo(addOutcome.reason)
-                    is AddRepoOutcome.ApiFailed ->
-                        return WebhookEnableOutcome.ApiFailed(ownerRepo, addOutcome.reason)
+                ?: if (privateMode) {
+                    repoRepository.save(GitHubRepo(owner = owner, name = name))
+                } else {
+                    when (val addOutcome = subscriptionService.addRepo("$owner/$name", null)) {
+                        is AddRepoOutcome.Added -> addOutcome.repo
+                        is AddRepoOutcome.AlreadyExists -> addOutcome.repo
+                        is AddRepoOutcome.InvalidRepo ->
+                            return WebhookEnableOutcome.InvalidRepo(addOutcome.reason)
+                        is AddRepoOutcome.ApiFailed ->
+                            return WebhookEnableOutcome.ApiFailed(ownerRepo, addOutcome.reason)
+                    }
                 }
         if (!repo.active) {
             return WebhookEnableOutcome.RepoInactive(ownerRepo)

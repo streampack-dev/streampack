@@ -118,4 +118,21 @@ class GitHubWebhookOperationTests {
         val decrypted = cipher.decrypt(repo.webhookSecret!!)
         assertEquals(64, decrypted.length)
     }
+
+    @Test
+    fun `github webhook private registers repo without remote validation`() {
+        val result = eventGateway.process(message("github webhook private owner/repo"))
+        val success = assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            true,
+            success.payload.toString().contains("https://hooks.example.com/webhooks/github"),
+        )
+
+        val repo = repoRepository.findByOwnerAndName("owner", "repo")
+        assertNotNull(repo)
+        assertEquals(DeliveryMode.WEBHOOK, repo!!.deliveryMode)
+        assertNotNull(repo.webhookSecret)
+        val decrypted = cipher.decrypt(repo.webhookSecret!!)
+        assertEquals(64, decrypted.length)
+    }
 }

@@ -6,8 +6,14 @@ import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
+import dev.streampack.core.parser.CommandArgSpec
+import dev.streampack.core.parser.CommandMatchResult
+import dev.streampack.core.parser.CommandPattern
+import dev.streampack.core.parser.CommandPatternMatcher
+import dev.streampack.core.parser.StringArgType
 import dev.streampack.core.service.TranslatingOperation
 import dev.streampack.github.config.GitHubProperties
+import dev.streampack.github.model.GitHubWebhookEnableRequest
 import dev.streampack.github.service.GitHubWebhookAdminService
 import dev.streampack.github.service.WebhookEnableOutcome
 import dev.streampack.polling.service.EgressNotifier
@@ -21,7 +27,22 @@ class GitHubWebhookOperation(
     private val notifier: EgressNotifier,
     private val properties: StreampackProperties,
     private val gitHubProperties: GitHubProperties,
-) : TranslatingOperation<String>(String::class) {
+) : TranslatingOperation<GitHubWebhookEnableRequest>(GitHubWebhookEnableRequest::class) {
+    private val commandMatcher =
+        CommandPatternMatcher(
+            listOf(
+                CommandPattern(
+                    name = "github_webhook_private",
+                    literals = listOf("github", "webhook", "private"),
+                    args = listOf(CommandArgSpec("ownerRepo", StringArgType)),
+                ),
+                CommandPattern(
+                    name = "github_webhook",
+                    literals = listOf("github", "webhook"),
+                    args = listOf(CommandArgSpec("ownerRepo", StringArgType)),
+                ),
+            )
+        )
 
     private val webhookUrl =
         "${(gitHubProperties.webhookBaseUrl ?: properties.baseUrl).trimEnd('/')}/webhooks/github"
@@ -30,24 +51,38 @@ class GitHubWebhookOperation(
     override val addressed: Boolean = true
     override val operationGroup: String = "github"
 
-    override fun translate(payload: String, message: Message<*>): String? {
-        val trimmed = payload.trim()
-        if (!trimmed.startsWith("github webhook ", ignoreCase = true)) return null
-        val remainder = trimmed.removeRange(0, "github webhook ".length).trim()
-        if (remainder.isBlank()) return null
-        return remainder
+    override fun translate(payload: String, message: Message<*>): GitHubWebhookEnableRequest? {
+        return when (val match = commandMatcher.match(payload)) {
+            is CommandMatchResult.Match ->
+                GitHubWebhookEnableRequest(
+                    ownerRepo = match.captures["ownerRepo"] as String,
+                    privateMode = match.patternName == "github_webhook_private",
+                )
+            else -> null
+        }
     }
 
-    override fun canHandle(payload: String, message: Message<*>): Boolean {
+    override fun canHandle(payload: GitHubWebhookEnableRequest, message: Message<*>): Boolean {
         return hasRole(message, Role.ADMIN)
     }
 
-    override fun handle(payload: String, message: Message<*>): OperationOutcome {
-        return when (val outcome = adminService.enableWebhook(payload)) {
+    override fun handle(
+        payload: GitHubWebhookEnableRequest,
+        message: Message<*>,
+    ): OperationOutcome {
+        return when (
+            val outcome = adminService.enableWebhook(payload.ownerRepo, payload.privateMode)
+        ) {
             is WebhookEnableOutcome.Enabled -> {
                 sendSecret(message, outcome.ownerRepo, outcome.secret)
+                val note =
+                    if (payload.privateMode) {
+                        " Private mode skipped remote repository validation."
+                    } else {
+                        ""
+                    }
                 OperationResult.Success(
-                    "Webhook enabled for ${outcome.ownerRepo}. Configure GitHub to POST to $webhookUrl with the provided secret."
+                    "Webhook enabled for ${outcome.ownerRepo}. Configure GitHub to POST to $webhookUrl with the provided secret.$note"
                 )
             }
             is WebhookEnableOutcome.RepoInactive ->

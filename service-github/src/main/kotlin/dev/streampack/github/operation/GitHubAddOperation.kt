@@ -5,6 +5,11 @@ import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.RedactionRule
 import dev.streampack.core.model.Role
+import dev.streampack.core.parser.CommandArgSpec
+import dev.streampack.core.parser.CommandMatchResult
+import dev.streampack.core.parser.CommandPattern
+import dev.streampack.core.parser.CommandPatternMatcher
+import dev.streampack.core.parser.StringArgType
 import dev.streampack.core.service.TranslatingOperation
 import dev.streampack.github.model.AddRepoOutcome
 import dev.streampack.github.model.AddRepoRequest
@@ -16,6 +21,25 @@ import org.springframework.stereotype.Component
 @Component
 class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionService) :
     TranslatingOperation<AddRepoRequest>(AddRepoRequest::class) {
+    private val commandMatcher =
+        CommandPatternMatcher(
+            listOf(
+                CommandPattern(
+                    name = "github_add",
+                    literals = listOf("github", "add"),
+                    args =
+                        listOf(
+                            CommandArgSpec("ownerRepo", StringArgType),
+                            CommandArgSpec("token", StringArgType),
+                        ),
+                ),
+                CommandPattern(
+                    name = "github_add",
+                    literals = listOf("github", "add"),
+                    args = listOf(CommandArgSpec("ownerRepo", StringArgType)),
+                ),
+            )
+        )
 
     override val priority: Int = 55
     override val addressed: Boolean = true
@@ -23,14 +47,14 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
     override val redactionRules = listOf(RedactionRule("github add", setOf(3)))
 
     override fun translate(payload: String, message: Message<*>): AddRepoRequest? {
-        val trimmed = payload.trim()
-        if (!trimmed.startsWith("github add ", ignoreCase = true)) return null
-        val remainder = trimmed.removeRange(0, "github add ".length).trim()
-        if (remainder.isBlank()) return null
-        val parts = remainder.split("\\s+".toRegex(), limit = 2)
-        val ownerRepo = parts[0]
-        val token = parts.getOrNull(1)?.trim()?.ifBlank { null }
-        return AddRepoRequest(ownerRepo, token)
+        return when (val match = commandMatcher.match(payload)) {
+            is CommandMatchResult.Match -> {
+                val ownerRepo = match.captures["ownerRepo"] as String
+                val token = match.captures["token"] as? String
+                AddRepoRequest(ownerRepo = ownerRepo, token = token?.ifBlank { null })
+            }
+            else -> null
+        }
     }
 
     override fun canHandle(payload: AddRepoRequest, message: Message<*>): Boolean {
