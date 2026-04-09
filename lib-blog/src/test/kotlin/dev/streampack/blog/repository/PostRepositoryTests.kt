@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -319,5 +320,47 @@ class PostRepositoryTests {
         assertNotNull(found)
         assertNull(found.author)
         assertEquals("Anonymous Post", found.title)
+    }
+
+    @Test
+    fun `findCandidatesByMarkdownContaining returns posts whose markdown mentions selector`() {
+        val matching =
+            postRepository.save(
+                Post(
+                    title = "Factoid Post",
+                    markdownSource = "See [[thing]] for details.",
+                    renderedHtml = "<p>See [[thing]] for details.</p>",
+                    author = testUser,
+                )
+            )
+        postRepository.save(
+            Post(
+                title = "Other Post",
+                markdownSource = "Completely unrelated text.",
+                renderedHtml = "<p>Completely unrelated text.</p>",
+                author = testUser,
+            )
+        )
+
+        val results = postRepository.findCandidatesByMarkdownContaining("thing")
+
+        assertEquals(listOf(matching.id), results.map { it.id })
+    }
+
+    @Test
+    fun `findCandidatesByMarkdownContaining excludes deleted posts`() {
+        postRepository.save(
+            Post(
+                title = "Deleted Factoid Post",
+                markdownSource = "See [[thing]] for details.",
+                renderedHtml = "<p>See [[thing]] for details.</p>",
+                deleted = true,
+                author = testUser,
+            )
+        )
+
+        val results = postRepository.findCandidatesByMarkdownContaining("thing")
+
+        assertTrue(results.isEmpty())
     }
 }
