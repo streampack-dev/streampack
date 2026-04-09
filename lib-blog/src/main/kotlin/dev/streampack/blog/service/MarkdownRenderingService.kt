@@ -128,7 +128,7 @@ class MarkdownRenderingService(
 
             val metadata = factoidWikiLinkResolver.resolve(selector) ?: return@replace match.value
             val href = normalizeHref(metadata.href) ?: return@replace match.value
-            val title = metadata.title?.trim().orEmpty()
+            val title = normalizeFactoidTitle(metadata.title)
             buildAnchor(beforeAttrs, afterAttrs, innerHtml, href, title)
         }
     }
@@ -158,6 +158,16 @@ class MarkdownRenderingService(
             .replace("\"", "&quot;")
             .replace("<", "&lt;")
             .replace(">", "&gt;")
+
+    private fun normalizeFactoidTitle(candidate: String?): String {
+        val trimmed = candidate?.trim().orEmpty()
+        if (trimmed.isBlank()) return ""
+        return if (trimmed.startsWith("<reply>", ignoreCase = true)) {
+            trimmed.substring("<reply>".length).trimStart()
+        } else {
+            trimmed
+        }
+    }
 
     private fun buildAnchor(
         beforeAttrs: String,

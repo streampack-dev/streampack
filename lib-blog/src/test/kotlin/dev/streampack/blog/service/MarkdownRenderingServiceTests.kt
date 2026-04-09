@@ -213,6 +213,31 @@ class MarkdownRenderingServiceTests {
     }
 
     @Test
+    fun `factoid wikilink resolver strips reply prefix from title`() {
+        val rendererWithResolver =
+            MarkdownRenderingService(
+                excerptSummarizerService,
+                object : FactoidWikiLinkResolver {
+                    override fun resolve(selector: String): FactoidWikiLinkMetadata? =
+                        if (selector == "thing") {
+                            FactoidWikiLinkMetadata(
+                                href = "https://thing.com",
+                                title = "<reply>thing is a thing",
+                            )
+                        } else {
+                            null
+                        }
+                },
+            )
+
+        val result = rendererWithResolver.render("See [[thing]] now.")
+        assertTrue(
+            result.contains("<a href=\"https://thing.com\" title=\"thing is a thing\">thing</a>")
+        )
+        assertTrue(!result.contains("&lt;reply&gt;"))
+    }
+
+    @Test
     fun `factoid wikilink resolver ignores non-http targets`() {
         val rendererWithResolver =
             MarkdownRenderingService(
