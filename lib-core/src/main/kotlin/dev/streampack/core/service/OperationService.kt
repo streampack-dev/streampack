@@ -3,6 +3,7 @@ package dev.streampack.core.service
 
 import dev.streampack.core.config.StreampackProperties
 import dev.streampack.core.integration.EventGateway
+import dev.streampack.core.model.Consumed
 import dev.streampack.core.model.Declined
 import dev.streampack.core.model.FanOut
 import dev.streampack.core.model.LoggingRequest
@@ -62,15 +63,27 @@ class OperationService(
     fun process(message: Message<*>): OperationResult {
         val hopCount = message.headers[FanOut.HOP_COUNT_HEADER] as? Int ?: 0
         val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val result = processChain(message)
-        val transformed =
-            if (provenance != null) transformerChain.apply(result, provenance) else result
-        publishToEgress(transformed, message, hopCount)
-        return transformed
+        return when (val outcome = processChain(message)) {
+            is OperationResult -> {
+                val transformed =
+                    if (provenance != null) transformerChain.apply(outcome, provenance) else outcome
+                publishToEgress(transformed, message, hopCount)
+                transformed
+            }
+            is Consumed -> {
+                logger.debug(
+                    "Message {} consumed internally{}",
+                    message.headers.id,
+                    outcome.reason?.let { ": $it" } ?: "",
+                )
+                OperationResult.NotHandled
+            }
+            else -> OperationResult.NotHandled
+        }
     }
 
     /** Runs the message through the operation chain and returns the result */
-    private fun processChain(message: Message<*>): OperationResult {
+    private fun processChain(message: Message<*>): OperationOutcome {
         if (message.payload is LoggingRequest) {
             return OperationResult.NotHandled
         }
@@ -129,6 +142,14 @@ class OperationService(
                         result.messages.size,
                     )
                     return dispatchFanOut(result, hopCount)
+                }
+                if (result is Consumed) {
+                    logger.debug(
+                        "Operation {} consumed message {} internally",
+                        op::class.simpleName,
+                        message.headers.id,
+                    )
+                    return result
                 }
                 if (result is OperationResult) {
                     logger.debug(

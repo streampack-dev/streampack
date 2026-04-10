@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.integration
 
+import dev.streampack.core.model.Consumed
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
@@ -75,6 +76,19 @@ class EgressChannelTests {
                         )
                     return OperationResult.Success(body, provenance = targetProvenance)
                 }
+            }
+
+        /** Operation that handles internally and produces no egress output */
+        @Bean
+        fun consumeOperation() =
+            object : Operation {
+                override val priority = 10
+
+                override fun canHandle(message: Message<*>): Boolean =
+                    (message.payload as? String)?.startsWith("consume ") == true
+
+                override fun execute(message: Message<*>): OperationOutcome =
+                    Consumed((message.payload as String).removePrefix("consume ").trim())
             }
     }
 
@@ -211,6 +225,14 @@ class EgressChannelTests {
         val (result, _) = consoleSubscriber.received[0]
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals("async", (result as OperationResult.Success).payload)
+    }
+
+    @Test
+    fun `Consumed outcomes do not publish to egress`() {
+        val result = eventGateway.process(consoleMessage("consume queued factoid update"))
+
+        assertEquals(OperationResult.NotHandled, result)
+        assertEquals(0, consoleSubscriber.received.size)
     }
 
     @Test

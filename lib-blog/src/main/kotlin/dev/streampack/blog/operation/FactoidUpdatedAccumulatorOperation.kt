@@ -2,8 +2,8 @@
 package dev.streampack.blog.operation
 
 import dev.streampack.blog.service.FactoidUpdateBuffer
+import dev.streampack.core.model.Consumed
 import dev.streampack.core.model.OperationOutcome
-import dev.streampack.core.model.OperationResult
 import dev.streampack.core.service.TypedOperation
 import dev.streampack.factoid.model.FactoidUpdatedEvent
 import org.springframework.messaging.Message
@@ -17,6 +17,7 @@ class FactoidUpdatedAccumulatorOperation(private val factoidUpdateBuffer: Factoi
 
     override fun handle(payload: FactoidUpdatedEvent, message: Message<*>): OperationOutcome {
         factoidUpdateBuffer.record(payload.selector)
-        return OperationResult.Success("queued")
+        logger.debug("Queued factoid selector {} for deferred post rerender", payload.selector)
+        return Consumed("queued factoid selector ${payload.selector}")
     }
 }

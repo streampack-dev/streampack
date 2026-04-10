@@ -12,6 +12,15 @@
 | `OperationService` | Executes registered operations in priority order and publishes terminal results. |
 | `OperationConfigService` | Stores global and per-provenance operation configuration. |
 
+## Operation Outcomes
+
+- `OperationResult.Success`: definitive answer that is published to egress.
+- `OperationResult.Error`: definitive failure that is published to egress.
+- `OperationResult.NotHandled`: no operation handled the message.
+- `Declined`: recognized but deliberately passed; the chain continues.
+- `Consumed`: handled internally; the chain stops and nothing is published to egress.
+- `FanOut`: internal dispatch signal that emits child messages and returns a summary success.
+
 ## Operations
 
 | Operation | Command / payload | Purpose |
@@ -30,6 +39,10 @@
 ## Notes
 
 Protocol-specific identity resolution goes through `ServiceBindingRepository` and `UserResolutionService`. Service binding lookups fetch the bound `User` eagerly because protocol adapters resolve users outside repository transaction scopes.
+
+Use `Consumed` for maintenance work such as queueing, buffering, bookkeeping, or deferred
+background processing that should not generate user-visible output. Use `Declined` only when
+another operation should still get a chance to handle the same message.
 
 ## Example Flows
 

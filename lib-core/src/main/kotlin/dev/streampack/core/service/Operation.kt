@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
+import dev.streampack.core.model.Consumed
 import dev.streampack.core.model.Declined
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
@@ -28,7 +29,8 @@ import org.springframework.messaging.Message
  *    message metadata to decide if this operation is even relevant. Return false to skip entirely.
  * 3. Implement [execute] to do the actual work. Return an [OperationResult.Success] or
  *    [OperationResult.Error] for a definitive answer, [Declined] to pass with diagnostic info
- *    (logged by OperationService), or null to silently pass to the next operation in the chain.
+ *    (logged by OperationService), [Consumed] to handle the message internally without egress, or
+ *    null to silently pass to the next operation in the chain.
  *
  * ## Lifecycle
  *
@@ -125,8 +127,8 @@ interface Operation {
      * Process the message and produce a result.
      *
      * Returns [OperationResult.Success] or [OperationResult.Error] to short-circuit the chain,
-     * [Declined] to pass with diagnostic info (logged by OperationService), or null to silently
-     * pass to the next operation.
+     * [Declined] to pass with diagnostic info (logged by OperationService), [Consumed] to stop the
+     * chain without publishing to egress, or null to silently pass to the next operation.
      */
     fun execute(message: Message<*>): OperationOutcome?
 }
