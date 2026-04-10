@@ -10,10 +10,12 @@ package dev.streampack.core.model
  *   chain and reach the caller via the EventGateway.
  * - [Declined] -- a non-terminal signal consumed by the OperationService. It continues the chain
  *   but carries diagnostic information for logging.
+ * - [Consumed] -- a non-terminal internal signal consumed by the OperationService. It stops the
+ *   chain without publishing anything to egress.
  * - [FanOut] -- a non-terminal signal consumed by the OperationService. It dispatches each child
  *   message through the operation chain and returns Success to the original caller.
  *
- * Adapters and gateway callers only see [OperationResult]; [Declined] and [FanOut] are internal to
- * the chain.
+ * Adapters and gateway callers only see [OperationResult]; [Declined], [Consumed], and [FanOut] are
+ * internal to the chain.
  */
 sealed interface OperationOutcome
