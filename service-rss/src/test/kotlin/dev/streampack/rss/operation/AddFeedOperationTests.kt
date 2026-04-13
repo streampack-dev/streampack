@@ -95,6 +95,48 @@ class AddFeedOperationTests {
     }
 
     @Test
+    fun `feed add tolerates duplicate guid entries in upstream feed`() {
+        val duplicateGuidRss =
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rss version="2.0">
+                <channel>
+                    <title>Typotheque</title>
+                    <link>https://www.typotheque.com/</link>
+                    <item>
+                        <title>Duplicate Entry</title>
+                        <link>https://www.typotheque.com/articles/example</link>
+                        <guid>https://www.typotheque.com/articles/example</guid>
+                    </item>
+                    <item>
+                        <title>Duplicate Entry</title>
+                        <link>https://www.typotheque.com/articles/example</link>
+                        <guid>https://www.typotheque.com/articles/example</guid>
+                    </item>
+                    <item>
+                        <title>Distinct Entry</title>
+                        <link>https://www.typotheque.com/articles/another</link>
+                        <guid>https://www.typotheque.com/articles/another</guid>
+                    </item>
+                </channel>
+            </rss>
+            """
+                .trimIndent()
+
+        httpServer.createContext("/duplicate-guid.xml") { exchange ->
+            exchange.sendResponseHeaders(200, duplicateGuidRss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(duplicateGuidRss.toByteArray()) }
+        }
+
+        val result = eventGateway.process(message("feed add $baseUrl/duplicate-guid.xml"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            "Added feed \"Typotheque\" with 2 entries",
+            (result as OperationResult.Success).payload,
+        )
+    }
+
+    @Test
     fun `feed add with invalid URL returns error`() {
         val result = eventGateway.process(message("feed add http://localhost:1/nonexistent"))
         assertInstanceOf(OperationResult.Error::class.java, result)
