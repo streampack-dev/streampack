@@ -126,6 +126,49 @@ class RssSubscriptionServiceTests {
     }
 
     @Test
+    fun `adding a feed tolerates duplicate guid entries in the source feed`() {
+        val duplicateGuidRss =
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rss version="2.0">
+                <channel>
+                    <title>Typotheque</title>
+                    <link>https://www.typotheque.com/</link>
+                    <item>
+                        <title>Duplicate Entry</title>
+                        <link>https://www.typotheque.com/articles/example</link>
+                        <guid>https://www.typotheque.com/articles/example</guid>
+                    </item>
+                    <item>
+                        <title>Duplicate Entry</title>
+                        <link>https://www.typotheque.com/articles/example</link>
+                        <guid>https://www.typotheque.com/articles/example</guid>
+                    </item>
+                    <item>
+                        <title>Distinct Entry</title>
+                        <link>https://www.typotheque.com/articles/another</link>
+                        <guid>https://www.typotheque.com/articles/another</guid>
+                    </item>
+                </channel>
+            </rss>
+            """
+                .trimIndent()
+
+        httpServer.createContext("/duplicate-guid.xml") { exchange ->
+            exchange.sendResponseHeaders(200, duplicateGuidRss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(duplicateGuidRss.toByteArray()) }
+        }
+
+        val outcome = feedService.addFeed("$baseUrl/duplicate-guid.xml")
+        assertInstanceOf(AddFeedOutcome.Added::class.java, outcome)
+        val added = outcome as AddFeedOutcome.Added
+        assertEquals("Typotheque", added.feed.title)
+        assertEquals(2, added.entryCount)
+        entryRepository.flush()
+        assertEquals(2, entryRepository.count())
+    }
+
+    @Test
     fun `adding the same feed URL twice returns AlreadyExists`() {
         httpServer.createContext("/feed.xml") { exchange ->
             val rss = sampleRss("Dupe Test", 1)

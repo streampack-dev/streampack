@@ -123,6 +123,60 @@ class RssFeedPollingServiceTests {
     }
 
     @Test
+    fun `polling ignores duplicate guid entries in one fetch`() {
+        val feed = createFeed("Typotheque", "/duplicate.xml")
+        val destination =
+            Provenance(protocol = Protocol.IRC, serviceId = "libera", replyTo = "#java")
+        subscribeFeed(feed, destination.encode())
+
+        val duplicateGuidRss =
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rss version="2.0">
+                <channel>
+                    <title>Typotheque</title>
+                    <link>https://www.typotheque.com/</link>
+                    <item>
+                        <title>Duplicate Entry</title>
+                        <link>https://www.typotheque.com/articles/example</link>
+                        <guid>https://www.typotheque.com/articles/example</guid>
+                    </item>
+                    <item>
+                        <title>Duplicate Entry</title>
+                        <link>https://www.typotheque.com/articles/example</link>
+                        <guid>https://www.typotheque.com/articles/example</guid>
+                    </item>
+                    <item>
+                        <title>Distinct Entry</title>
+                        <link>https://www.typotheque.com/articles/another</link>
+                        <guid>https://www.typotheque.com/articles/another</guid>
+                    </item>
+                </channel>
+            </rss>
+            """
+                .trimIndent()
+
+        httpServer.createContext("/duplicate.xml") { exchange ->
+            exchange.sendResponseHeaders(200, duplicateGuidRss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(duplicateGuidRss.toByteArray()) }
+        }
+
+        pollingService.pollFeed(feed)
+        entryRepository.flush()
+
+        val entries =
+            entryRepository.findByFeedAndGuidIn(
+                feed,
+                listOf(
+                    "https://www.typotheque.com/articles/example",
+                    "https://www.typotheque.com/articles/another",
+                ),
+            )
+        assertEquals(2, entries.size)
+        assertEquals(2, capturingEgressSubscriber.captured.size)
+    }
+
+    @Test
     fun `polling a feed with no new entries only updates lastFetchedAt`() {
         val feed = createFeed("All Seen Feed", "/feed.xml")
         // Seed the same entries that the feed will return

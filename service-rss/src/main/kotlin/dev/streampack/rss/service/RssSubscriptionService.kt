@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.service
 
+import com.rometools.rome.feed.synd.SyndEntry
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.entity.RssFeed
 import dev.streampack.rss.entity.RssFeedSubscription
@@ -70,7 +71,7 @@ class RssSubscriptionService(
 
         // Seed all current entries to establish the baseline
         val entries =
-            syndFeed.entries.mapNotNull { entry ->
+            deduplicateEntries(syndFeed.entries).mapNotNull { entry ->
                 val guid = entry.uri ?: entry.link ?: return@mapNotNull null
                 val link = entry.link ?: guid
                 val title = entry.title ?: ""
@@ -88,6 +89,22 @@ class RssSubscriptionService(
         entryRepository.saveAll(entries)
         logger.info("Added feed \"{}\" with {} entries", feed.title, entries.size)
         return AddFeedOutcome.Added(feed, entries.size)
+    }
+
+    private fun deduplicateEntries(entries: List<SyndEntry>): List<SyndEntry> {
+        val seenGuids = LinkedHashSet<String>()
+        var duplicates = 0
+        val deduplicated =
+            entries.filter { entry ->
+                val guid = entry.uri ?: entry.link ?: return@filter false
+                val added = seenGuids.add(guid)
+                if (!added) duplicates++
+                added
+            }
+        if (duplicates > 0) {
+            logger.info("Ignored {} duplicate RSS entries during feed registration", duplicates)
+        }
+        return deduplicated
     }
 
     private fun findExistingByInputUrl(url: String, normalized: String): RssFeed? {
