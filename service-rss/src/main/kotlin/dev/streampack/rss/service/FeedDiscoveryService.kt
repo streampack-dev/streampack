@@ -16,21 +16,63 @@ import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
-/** Fetches a URL and discovers the RSS/Atom feed, either directly or via HTML link discovery */
+/**
+ * Discovers RSS or Atom feeds from a URL.
+ *
+ * The service supports three broad cases:
+ * 1. the URL is already a feed URL and can be parsed directly
+ * 2. the URL is an HTML page with standard head metadata such as `<link rel="alternate"
+ *    type="application/rss+xml" ...>`
+ * 3. the URL is an HTML page that exposes a credible feed link through body content or common
+ *    feed-path conventions
+ *
+ * Discovery is intentionally pragmatic rather than specification-pure. Real sites are often only
+ * partially correct:
+ * - some expose feed links through `rel=alternate`
+ * - some only link feeds in navigation or page body text
+ * - some misreport content type or status code
+ * - some publish feed URLs at common paths such as `/feed.xml` or `/index.xml`
+ *
+ * This service prefers high-confidence discovery first, then falls back to looser heuristics.
+ *
+ * Discovery order:
+ * 1. fetch the URL body
+ * 2. attempt direct feed parsing
+ * 3. inspect HTML for standard alternate feed links
+ * 4. inspect HTML anchors/links for feed-like hrefs or strong surrounding feed wording
+ * 5. try common root-level feed candidate paths
+ *
+ * Any candidate URL found during discovery is fetched and parsed before it is accepted.
+ */
 @Service
 class FeedDiscoveryService(private val properties: RssProperties) {
 
     private val logger = LoggerFactory.getLogger(FeedDiscoveryService::class.java)
 
-    /** Fetches a known feed URL and parses it directly, without HTML discovery fallback */
+    /**
+     * Fetches and parses a known feed URL directly.
+     *
+     * Unlike [discover], this method does not perform HTML fallback discovery. It is intended for
+     * situations where the caller already knows the concrete feed URL and simply wants to fetch and
+     * parse it.
+     *
+     * @param feedUrl concrete RSS or Atom feed URL
+     * @return the parsed feed, or `null` if the fetch or parse fails
+     */
     fun fetchFeed(feedUrl: String): SyndFeed? {
         val body = fetchBody(feedUrl) ?: return null
         return tryParseFeed(feedUrl, body)
     }
 
     /**
-     * Discover a feed from the given URL. Tries direct parsing first, then falls back to HTML
-     * alternate-link discovery.
+     * Discovers a feed from an arbitrary URL.
+     *
+     * The URL may already point at a feed, or it may point at an HTML page that references one.
+     * Direct parsing is attempted first. If that fails, HTML-based discovery heuristics are used.
+     *
+     * @param url arbitrary URL that may be either a feed URL or an HTML page containing feed hints
+     * @return a [DiscoveryResult] containing the discovered feed URL and parsed feed, or `null`
+     *   when no credible feed can be found
      */
     fun discover(url: String): DiscoveryResult? {
         val body = fetchBody(url)
@@ -110,6 +152,13 @@ class FeedDiscoveryService(private val properties: RssProperties) {
         return null
     }
 
+    /**
+     * Attempts to parse the supplied body as RSS or Atom using ROME.
+     *
+     * @param url source URL used only for diagnostics
+     * @param body candidate feed body
+     * @return the parsed feed, or `null` when the body is not parseable as a feed
+     */
     private fun tryParseFeed(url: String, body: String): com.rometools.rome.feed.synd.SyndFeed? {
         return try {
             val input = SyndFeedInput()
@@ -121,7 +170,20 @@ class FeedDiscoveryService(private val properties: RssProperties) {
         }
     }
 
-    /** Parse HTML for alternate feed links and try each one until a valid feed is found */
+    /**
+     * Attempts feed discovery from HTML.
+     *
+     * This applies progressively looser strategies:
+     * 1. standard `rel=alternate` feed discovery
+     * 2. href/body-text heuristics for likely feed links
+     * 3. common root-level feed path guesses
+     *
+     * Every candidate found here is still fetched and parsed before being accepted as a feed.
+     *
+     * @param baseUrl source page URL used to resolve relative links
+     * @param html HTML body to inspect
+     * @return a discovered feed result, or `null` if no candidate successfully parses
+     */
     private fun discoverFromHtml(baseUrl: String, html: String): DiscoveryResult? {
         val document = Jsoup.parse(html, baseUrl)
         // Standard feed discovery: rel=alternate links with feed-ish MIME types.
@@ -144,8 +206,12 @@ class FeedDiscoveryService(private val properties: RssProperties) {
         val hintedHrefs =
             document
                 .select("a[href], link[href]")
+                .filter { element ->
+                    val href = element.absUrl("href")
+                    href.isNotBlank() &&
+                        (FEED_HINT_REGEX.containsMatchIn(href) || hasBodyFeedHint(element))
+                }
                 .map { it.absUrl("href") }
-                .filter { it.isNotBlank() && FEED_HINT_REGEX.containsMatchIn(it) }
         discoverFromCandidates(baseUrl, hintedHrefs)?.let {
             return it
         }
@@ -159,6 +225,15 @@ class FeedDiscoveryService(private val properties: RssProperties) {
         return null
     }
 
+    /**
+     * Tries a list of candidate feed URLs in order until one fetches and parses successfully.
+     *
+     * Duplicates are removed while preserving the original order of first appearance.
+     *
+     * @param baseUrl source page URL used only for diagnostics
+     * @param candidates ordered candidate URLs to test
+     * @return the first successfully discovered feed, or `null` if no candidate parses
+     */
     private fun discoverFromCandidates(
         baseUrl: String,
         candidates: List<String>,
@@ -175,6 +250,12 @@ class FeedDiscoveryService(private val properties: RssProperties) {
         return null
     }
 
+    /**
+     * Generates a last-resort list of common root-level feed paths for a site.
+     *
+     * This intentionally uses the site root rather than the original page path. It is meant as a
+     * broad fallback for sites that do not expose any in-page hints at all.
+     */
     private fun commonFeedCandidates(baseUrl: String): List<String> {
         val uri = runCatching { URI(baseUrl) }.getOrNull() ?: return emptyList()
         val authority = uri.authority ?: return emptyList()
@@ -190,7 +271,29 @@ class FeedDiscoveryService(private val properties: RssProperties) {
         )
     }
 
+    /**
+     * Returns `true` when a link element has strong body-language evidence that it points to a
+     * feed.
+     *
+     * This heuristic is used for pages that do not expose standard head metadata but do say things
+     * like:
+     * - `This page is also available as an RSS feed`
+     * - `Subscribe via Atom`
+     *
+     * The check intentionally uses both the anchor text and the immediate parent text so that
+     * phrases surrounding the anchor can contribute signal even if the anchor itself only says
+     * something generic like `this url`.
+     */
+    private fun hasBodyFeedHint(element: org.jsoup.nodes.Element): Boolean {
+        val ownText = element.text()
+        val parentText = element.parent()?.text().orEmpty()
+        val combined = "$ownText $parentText"
+        return BODY_FEED_HINT_REGEX.containsMatchIn(combined)
+    }
+
     companion object {
         private val FEED_HINT_REGEX = Regex("(?i)(/|\\b)(feed|rss|atom)(\\.xml)?([/?#].*)?$")
+        private val BODY_FEED_HINT_REGEX =
+            Regex("(?i)\\b(rss|atom|feed|rss\\s+feed|atom\\s+feed)\\b")
     }
 }

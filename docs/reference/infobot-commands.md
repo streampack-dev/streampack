@@ -41,3 +41,31 @@ Notes:
 - `github webhook private owner/repo` skips remote validation and is intended for operator-managed private repository webhook setups.
 
 For fuller details and example flows, see [service-github/README.md](../../service-github/README.md).
+
+## RSS
+
+RSS and Atom watching is provided by `service-rss`.
+
+Common commands:
+
+```text
+feed add https://example.com/feed.xml
+feed add https://example.com/blog/
+feed list
+feed subscribe https://example.com/feed.xml
+feed subscribe https://example.com/feed.xml to irc://libera/%23java
+feed subscriptions
+feed subscriptions for irc://libera/%23java
+feed unsubscribe https://example.com/feed.xml
+feed unsubscribe https://example.com/feed.xml to irc://libera/%23java
+feed remove https://example.com/feed.xml
+```
+
+Notes:
+
+- `feed add` accepts either a direct feed URL or a site URL and will try autodiscovery.
+- `feed subscribe` without `to` uses the current destination.
+- `feed subscriptions` is readable without admin privileges.
+- Discovery can handle some in-body feed links, not only head metadata.
+
+For fuller details and example flows, see [service-rss/README.md](../../service-rss/README.md).
