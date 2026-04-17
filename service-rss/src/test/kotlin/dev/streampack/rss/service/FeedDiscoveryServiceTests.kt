@@ -142,6 +142,66 @@ class FeedDiscoveryServiceTests {
     }
 
     @Test
+    fun `HTML page with in-body RSS wording discovers nested xml feed link`() {
+        httpServer.createContext("/news/") { exchange ->
+            val html =
+                """
+                <!DOCTYPE html>
+                <html>
+                <head><title>Zig News</title></head>
+                <body>
+                  <p>This page is also available as an <a href="/news/index.xml">RSS feed</a>.</p>
+                </body>
+                </html>
+                """
+                    .trimIndent()
+            exchange.responseHeaders.add("Content-Type", "text/html")
+            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(html.toByteArray()) }
+        }
+        httpServer.createContext("/news/index.xml") { exchange ->
+            val rss = sampleRss("Zig News Feed", 2)
+            exchange.responseHeaders.add("Content-Type", "application/rss+xml")
+            exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(rss.toByteArray()) }
+        }
+
+        val result = service.discover("$baseUrl/news/")
+        assertNotNull(result)
+        assertEquals("$baseUrl/news/index.xml", result!!.feedUrl)
+        assertEquals("Zig News Feed", result.feed.title)
+    }
+
+    @Test
+    fun `HTML page with generic xml link but no feed wording does not use it as feed hint`() {
+        httpServer.createContext("/") { exchange ->
+            val html =
+                """
+                <!DOCTYPE html>
+                <html>
+                <head><title>Site</title></head>
+                <body>
+                  <p>Download the data export as <a href="/index.xml">XML</a>.</p>
+                </body>
+                </html>
+                """
+                    .trimIndent()
+            exchange.responseHeaders.add("Content-Type", "text/html")
+            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(html.toByteArray()) }
+        }
+        httpServer.createContext("/index.xml") { exchange ->
+            val body = "<not-a-feed><item>data export</item></not-a-feed>"
+            exchange.responseHeaders.add("Content-Type", "application/xml")
+            exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+
+        val result = service.discover(baseUrl)
+        assertNull(result)
+    }
+
+    @Test
     fun `HTML page with no feed hints falls back to common feed path`() {
         httpServer.createContext("/") { exchange ->
             val html =
