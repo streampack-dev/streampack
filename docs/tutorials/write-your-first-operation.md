@@ -43,3 +43,15 @@ Test the operation with the shared channel and test-support configuration where 
 ## 5. Add It to a Server
 
 Add the operation module as a dependency of `server-streampack` or your own server distribution. `OperationService` discovers operation beans through Spring scanning.
+
+## 6. Externalize Prompts When Appropriate
+
+If an operation uses AI or other generative prompting, do not hardcode deployment-specific prompt text in the operation itself.
+
+Use the shared prompt-loading support in `lib-generative` so the feature can:
+
+- keep a bundled fallback prompt in the module resources
+- accept filesystem overrides from a mounted directory
+- optionally evaluate dynamic `.clj` prompt files at runtime
+
+For the first concrete example, see `operation-ideas` and [Configure Generative Prompts](../how-to/deploy/configure-generative-prompts.md).

@@ -1,6 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.ideas.operation
 
+import dev.streampack.ai.config.AiProperties
+import dev.streampack.ai.service.AiService
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.core.entity.User
@@ -13,6 +15,8 @@ import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.ideas.service.FetchOutcome
 import dev.streampack.ideas.service.SuggestedContentFetcher
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -29,13 +33,18 @@ import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Primary
 import org.springframework.messaging.support.MessageBuilder
 
-@SpringBootTest
+@SpringBootTest(
+    properties = ["streampack.generative.prompt-dir=/tmp/streampack-ideas-prompt-tests"]
+)
 @Import(SuggestArticleOperationTests.TestConfig::class)
 class SuggestArticleOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
+    @Autowired lateinit var recordingAiService: RecordingAiService
+
+    private val promptDir: Path = Path.of("/tmp/streampack-ideas-prompt-tests")
 
     private lateinit var adminUser: User
     private lateinit var regularUser: User
@@ -57,6 +66,11 @@ class SuggestArticleOperationTests {
     @BeforeEach
     fun setUp() {
         postRepository.deleteAll()
+        Files.createDirectories(promptDir)
+        Files.list(promptDir).use { paths -> paths.forEach { Files.deleteIfExists(it) } }
+        recordingAiService.rawResponse =
+            """{"title":"Suggested Title","summary":"AI summary body.","tags":["jvm","kotlin","ai"]}"""
+        recordingAiService.lastSystemPrompt = null
         val suffix = UUID.randomUUID().toString().take(8)
 
         adminUser =
@@ -93,9 +107,10 @@ class SuggestArticleOperationTests {
         val payload = (result as OperationResult.Success).payload.toString()
         assertTrue(payload.contains("Suggested draft saved"))
 
-        val created = postRepository.findAll().firstOrNull { it.title.contains("Good Example") }
+        val created = postRepository.findAll().firstOrNull()
         assertNotNull(created)
         val markdown = created!!.markdownSource
+        assertEquals("Suggested Title", created.title)
         assertTrue(markdown.contains("Source: https://good.example/article"))
         assertTrue(markdown.contains("Generated from !suggest"))
         assertTrue(created.status.name == "DRAFT")
@@ -156,8 +171,27 @@ class SuggestArticleOperationTests {
         assertFalse(created.markdownSource.contains("Source: http://good.example"))
     }
 
+    @Test
+    fun `suggest uses external prompt override when configured`() {
+        promptDir.resolve("suggest-prompt.txt").toFile().writeText("EXTERNAL SUGGEST PROMPT")
+
+        val result =
+            eventGateway.process(
+                messageFor(adminUser.toUserPrincipal(), "suggest https://good.example/article")
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val systemPrompt = recordingAiService.lastSystemPrompt
+        assertTrue(systemPrompt!!.startsWith("EXTERNAL SUGGEST PROMPT"))
+        assertTrue(systemPrompt.contains("Your response should be in JSON format."))
+    }
+
     @TestConfiguration
     class TestConfig {
+        @Bean fun aiProperties(): AiProperties = AiProperties(enabled = true)
+
+        @Bean @Primary fun recordingAiService(): RecordingAiService = RecordingAiService()
+
         @Bean
         @Primary
         fun suggestedContentFetcher(): SuggestedContentFetcher =
@@ -196,5 +230,23 @@ class SuggestArticleOperationTests {
                     }
                 }
             }
+    }
+
+    class RecordingAiService : AiService(NoopChatModel(), AiProperties(enabled = true)) {
+        var lastSystemPrompt: String? = null
+        var rawResponse: String? = null
+
+        override fun prompt(systemInstruction: String, userPrompt: String): String? {
+            lastSystemPrompt = systemInstruction
+            return rawResponse
+        }
+    }
+
+    class NoopChatModel : org.springframework.ai.chat.model.ChatModel {
+        override fun call(
+            prompt: org.springframework.ai.chat.prompt.Prompt
+        ): org.springframework.ai.chat.model.ChatResponse {
+            throw UnsupportedOperationException()
+        }
     }
 }

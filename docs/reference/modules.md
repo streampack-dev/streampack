@@ -6,6 +6,7 @@
 | `lib-testsupport` | Shared test support, channel overrides, HTTP database reset utilities |
 | `lib-blog` | Blog/site domain model, repositories, and operations |
 | `lib-factoid` | Factoid domain library |
+| `lib-generative` | Shared generative prompt loading, filesystem overrides, and dynamic Clojure prompt evaluation |
 | `lib-irc` | IRC domain and integration support |
 | `lib-slack` | Slack integration support |
 | `lib-polling` | Shared polling infrastructure |
