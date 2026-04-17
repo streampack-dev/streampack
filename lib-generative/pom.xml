@@ -9,33 +9,23 @@
         <version>1.1.5</version>
     </parent>
 
-    <artifactId>operation-ideas</artifactId>
+    <artifactId>lib-generative</artifactId>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.streampack</groupId>
-            <artifactId>lib-blog</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.streampack</groupId>
-            <artifactId>lib-ai</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.streampack</groupId>
-            <artifactId>lib-generative</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.streampack</groupId>
-            <artifactId>lib-taxonomy</artifactId>
+            <groupId>org.clojure</groupId>
+            <artifactId>clojure</artifactId>
+            <version>1.12.2</version>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>

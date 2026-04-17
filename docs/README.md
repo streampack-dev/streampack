@@ -15,3 +15,5 @@ Two concepts are kept separate throughout the docs:
 - `server-streampack` is the bundled runnable server distribution used by Bytecode News. It includes the infobot, blog/site APIs, feeds, authentication, MCP, and integrations.
 
 Start with [What is Streampack?](explanation/what-is-streampack.md) if you are orienting yourself, [Deploy `server-streampack`](tutorials/deploy-server-streampack.md) if you are putting the bundled server on a machine, [Run the infobot on IRC](tutorials/run-infobot-on-irc.md) if you want the protocol path first, or [Use GitHub repository watching](how-to/infobot/use-github-repository-watching.md) if you are setting up GitHub notifications.
+
+For AI prompt customization, see [Configure Generative Prompts](how-to/deploy/configure-generative-prompts.md).
