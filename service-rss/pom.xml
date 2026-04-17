@@ -22,6 +22,10 @@
             <artifactId>lib-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-polling</artifactId>
         </dependency>
@@ -30,12 +34,25 @@
             <artifactId>rome</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.rometools</groupId>
+            <artifactId>rome-opml</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+        <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-testsupport</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

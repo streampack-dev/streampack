@@ -15,13 +15,11 @@ import org.springframework.core.io.ResourceLoader
  * Resolves generative prompt text for consumer modules.
  *
  * This service supports a three-tier prompt lookup model:
- *
  * 1. runtime filesystem `.clj` prompt
  * 2. runtime filesystem `.txt` prompt
  * 3. bundled classpath fallback prompt
  *
  * The service is intentionally consumer-agnostic. Each caller provides:
- *
  * - a prompt name such as `suggest-prompt`
  * - a classpath fallback resource path
  * - a context map for dynamic prompt generation
@@ -47,9 +45,9 @@ import org.springframework.core.io.ResourceLoader
  *
  * ## Failure Semantics
  *
- * External prompt loading failures are non-fatal by design. If an external `.clj` or `.txt`
- * prompt cannot be loaded, the service logs a warning and falls back to the next resolution step.
- * This keeps deployment mistakes from breaking the entire feature path.
+ * External prompt loading failures are non-fatal by design. If an external `.clj` or `.txt` prompt
+ * cannot be loaded, the service logs a warning and falls back to the next resolution step. This
+ * keeps deployment mistakes from breaking the entire feature path.
  */
 class GenerativePromptService(
     private val properties: GenerativeProperties,
@@ -63,17 +61,15 @@ class GenerativePromptService(
      * Resolves the final prompt text for a named generative feature.
      *
      * Resolution order is:
-     *
      * 1. `${promptDir}/{promptName}.clj`
      * 2. `${promptDir}/{promptName}.txt`
      * 3. `classpath:{fallbackClasspathResource}`
      *
      * When a `.clj` file is present, it is parsed and evaluated as Clojure code and must yield a
-     * function of one argument. That function receives the provided [context] as a Clojure map
-     * with keyword keys.
+     * function of one argument. That function receives the provided [context] as a Clojure map with
+     * keyword keys.
      *
      * Example:
-     *
      * ```kotlin
      * val systemPrompt =
      *     promptService.render(
@@ -86,8 +82,8 @@ class GenerativePromptService(
      * @param promptName logical prompt name without file extension
      * @param fallbackClasspathResource classpath resource path used when no usable external prompt
      *   is available
-     * @param context dynamic values exposed to a `.clj` prompt function; string keys become
-     *   Clojure keyword keys
+     * @param context dynamic values exposed to a `.clj` prompt function; string keys become Clojure
+     *   keyword keys
      * @return the prompt text to pass into the consumer’s AI/generative pipeline
      */
     fun render(

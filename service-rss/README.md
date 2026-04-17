@@ -7,6 +7,7 @@ It covers:
 - feed discovery and registration
 - destination subscriptions
 - feed polling and new-entry notifications
+- OPML export and import for the registered feed catalog
 
 ## Operations
 
@@ -81,6 +82,29 @@ This deactivates the feed and any active subscriptions attached to it.
 
 - `feed add`, `feed subscribe`, `feed unsubscribe`, and `feed remove` require `ADMIN`
 - `feed list` and `feed subscriptions` are readable without admin privileges
+
+## HTTP API
+
+`service-rss` also exposes admin HTTP endpoints for feed-catalog portability:
+
+- `GET /admin/rss/opml`
+  Exports all active registered feeds as OPML.
+- `POST /admin/rss/opml/import`
+  Imports feeds from either:
+  - valid OPML containing `xmlUrl` outlines
+  - plain text where each line may or may not be a URL
+
+The import endpoint intentionally tolerates messy operator input. For example:
+
+```text
+Block 1
+https://foo.bar.com/rss.xml
+https://bar.foo.com/feed.xml
+Block 2
+https://baz.com/rss.xml
+```
+
+The non-URL lines are ignored; the URL lines are treated as feed candidates. OPML is still attempted first when the payload is valid XML/OPML.
 
 ## Discovery Notes
 
