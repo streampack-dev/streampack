@@ -49,6 +49,7 @@
         <module>lib-blog</module>
         <module>lib-core</module>
         <module>lib-factoid</module>
+        <module>lib-generative</module>
         <module>lib-irc</module>
         <module>lib-slack</module>
         <module>lib-polling</module>
@@ -279,6 +280,11 @@
             <dependency>
                 <groupId>dev.streampack</groupId>
                 <artifactId>lib-factoid</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.streampack</groupId>
+                <artifactId>lib-generative</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

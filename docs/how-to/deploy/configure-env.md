@@ -40,9 +40,12 @@ Optional integrations:
 | `DISCORD_ENABLED` | Enables Discord adapter. |
 | `SLACK_ENABLED` | Enables Slack adapter. |
 | `AI_ENABLED` | Enables AI-backed features. |
+| `STREAMPACK_GENERATIVE_PROMPT_DIR` | Filesystem directory for external generative prompt overrides. |
 | `ANTHROPIC_API_KEY` | Anthropic API key. |
 | `GITHUB_WEBHOOK_SECRET_KEY` | GitHub webhook signing secret. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OIDC credentials. |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub OAuth credentials. |
 
 Do not rely on application defaults for production secrets. Compose should fail fast when `JWT_SECRET` is missing.
+
+If `STREAMPACK_GENERATIVE_PROMPT_DIR` is set, Streampack will look there for runtime prompt overrides such as `suggest-prompt.txt` or `suggest-prompt.clj`.

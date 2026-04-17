@@ -15,6 +15,7 @@ import dev.streampack.core.parser.CommandPattern
 import dev.streampack.core.parser.CommandPatternMatcher
 import dev.streampack.core.parser.HttpUrlArgType
 import dev.streampack.core.service.TypedOperation
+import dev.streampack.generative.service.GenerativePromptService
 import dev.streampack.ideas.service.FetchOutcome
 import dev.streampack.ideas.service.SuggestedContentFetcher
 import org.springframework.beans.factory.ObjectProvider
@@ -30,6 +31,7 @@ class SuggestArticleOperation(
     private val contentFetcher: SuggestedContentFetcher,
     private val aiServiceProvider: ObjectProvider<AiService>,
     private val eventGateway: dev.streampack.core.integration.EventGateway,
+    private val promptService: GenerativePromptService,
 ) : TypedOperation<String>(String::class) {
 
     private val objectMapper = JacksonMappers.standard()
@@ -168,24 +170,13 @@ class SuggestArticleOperation(
                 }
 
         val systemPrompt =
-            """
-            You draft a technical blog summary from extracted source text.
-            Return ONLY valid JSON with this exact schema:
-            {"title":"string","summary":"string","tags":["tag1","tag2"]}
-
-            Rules:
-            - Keep strong signal-to-noise.
-            - Preserve key technical details and tradeoffs.
-            - Prefer classic essay-style prose when the source has enough depth (often ~3-5 paragraphs), but do not pad.
-            - Use fewer paragraphs when source material is thin.
-            - Do not include headings or bullet lists in summary.
-            - Do not speculate beyond available evidence.
-            - You may add brief contextual commentary only when it is well-established and clearly attributed.
-            - tags must be lowercase, no leading '#', no underscores.
-            - return 3-5 tags.
-            - no markdown fences.
-            """
-                .trimIndent()
+            promptService
+                .render(
+                    "suggest-prompt",
+                    "dev/streampack/ideas/prompts/suggest-prompt.txt",
+                    mapOf("sourceTitle" to title, "extractedText" to extractedText),
+                )
+                .trim()
 
         val userPrompt =
             """

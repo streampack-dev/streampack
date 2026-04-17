@@ -28,6 +28,7 @@ It currently includes:
 - email OTP and OIDC authentication
 - IRC, Discord, Slack, console, and bridge services
 - factoids, karma, calculator, weather, dictionary, GitHub, RSS, MCP, and other included capabilities
+- reusable generative infrastructure for AI-backed prompts and prompt overrides
 
 That bundled server is production-usable, but it is also an example of composition. Streampack users can build their own server by selecting `lib-core`, selected libraries, and their own services and operations.
 
