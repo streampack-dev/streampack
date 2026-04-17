@@ -8,6 +8,7 @@ This guide covers the user-facing RSS workflow in the bundled infobot.
 - subscribe destinations
 - inspect subscriptions
 - unsubscribe or remove feeds
+- export or import the registered feed catalog over the admin HTTP API
 
 ## 1. Add a Feed
 
@@ -85,3 +86,22 @@ This deactivates the feed and any active subscriptions attached to it.
 - If a feed is already registered, re-adding it is harmless.
 - Polling stores a baseline of entries and only notifies on new items.
 - Duplicate guid entries in one upstream fetch are ignored.
+
+## OPML Import and Export
+
+The bundled server also exposes admin HTTP endpoints for catalog portability:
+
+- `GET /admin/rss/opml`
+- `POST /admin/rss/opml/import`
+
+The import endpoint tries OPML first, then falls back to plain text URL extraction. That means an operator can paste content like:
+
+```text
+Block 1
+https://foo.bar.com/rss.xml
+https://bar.foo.com/feed.xml
+Block 2
+https://baz.com/rss.xml
+```
+
+and only the URL lines will be treated as feed candidates.

@@ -10,9 +10,8 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Spring auto-configuration for shared generative prompt loading.
  *
- * Registers [GenerativePromptService], which is the runtime entry point used by consumer modules
- * to resolve prompts from:
- *
+ * Registers [GenerativePromptService], which is the runtime entry point used by consumer modules to
+ * resolve prompts from:
  * - dynamic filesystem `.clj` overrides
  * - static filesystem `.txt` overrides
  * - bundled classpath fallback resources

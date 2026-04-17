@@ -231,6 +231,11 @@
                 <version>${romeVersion}</version>
             </dependency>
             <dependency>
+                <groupId>com.rometools</groupId>
+                <artifactId>rome-opml</artifactId>
+                <version>${romeVersion}</version>
+            </dependency>
+            <dependency>
                 <groupId>net.dv8tion</groupId>
                 <artifactId>JDA</artifactId>
                 <version>${jdaVersion}</version>

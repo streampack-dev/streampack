@@ -25,7 +25,6 @@ data class GenerativeProperties(
      * Filesystem directory to search for external prompt overrides.
      *
      * For a prompt named `suggest-prompt`, this directory is checked for:
-     *
      * 1. `suggest-prompt.clj`
      * 2. `suggest-prompt.txt`
      *
