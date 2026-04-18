@@ -24,5 +24,7 @@ data class RssEntry(
     @Column(nullable = false, length = 2048) val link: String = "",
     @Column(nullable = false, length = 500) val title: String = "",
     @Column val publishedAt: Instant? = null,
+    @Column(nullable = false) val accessCount: Long = 0,
+    @Column val lastAccessedAt: Instant? = null,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
 )
