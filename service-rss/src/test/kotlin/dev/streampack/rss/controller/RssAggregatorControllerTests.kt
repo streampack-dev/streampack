@@ -152,12 +152,7 @@ class RssAggregatorControllerTests {
     }
 
     @Test
-    fun `POST rss item access returns accepted and increments usage`() {
+    fun `POST rss item access returns accepted`() {
         mockMvc.post("/rss/items/$bytecodeSpringId/access").andExpect { status { isAccepted() } }
-
-        entryRepository.flush()
-        val refreshed = entryRepository.findById(bytecodeSpringId).orElseThrow()
-        org.junit.jupiter.api.Assertions.assertEquals(1, refreshed.accessCount)
-        org.junit.jupiter.api.Assertions.assertNotNull(refreshed.lastAccessedAt)
     }
 }

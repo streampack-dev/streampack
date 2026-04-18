@@ -155,7 +155,7 @@ Documentation is organized using the Diataxis model:
 |------|------------|
 | Tutorials | [Deploy `server-streampack`](docs/tutorials/deploy-server-streampack.md), [run the infobot on IRC](docs/tutorials/run-infobot-on-irc.md), [write your first operation](docs/tutorials/write-your-first-operation.md) |
 | How-to | [Configure deployment environment](docs/how-to/deploy/configure-env.md), [build and publish the container](docs/how-to/deploy/build-and-publish-container.md) |
-| Reference | [Modules](docs/reference/modules.md), [environment variables](docs/reference/environment-variables.md), [OpenAPI](docs/openapi.json) |
+| Reference | [Modules](docs/reference/modules.md), [environment variables](docs/reference/environment-variables.md), [infobot commands](docs/reference/infobot-commands.md), [OpenAPI](docs/openapi.json) |
 | Explanation | [What is Streampack?](docs/explanation/what-is-streampack.md), [platform vs bundled server](docs/explanation/platform-vs-server-streampack.md) |
 
 ## License
