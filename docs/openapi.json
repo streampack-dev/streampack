@@ -892,6 +892,58 @@
         "required" : [ "newRole" ],
         "type" : "object"
       },
+      "RssAggregatedItemResponse" : {
+        "properties" : {
+          "feedTitle" : {
+            "type" : "string"
+          },
+          "feedUrl" : {
+            "type" : "string"
+          },
+          "guid" : {
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "siteUrl" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "feedTitle", "feedUrl", "guid", "link", "title" ],
+        "type" : "object"
+      },
+      "RssAggregatedItemsResponse" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/RssAggregatedItemResponse"
+            },
+            "type" : "array"
+          },
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "items", "page", "totalCount", "totalPages" ],
+        "type" : "object"
+      },
       "SuggestTagsHttpRequest" : {
         "properties" : {
           "existingTags" : {
@@ -4095,6 +4147,130 @@
         } ],
         "summary" : "Add a comment to a post",
         "tags" : [ "Comments" ]
+      }
+    },
+    "/rss/items" : {
+      "get" : {
+        "operationId" : "items",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "feed",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "title",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RssAggregatedItemsResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
+                }
+              }
+            },
+            "description" : "Paginated stored RSS items"
+          }
+        },
+        "summary" : "List stored RSS items",
+        "tags" : [ "RSS Aggregator" ]
+      }
+    },
+    "/rss/items/{id}/access" : {
+      "post" : {
+        "operationId" : "recordAccess",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Access tracking accepted"
+          }
+        },
+        "summary" : "Record a UI-driven access of a stored RSS item",
+        "tags" : [ "RSS Aggregator" ]
+      }
+    },
+    "/rss/sources.xml" : {
+      "get" : {
+        "operationId" : "aggregatedFeed",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "feed",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "title",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/rss+xml" : {
+                "schema" : {
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "Aggregated RSS feed"
+          }
+        },
+        "summary" : "Generate an aggregated RSS feed of stored items",
+        "tags" : [ "RSS Aggregator" ]
       }
     },
     "/sitemap.xml" : {
