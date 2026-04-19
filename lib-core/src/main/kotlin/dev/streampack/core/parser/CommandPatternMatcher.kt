@@ -10,6 +10,9 @@ package dev.streampack.core.parser
  * - otherwise return the strongest failure signal among literal matches
  *   ([CommandMatchResult.InvalidArgument] > [CommandMatchResult.MissingArguments] > [CommandMatchResult.TooManyArguments])
  * - return null if no literal prefix matched
+ *
+ * The matcher can also render its own grammar/help lines via [describeGrammar] and [describeHelp].
+ * This keeps parser-driven command documentation close to the command definitions themselves.
  */
 class CommandPatternMatcher(private val patterns: List<CommandPattern>) {
     fun match(raw: String): CommandMatchResult? {
@@ -83,6 +86,33 @@ class CommandPatternMatcher(private val patterns: List<CommandPattern>) {
         }
 
         return if (matchedLiteralPrefix) fallback else null
+    }
+
+    /**
+     * Renders one BNF-ish grammar line per configured pattern.
+     *
+     * Example output:
+     *
+     * `boolean xor <left:one-of(false|true)> <right:one-of(false|true)>`
+     */
+    fun describeGrammar(): List<String> = patterns.map { it.renderGrammar() }
+
+    /**
+     * Renders grammar plus any available summaries and argument help text.
+     *
+     * The output format is intentionally plain list-of-strings so callers can publish it directly
+     * in chat, logs, or docs without depending on a richer presentation model.
+     */
+    fun describeHelp(): List<String> {
+        val lines = mutableListOf<String>()
+        for (pattern in patterns) {
+            val summarySuffix = pattern.summary?.let { " -- $it" } ?: ""
+            lines += pattern.renderGrammar() + summarySuffix
+            for (arg in pattern.args) {
+                arg.helpText?.let { lines += "  ${arg.renderGrammar()}: $it" }
+            }
+        }
+        return lines
     }
 
     private fun matchesLiterals(pattern: CommandPattern, tokens: List<String>): Boolean {

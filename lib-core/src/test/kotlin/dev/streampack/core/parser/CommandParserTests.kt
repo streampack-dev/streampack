@@ -8,6 +8,57 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class CommandParserTests {
+    private val booleanArgType = ChoiceArgType(setOf("true", "false"))
+
+    private fun booleanArg(name: String, helpText: String? = null): CommandArgSpec<String> =
+        CommandArgSpec(name, booleanArgType, helpText)
+
+    private fun booleanMatcher(): CommandPatternMatcher =
+        CommandPatternMatcher(
+            listOf(
+                CommandPattern(
+                    name = "boolean_xor",
+                    literals = listOf("boolean", "xor"),
+                    args =
+                        listOf(
+                            booleanArg("left", "Left boolean operand"),
+                            booleanArg("right", "Right boolean operand"),
+                        ),
+                    summary = "Exclusive-or over two boolean inputs",
+                ),
+                CommandPattern(
+                    name = "boolean_and",
+                    literals = listOf("boolean", "and"),
+                    args =
+                        listOf(
+                            booleanArg("left", "Left boolean operand"),
+                            booleanArg("right", "Right boolean operand"),
+                        ),
+                    summary = "Logical and over two boolean inputs",
+                ),
+                CommandPattern(
+                    name = "boolean_or",
+                    literals = listOf("boolean", "or"),
+                    args =
+                        listOf(
+                            booleanArg("left", "Left boolean operand"),
+                            booleanArg("right", "Right boolean operand"),
+                        ),
+                    summary = "Logical or over two boolean inputs",
+                ),
+                CommandPattern(
+                    name = "boolean_not",
+                    literals = listOf("boolean", "not"),
+                    args = listOf(booleanArg("value", "Boolean input to negate")),
+                    summary = "Logical not over one boolean input",
+                ),
+                CommandPattern(
+                    name = "boolean_help",
+                    literals = listOf("boolean", "help"),
+                    summary = "Show boolean command help",
+                ),
+            )
+        )
 
     private val matcher =
         CommandPatternMatcher(
@@ -199,5 +250,70 @@ class CommandParserTests {
             CommandMatchResult.InvalidArgument::class.java,
             urlMatcher.match("suggest file:///tmp/test"),
         )
+    }
+
+    @Test
+    fun `matcher can render grammar lines for boolean command tree`() {
+        assertEquals(
+            listOf(
+                "boolean xor <left:one-of(false|true)> <right:one-of(false|true)>",
+                "boolean and <left:one-of(false|true)> <right:one-of(false|true)>",
+                "boolean or <left:one-of(false|true)> <right:one-of(false|true)>",
+                "boolean not <value:one-of(false|true)>",
+                "boolean help",
+            ),
+            booleanMatcher().describeGrammar(),
+        )
+    }
+
+    @Test
+    fun `matcher can render help lines with summaries and argument help`() {
+        assertEquals(
+            listOf(
+                "boolean xor <left:one-of(false|true)> <right:one-of(false|true)> -- Exclusive-or over two boolean inputs",
+                "  <left:one-of(false|true)>: Left boolean operand",
+                "  <right:one-of(false|true)>: Right boolean operand",
+                "boolean and <left:one-of(false|true)> <right:one-of(false|true)> -- Logical and over two boolean inputs",
+                "  <left:one-of(false|true)>: Left boolean operand",
+                "  <right:one-of(false|true)>: Right boolean operand",
+                "boolean or <left:one-of(false|true)> <right:one-of(false|true)> -- Logical or over two boolean inputs",
+                "  <left:one-of(false|true)>: Left boolean operand",
+                "  <right:one-of(false|true)>: Right boolean operand",
+                "boolean not <value:one-of(false|true)> -- Logical not over one boolean input",
+                "  <value:one-of(false|true)>: Boolean input to negate",
+                "boolean help -- Show boolean command help",
+            ),
+            booleanMatcher().describeHelp(),
+        )
+    }
+
+    @Test
+    fun `boolean binary commands match typed boolean choice arguments`() {
+        val cases =
+            mapOf(
+                "boolean xor true false" to "boolean_xor",
+                "boolean and true false" to "boolean_and",
+                "boolean or true false" to "boolean_or",
+            )
+
+        for ((input, patternName) in cases) {
+            val result = booleanMatcher().match(input)
+
+            assertInstanceOf(CommandMatchResult.Match::class.java, result)
+            result as CommandMatchResult.Match
+            assertEquals(patternName, result.patternName)
+            assertEquals("true", result.captures["left"])
+            assertEquals("false", result.captures["right"])
+        }
+    }
+
+    @Test
+    fun `boolean not command matches one typed boolean choice argument`() {
+        val result = booleanMatcher().match("boolean not false")
+
+        assertInstanceOf(CommandMatchResult.Match::class.java, result)
+        result as CommandMatchResult.Match
+        assertEquals("boolean_not", result.patternName)
+        assertEquals("false", result.captures["value"])
     }
 }

@@ -3858,6 +3858,28 @@
         "tags" : [ "Posts" ]
       }
     },
+    "/posts/{id}/access" : {
+      "post" : {
+        "operationId" : "recordPostAccess",
+        "parameters" : [ {
+          "description" : "Post UUIDv7",
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "default" : "##default",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Access tracking accepted"
+          }
+        },
+        "summary" : "Record a UI-driven access of a blog post",
+        "tags" : [ "Posts" ]
+      }
+    },
     "/posts/{year}/{month}/{slug}" : {
       "get" : {
         "description" : "Returns full post detail including rendered HTML, tags, categories, and comment count. Draft posts are only visible to their author and admins.",
@@ -4232,44 +4254,6 @@
           }
         },
         "summary" : "Record a UI-driven access of a stored RSS item",
-        "tags" : [ "RSS Aggregator" ]
-      }
-    },
-    "/rss/sources.xml" : {
-      "get" : {
-        "operationId" : "aggregatedFeed",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "feed",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "title",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/rss+xml" : {
-                "schema" : {
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "type" : "string"
-                }
-              }
-            },
-            "description" : "Aggregated RSS feed"
-          }
-        },
-        "summary" : "Generate an aggregated RSS feed of stored items",
         "tags" : [ "RSS Aggregator" ]
       }
     },

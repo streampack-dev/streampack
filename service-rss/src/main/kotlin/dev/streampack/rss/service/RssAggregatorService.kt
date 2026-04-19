@@ -1,10 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.service
 
-import com.rometools.rome.feed.synd.SyndContentImpl
-import com.rometools.rome.feed.synd.SyndEntryImpl
-import com.rometools.rome.feed.synd.SyndFeedImpl
-import com.rometools.rome.io.SyndFeedOutput
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.model.RssAggregatedItemResponse
 import dev.streampack.rss.model.RssAggregatedItemsResponse
@@ -43,33 +39,6 @@ class RssAggregatorService(private val entryRepository: RssEntryRepository) {
             totalPages = results.totalPages,
             totalCount = results.totalElements,
         )
-    }
-
-    fun aggregatedFeed(feed: String?, title: String?): String {
-        val items = listItems(0, 100, feed, title).items
-        val syndFeed =
-            SyndFeedImpl().apply {
-                feedType = "rss_2.0"
-                this.title = "Streampack Source Aggregator"
-                link = "https://bytecode.news/rss/sources.xml"
-                description = "Aggregated stored RSS entries across configured Streampack sources"
-                publishedDate = items.firstOrNull()?.publishedAt?.let { java.util.Date.from(it) }
-                entries =
-                    items.map { item ->
-                        SyndEntryImpl().apply {
-                            uri = item.guid
-                            link = item.link
-                            this.setTitle(item.title)
-                            publishedDate = item.publishedAt?.let { java.util.Date.from(it) }
-                            description =
-                                SyndContentImpl().apply {
-                                    type = "text/plain"
-                                    value = "Source: ${item.feedTitle}"
-                                }
-                        }
-                    }
-            }
-        return SyndFeedOutput().outputString(syndFeed)
     }
 
     @Transactional

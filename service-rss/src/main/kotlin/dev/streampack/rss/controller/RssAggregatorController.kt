@@ -44,21 +44,6 @@ class RssAggregatorController(
         @RequestParam(required = false) title: String?,
     ): RssAggregatedItemsResponse = rssAggregatorService.listItems(page, size, feed, title)
 
-    @Operation(summary = "Generate an aggregated RSS feed of stored items")
-    @ApiResponse(
-        responseCode = "200",
-        description = "Aggregated RSS feed",
-        content = [Content(mediaType = "application/rss+xml")],
-    )
-    @GetMapping("/sources.xml", produces = ["application/rss+xml"])
-    fun aggregatedFeed(
-        @RequestParam(required = false) feed: String?,
-        @RequestParam(required = false) title: String?,
-    ): ResponseEntity<String> =
-        ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType("application/rss+xml; charset=utf-8"))
-            .body(rssAggregatorService.aggregatedFeed(feed, title))
-
     @Operation(summary = "Record a UI-driven access of a stored RSS item")
     @ApiResponse(responseCode = "202", description = "Access tracking accepted")
     @PostMapping("/items/{id}/access")

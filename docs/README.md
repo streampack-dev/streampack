@@ -22,3 +22,4 @@ For the bundled bot command surface, use:
 
 - [Use the Infobot](how-to/infobot/use-the-infobot.md) for the public user guide
 - [Admin Text Operations](reference/admin-text-operations.md) for repository-facing operator commands
+- [Command Parser](reference/command-parser.md) for parser internals and grammar/help rendering

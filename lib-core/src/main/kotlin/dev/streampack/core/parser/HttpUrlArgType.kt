@@ -5,6 +5,8 @@ import java.net.URI
 
 /** URL validator that accepts only absolute http/https URLs with a host. */
 data object HttpUrlArgType : CommandArgType<String> {
+    override val syntaxName: String = "http-url"
+
     override fun parse(token: String): String? {
         val uri =
             try {

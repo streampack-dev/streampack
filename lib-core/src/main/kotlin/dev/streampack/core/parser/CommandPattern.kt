@@ -13,4 +13,7 @@ data class CommandPattern(
     val literals: List<String>,
     val args: List<CommandArgSpec<*>> = emptyList(),
     val caseInsensitiveLiterals: Boolean = true,
-)
+    val summary: String? = null,
+) {
+    fun renderGrammar(): String = (literals + args.map { it.renderGrammar() }).joinToString(" ")
+}

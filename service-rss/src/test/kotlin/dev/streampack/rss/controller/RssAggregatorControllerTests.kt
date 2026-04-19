@@ -134,24 +134,6 @@ class RssAggregatorControllerTests {
     }
 
     @Test
-    fun `GET rss sources xml returns filtered aggregated rss`() {
-        mockMvc.get("/rss/sources.xml?title=spring").andExpect {
-            status { isOk() }
-            content { contentTypeCompatibleWith("application/rss+xml") }
-            content { string(org.hamcrest.Matchers.containsString("<rss")) }
-            content { string(org.hamcrest.Matchers.containsString("Spring Release Notes")) }
-            content { string(org.hamcrest.Matchers.containsString("Spring Signals")) }
-            content {
-                string(
-                    org.hamcrest.Matchers.not(
-                        org.hamcrest.Matchers.containsString("Kotlin Roundup")
-                    )
-                )
-            }
-        }
-    }
-
-    @Test
     fun `POST rss item access returns accepted`() {
         mockMvc.post("/rss/items/$bytecodeSpringId/access").andExpect { status { isAccepted() } }
     }

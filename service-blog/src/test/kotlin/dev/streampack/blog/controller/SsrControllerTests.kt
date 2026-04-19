@@ -18,6 +18,7 @@ import dev.streampack.test.TestChannelConfiguration
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -128,6 +129,7 @@ class SsrControllerTests {
                 content { string(org.hamcrest.Matchers.containsString("A post for SSR testing")) }
                 content { string(org.hamcrest.Matchers.containsString("canonical")) }
             }
+        waitForAccessCount(publishedPost.id, 1)
     }
 
     @Test
@@ -173,5 +175,14 @@ class SsrControllerTests {
                 content { string(org.hamcrest.Matchers.containsString("robots")) }
                 content { string(org.hamcrest.Matchers.containsString("index, follow")) }
             }
+    }
+
+    private fun waitForAccessCount(postId: java.util.UUID, expected: Long) {
+        repeat(40) {
+            val current = postRepository.findById(postId).orElseThrow().accessCount
+            if (current == expected) return
+            Thread.sleep(25)
+        }
+        assertEquals(expected, postRepository.findById(postId).orElseThrow().accessCount)
     }
 }
