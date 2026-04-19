@@ -2,6 +2,7 @@
 package dev.streampack.blog.service
 
 import dev.streampack.core.config.StreampackProperties
+import dev.streampack.web.auth.AuthCookieNames
 import java.time.Duration
 import org.springframework.http.ResponseCookie
 import org.springframework.stereotype.Service
@@ -54,7 +55,7 @@ class CookieService(properties: StreampackProperties) {
             .build()
 
     companion object {
-        const val ACCESS_TOKEN_COOKIE = "access_token"
-        const val REFRESH_TOKEN_COOKIE = "refresh_token"
+        const val ACCESS_TOKEN_COOKIE = AuthCookieNames.ACCESS_TOKEN
+        const val REFRESH_TOKEN_COOKIE = AuthCookieNames.REFRESH_TOKEN
     }
 }

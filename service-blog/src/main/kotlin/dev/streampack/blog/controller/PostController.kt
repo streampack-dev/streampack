@@ -18,13 +18,13 @@ import dev.streampack.blog.model.RecordPostAccessRequest
 import dev.streampack.blog.model.SuggestTagsHttpRequest
 import dev.streampack.blog.model.SuggestTagsRequest
 import dev.streampack.blog.model.SuggestTagsResponse
-import dev.streampack.blog.service.CookieService
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.JwtService
+import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -53,9 +53,9 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "Posts")
 class PostController(
     private val eventGateway: EventGateway,
-    private val jwtService: JwtService,
+    jwtService: JwtService,
     private val blogProperties: BlogProperties,
-) {
+) : UserAwareController(jwtService) {
     private val serviceId = blogProperties.serviceId
     private val logger = LoggerFactory.getLogger(PostController::class.java)
 
@@ -406,20 +406,6 @@ class PostController(
                 markdownSource = request.markdownSource ?: "",
             )
         return dispatch(payload, "posts/derive-summary", user) { result -> mapError(result) }
-    }
-
-    /** Extracts and validates the JWT from cookies first, then the Authorization header */
-    private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
-        val cookieToken =
-            request.cookies?.find { it.name == CookieService.ACCESS_TOKEN_COOKIE }?.value
-        if (cookieToken != null) {
-            val principal = jwtService.validateToken(cookieToken)
-            if (principal != null) return principal
-        }
-        val header = request.getHeader("Authorization") ?: return null
-        if (!header.startsWith("Bearer ")) return null
-        val token = header.substring(7)
-        return jwtService.validateToken(token)
     }
 
     /** Sends a payload through the event system and maps the result to an HTTP response */

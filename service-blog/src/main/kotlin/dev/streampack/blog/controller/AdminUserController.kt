@@ -7,7 +7,6 @@ import dev.streampack.blog.model.PurgeErasedContentRequest
 import dev.streampack.blog.model.RoleUpdateRequest
 import dev.streampack.blog.model.SuspendAccountRequest
 import dev.streampack.blog.model.UnsuspendAccountRequest
-import dev.streampack.blog.service.CookieService
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.AlterUserRequest
 import dev.streampack.core.model.OperationResult
@@ -17,6 +16,7 @@ import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.model.UserStatus
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
+import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -45,10 +45,10 @@ import org.springframework.web.bind.annotation.RestController
 @SecurityRequirement(name = "bearerAuth")
 class AdminUserController(
     private val eventGateway: EventGateway,
-    private val jwtService: JwtService,
+    jwtService: JwtService,
     private val userRepository: UserRepository,
     blogProperties: BlogProperties,
-) {
+) : UserAwareController(jwtService) {
     private val serviceId = blogProperties.serviceId
     private val logger = LoggerFactory.getLogger(AdminUserController::class.java)
 
@@ -183,20 +183,6 @@ class AdminUserController(
         ) { result ->
             mapError(result)
         }
-    }
-
-    /** Extracts and validates the JWT from cookies first, then the Authorization header */
-    private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
-        val cookieToken =
-            request.cookies?.find { it.name == CookieService.ACCESS_TOKEN_COOKIE }?.value
-        if (cookieToken != null) {
-            val principal = jwtService.validateToken(cookieToken)
-            if (principal != null) return principal
-        }
-        val header = request.getHeader("Authorization") ?: return null
-        if (!header.startsWith("Bearer ")) return null
-        val token = header.substring(7)
-        return jwtService.validateToken(token)
     }
 
     /** Sends a payload through the event system and maps the result to an HTTP response */

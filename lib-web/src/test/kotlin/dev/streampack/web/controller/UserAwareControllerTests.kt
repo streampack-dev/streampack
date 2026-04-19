@@ -5,6 +5,8 @@ import dev.streampack.core.config.StreampackProperties
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.JwtService
+import dev.streampack.web.auth.AuthCookieNames
+import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -57,6 +59,28 @@ class UserAwareControllerTests {
         val token = jwtService.generateToken(expected)
         val request = MockHttpServletRequest()
         request.addHeader("Authorization", "Bearer $token")
+
+        val resolved = controller.resolve(request)
+
+        requireNotNull(resolved, { "Expected principal to be resolved" })
+        assertEquals(expected.id, resolved.id)
+        assertEquals(expected.username, resolved.username)
+        assertEquals(expected.displayName, resolved.displayName)
+        assertEquals(expected.role, resolved.role)
+    }
+
+    @Test
+    fun `resolveUser returns principal from access token cookie`() {
+        val expected =
+            UserPrincipal(
+                id = java.util.UUID.randomUUID(),
+                username = "cookie-user",
+                displayName = "Cookie User",
+                role = Role.ADMIN,
+            )
+        val token = jwtService.generateToken(expected)
+        val request = MockHttpServletRequest()
+        request.setCookies(Cookie(AuthCookieNames.ACCESS_TOKEN, token))
 
         val resolved = controller.resolve(request)
 
