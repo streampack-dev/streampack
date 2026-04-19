@@ -72,9 +72,22 @@ class GitHubWebhookController(
         request: HttpServletRequest,
     ): ResponseEntity<Void> {
         if (signature.isNullOrBlank() || event.isNullOrBlank()) {
+            logger.warn(
+                "Rejecting GitHub webhook delivery {} because required headers are missing (eventPresent={}, signaturePresent={})",
+                deliveryId ?: "unknown",
+                !event.isNullOrBlank(),
+                !signature.isNullOrBlank(),
+            )
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
         val body = request.inputStream.readAllBytes()
+        logger.debug(
+            "Received GitHub webhook delivery {} (event={}, contentType={}, bodyBytes={})",
+            deliveryId ?: "unknown",
+            event,
+            contentType ?: "unknown",
+            body.size,
+        )
         if (event !in supportedEvents) {
             logger.warn(
                 "Ignoring unsupported GitHub event '{}' (deliveryId={})",
@@ -85,7 +98,16 @@ class GitHubWebhookController(
         }
 
         val payload =
-            extractJsonPayload(body, contentType) ?: return ResponseEntity.badRequest().build()
+            extractJsonPayload(body, contentType)
+                ?: run {
+                    logger.warn(
+                        "Rejecting GitHub webhook delivery {} because form payload field is missing (event={}, contentType={})",
+                        deliveryId ?: "unknown",
+                        event,
+                        contentType ?: "unknown",
+                    )
+                    return ResponseEntity.badRequest().build()
+                }
         val root: JsonNode =
             try {
                 objectMapper.readTree(payload)
@@ -96,16 +118,42 @@ class GitHubWebhookController(
 
         val fullName = root.path("repository").path("full_name").asString()
         if (fullName.isBlank()) {
+            logger.warn(
+                "Rejecting GitHub webhook delivery {} because repository.full_name is missing (event={})",
+                deliveryId ?: "unknown",
+                event,
+            )
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
         val parts = fullName.split("/")
         if (parts.size != 2) {
+            logger.warn(
+                "Rejecting GitHub webhook delivery {} because repository.full_name is invalid: {}",
+                deliveryId ?: "unknown",
+                fullName,
+            )
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
         val repo =
             repoRepository.findByOwnerAndName(parts[0], parts[1])
-                ?: return ResponseEntity.status(HttpStatus.ACCEPTED).build()
+                ?: run {
+                    logger.warn(
+                        "Ignoring GitHub webhook delivery for unknown repository {} (deliveryId={}, event={})",
+                        fullName,
+                        deliveryId ?: "unknown",
+                        event,
+                    )
+                    return ResponseEntity.status(HttpStatus.ACCEPTED).build()
+                }
         if (repo.deliveryMode != DeliveryMode.WEBHOOK || repo.webhookSecret.isNullOrBlank()) {
+            logger.warn(
+                "Ignoring GitHub webhook delivery for {} because repository is not webhook-enabled (deliveryId={}, event={}, deliveryMode={}, hasSecret={})",
+                fullName,
+                deliveryId ?: "unknown",
+                event,
+                repo.deliveryMode,
+                !repo.webhookSecret.isNullOrBlank(),
+            )
             return ResponseEntity.status(HttpStatus.ACCEPTED).build()
         }
 

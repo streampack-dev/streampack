@@ -21,10 +21,13 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.boot.test.system.CapturedOutput
+import org.springframework.boot.test.system.OutputCaptureExtension
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
@@ -37,6 +40,7 @@ import org.springframework.test.web.servlet.post
 @AutoConfigureMockMvc(addFilters = false)
 @ResetDatabaseBeforeEach
 @Import(TestSecurityConfiguration::class)
+@ExtendWith(OutputCaptureExtension::class)
 class GitHubWebhookControllerTests {
 
     @TestConfiguration
@@ -144,6 +148,32 @@ class GitHubWebhookControllerTests {
     }
 
     @Test
+    fun `form encoded issue event fans out for private webhook repo`() {
+        val jsonPayload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/repo"},
+            "issue":{"number":1,"title":"Private issue","html_url":"https://github.com/owner/repo/issues/1"}
+        }"""
+        val formBody = "payload=${URLEncoder.encode(jsonPayload, Charsets.UTF_8)}"
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_FORM_URLENCODED
+                content = formBody
+                header("X-GitHub-Event", "issues")
+                header("X-GitHub-Delivery", "delivery-private-issue")
+                header("X-Hub-Signature-256", sign(formBody.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
+
+        assertEquals(1, capturingSubscriber.captured.size)
+        val (result, provenance) = capturingSubscriber.captured[0]
+        assertEquals("console:///local", provenance.encode())
+        assertTrue(result is OperationResult.Success)
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Private issue"))
+    }
+
+    @Test
     fun `form encoded payload is accepted when payload is not first field`() {
         val jsonPayload =
             """{
@@ -244,6 +274,57 @@ class GitHubWebhookControllerTests {
             .andExpect { status { isAccepted() } }
 
         assertEquals(0, capturingSubscriber.captured.size)
+    }
+
+    @Test
+    fun `accepted delivery with no subscriptions is logged`(output: CapturedOutput) {
+        subscriptionRepository.deleteAll()
+        capturingSubscriber.captured.clear()
+        val payload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/repo"},
+            "issue":{"number":1,"title":"No subscribers","html_url":"https://github.com/owner/repo/issues/1"}
+        }"""
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "issues")
+                header("X-GitHub-Delivery", "delivery-no-subscribers")
+                header("X-Hub-Signature-256", sign(payload.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
+
+        assertEquals(0, capturingSubscriber.captured.size)
+        assertTrue(output.out.contains("No active GitHub subscriptions for owner/repo"), output.out)
+    }
+
+    @Test
+    fun `accepted delivery for unknown repository is logged`(output: CapturedOutput) {
+        val payload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/missing"},
+            "issue":{"number":1,"title":"Missing repo","html_url":"https://github.com/owner/missing/issues/1"}
+        }"""
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "issues")
+                header("X-GitHub-Delivery", "delivery-missing-repo")
+                header("X-Hub-Signature-256", sign(payload.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
+
+        assertEquals(0, capturingSubscriber.captured.size)
+        assertTrue(
+            output.out.contains(
+                "Ignoring GitHub webhook delivery for unknown repository owner/missing"
+            ),
+            output.out,
+        )
     }
 
     @Test
