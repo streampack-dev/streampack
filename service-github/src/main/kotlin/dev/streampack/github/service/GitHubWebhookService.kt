@@ -20,7 +20,14 @@ class GitHubWebhookService(
     private val logger = LoggerFactory.getLogger(GitHubWebhookService::class.java)
 
     fun handleIssue(repo: GitHubRepo, event: GitHubIssueEvent) {
-        if (event.action != "opened") return
+        if (event.action != "opened") {
+            logger.debug(
+                "Ignoring GitHub issue webhook for {} with unsupported action {}",
+                repo.fullName(),
+                event.action,
+            )
+            return
+        }
         val issue = event.issue
         val message =
             "[${repo.fullName()}] New issue #${issue.number}: ${issue.title} - ${issue.htmlUrl}"
@@ -28,14 +35,28 @@ class GitHubWebhookService(
     }
 
     fun handlePullRequest(repo: GitHubRepo, event: GitHubPullRequestEvent) {
-        if (event.action != "opened") return
+        if (event.action != "opened") {
+            logger.debug(
+                "Ignoring GitHub pull request webhook for {} with unsupported action {}",
+                repo.fullName(),
+                event.action,
+            )
+            return
+        }
         val pr = event.pullRequest
         val message = "[${repo.fullName()}] New PR #${pr.number}: ${pr.title} - ${pr.htmlUrl}"
         fanOut(repo, message)
     }
 
     fun handleRelease(repo: GitHubRepo, event: GitHubReleaseEvent) {
-        if (event.action != "published") return
+        if (event.action != "published") {
+            logger.debug(
+                "Ignoring GitHub release webhook for {} with unsupported action {}",
+                repo.fullName(),
+                event.action,
+            )
+            return
+        }
         val release = event.release
         val message = "[${repo.fullName()}] New release ${release.tagName} - ${release.htmlUrl}"
         fanOut(repo, message)
@@ -49,7 +70,18 @@ class GitHubWebhookService(
 
     private fun fanOut(repo: GitHubRepo, message: String) {
         val subscriptions = subscriptionRepository.findByRepoAndActiveTrue(repo)
-        if (subscriptions.isEmpty()) return
+        if (subscriptions.isEmpty()) {
+            logger.info(
+                "No active GitHub subscriptions for {}; webhook notification not delivered",
+                repo.fullName(),
+            )
+            return
+        }
+        logger.info(
+            "Delivering GitHub webhook notification for {} to {} active subscription(s)",
+            repo.fullName(),
+            subscriptions.size,
+        )
         subscriptions.forEach { subscription ->
             notifier.send(message, subscription.destinationUri)
         }
