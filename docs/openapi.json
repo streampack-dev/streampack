@@ -2052,13 +2052,25 @@
     },
     "/admin/rss/opml/import" : {
       "post" : {
-        "description" : "Attempts OPML parsing first. If the payload is not valid OPML, falls back to line-by-line URL extraction and ignores non-URL lines.",
+        "description" : "Accepts a multipart file field named `file`. OPML is parsed first; non-OPML files fall back to line-by-line URL extraction.",
         "operationId" : "importOpml",
         "requestBody" : {
           "content" : {
             "application/xml" : {
               "schema" : {
                 "type" : "string"
+              }
+            },
+            "multipart/form-data" : {
+              "schema" : {
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
               }
             },
             "text/plain" : {
@@ -2139,7 +2151,7 @@
         "security" : [ {
           "bearerAuth" : [ ]
         } ],
-        "summary" : "Import RSS feeds from OPML or plain text",
+        "summary" : "Import RSS feeds from an OPML or plain text upload",
         "tags" : [ "Admin - RSS" ]
       }
     },

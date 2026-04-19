@@ -8,15 +8,21 @@ import dev.streampack.core.service.JwtService
 import dev.streampack.rss.entity.RssFeed
 import dev.streampack.rss.repository.RssFeedRepository
 import dev.streampack.test.ResetDatabaseBeforeEach
+import dev.streampack.web.auth.AuthCookieNames
+import jakarta.servlet.http.Cookie
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -124,5 +130,45 @@ class AdminRssOpmlControllerTests {
                 status { isOk() }
                 jsonPath("$.added") { value(0) }
             }
+    }
+
+    @Test
+    fun `POST admin rss opml import accepts access token cookie`() {
+        mockMvc
+            .post("/admin/rss/opml/import") {
+                cookie(Cookie(AuthCookieNames.ACCESS_TOKEN, adminToken))
+                contentType = MediaType.APPLICATION_XML
+                content = """<opml version="2.0"><head><title>Empty</title></head><body /></opml>"""
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.added") { value(0) }
+            }
+    }
+
+    @Test
+    fun `POST admin rss opml import accepts multipart file upload`() {
+        val file =
+            MockMultipartFile(
+                "file",
+                "feeds.opml",
+                MediaType.APPLICATION_XML_VALUE,
+                """
+                <opml version="2.0">
+                  <body />
+                </opml>
+                """
+                    .trimIndent()
+                    .toByteArray(),
+            )
+
+        mockMvc
+            .perform(
+                multipart("/admin/rss/opml/import")
+                    .file(file)
+                    .header("Authorization", "Bearer $adminToken")
+            )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.added").value(0))
     }
 }

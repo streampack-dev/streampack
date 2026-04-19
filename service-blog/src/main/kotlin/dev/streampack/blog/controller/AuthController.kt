@@ -17,6 +17,7 @@ import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.RefreshTokenService
+import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -50,7 +51,7 @@ class AuthController(
     private val cookieService: CookieService,
     private val userRepository: UserRepository,
     blogProperties: BlogProperties,
-) {
+) : UserAwareController(jwtService) {
     private val serviceId = blogProperties.serviceId
     private val logger = LoggerFactory.getLogger(AuthController::class.java)
 
@@ -226,20 +227,6 @@ class AuthController(
         return dispatch(request, "auth/profile", user) { result ->
             mapError(result, HttpStatus.BAD_REQUEST)
         }
-    }
-
-    /** Extracts and validates the JWT from cookies first, then the Authorization header */
-    private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
-        val cookieToken =
-            request.cookies?.find { it.name == CookieService.ACCESS_TOKEN_COOKIE }?.value
-        if (cookieToken != null) {
-            val principal = jwtService.validateToken(cookieToken)
-            if (principal != null) return principal
-        }
-        val header = request.getHeader("Authorization") ?: return null
-        if (!header.startsWith("Bearer ")) return null
-        val token = header.substring(7)
-        return jwtService.validateToken(token)
     }
 
     /** Extracts the refresh token from the cookie */

@@ -2,9 +2,9 @@
 package dev.streampack.rss.controller
 
 import dev.streampack.core.model.Role
-import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.JwtService
 import dev.streampack.rss.service.RssOpmlService
+import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -20,17 +20,17 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 
 /** Admin endpoints for RSS OPML import and export. */
 @RestController
 @RequestMapping("/admin/rss")
 @Tag(name = "Admin - RSS")
 @SecurityRequirement(name = "bearerAuth")
-class AdminRssOpmlController(
-    private val opmlService: RssOpmlService,
-    private val jwtService: JwtService,
-) {
+class AdminRssOpmlController(private val opmlService: RssOpmlService, jwtService: JwtService) :
+    UserAwareController(jwtService) {
 
     @Operation(summary = "Export active RSS feeds as OPML")
     @ApiResponse(
@@ -90,10 +90,40 @@ class AdminRssOpmlController(
         return ResponseEntity.ok(opmlService.importFeeds(body))
     }
 
-    private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
-        val header = request.getHeader("Authorization") ?: return null
-        if (!header.startsWith("Bearer ")) return null
-        return jwtService.validateToken(header.removePrefix("Bearer ").trim())
+    @Operation(
+        summary = "Import RSS feeds from an OPML or plain text upload",
+        description =
+            "Accepts a multipart file field named `file`. OPML is parsed first; non-OPML files " +
+                "fall back to line-by-line URL extraction.",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Import summary",
+        content = [Content(mediaType = MediaType.APPLICATION_JSON_VALUE)],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not authenticated",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Admin access required",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @PostMapping(
+        "/opml/import",
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
+        produces = ["application/json"],
+    )
+    fun importOpmlFile(
+        @RequestPart("file") file: MultipartFile,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized()
+        if (user.role < Role.ADMIN) return forbidden()
+        val body = file.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+        return ResponseEntity.ok(opmlService.importFeeds(body))
     }
 
     private fun unauthorized(): ResponseEntity<ProblemDetail> =

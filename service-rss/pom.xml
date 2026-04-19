@@ -6,7 +6,7 @@
     <parent>
         <groupId>dev.streampack</groupId>
         <artifactId>streampack-parent</artifactId>
-        <version>1.1.9</version>
+        <version>1.1.9a</version>
     </parent>
 
     <artifactId>service-rss</artifactId>
@@ -20,6 +20,10 @@
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-web</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

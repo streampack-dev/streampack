@@ -5,7 +5,6 @@ import dev.streampack.blog.model.LogDayResponse
 import dev.streampack.blog.model.LogEntry
 import dev.streampack.blog.model.LogProvenanceListResponse
 import dev.streampack.blog.model.LogProvenanceSummary
-import dev.streampack.blog.service.CookieService
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
@@ -13,6 +12,7 @@ import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.ChannelControlOptionsRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.MessageLogService
+import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -36,8 +36,8 @@ import org.springframework.web.bind.annotation.RestController
 class LogController(
     private val channelOptionsRepository: ChannelControlOptionsRepository,
     private val messageLogService: MessageLogService,
-    private val jwtService: JwtService,
-) {
+    jwtService: JwtService,
+) : UserAwareController(jwtService) {
 
     @Operation(summary = "List browseable log provenances for the current user")
     @ApiResponse(
@@ -139,20 +139,6 @@ class LogController(
             Protocol.MATTERMOST -> true
             else -> false
         }
-    }
-
-    /** Extracts and validates the JWT from cookies first, then the Authorization header */
-    private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
-        val cookieToken =
-            request.cookies?.find { it.name == CookieService.ACCESS_TOKEN_COOKIE }?.value
-        if (cookieToken != null) {
-            val principal = jwtService.validateToken(cookieToken)
-            if (principal != null) return principal
-        }
-        val header = request.getHeader("Authorization") ?: return null
-        if (!header.startsWith("Bearer ")) return null
-        val token = header.substring(7)
-        return jwtService.validateToken(token)
     }
 
     private fun notFound(message: String): ResponseEntity<*> {
