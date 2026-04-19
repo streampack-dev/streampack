@@ -16,6 +16,7 @@ data class ChoiceArgType(
         if (caseInsensitive) options.associateBy { it.lowercase() } else emptyMap()
 
     val validOptions: List<String> = options.toList().sorted()
+    override val syntaxName: String = "one-of(${validOptions.joinToString("|")})"
 
     override fun parse(token: String): String? {
         return if (caseInsensitive) {

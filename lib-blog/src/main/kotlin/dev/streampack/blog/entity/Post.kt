@@ -32,6 +32,8 @@ data class Post(
     val status: PostStatus = PostStatus.DRAFT,
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "author_id") val author: User? = null,
     val publishedAt: Instant? = null,
+    @Column(nullable = false) val accessCount: Long = 0,
+    @Column val lastAccessedAt: Instant? = null,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     @Column(nullable = false) val updatedAt: Instant = Instant.now(),
     @Column(nullable = false) val deleted: Boolean = false,

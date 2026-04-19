@@ -22,6 +22,7 @@ import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestChannelConfiguration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -131,6 +132,7 @@ class PostControllerTests {
             jsonPath("$.title") { value("Published Post") }
             jsonPath("$.renderedHtml") { isNotEmpty() }
         }
+        waitForAccessCount(publishedPost.id, 1)
     }
 
     @Test
@@ -139,6 +141,21 @@ class PostControllerTests {
             status { isNotFound() }
             jsonPath("$.detail") { value("Post not found") }
         }
+    }
+
+    @Test
+    fun `POST post access returns accepted`() {
+        mockMvc.post("/posts/${publishedPost.id}/access").andExpect { status { isAccepted() } }
+    }
+
+    @Test
+    fun `GET post by id returns detail and increments access count`() {
+        mockMvc.get("/posts/${publishedPost.id}").andExpect {
+            status { isOk() }
+            jsonPath("$.id") { value(publishedPost.id.toString()) }
+            jsonPath("$.title") { value("Published Post") }
+        }
+        waitForAccessCount(publishedPost.id, 1)
     }
 
     // --- GET /posts/search ---
@@ -217,6 +234,15 @@ class PostControllerTests {
                 status { isBadRequest() }
                 jsonPath("$.detail") { value("Title is required") }
             }
+    }
+
+    private fun waitForAccessCount(postId: java.util.UUID, expected: Long) {
+        repeat(40) {
+            val current = postRepository.findById(postId).orElseThrow().accessCount
+            if (current == expected) return
+            Thread.sleep(25)
+        }
+        assertEquals(expected, postRepository.findById(postId).orElseThrow().accessCount)
     }
 
     @Test

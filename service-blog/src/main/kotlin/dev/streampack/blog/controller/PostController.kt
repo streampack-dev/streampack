@@ -14,6 +14,7 @@ import dev.streampack.blog.model.EditContentHttpRequest
 import dev.streampack.blog.model.EditContentRequest
 import dev.streampack.blog.model.FindContentRequest
 import dev.streampack.blog.model.PostStatus
+import dev.streampack.blog.model.RecordPostAccessRequest
 import dev.streampack.blog.model.SuggestTagsHttpRequest
 import dev.streampack.blog.model.SuggestTagsRequest
 import dev.streampack.blog.model.SuggestTagsResponse
@@ -131,7 +132,9 @@ class PostController(
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
         val payload = FindContentRequest.FindBySlug("$year/${"%02d".format(month)}/$slug")
-        return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
+        return maybeTrackPostAccess(
+            dispatch(payload, "posts/detail", user) { result -> mapError(result) }
+        )
     }
 
     @Operation(
@@ -158,7 +161,19 @@ class PostController(
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
         val payload = FindContentRequest.FindById(id)
-        return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
+        return maybeTrackPostAccess(
+            dispatch(payload, "posts/detail", user) { result -> mapError(result) }
+        )
+    }
+
+    @Operation(summary = "Record a UI-driven access of a blog post")
+    @ApiResponse(responseCode = "202", description = "Access tracking accepted")
+    @PostMapping("/posts/{id}/access")
+    fun recordPostAccess(
+        @Parameter(description = "Post UUIDv7") @PathVariable id: UUID
+    ): ResponseEntity<Void> {
+        eventGateway.send(MessageBuilder.withPayload(RecordPostAccessRequest(id)).build())
+        return ResponseEntity.accepted().build()
     }
 
     @Operation(
@@ -472,6 +487,16 @@ class PostController(
                     )
             }
         }
+    }
+
+    private fun maybeTrackPostAccess(response: ResponseEntity<*>): ResponseEntity<*> {
+        val detail = response.body as? ContentDetail ?: return response
+        if (response.statusCode.is2xxSuccessful) {
+            eventGateway.send(
+                MessageBuilder.withPayload(RecordPostAccessRequest(detail.id)).build()
+            )
+        }
+        return response
     }
 
     /** Maps an error to the appropriate HTTP status based on error message content */

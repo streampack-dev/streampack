@@ -12,6 +12,22 @@
 | `OperationService` | Executes registered operations in priority order and publishes terminal results. |
 | `OperationConfigService` | Stores global and per-provenance operation configuration. |
 
+## Command Parser
+
+`lib-core` also contains the shared text-command parser under `dev.streampack.core.parser`.
+
+Core parser types:
+
+| Type | Purpose |
+|------|---------|
+| `CommandLexer` | Tokenizes raw text, strips an optional leading `!`, and preserves quoted tokens. |
+| `CommandPattern` | Declares fixed literals plus typed positional arguments. |
+| `CommandArgType` | Validates and converts one token into a typed value. |
+| `CommandPatternMatcher` | Matches input against patterns and can render grammar/help lines from those patterns. |
+
+The parser is intended to become the preferred foundation for text-command parsing, but not every
+operation has migrated to it yet.
+
 ## Operation Outcomes
 
 - `OperationResult.Success`: definitive answer that is published to egress.
@@ -43,6 +59,9 @@ Protocol-specific identity resolution goes through `ServiceBindingRepository` an
 Use `Consumed` for maintenance work such as queueing, buffering, bookkeeping, or deferred
 background processing that should not generate user-visible output. Use `Declined` only when
 another operation should still get a chance to handle the same message.
+
+For parser details and the new grammar/help rendering surface, see
+[docs/reference/command-parser.md](/Users/joeo/work/streampack-dev/streampack/docs/reference/command-parser.md).
 
 ## Example Flows
 

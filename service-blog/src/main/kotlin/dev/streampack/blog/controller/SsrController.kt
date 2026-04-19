@@ -5,6 +5,7 @@ import dev.streampack.blog.config.BlogProperties
 import dev.streampack.blog.model.ContentDetail
 import dev.streampack.blog.model.ContentListResponse
 import dev.streampack.blog.model.FindContentRequest
+import dev.streampack.blog.model.RecordPostAccessRequest
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
@@ -77,6 +78,7 @@ class SsrController(
         }
 
         val detail = result.payload as ContentDetail
+        eventGateway.send(MessageBuilder.withPayload(RecordPostAccessRequest(detail.id)).build())
         val canonicalUrl = "$baseUrl/posts/${esc(detail.slug)}"
         val tags = detail.tags.joinToString(", ")
 
