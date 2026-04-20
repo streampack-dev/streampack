@@ -39,7 +39,7 @@
 
     <groupId>dev.streampack</groupId>
     <artifactId>streampack-parent</artifactId>
-    <version>1.1.9a</version>
+    <version>1.1.10</version>
     <packaging>pom</packaging>
 
     <modules>

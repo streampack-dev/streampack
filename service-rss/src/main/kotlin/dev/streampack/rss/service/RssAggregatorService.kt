@@ -4,28 +4,27 @@ package dev.streampack.rss.service
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.model.RssAggregatedItemResponse
 import dev.streampack.rss.model.RssAggregatedItemsResponse
+import dev.streampack.rss.model.RssFeedSourceResponse
+import dev.streampack.rss.model.RssFeedSourcesResponse
 import dev.streampack.rss.repository.RssEntryRepository
+import dev.streampack.rss.repository.RssFeedRepository
 import jakarta.persistence.criteria.JoinType
 import java.time.Instant
-import java.time.ZoneOffset
 import java.util.UUID
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /** Read-only aggregator over stored RSS entries. */
 @Service
-class RssAggregatorService(private val entryRepository: RssEntryRepository) {
+class RssAggregatorService(
+    private val entryRepository: RssEntryRepository,
+    private val feedRepository: RssFeedRepository,
+) {
 
     fun listItems(page: Int, size: Int, feed: String?, title: String?): RssAggregatedItemsResponse {
-        val pageable =
-            PageRequest.of(
-                page.coerceAtLeast(0),
-                size.coerceIn(1, 200),
-                Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("createdAt")),
-            )
+        val pageable = PageRequest.of(page.coerceAtLeast(0), size.coerceIn(1, 200))
         val normalizedFeed = feed?.trim()?.ifBlank { null }
         val normalizedTitle = title?.trim()?.ifBlank { null }
         val results =
@@ -41,6 +40,23 @@ class RssAggregatorService(private val entryRepository: RssEntryRepository) {
         )
     }
 
+    fun listFeeds(): RssFeedSourcesResponse =
+        RssFeedSourcesResponse(
+            feeds =
+                feedRepository
+                    .findAllByActiveTrue()
+                    .sortedBy { it.title.lowercase() }
+                    .map { feed ->
+                        RssFeedSourceResponse(
+                            title = feed.title,
+                            feedUrl = feed.feedUrl,
+                            siteUrl = feed.siteUrl,
+                            itemCount = entryRepository.countByFeed(feed),
+                            latestItemTimestamp = entryRepository.findLatestItemTimestamp(feed),
+                        )
+                    }
+        )
+
     @Transactional
     fun recordAccess(id: UUID) {
         val entry = entryRepository.findById(id).orElse(null) ?: return
@@ -51,13 +67,15 @@ class RssAggregatorService(private val entryRepository: RssEntryRepository) {
 
     private fun RssEntry.toResponse(): RssAggregatedItemResponse =
         RssAggregatedItemResponse(
+            id = id,
             feedTitle = feed.title,
             feedUrl = feed.feedUrl,
             siteUrl = feed.siteUrl,
             guid = guid,
             link = link,
             title = title,
-            publishedAt = publishedAt?.atOffset(ZoneOffset.UTC)?.toInstant(),
+            publishedAt = publishedAt,
+            receivedAt = createdAt,
         )
 
     private fun aggregatedEntrySpecification(
@@ -71,7 +89,15 @@ class RssAggregatorService(private val entryRepository: RssEntryRepository) {
                 "feed",
                 JoinType.INNER,
             )
-            query.distinct(true)
+            val effectiveTimestamp =
+                criteriaBuilder
+                    .coalesce<Instant>()
+                    .value(root.get("publishedAt"))
+                    .value(root.get("createdAt"))
+            query.orderBy(
+                criteriaBuilder.desc(effectiveTimestamp),
+                criteriaBuilder.desc(root.get<Instant>("createdAt")),
+            )
         }
 
         val predicates = mutableListOf(criteriaBuilder.isTrue(feedJoin.get("active")))
