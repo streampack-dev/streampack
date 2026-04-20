@@ -4,6 +4,7 @@ package dev.streampack.rss.controller
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.rss.model.RecordRssEntryAccessRequest
 import dev.streampack.rss.model.RssAggregatedItemsResponse
+import dev.streampack.rss.model.RssFeedSourcesResponse
 import dev.streampack.rss.service.RssAggregatorService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -43,6 +44,15 @@ class RssAggregatorController(
         @RequestParam(required = false) feed: String?,
         @RequestParam(required = false) title: String?,
     ): RssAggregatedItemsResponse = rssAggregatorService.listItems(page, size, feed, title)
+
+    @Operation(summary = "List active RSS feed sources")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Active RSS feed sources available to the aggregator UI",
+        content = [Content(schema = Schema(implementation = RssFeedSourcesResponse::class))],
+    )
+    @GetMapping("/feeds", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun feeds(): RssFeedSourcesResponse = rssAggregatorService.listFeeds()
 
     @Operation(summary = "Record a UI-driven access of a stored RSS item")
     @ApiResponse(responseCode = "202", description = "Access tracking accepted")

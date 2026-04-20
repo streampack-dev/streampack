@@ -903,10 +903,18 @@
           "guid" : {
             "type" : "string"
           },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "link" : {
             "type" : "string"
           },
           "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "receivedAt" : {
             "format" : "date-time",
             "type" : "string"
           },
@@ -917,7 +925,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "feedTitle", "feedUrl", "guid", "link", "title" ],
+        "required" : [ "feedTitle", "feedUrl", "guid", "id", "link", "receivedAt", "title" ],
         "type" : "object"
       },
       "RssAggregatedItemsResponse" : {
@@ -942,6 +950,41 @@
           }
         },
         "required" : [ "items", "page", "totalCount", "totalPages" ],
+        "type" : "object"
+      },
+      "RssFeedSourceResponse" : {
+        "properties" : {
+          "feedUrl" : {
+            "type" : "string"
+          },
+          "itemCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "latestItemTimestamp" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "siteUrl" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "feedUrl", "itemCount", "title" ],
+        "type" : "object"
+      },
+      "RssFeedSourcesResponse" : {
+        "properties" : {
+          "feeds" : {
+            "items" : {
+              "$ref" : "#/components/schemas/RssFeedSourceResponse"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "feeds" ],
         "type" : "object"
       },
       "SuggestTagsHttpRequest" : {
@@ -4181,6 +4224,38 @@
         } ],
         "summary" : "Add a comment to a post",
         "tags" : [ "Comments" ]
+      }
+    },
+    "/rss/feeds" : {
+      "get" : {
+        "operationId" : "feeds",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RssFeedSourcesResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
+                }
+              }
+            },
+            "description" : "Active RSS feed sources available to the aggregator UI"
+          }
+        },
+        "summary" : "List active RSS feed sources",
+        "tags" : [ "RSS Aggregator" ]
       }
     },
     "/rss/items" : {

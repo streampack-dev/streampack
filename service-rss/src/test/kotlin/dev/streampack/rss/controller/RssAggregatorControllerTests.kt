@@ -29,6 +29,7 @@ class RssAggregatorControllerTests {
     @Autowired lateinit var feedRepository: RssFeedRepository
     @Autowired lateinit var entryRepository: RssEntryRepository
     private lateinit var bytecodeSpringId: UUID
+    private lateinit var bytecodeUndatedId: UUID
 
     @BeforeEach
     fun setUp() {
@@ -81,6 +82,18 @@ class RssAggregatorControllerTests {
                 publishedAt = Instant.parse("2026-04-15T12:00:00Z"),
             )
         )
+        bytecodeUndatedId =
+            entryRepository
+                .save(
+                    RssEntry(
+                        feed = bytecode,
+                        guid = "bytecode-3",
+                        link = "https://bytecode.news/posts/no-published-date",
+                        title = "No Published Date",
+                        createdAt = Instant.parse("2026-04-18T13:00:00Z"),
+                    )
+                )
+                .id
         entryRepository.save(
             RssEntry(
                 feed = spring,
@@ -105,11 +118,32 @@ class RssAggregatorControllerTests {
     fun `GET rss items returns newest-first stored entries`() {
         mockMvc.get("/rss/items").andExpect {
             status { isOk() }
-            jsonPath("$.items.length()") { value(3) }
-            jsonPath("$.items[0].title") { value("Spring Release Notes") }
-            jsonPath("$.items[1].title") { value("Spring Signals") }
-            jsonPath("$.items[2].title") { value("Kotlin Roundup") }
-            jsonPath("$.totalCount") { value(3) }
+            jsonPath("$.items.length()") { value(4) }
+            jsonPath("$.items[0].id") { value(bytecodeUndatedId.toString()) }
+            jsonPath("$.items[0].title") { value("No Published Date") }
+            jsonPath("$.items[0].receivedAt") { value("2026-04-18T13:00:00Z") }
+            jsonPath("$.items[1].title") { value("Spring Release Notes") }
+            jsonPath("$.items[2].id") { value(bytecodeSpringId.toString()) }
+            jsonPath("$.items[2].title") { value("Spring Signals") }
+            jsonPath("$.items[3].title") { value("Kotlin Roundup") }
+            jsonPath("$.totalCount") { value(4) }
+        }
+    }
+
+    @Test
+    fun `GET rss feeds returns active source list for aggregator UI`() {
+        mockMvc.get("/rss/feeds").andExpect {
+            status { isOk() }
+            jsonPath("$.feeds.length()") { value(2) }
+            jsonPath("$.feeds[0].title") { value("bytecode.news") }
+            jsonPath("$.feeds[0].feedUrl") { value("https://bytecode.news/feed.xml") }
+            jsonPath("$.feeds[0].siteUrl") { value("https://bytecode.news") }
+            jsonPath("$.feeds[0].itemCount") { value(3) }
+            jsonPath("$.feeds[0].latestItemTimestamp") { value("2026-04-18T13:00:00Z") }
+            jsonPath("$.feeds[1].title") { value("Spring Blog") }
+            jsonPath("$.feeds[1].feedUrl") { value("https://spring.io/blog.atom") }
+            jsonPath("$.feeds[1].itemCount") { value(1) }
+            jsonPath("$.feeds[1].latestItemTimestamp") { value("2026-04-17T12:00:00Z") }
         }
     }
 
