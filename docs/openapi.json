@@ -14,7 +14,11 @@
       "AuthenticationFeatures" : {
         "properties" : {
           "oidc" : {
-            "$ref" : "#/components/schemas/OidcFeatures"
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/OidcFeatures"
+            }, {
+              "type" : "null"
+            } ]
           },
           "otp" : {
             "type" : "boolean"
@@ -36,7 +40,7 @@
             "type" : "string"
           },
           "parentName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "slug" : {
             "type" : "string"
@@ -76,7 +80,7 @@
           },
           "authorId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "children" : {
             "items" : {
@@ -99,7 +103,7 @@
             "type" : "string"
           },
           "markdownSource" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "renderedHtml" : {
             "type" : "string"
@@ -139,7 +143,7 @@
           },
           "authorId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "categories" : {
             "items" : {
@@ -156,18 +160,18 @@
             "type" : "string"
           },
           "excerpt" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "id" : {
             "format" : "uuid",
             "type" : "string"
           },
           "markdownSource" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "publishedAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "renderedHtml" : {
             "type" : "string"
@@ -253,7 +257,7 @@
             "type" : "integer"
           },
           "excerpt" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "id" : {
             "format" : "uuid",
@@ -261,7 +265,7 @@
           },
           "publishedAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "slug" : {
             "type" : "string"
@@ -290,7 +294,7 @@
           },
           "parentId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "name" ],
@@ -306,7 +310,7 @@
             "type" : "string"
           },
           "parentName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "slug" : {
             "type" : "string"
@@ -322,54 +326,47 @@
           },
           "parentCommentId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "markdownSource" ],
         "type" : "object"
       },
       "CreateContentHttpRequest" : {
-        "default" : "##default",
         "description" : "Request body for creating a new blog post draft",
         "properties" : {
           "categoryIds" : {
-            "default" : "##default",
             "description" : "Category UUIDv7s to associate. Non-existent or deleted IDs are skipped.",
             "items" : {
               "format" : "uuid",
               "type" : "string"
             },
-            "type" : "array"
+            "type" : [ "array", "null" ]
           },
           "formLoadedAt" : {
-            "default" : "##default",
             "description" : "Epoch milliseconds when the form was rendered (Date.now()). Required. Submissions arriving less than 3 seconds after this timestamp are silently rejected.",
             "example" : 1709740800000,
             "format" : "int64",
-            "type" : "integer"
+            "type" : [ "integer", "null" ]
           },
           "markdownSource" : {
-            "default" : "##default",
             "description" : "Post content in Markdown. No raw HTML allowed.",
             "example" : "Virtual threads change the concurrency model...",
             "type" : "string"
           },
           "summary" : {
-            "default" : "##default",
             "description" : "Optional manual summary text from the UI. This value is persisted as the post excerpt. If omitted or blank, the backend derives excerpt text heuristically from markdown content.",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "tags" : {
-            "default" : "##default",
             "description" : "Tag names to associate with the post. Created automatically if new.",
             "example" : [ "java", "concurrency" ],
             "items" : {
               "type" : "string"
             },
-            "type" : "array"
+            "type" : [ "array", "null" ]
           },
           "title" : {
-            "default" : "##default",
             "description" : "Post title",
             "example" : "Understanding Virtual Threads",
             "type" : "string"
@@ -385,7 +382,7 @@
           },
           "authorId" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "categories" : {
             "items" : {
@@ -398,7 +395,7 @@
             "type" : "string"
           },
           "excerpt" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "id" : {
             "format" : "uuid",
@@ -427,7 +424,7 @@
       "DeleteAccountRequest" : {
         "properties" : {
           "username" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "type" : "object"
@@ -435,10 +432,10 @@
       "DeriveSummaryHttpRequest" : {
         "properties" : {
           "markdownSource" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "title" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "type" : "object"
@@ -458,13 +455,13 @@
             "items" : {
               "type" : "string"
             },
-            "type" : "array"
+            "type" : [ "array", "null" ]
           },
           "markdownSource" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "title" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "type" : "object"
@@ -497,30 +494,30 @@
               "format" : "uuid",
               "type" : "string"
             },
-            "type" : "array"
+            "type" : [ "array", "null" ]
           },
           "markdownSource" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "publishedAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "sortOrder" : {
             "format" : "int32",
-            "type" : "integer"
+            "type" : [ "integer", "null" ]
           },
           "summary" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "tags" : {
             "items" : {
               "type" : "string"
             },
-            "type" : "array"
+            "type" : [ "array", "null" ]
           },
           "title" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "type" : "object"
@@ -528,10 +525,10 @@
       "EditProfileRequest" : {
         "properties" : {
           "displayName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "email" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "type" : "object"
@@ -545,7 +542,7 @@
             "type" : "string"
           },
           "value" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "rendered", "type" ],
@@ -565,7 +562,7 @@
           },
           "lastAccessedAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "locked" : {
             "type" : "boolean"
@@ -578,7 +575,7 @@
             "type" : "string"
           },
           "updatedBy" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "accessCount", "attributes", "locked", "selector", "updatedAt" ],
@@ -616,7 +613,7 @@
           },
           "lastAccessedAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "locked" : {
             "type" : "boolean"
@@ -631,14 +628,14 @@
             "type" : "array"
           },
           "text" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "updatedAt" : {
             "format" : "date-time",
             "type" : "string"
           },
           "updatedBy" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "accessCount", "locked", "selector", "tags", "updatedAt" ],
@@ -679,16 +676,18 @@
       },
       "JsonRpcRequest" : {
         "properties" : {
-          "id" : { },
+          "id" : {
+            "type" : "null"
+          },
           "jsonrpc" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "method" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "params" : {
             "additionalProperties" : { },
-            "type" : "object"
+            "type" : [ "object", "null" ]
           }
         },
         "type" : "object"
@@ -785,14 +784,14 @@
       "LogProvenanceSummary" : {
         "properties" : {
           "latestContentPreview" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "latestSender" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "latestTimestamp" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "protocol" : {
             "type" : "string"
@@ -804,7 +803,7 @@
             "type" : "string"
           },
           "serviceId" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "protocol", "provenanceUri", "replyTo" ],
@@ -912,14 +911,14 @@
           },
           "publishedAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "receivedAt" : {
             "format" : "date-time",
             "type" : "string"
           },
           "siteUrl" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "title" : {
             "type" : "string"
@@ -963,10 +962,10 @@
           },
           "latestItemTimestamp" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "siteUrl" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "title" : {
             "type" : "string"
@@ -993,13 +992,13 @@
             "items" : {
               "type" : "string"
             },
-            "type" : "array"
+            "type" : [ "array", "null" ]
           },
           "markdownSource" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "title" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "type" : "object"
@@ -1066,19 +1065,19 @@
       "VersionInfo" : {
         "properties" : {
           "branch" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "buildTime" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "commit" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "name" : {
             "type" : "string"
           },
           "version" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "name" ],
@@ -1118,20 +1117,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CreateCategoryResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/CreateCategoryResponse"
                 }
               }
             },
@@ -1141,20 +1127,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1164,20 +1137,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1208,20 +1168,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentOperationConfirmation",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
                 }
               }
             },
@@ -1231,20 +1178,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1254,20 +1188,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1277,20 +1198,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1329,20 +1237,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentOperationConfirmation",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
                 }
               }
             },
@@ -1352,20 +1247,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1375,20 +1257,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1398,20 +1267,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1460,20 +1316,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentListResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentListResponse"
                 }
               }
             },
@@ -1483,20 +1326,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1506,20 +1336,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1558,20 +1375,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentOperationConfirmation",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
                 }
               }
             },
@@ -1581,20 +1385,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1604,20 +1395,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1627,20 +1405,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1679,20 +1444,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
             },
@@ -1702,20 +1454,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1725,20 +1464,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1748,20 +1474,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1802,20 +1515,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
             },
@@ -1825,20 +1525,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1848,20 +1535,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1871,20 +1545,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1925,20 +1586,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DeriveTagsResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/DeriveTagsResponse"
                 }
               }
             },
@@ -1948,20 +1596,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1971,20 +1606,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -1994,20 +1616,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2027,15 +1636,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "application/xml" : {
-                "schema" : {
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "type" : "string"
-                }
-              }
+              "application/xml" : { }
             },
             "description" : "OPML export of active feeds"
           },
@@ -2043,20 +1644,7 @@
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2066,20 +1654,7 @@
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2132,15 +1707,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "application/json" : {
-                "schema" : {
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "type" : "string"
-                }
-              }
+              "application/json" : { }
             },
             "description" : "Import summary"
           },
@@ -2148,20 +1715,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2171,20 +1725,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2345,20 +1886,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserPrincipal",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/UserPrincipal"
                 }
               }
             },
@@ -2368,20 +1896,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2391,20 +1906,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2414,20 +1916,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2614,20 +2103,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/LoginResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/LoginResponse"
                 }
               }
             },
@@ -2637,20 +2113,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2679,20 +2142,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserPrincipal",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/UserPrincipal"
                 }
               }
             },
@@ -2714,20 +2164,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/LoginResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/LoginResponse"
                 }
               }
             },
@@ -2737,20 +2174,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2769,20 +2193,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserPrincipal",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/UserPrincipal"
                 }
               }
             },
@@ -2792,20 +2203,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2863,26 +2261,10 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
                   "items" : {
-                    "$ref" : "#/components/schemas/CategorySummary",
-                    "contains" : {
-                      "default" : "##default"
-                    },
-                    "default" : "##default",
-                    "unevaluatedItems" : {
-                      "default" : "##default"
-                    }
+                    "$ref" : "#/components/schemas/CategorySummary"
                   },
-                  "type" : "array",
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "type" : "array"
                 }
               }
             },
@@ -2920,20 +2302,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CommentDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/CommentDetail"
                 }
               }
             },
@@ -2943,20 +2312,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2966,20 +2322,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -2989,20 +2332,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3191,20 +2521,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/LogDayResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/LogDayResponse"
                 }
               }
             },
@@ -3214,20 +2531,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3246,20 +2550,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/LogProvenanceListResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/LogProvenanceListResponse"
                 }
               }
             },
@@ -3351,8 +2642,9 @@
           "name" : "page",
           "required" : false,
           "schema" : {
-            "default" : "##default",
-            "type" : "string"
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
           }
         }, {
           "description" : "Number of posts per page",
@@ -3361,8 +2653,9 @@
           "name" : "size",
           "required" : false,
           "schema" : {
-            "default" : "##default",
-            "type" : "string"
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
           }
         }, {
           "description" : "Filter by category name",
@@ -3370,7 +2663,6 @@
           "name" : "category",
           "required" : false,
           "schema" : {
-            "default" : "##default",
             "type" : "string"
           }
         }, {
@@ -3379,7 +2671,6 @@
           "name" : "tag",
           "required" : false,
           "schema" : {
-            "default" : "##default",
             "type" : "string"
           }
         } ],
@@ -3388,20 +2679,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentListResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentListResponse"
                 }
               }
             },
@@ -3429,20 +2707,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CreateContentResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/CreateContentResponse"
                 }
               }
             },
@@ -3452,20 +2717,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3475,20 +2727,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3521,20 +2760,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DeriveSummaryResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/DeriveSummaryResponse"
                 }
               }
             },
@@ -3544,20 +2770,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3567,20 +2780,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3613,20 +2813,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/SuggestTagsResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/SuggestTagsResponse"
                 }
               }
             },
@@ -3636,20 +2823,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3671,7 +2845,6 @@
           "name" : "q",
           "required" : true,
           "schema" : {
-            "default" : "##default",
             "type" : "string"
           }
         }, {
@@ -3681,8 +2854,9 @@
           "name" : "page",
           "required" : false,
           "schema" : {
-            "default" : "##default",
-            "type" : "string"
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
           }
         }, {
           "description" : "Number of results per page",
@@ -3691,8 +2865,9 @@
           "name" : "size",
           "required" : false,
           "schema" : {
-            "default" : "##default",
-            "type" : "string"
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
           }
         } ],
         "responses" : {
@@ -3700,20 +2875,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentListResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentListResponse"
                 }
               }
             },
@@ -3734,7 +2896,7 @@
           "name" : "id",
           "required" : true,
           "schema" : {
-            "default" : "##default",
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -3743,20 +2905,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
             },
@@ -3766,20 +2915,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3798,7 +2934,7 @@
           "name" : "id",
           "required" : true,
           "schema" : {
-            "default" : "##default",
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -3817,20 +2953,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
             },
@@ -3840,20 +2963,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3863,20 +2973,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3886,20 +2983,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -3922,7 +3006,7 @@
           "name" : "id",
           "required" : true,
           "schema" : {
-            "default" : "##default",
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -3946,8 +3030,10 @@
           "name" : "year",
           "required" : true,
           "schema" : {
-            "default" : "##default",
-            "type" : "string"
+            "format" : "int32",
+            "maximum" : 3000,
+            "minimum" : 2007,
+            "type" : "integer"
           }
         }, {
           "description" : "Publication month (1-12)",
@@ -3956,8 +3042,10 @@
           "name" : "month",
           "required" : true,
           "schema" : {
-            "default" : "##default",
-            "type" : "string"
+            "format" : "int32",
+            "maximum" : 12,
+            "minimum" : 1,
+            "type" : "integer"
           }
         }, {
           "description" : "URL-safe slug derived from the post title",
@@ -3966,7 +3054,6 @@
           "name" : "slug",
           "required" : true,
           "schema" : {
-            "default" : "##default",
             "type" : "string"
           }
         } ],
@@ -3975,20 +3062,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
             },
@@ -3998,20 +3072,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4030,7 +3091,6 @@
           "name" : "year",
           "required" : true,
           "schema" : {
-            "default" : "##default",
             "format" : "int32",
             "maximum" : 3000,
             "minimum" : 2007,
@@ -4041,7 +3101,6 @@
           "name" : "month",
           "required" : true,
           "schema" : {
-            "default" : "##default",
             "format" : "int32",
             "maximum" : 12,
             "minimum" : 1,
@@ -4060,20 +3119,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CommentThreadResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/CommentThreadResponse"
                 }
               }
             },
@@ -4083,20 +3129,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4113,7 +3146,6 @@
           "name" : "year",
           "required" : true,
           "schema" : {
-            "default" : "##default",
             "format" : "int32",
             "maximum" : 3000,
             "minimum" : 2007,
@@ -4124,7 +3156,6 @@
           "name" : "month",
           "required" : true,
           "schema" : {
-            "default" : "##default",
             "format" : "int32",
             "maximum" : 12,
             "minimum" : 1,
@@ -4153,20 +3184,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CommentDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/CommentDetail"
                 }
               }
             },
@@ -4176,20 +3194,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4199,20 +3204,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
@@ -4234,20 +3226,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/RssFeedSourcesResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/RssFeedSourcesResponse"
                 }
               }
             },
@@ -4299,20 +3278,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/RssAggregatedItemsResponse",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/RssAggregatedItemsResponse"
                 }
               }
             },
@@ -4475,20 +3441,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/TaxonomySnapshot",
-                  "additionalProperties" : {
-                    "default" : "##default"
-                  },
-                  "contains" : {
-                    "default" : "##default"
-                  },
-                  "default" : "##default",
-                  "items" : {
-                    "default" : "##default"
-                  },
-                  "unevaluatedItems" : {
-                    "default" : "##default"
-                  }
+                  "$ref" : "#/components/schemas/TaxonomySnapshot"
                 }
               }
             },

@@ -31,6 +31,22 @@ data class Provenance(
         return URI(scheme, authority, path, null, null).toASCIIString()
     }
 
+    /**
+     * Encodes the stable identity portion of this provenance.
+     *
+     * Discord guild targets may include human-readable display labels after the channel ID. Those
+     * labels are useful for logs, but they must not affect routing/config identity.
+     */
+    fun identityEncode(): String {
+        if (protocol == Protocol.DISCORD && serviceId != null) {
+            val channelId = replyTo.substringBefore("/")
+            if (DISCORD_SNOWFLAKE.matches(channelId)) {
+                return copy(replyTo = channelId).encode()
+            }
+        }
+        return encode()
+    }
+
     companion object {
         const val HEADER = "provenance"
         const val BOT_NICK = "botNick"
@@ -38,6 +54,7 @@ data class Provenance(
         const val IS_ACTION = "isAction"
         const val LOOPBACK_KEY = "loopback"
         const val BRIDGED = "streampack_bridged"
+        private val DISCORD_SNOWFLAKE = Regex("\\d{15,25}")
 
         /** Decodes a URI-format address string into a Provenance */
         fun decode(uri: String): Provenance {

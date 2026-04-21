@@ -4,10 +4,14 @@ package dev.streampack.discord.service
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.ChannelControlService
+import dev.streampack.core.service.MailNotificationPublisher
 import dev.streampack.core.service.ProtocolAdapter
 import dev.streampack.core.service.UserResolutionService
 import dev.streampack.discord.config.DiscordProperties
+import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import net.dv8tion.jda.api.JDA
@@ -20,6 +24,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.integration.support.MessageBuilder
@@ -34,6 +39,8 @@ class DiscordAdapter(
     private val userResolutionService: UserResolutionService,
     private val channelControlService: ChannelControlService,
     private val properties: DiscordProperties,
+    private val mailNotificationPublisher: ObjectProvider<MailNotificationPublisher>,
+    private val userRepository: UserRepository,
 ) : ListenerAdapter(), InitializingBean, DisposableBean, ProtocolAdapter {
     override val protocol: Protocol = Protocol.DISCORD
     override val serviceName: String = "discord"
@@ -45,6 +52,7 @@ class DiscordAdapter(
 
     /** Tracks the last message per channel for reaction filtering */
     internal val lastMessageByChannel = ConcurrentHashMap<String, LastMessage>()
+    private val legacyNotificationTimes = ConcurrentHashMap<String, Instant>()
 
     override fun afterPropertiesSet() {
         if (properties.token.isBlank()) {
@@ -84,12 +92,15 @@ class DiscordAdapter(
         for (guild in event.jda.guilds) {
             for (channel in guild.textChannels) {
                 val uri =
-                    Provenance(
-                            protocol = Protocol.DISCORD,
-                            serviceId = guild.id,
-                            replyTo = "#${channel.name}",
+                    DiscordProvenance.guildChannel(
+                            guildId = guild.id,
+                            guildName = guild.name,
+                            channelId = channel.id,
+                            channelName = channel.name,
+                            categoryId = channel.parentCategory?.id,
+                            categoryName = channel.parentCategory?.name,
                         )
-                        .encode()
+                        .identityEncode()
                 channelControlService.getOrCreateOptions(uri)
             }
         }
@@ -113,19 +124,18 @@ class DiscordAdapter(
 
         if (event.isFromGuild) {
             val guild = event.guild
-            val channelName = "#${event.channel.name}"
+            val textChannel = guild.getTextChannelById(event.channel.id)
             val user = userResolutionService.resolve(Protocol.DISCORD, guild.id, event.author.id)
             val provenance =
-                Provenance(
-                    protocol = Protocol.DISCORD,
-                    serviceId = guild.id,
-                    replyTo = channelName,
+                DiscordProvenance.guildChannel(
+                    guildId = guild.id,
+                    guildName = guild.name,
+                    channelId = event.channel.id,
+                    channelName = event.channel.name,
+                    categoryId = textChannel?.parentCategory?.id,
+                    categoryName = textChannel?.parentCategory?.name,
+                    botNick = event.jda.selfUser.name,
                     user = user,
-                    metadata =
-                        mapOf(
-                            Provenance.BOT_NICK to event.jda.selfUser.name,
-                            "guildName" to guild.name,
-                        ),
                 )
 
             val nick = event.member?.effectiveName ?: event.author.effectiveName
@@ -171,16 +181,18 @@ class DiscordAdapter(
         if (!shouldRelayReaction(channelKey, event.messageId)) return
 
         val guild = event.guild
-        val channelName = "#${event.channel.name}"
+        val textChannel = guild.getTextChannelById(event.channel.id)
         val nick = event.member?.effectiveName ?: event.user?.effectiveName ?: "unknown"
         val emojiName = event.emoji.name
         val provenance =
-            Provenance(
-                protocol = Protocol.DISCORD,
-                serviceId = guild.id,
-                replyTo = channelName,
-                metadata =
-                    mapOf(Provenance.BOT_NICK to event.jda.selfUser.name, "guildName" to guild.name),
+            DiscordProvenance.guildChannel(
+                guildId = guild.id,
+                guildName = guild.name,
+                channelId = event.channel.id,
+                channelName = event.channel.name,
+                categoryId = textChannel?.parentCategory?.id,
+                categoryName = textChannel?.parentCategory?.name,
+                botNick = event.jda.selfUser.name,
             )
 
         val payload = "* $nick reacted with :$emojiName:"
@@ -257,9 +269,9 @@ class DiscordAdapter(
     }
 
     /** Sends a text message to a guild channel */
-    fun sendToChannel(guildId: String, channelName: String, text: String) {
+    fun sendToChannel(guildId: String, replyTo: String, text: String) {
         if (!::jda.isInitialized) {
-            logger.warn("JDA not initialized, cannot send to {}/{}", guildId, channelName)
+            logger.warn("JDA not initialized, cannot send to {}/{}", guildId, replyTo)
             return
         }
         val guild = jda.getGuildById(guildId)
@@ -267,13 +279,160 @@ class DiscordAdapter(
             logger.warn("Guild '{}' not found", guildId)
             return
         }
-        val cleanName = channelName.removePrefix("#")
-        val channels = guild.getTextChannelsByName(cleanName, true)
-        if (channels.isEmpty()) {
-            logger.warn("Channel '{}' not found in guild '{}'", channelName, guild.name)
+
+        val channelId = DiscordProvenance.channelIdOrNull(replyTo)
+        if (channelId != null) {
+            val channel = jda.getTextChannelById(channelId)
+            if (channel == null) {
+                logger.warn("Discord channel '{}' not found for guild '{}'", channelId, guildId)
+                return
+            }
+            if (channel.guild.id != guildId) {
+                logger.warn(
+                    "Discord channel '{}' belongs to guild '{}', not requested guild '{}'",
+                    channelId,
+                    channel.guild.id,
+                    guildId,
+                )
+                return
+            }
+            channel.sendMessage(text).queue()
             return
         }
-        channels.first().sendMessage(text).queue()
+
+        if (!DiscordProvenance.isLegacyGuildChannelReplyTo(replyTo)) {
+            logger.warn("Invalid Discord guild reply target '{}' for guild '{}'", replyTo, guildId)
+            return
+        }
+
+        val cleanName = replyTo.removePrefix("#")
+        val channels = guild.getTextChannelsByName(cleanName, true)
+        when (channels.size) {
+            0 -> {
+                notifyLegacyDiscordProvenance(
+                    key = "missing:$guildId:$replyTo",
+                    subject = "Legacy Discord provenance could not be resolved",
+                    body =
+                        """
+                        Legacy Discord provenance could not be resolved.
+
+                        Legacy URI:
+                        discord://$guildId/${replyTo}
+
+                        Guild:
+                        ${guild.name} ($guildId)
+
+                        Problem:
+                        No channel named '$replyTo' was found. Update persisted bridge/channel-control/operation configuration to a channel-ID-first Discord URI.
+                        """
+                            .trimIndent(),
+                )
+                logger.warn(
+                    "Legacy Discord channel '{}' not found in guild '{}'",
+                    replyTo,
+                    guild.name,
+                )
+            }
+            1 -> {
+                val channel = channels.first()
+                val canonical =
+                    DiscordProvenance.guildChannel(
+                            guildId = guild.id,
+                            guildName = guild.name,
+                            channelId = channel.id,
+                            channelName = channel.name,
+                            categoryId = channel.parentCategory?.id,
+                            categoryName = channel.parentCategory?.name,
+                        )
+                        .encode()
+                notifyLegacyDiscordProvenance(
+                    key = "unique:$guildId:$replyTo",
+                    subject = "Legacy Discord provenance needs repair",
+                    body =
+                        """
+                        Legacy Discord provenance was used and uniquely resolved.
+
+                        Legacy URI:
+                        discord://$guildId/${replyTo}
+
+                        Canonical URI:
+                        $canonical
+
+                        Guild:
+                        ${guild.name} ($guildId)
+
+                        Action:
+                        Update persisted bridge/channel-control/operation configuration to use the canonical URI.
+                        """
+                            .trimIndent(),
+                )
+                logger.warn(
+                    "Legacy Discord provenance discord://{}/{} uniquely resolved to {}. Repair persisted configuration.",
+                    guildId,
+                    replyTo,
+                    canonical,
+                )
+                channel.sendMessage(text).queue()
+            }
+            else -> {
+                val candidates =
+                    channels.joinToString("\n") { channel ->
+                        val canonical =
+                            DiscordProvenance.guildChannel(
+                                    guildId = guild.id,
+                                    guildName = guild.name,
+                                    channelId = channel.id,
+                                    channelName = channel.name,
+                                    categoryId = channel.parentCategory?.id,
+                                    categoryName = channel.parentCategory?.name,
+                                )
+                                .encode()
+                        val category = channel.parentCategory?.name ?: "(no category)"
+                        "  $canonical category=$category"
+                    }
+                notifyLegacyDiscordProvenance(
+                    key = "ambiguous:$guildId:$replyTo",
+                    subject = "Legacy Discord provenance is ambiguous",
+                    body =
+                        """
+                        Legacy Discord provenance matched multiple channels and was not routed.
+
+                        Legacy URI:
+                        discord://$guildId/${replyTo}
+
+                        Guild:
+                        ${guild.name} ($guildId)
+
+                        Candidates:
+                        $candidates
+
+                        Action:
+                        Update persisted bridge/channel-control/operation configuration to one of the canonical channel-ID-first URIs above.
+                        """
+                            .trimIndent(),
+                )
+                logger.warn(
+                    "Legacy Discord provenance discord://{}/{} matched multiple channels in guild '{}'; not routing. Candidates:\n{}",
+                    guildId,
+                    replyTo,
+                    guild.name,
+                    candidates,
+                )
+            }
+        }
+    }
+
+    private fun notifyLegacyDiscordProvenance(key: String, subject: String, body: String) {
+        val now = Instant.now()
+        val previous = legacyNotificationTimes[key]
+        if (previous != null && Duration.between(previous, now) < LEGACY_NOTIFICATION_INTERVAL) {
+            return
+        }
+        legacyNotificationTimes[key] = now
+
+        val recipients = userRepository.findDistinctActiveAdminEmailAddresses()
+        if (recipients.isEmpty()) return
+        mailNotificationPublisher.ifAvailable { it.publishAll(recipients, subject, body) }
     }
 
     /** Sends a direct message to a user by their Discord user ID */
@@ -287,6 +446,7 @@ class DiscordAdapter(
 
     companion object {
         const val MAX_REACTIONS_PER_MESSAGE = 5
+        val LEGACY_NOTIFICATION_INTERVAL: Duration = Duration.ofHours(24)
     }
 }
 

@@ -57,6 +57,33 @@ class ProvenanceTests {
     }
 
     @Test
+    fun `Discord identity encoding ignores display labels after channel id`() {
+        val provenance =
+            Provenance(
+                protocol = Protocol.DISCORD,
+                serviceId = "1256590312177012806",
+                replyTo = "222222222222222222/server/rcompat/#general",
+            )
+
+        assertEquals(
+            "discord://1256590312177012806/222222222222222222",
+            provenance.identityEncode(),
+        )
+    }
+
+    @Test
+    fun `Discord legacy name provenance identity remains unchanged`() {
+        val provenance =
+            Provenance(
+                protocol = Protocol.DISCORD,
+                serviceId = "1256590312177012806",
+                replyTo = "#general",
+            )
+
+        assertEquals("discord://1256590312177012806/%23general", provenance.identityEncode())
+    }
+
+    @Test
     fun `round trip encode then decode preserves components`() {
         val original =
             Provenance(protocol = Protocol.IRC, serviceId = "ircservice", replyTo = "oftc/#java")

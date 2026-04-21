@@ -61,9 +61,13 @@ class BridgeAdminOperation(private val bridgeService: BridgeService) :
 
         return when (val result = bridgeService.copy(sourceUri, targetUri)) {
             is BridgeService.CopyResult.Success ->
-                OperationResult.Success("Bridge established: $sourceUri -> $targetUri")
+                OperationResult.Success(
+                    "Bridge established: ${result.pair.firstUri} -> ${result.pair.secondUri}"
+                )
             is BridgeService.CopyResult.AlreadyExists ->
-                OperationResult.Success("Bridge already exists: $sourceUri -> $targetUri")
+                OperationResult.Success(
+                    "Bridge already exists: ${result.pair.firstUri} -> ${result.pair.secondUri}"
+                )
             is BridgeService.CopyResult.Error -> OperationResult.Error(result.message)
         }
     }
