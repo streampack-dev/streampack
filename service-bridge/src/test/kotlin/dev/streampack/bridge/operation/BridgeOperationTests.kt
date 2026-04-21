@@ -102,6 +102,28 @@ class BridgeOperationTests {
     }
 
     @Test
+    fun `bridge copy normalizes Discord display labels to stable channel identity`() {
+        val source = "discord://1256590312177012806/222222222222222222/server/rcompat/%23general"
+        val target = "irc://libera/%23java"
+
+        bridgeService.copy(source, target)
+
+        assertEquals(
+            listOf(target),
+            bridgeService.getCopyTargets("discord://1256590312177012806/222222222222222222"),
+        )
+        assertEquals(
+            listOf(target),
+            bridgeService.getCopyTargets(
+                "discord://1256590312177012806/222222222222222222/renamed/other/%23changed"
+            ),
+        )
+        assertTrue(
+            bridgeService.getCopyTargets("discord://1256590312177012806/%23general").isEmpty()
+        )
+    }
+
+    @Test
     fun `bridge copy reverse direction creates bidirectional mirror`() {
         bridgeService.copy("irc://a/%23one", "irc://b/%23two")
 

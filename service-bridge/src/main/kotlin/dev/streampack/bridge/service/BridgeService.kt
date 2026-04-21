@@ -3,6 +3,7 @@ package dev.streampack.bridge.service
 
 import dev.streampack.bridge.entity.BridgePair
 import dev.streampack.bridge.repository.BridgePairRepository
+import dev.streampack.core.model.Provenance
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,16 +25,19 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
      * a new pair. If either URI is already paired with a different URI, returns an error message.
      */
     fun copy(sourceUri: String, targetUri: String): CopyResult {
-        if (sourceUri == targetUri) {
+        val normalizedSourceUri = sourceUri.toProvenanceIdentityUri()
+        val normalizedTargetUri = targetUri.toProvenanceIdentityUri()
+
+        if (normalizedSourceUri == normalizedTargetUri) {
             return CopyResult.Error("Cannot bridge a channel to itself")
         }
 
-        val existingPair = findPairContaining(sourceUri, targetUri)
+        val existingPair = findPairContaining(normalizedSourceUri, normalizedTargetUri)
 
         if (existingPair != null) {
             // Both are in the same pair - just update direction
             val updated =
-                if (existingPair.firstUri == sourceUri) {
+                if (existingPair.firstUri == normalizedSourceUri) {
                     if (existingPair.copyFirstToSecond) {
                         return CopyResult.AlreadyExists(existingPair)
                     }
@@ -45,37 +49,47 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
                     existingPair.copy(copySecondToFirst = true)
                 }
             pairRepository.save(updated)
-            logger.info("Updated bridge direction: {} -> {}", sourceUri, targetUri)
+            logger.info(
+                "Updated bridge direction: {} -> {}",
+                normalizedSourceUri,
+                normalizedTargetUri,
+            )
             return CopyResult.Success(updated)
         }
 
         // Check if either URI is already paired with someone else
-        val sourceConflict = findPairFor(sourceUri)
+        val sourceConflict = findPairFor(normalizedSourceUri)
         if (sourceConflict != null) {
-            val partner = partnerOf(sourceConflict, sourceUri)
-            return CopyResult.Error("$sourceUri is already paired with $partner")
+            val partner = partnerOf(sourceConflict, normalizedSourceUri)
+            return CopyResult.Error("$normalizedSourceUri is already paired with $partner")
         }
-        val targetConflict = findPairFor(targetUri)
+        val targetConflict = findPairFor(normalizedTargetUri)
         if (targetConflict != null) {
-            val partner = partnerOf(targetConflict, targetUri)
-            return CopyResult.Error("$targetUri is already paired with $partner")
+            val partner = partnerOf(targetConflict, normalizedTargetUri)
+            return CopyResult.Error("$normalizedTargetUri is already paired with $partner")
         }
 
         // Create new pair
         val pair =
             pairRepository.save(
-                BridgePair(firstUri = sourceUri, secondUri = targetUri, copyFirstToSecond = true)
+                BridgePair(
+                    firstUri = normalizedSourceUri,
+                    secondUri = normalizedTargetUri,
+                    copyFirstToSecond = true,
+                )
             )
-        logger.info("Created bridge pair: {} -> {}", sourceUri, targetUri)
+        logger.info("Created bridge pair: {} -> {}", normalizedSourceUri, normalizedTargetUri)
         return CopyResult.Success(pair)
     }
 
     /** Removes a one-way copy. If both directions are gone, dissolves the pair. */
     fun removeCopy(sourceUri: String, targetUri: String): Boolean {
-        val pair = findPairContaining(sourceUri, targetUri) ?: return false
+        val normalizedSourceUri = sourceUri.toProvenanceIdentityUri()
+        val normalizedTargetUri = targetUri.toProvenanceIdentityUri()
+        val pair = findPairContaining(normalizedSourceUri, normalizedTargetUri) ?: return false
 
         val updated =
-            if (pair.firstUri == sourceUri) {
+            if (pair.firstUri == normalizedSourceUri) {
                 pair.copy(copyFirstToSecond = false)
             } else {
                 pair.copy(copySecondToFirst = false)
@@ -86,7 +100,11 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
             logger.info("Dissolved bridge pair between {} and {}", pair.firstUri, pair.secondUri)
         } else {
             pairRepository.save(updated)
-            logger.info("Removed bridge direction: {} -> {}", sourceUri, targetUri)
+            logger.info(
+                "Removed bridge direction: {} -> {}",
+                normalizedSourceUri,
+                normalizedTargetUri,
+            )
         }
         return true
     }
@@ -94,12 +112,18 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
     /** Returns the URIs that the given provenance copies TO */
     @Transactional(readOnly = true)
     fun getCopyTargets(provenanceUri: String): List<String> {
-        val pair = findPairFor(provenanceUri) ?: return emptyList()
+        val normalizedProvenanceUri = provenanceUri.toProvenanceIdentityUri()
+        val pair =
+            findPairFor(normalizedProvenanceUri)
+                ?: run {
+                    warnIfDiscordLegacyBridgeExists(provenanceUri, normalizedProvenanceUri)
+                    return emptyList()
+                }
         val targets = mutableListOf<String>()
-        if (pair.firstUri == provenanceUri && pair.copyFirstToSecond) {
+        if (pair.firstUri == normalizedProvenanceUri && pair.copyFirstToSecond) {
             targets.add(pair.secondUri)
         }
-        if (pair.secondUri == provenanceUri && pair.copySecondToFirst) {
+        if (pair.secondUri == normalizedProvenanceUri && pair.copySecondToFirst) {
             targets.add(pair.firstUri)
         }
         return targets
@@ -118,8 +142,9 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
     /** Returns the pair containing the given URI, or null */
     @Transactional(readOnly = true)
     fun findPairFor(provenanceUri: String): BridgePair? {
-        return pairRepository.findByFirstUriAndDeletedFalse(provenanceUri)
-            ?: pairRepository.findBySecondUriAndDeletedFalse(provenanceUri)
+        val normalizedProvenanceUri = provenanceUri.toProvenanceIdentityUri()
+        return pairRepository.findByFirstUriAndDeletedFalse(normalizedProvenanceUri)
+            ?: pairRepository.findBySecondUriAndDeletedFalse(normalizedProvenanceUri)
     }
 
     /** Returns the pair containing both URIs, or null if they are not paired together */
@@ -131,6 +156,37 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
     /** Returns the other URI in the pair */
     private fun partnerOf(pair: BridgePair, uri: String): String {
         return if (pair.firstUri == uri) pair.secondUri else pair.firstUri
+    }
+
+    private fun String.toProvenanceIdentityUri(): String =
+        runCatching { Provenance.decode(this).identityEncode() }.getOrDefault(this)
+
+    private fun warnIfDiscordLegacyBridgeExists(
+        provenanceUri: String,
+        normalizedProvenanceUri: String,
+    ) {
+        val legacyUri = provenanceUri.toDiscordLegacyNameUriOrNull() ?: return
+        val legacyPair =
+            pairRepository.findByFirstUriAndDeletedFalse(legacyUri)
+                ?: pairRepository.findBySecondUriAndDeletedFalse(legacyUri)
+                ?: return
+
+        logger.warn(
+            "Legacy Discord bridge row '{}' exists but was not used for canonical provenance '{}'. Repair bridge pair {} <-> {} to channel-ID-first Discord URI(s).",
+            legacyUri,
+            normalizedProvenanceUri,
+            legacyPair.firstUri,
+            legacyPair.secondUri,
+        )
+    }
+
+    private fun String.toDiscordLegacyNameUriOrNull(): String? {
+        val provenance = runCatching { Provenance.decode(this) }.getOrNull() ?: return null
+        if (provenance.protocol != dev.streampack.core.model.Protocol.DISCORD) return null
+        if (provenance.serviceId == null) return null
+        val channelLabel = provenance.replyTo.substringAfterLast("/", "")
+        if (!channelLabel.startsWith("#")) return null
+        return provenance.copy(replyTo = channelLabel).encode()
     }
 
     /** Result of a copy operation */

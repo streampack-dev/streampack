@@ -26,7 +26,8 @@ class DiscordEgressSubscriber(
         discordAdapter.signalCharacter
 
     override fun deliver(result: OperationResult, provenance: Provenance) {
-        val isMuted = channelControlService.getOptions(provenance.encode())?.automute ?: false
+        val isMuted =
+            channelControlService.getOptions(provenance.identityEncode())?.automute ?: false
         if (isMuted) {
             logger.debug("Channel '{}' is muted, suppressing reply", provenance.replyTo)
             return
