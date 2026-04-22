@@ -6,7 +6,7 @@
     <parent>
         <groupId>dev.streampack</groupId>
         <artifactId>streampack-parent</artifactId>
-        <version>1.2.0</version>
+        <version>1.2.1</version>
     </parent>
 
     <artifactId>lib-blog</artifactId>
@@ -23,6 +23,10 @@
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-factoid</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-temperature</artifactId>
         </dependency>
         <dependency>
             <groupId>io.swagger.core.v3</groupId>

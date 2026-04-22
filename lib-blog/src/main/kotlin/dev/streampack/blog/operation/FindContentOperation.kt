@@ -2,6 +2,7 @@
 package dev.streampack.blog.operation
 
 import dev.streampack.blog.entity.Post
+import dev.streampack.blog.model.BlogTemperature
 import dev.streampack.blog.model.ContentDetail
 import dev.streampack.blog.model.ContentListResponse
 import dev.streampack.blog.model.ContentSummary
@@ -18,6 +19,7 @@ import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.TypedOperation
+import dev.streampack.temperature.service.TemperatureService
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.domain.PageRequest
@@ -34,6 +36,7 @@ class FindContentOperation(
     private val commentRepository: CommentRepository,
     private val postTagRepository: PostTagRepository,
     private val postCategoryRepository: PostCategoryRepository,
+    private val temperatureService: TemperatureService,
 ) : TypedOperation<FindContentRequest>(FindContentRequest::class) {
 
     override val priority = 50
@@ -46,6 +49,7 @@ class FindContentOperation(
             is FindContentRequest.FindBySlug -> findBySlug(payload.path, user)
             is FindContentRequest.FindById -> findById(payload.id, user)
             is FindContentRequest.FindPublished -> findPublished(payload.page, payload.size)
+            is FindContentRequest.FindPopular -> findPopular(payload.page, payload.size)
             is FindContentRequest.Search ->
                 searchPublished(payload.query, payload.page, payload.size)
             is FindContentRequest.FindByCategory ->
@@ -88,22 +92,7 @@ class FindContentOperation(
         val now = Instant.now()
         val pageResult = postRepository.findPublished(now, PageRequest.of(page, size))
 
-        val summaries =
-            pageResult.content.map { post ->
-                val canonicalSlug = slugRepository.findCanonical(post.id)
-                ContentSummary(
-                    id = post.id,
-                    title = post.title,
-                    slug = canonicalSlug?.path ?: "",
-                    excerpt = post.excerpt,
-                    authorDisplayName = post.author?.displayName ?: "Anonymous",
-                    publishedAt = post.publishedAt,
-                    sortOrder = post.sortOrder,
-                    commentCount = commentRepository.countActiveByPost(post.id).toInt(),
-                    tags = tagNamesForPost(post.id),
-                    categories = categoryNamesForPost(post.id),
-                )
-            }
+        val summaries = pageResult.content.map { post -> toSummary(post) }
 
         return OperationResult.Success(
             ContentListResponse(
@@ -111,6 +100,32 @@ class FindContentOperation(
                 page = pageResult.number,
                 totalPages = pageResult.totalPages,
                 totalCount = pageResult.totalElements,
+            )
+        )
+    }
+
+    private fun findPopular(page: Int, size: Int): OperationResult {
+        val ranking =
+            temperatureService.ranking(
+                namespace = BlogTemperature.POST_NAMESPACE,
+                signal = BlogTemperature.HIT_SIGNAL,
+                page = page,
+                size = size,
+            )
+
+        val summaries =
+            ranking.scores
+                .mapNotNull { score -> score.subjectKey.toUuidOrNull() }
+                .mapNotNull { id -> postRepository.findActiveByIdWithAuthor(id) }
+                .filter { post -> isVisible(post, null) && !isSystemContent(post.id) }
+                .map { post -> toSummary(post) }
+
+        return OperationResult.Success(
+            ContentListResponse(
+                posts = summaries,
+                page = ranking.page,
+                totalPages = ranking.totalPages,
+                totalCount = ranking.totalCount,
             )
         )
     }
@@ -128,19 +143,7 @@ class FindContentOperation(
         val summaries =
             pageResult.content.map { post ->
                 val resolvedPost = postRepository.findActiveByIdWithAuthor(post.id) ?: post
-                val canonicalSlug = slugRepository.findCanonical(resolvedPost.id)
-                ContentSummary(
-                    id = resolvedPost.id,
-                    title = resolvedPost.title,
-                    slug = canonicalSlug?.path ?: "",
-                    excerpt = resolvedPost.excerpt,
-                    authorDisplayName = resolvedPost.author?.displayName ?: "Anonymous",
-                    publishedAt = resolvedPost.publishedAt,
-                    sortOrder = resolvedPost.sortOrder,
-                    commentCount = commentRepository.countActiveByPost(resolvedPost.id).toInt(),
-                    tags = tagNamesForPost(resolvedPost.id),
-                    categories = categoryNamesForPost(resolvedPost.id),
-                )
+                toSummary(resolvedPost)
             }
 
         return OperationResult.Success(
@@ -158,22 +161,7 @@ class FindContentOperation(
         val pageResult =
             postRepository.findByCategory(categoryName, now, PageRequest.of(page, size))
 
-        val summaries =
-            pageResult.content.map { post ->
-                val canonicalSlug = slugRepository.findCanonical(post.id)
-                ContentSummary(
-                    id = post.id,
-                    title = post.title,
-                    slug = canonicalSlug?.path ?: "",
-                    excerpt = post.excerpt,
-                    authorDisplayName = post.author?.displayName ?: "Anonymous",
-                    publishedAt = post.publishedAt,
-                    sortOrder = post.sortOrder,
-                    commentCount = commentRepository.countActiveByPost(post.id).toInt(),
-                    tags = tagNamesForPost(post.id),
-                    categories = categoryNamesForPost(post.id),
-                )
-            }
+        val summaries = pageResult.content.map { post -> toSummary(post) }
 
         return OperationResult.Success(
             ContentListResponse(
@@ -189,22 +177,7 @@ class FindContentOperation(
         val now = Instant.now()
         val pageResult = postRepository.findByTag(tagName, now, PageRequest.of(page, size))
 
-        val summaries =
-            pageResult.content.map { post ->
-                val canonicalSlug = slugRepository.findCanonical(post.id)
-                ContentSummary(
-                    id = post.id,
-                    title = post.title,
-                    slug = canonicalSlug?.path ?: "",
-                    excerpt = post.excerpt,
-                    authorDisplayName = post.author?.displayName ?: "Anonymous",
-                    publishedAt = post.publishedAt,
-                    sortOrder = post.sortOrder,
-                    commentCount = commentRepository.countActiveByPost(post.id).toInt(),
-                    tags = tagNamesForPost(post.id),
-                    categories = categoryNamesForPost(post.id),
-                )
-            }
+        val summaries = pageResult.content.map { post -> toSummary(post) }
 
         return OperationResult.Success(
             ContentListResponse(
@@ -272,4 +245,30 @@ class FindContentOperation(
 
     private fun categoryNamesForPost(postId: UUID): List<String> =
         postCategoryRepository.findNamesByPost(postId)
+
+    private fun isSystemContent(postId: UUID): Boolean =
+        categoryNamesForPost(postId).any { it.startsWith("_") }
+
+    private fun toSummary(post: Post): ContentSummary {
+        val canonicalSlug = slugRepository.findCanonical(post.id)
+        return ContentSummary(
+            id = post.id,
+            title = post.title,
+            slug = canonicalSlug?.path ?: "",
+            excerpt = post.excerpt,
+            authorDisplayName = post.author?.displayName ?: "Anonymous",
+            publishedAt = post.publishedAt,
+            sortOrder = post.sortOrder,
+            commentCount = commentRepository.countActiveByPost(post.id).toInt(),
+            tags = tagNamesForPost(post.id),
+            categories = categoryNamesForPost(post.id),
+        )
+    }
+
+    private fun String.toUuidOrNull(): UUID? =
+        try {
+            UUID.fromString(this)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
 }

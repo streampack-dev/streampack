@@ -39,7 +39,7 @@
 
     <groupId>dev.streampack</groupId>
     <artifactId>streampack-parent</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -55,6 +55,7 @@
         <module>lib-polling</module>
         <module>lib-startrader</module>
         <module>lib-taxonomy</module>
+        <module>lib-temperature</module>
         <module>lib-testsupport</module>
         <module>lib-web</module>
         <module>operation-21</module>
@@ -315,6 +316,11 @@
             <dependency>
                 <groupId>dev.streampack</groupId>
                 <artifactId>lib-taxonomy</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.streampack</groupId>
+                <artifactId>lib-temperature</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

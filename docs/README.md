@@ -18,6 +18,8 @@ Start with [What is Streampack?](explanation/what-is-streampack.md) if you are o
 
 For AI prompt customization, see [Configure Generative Prompts](how-to/deploy/configure-generative-prompts.md).
 
+For blog/site HTTP integration, see [Blog HTTP API](reference/blog-http-api.md).
+
 For the bundled bot command surface, use:
 
 - [Use the Infobot](how-to/infobot/use-the-infobot.md) for the public user guide

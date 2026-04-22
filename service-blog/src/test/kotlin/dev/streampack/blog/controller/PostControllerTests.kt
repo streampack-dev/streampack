@@ -18,6 +18,7 @@ import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
+import dev.streampack.temperature.service.TemperatureService
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestChannelConfiguration
 import java.time.Instant
@@ -53,6 +54,7 @@ class PostControllerTests {
     @Autowired lateinit var postCategoryRepository: PostCategoryRepository
     @Autowired lateinit var tagRepository: TagRepository
     @Autowired lateinit var postTagRepository: PostTagRepository
+    @Autowired lateinit var temperatureService: TemperatureService
 
     private lateinit var verifiedUser: User
     private lateinit var verifiedUserToken: String
@@ -119,6 +121,45 @@ class PostControllerTests {
             jsonPath("$.posts") { isArray() }
             jsonPath("$.page") { value(0) }
             jsonPath("$.totalCount") { isNumber() }
+        }
+    }
+
+    @Test
+    fun `GET posts popular defaults to three posts ordered by hit temperature`() {
+        val now = Instant.now()
+        val posts =
+            (1..4).map { index ->
+                val post =
+                    postRepository.save(
+                        Post(
+                            title = "Popular Post $index",
+                            markdownSource = "popular $index",
+                            renderedHtml = "<p>popular $index</p>",
+                            excerpt = "popular $index",
+                            status = PostStatus.APPROVED,
+                            publishedAt = now.minus(index.toLong(), ChronoUnit.HOURS),
+                            author = verifiedUser,
+                        )
+                    )
+                slugRepository.save(
+                    Slug(path = "2026/01/popular-post-$index", post = post, canonical = true)
+                )
+                post
+            }
+
+        temperatureService.accrue("blog.post", posts[0].id.toString(), "hit", positiveDelta = 1L)
+        temperatureService.accrue("blog.post", posts[1].id.toString(), "hit", positiveDelta = 4L)
+        temperatureService.accrue("blog.post", posts[2].id.toString(), "hit", positiveDelta = 3L)
+        temperatureService.accrue("blog.post", posts[3].id.toString(), "hit", positiveDelta = 2L)
+
+        mockMvc.get("/posts/popular").andExpect {
+            status { isOk() }
+            jsonPath("$.posts.length()") { value(3) }
+            jsonPath("$.posts[0].title") { value("Popular Post 2") }
+            jsonPath("$.posts[1].title") { value("Popular Post 3") }
+            jsonPath("$.posts[2].title") { value("Popular Post 4") }
+            jsonPath("$.page") { value(0) }
+            jsonPath("$.totalCount") { value(4) }
         }
     }
 

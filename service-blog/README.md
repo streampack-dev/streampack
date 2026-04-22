@@ -12,6 +12,22 @@ It owns:
 Most operations in this module are typed request handlers used by HTTP controllers rather than
 chat-facing bot commands.
 
+## Public HTTP Endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /posts` | Lists published posts, optionally filtered by `category` or `tag`. |
+| `GET /posts/search?q=...` | Searches published posts. |
+| `GET /posts/popular` | Lists popular published posts, defaulting to `size=3`. |
+| `GET /posts/{year}/{month}/{slug}` | Reads a post by slug and records an access event. |
+| `GET /posts/{id}` | Reads a post by UUID and records an access event. |
+| `POST /posts/{id}/access` | Records UI-driven post access without returning post content. |
+| `GET /pages/{slug}` | Reads a system page from the `_pages` category. |
+
+`GET /posts/popular` is intended for compact UI sections such as "popular posts" or "popular pages."
+It returns the same `ContentListResponse` shape as the normal post listing, ordered by decayed
+`blog.post` / `hit` temperature.
+
 ## Operations
 
 | Operation | Command / payload | Purpose |

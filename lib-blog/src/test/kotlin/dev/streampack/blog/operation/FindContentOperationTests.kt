@@ -27,6 +27,7 @@ import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.temperature.service.TemperatureService
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -53,6 +54,7 @@ class FindContentOperationTests {
     @Autowired lateinit var postTagRepository: PostTagRepository
     @Autowired lateinit var categoryRepository: CategoryRepository
     @Autowired lateinit var postCategoryRepository: PostCategoryRepository
+    @Autowired lateinit var temperatureService: TemperatureService
 
     private lateinit var author: User
     private lateinit var admin: User
@@ -310,6 +312,58 @@ class FindContentOperationTests {
         assertEquals(0, response.page)
         assertEquals(2, response.totalPages)
         assertEquals(6, response.totalCount)
+    }
+
+    @Test
+    fun `FindPopular returns published posts ordered by hit temperature`() {
+        val now = Instant.now()
+        val colderPost =
+            postRepository.save(
+                Post(
+                    title = "Colder Post",
+                    markdownSource = "colder",
+                    renderedHtml = "<p>colder</p>",
+                    excerpt = "colder",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(2, ChronoUnit.HOURS),
+                    author = author,
+                )
+            )
+        val hotterPost =
+            postRepository.save(
+                Post(
+                    title = "Hotter Post",
+                    markdownSource = "hotter",
+                    renderedHtml = "<p>hotter</p>",
+                    excerpt = "hotter",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(3, ChronoUnit.HOURS),
+                    author = author,
+                )
+            )
+        slugRepository.save(Slug(path = "2026/02/colder-post", post = colderPost, canonical = true))
+        slugRepository.save(Slug(path = "2026/02/hotter-post", post = hotterPost, canonical = true))
+
+        temperatureService.accrue(
+            "blog.post",
+            publishedPost.id.toString(),
+            "hit",
+            positiveDelta = 3L,
+        )
+        temperatureService.accrue("blog.post", colderPost.id.toString(), "hit", positiveDelta = 1L)
+        temperatureService.accrue("blog.post", hotterPost.id.toString(), "hit", positiveDelta = 5L)
+
+        val result =
+            eventGateway.process(findMessage(FindContentRequest.FindPopular(page = 0, size = 2)))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(2, response.posts.size)
+        assertEquals("Hotter Post", response.posts[0].title)
+        assertEquals("Published Post", response.posts[1].title)
+        assertEquals(0, response.page)
+        assertEquals(2, response.totalPages)
+        assertEquals(3, response.totalCount)
     }
 
     @Test
