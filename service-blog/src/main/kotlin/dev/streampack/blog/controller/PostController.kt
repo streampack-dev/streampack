@@ -99,6 +99,31 @@ class PostController(
     }
 
     @Operation(
+        summary = "List popular published posts",
+        description =
+            "Returns published posts ordered by decayed access temperature. " +
+                "The default page size is intentionally small for compact homepage widgets.",
+        operationId = "listPopularPosts",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Paginated list of popular published posts",
+        content = [Content(schema = Schema(implementation = ContentListResponse::class))],
+    )
+    @GetMapping("/posts/popular", produces = ["application/json"])
+    fun listPopularPosts(
+        @Parameter(description = "Zero-based page index", example = "0")
+        @RequestParam(defaultValue = "0")
+        page: Int,
+        @Parameter(description = "Number of posts per page", example = "3")
+        @RequestParam(defaultValue = "3")
+        size: Int,
+    ): ResponseEntity<*> {
+        val payload = FindContentRequest.FindPopular(page, size)
+        return dispatch(payload, "posts/popular") { result -> mapError(result) }
+    }
+
+    @Operation(
         summary = "Get a published post by slug",
         description =
             "Returns full post detail including rendered HTML, tags, categories, and " +

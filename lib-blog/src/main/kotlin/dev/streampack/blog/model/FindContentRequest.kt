@@ -11,6 +11,8 @@ sealed interface FindContentRequest {
 
     data class FindPublished(val page: Int = 0, val size: Int = 20) : FindContentRequest
 
+    data class FindPopular(val page: Int = 0, val size: Int = 3) : FindContentRequest
+
     data class Search(val query: String, val page: Int = 0, val size: Int = 20) : FindContentRequest
 
     /** Fetch approved posts in a named category, ordered by sortOrder then publishedAt */

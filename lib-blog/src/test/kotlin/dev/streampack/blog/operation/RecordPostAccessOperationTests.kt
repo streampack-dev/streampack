@@ -7,6 +7,8 @@ import dev.streampack.blog.model.RecordPostAccessRequest
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
+import dev.streampack.temperature.repository.TemperatureBucketRepository
+import java.time.LocalDate
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
@@ -22,6 +24,7 @@ class RecordPostAccessOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var postRepository: PostRepository
+    @Autowired lateinit var temperatureBucketRepository: TemperatureBucketRepository
 
     private lateinit var postId: java.util.UUID
 
@@ -53,5 +56,14 @@ class RecordPostAccessOperationTests {
         val refreshed = postRepository.findById(postId).orElseThrow()
         assertEquals(1, refreshed.accessCount)
         assertNotNull(refreshed.lastAccessedAt)
+        val bucket =
+            temperatureBucketRepository.findByNamespaceAndSubjectKeyAndSignalAndBucketDate(
+                "blog.post",
+                postId.toString(),
+                "hit",
+                LocalDate.now(),
+            )
+        assertNotNull(bucket)
+        assertEquals(1, bucket!!.positiveDelta)
     }
 }

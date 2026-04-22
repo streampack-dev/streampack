@@ -2834,6 +2834,49 @@
         "tags" : [ "Posts" ]
       }
     },
+    "/posts/popular" : {
+      "get" : {
+        "description" : "Returns published posts ordered by decayed access temperature. The default page size is intentionally small for compact homepage widgets.",
+        "operationId" : "listPopularPosts",
+        "parameters" : [ {
+          "description" : "Zero-based page index",
+          "example" : 0,
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "description" : "Number of posts per page",
+          "example" : 3,
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 3,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentListResponse"
+                }
+              }
+            },
+            "description" : "Paginated list of popular published posts"
+          }
+        },
+        "summary" : "List popular published posts",
+        "tags" : [ "Posts" ]
+      }
+    },
     "/posts/search" : {
       "get" : {
         "description" : "Full-text search across post titles (weighted higher) and excerpts. Only published, non-deleted posts are searched. Results are ranked by relevance. Blank queries return an empty list.",
