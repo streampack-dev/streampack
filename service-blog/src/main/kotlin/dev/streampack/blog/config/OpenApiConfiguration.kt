@@ -17,10 +17,11 @@ class OpenApiConfiguration {
         OpenAPI()
             .info(
                 Info()
-                    .title("bytecode.news API")
+                    .title("server-streampack API")
                     .version("0.1.0")
                     .description(
-                        "Content hub and knowledge management for the JVM ecosystem. " +
+                        "Bundled HTTP API for the server-streampack distribution of Streampack. " +
+                            "Includes blog, authentication, and related site endpoints. " +
                             "Advisory version headers are supported: clients may send " +
                             "'Accept-Version' and responses include 'Content-Version' and " +
                             "resolved 'Accept-Version'."

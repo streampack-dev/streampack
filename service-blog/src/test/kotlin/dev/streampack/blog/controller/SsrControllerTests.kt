@@ -129,7 +129,8 @@ class SsrControllerTests {
                 content { string(org.hamcrest.Matchers.containsString("A post for SSR testing")) }
                 content { string(org.hamcrest.Matchers.containsString("canonical")) }
             }
-        waitForAccessCount(publishedPost.id, 1)
+        val refreshed = postRepository.findById(publishedPost.id).orElseThrow()
+        assertEquals(0, refreshed.accessCount)
     }
 
     @Test
@@ -175,14 +176,5 @@ class SsrControllerTests {
                 content { string(org.hamcrest.Matchers.containsString("robots")) }
                 content { string(org.hamcrest.Matchers.containsString("index, follow")) }
             }
-    }
-
-    private fun waitForAccessCount(postId: java.util.UUID, expected: Long) {
-        repeat(40) {
-            val current = postRepository.findById(postId).orElseThrow().accessCount
-            if (current == expected) return
-            Thread.sleep(25)
-        }
-        assertEquals(expected, postRepository.findById(postId).orElseThrow().accessCount)
     }
 }

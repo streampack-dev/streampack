@@ -19,8 +19,8 @@ chat-facing bot commands.
 | `GET /posts` | Lists published posts, optionally filtered by `category` or `tag`. |
 | `GET /posts/search?q=...` | Searches published posts. |
 | `GET /posts/popular` | Lists popular published posts, defaulting to `size=3`. |
-| `GET /posts/{year}/{month}/{slug}` | Reads a post by slug and records an access event. |
-| `GET /posts/{id}` | Reads a post by UUID and records an access event. |
+| `GET /posts/{year}/{month}/{slug}` | Reads a post by slug without recording access. |
+| `GET /posts/{id}` | Reads a post by UUID without recording access. |
 | `POST /posts/{id}/access` | Records UI-driven post access without returning post content. |
 | `GET /pages/{slug}` | Reads a system page from the `_pages` category. |
 

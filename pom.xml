@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.5</version>
+        <version>4.0.6</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -16,9 +16,9 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <springBootVersion>4.0.2</springBootVersion>
-        <kotlinVersion>2.3.20</kotlinVersion>
+        <kotlinVersion>2.3.21</kotlinVersion>
         <logbackVersion>1.5.32</logbackVersion>
-        <testcontainersVersion>2.0.4</testcontainersVersion>
+        <testcontainersVersion>2.0.5</testcontainersVersion>
         <springdocVersion>3.0.3</springdocVersion>
         <surefireVersion>3.5.5</surefireVersion>
         <spotlessVersion>3.4.0</spotlessVersion>
@@ -29,7 +29,7 @@
         <kittehVersion>9.0.0</kittehVersion>
         <jsoupVersion>1.22.2</jsoupVersion>
         <romeVersion>2.1.0</romeVersion>
-        <jdaVersion>6.3.0</jdaVersion>
+        <jdaVersion>6.4.1</jdaVersion>
         <slackSdkVersion>1.48.0</slackSdkVersion>
         <githubApiVersion>1.330</githubApiVersion>
         <springAiVersion>2.0.0-M2</springAiVersion>
@@ -39,7 +39,7 @@
 
     <groupId>dev.streampack</groupId>
     <artifactId>streampack-parent</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.1a</version>
     <packaging>pom</packaging>
 
     <modules>

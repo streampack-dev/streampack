@@ -52,9 +52,9 @@ less than recent traffic.
 | `GET /posts/{id}` | Reads a published post by UUID. |
 | `GET /pages/{slug}` | Reads an approved system page from the `_pages` category. |
 
-Successful `GET /posts/{year}/{month}/{slug}` and `GET /posts/{id}` requests record post access
-asynchronously. UI clients may also call `POST /posts/{id}/access` when a post link is opened from
-client-side navigation.
+Successful `GET /posts/{year}/{month}/{slug}` and `GET /posts/{id}` requests are pure reads. They do
+not record post access or change temperature buckets. UI clients should call `POST /posts/{id}/access`
+when a post link is opened from client-side navigation.
 
 ## Generated OpenAPI
 

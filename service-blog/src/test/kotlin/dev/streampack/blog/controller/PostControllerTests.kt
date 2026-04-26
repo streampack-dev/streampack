@@ -151,6 +151,10 @@ class PostControllerTests {
         temperatureService.accrue("blog.post", posts[1].id.toString(), "hit", positiveDelta = 4L)
         temperatureService.accrue("blog.post", posts[2].id.toString(), "hit", positiveDelta = 3L)
         temperatureService.accrue("blog.post", posts[3].id.toString(), "hit", positiveDelta = 2L)
+        val scoresBefore =
+            posts.associate { post ->
+                post.id to temperatureService.score("blog.post", post.id.toString(), "hit").netScore
+            }
 
         mockMvc.get("/posts/popular").andExpect {
             status { isOk() }
@@ -161,19 +165,29 @@ class PostControllerTests {
             jsonPath("$.page") { value(0) }
             jsonPath("$.totalCount") { value(4) }
         }
+
+        val scoresAfter =
+            posts.associate { post ->
+                post.id to temperatureService.score("blog.post", post.id.toString(), "hit").netScore
+            }
+        assertEquals(scoresBefore, scoresAfter)
     }
 
     // --- GET /posts/{year}/{month}/{slug} ---
 
     @Test
-    fun `GET post by slug returns detail`() {
+    fun `GET post by slug returns detail without recording access`() {
         mockMvc.get("/posts/$slugPath").andExpect {
             status { isOk() }
             jsonPath("$.id") { value(publishedPost.id.toString()) }
             jsonPath("$.title") { value("Published Post") }
             jsonPath("$.renderedHtml") { isNotEmpty() }
         }
-        waitForAccessCount(publishedPost.id, 1)
+        waitForAccessCount(publishedPost.id, 0)
+        assertEquals(
+            0.0,
+            temperatureService.score("blog.post", publishedPost.id.toString(), "hit").netScore,
+        )
     }
 
     @Test
@@ -187,16 +201,25 @@ class PostControllerTests {
     @Test
     fun `POST post access returns accepted`() {
         mockMvc.post("/posts/${publishedPost.id}/access").andExpect { status { isAccepted() } }
+        waitForAccessCount(publishedPost.id, 1)
+        assertEquals(
+            1.0,
+            temperatureService.score("blog.post", publishedPost.id.toString(), "hit").netScore,
+        )
     }
 
     @Test
-    fun `GET post by id returns detail and increments access count`() {
+    fun `GET post by id returns detail without recording access`() {
         mockMvc.get("/posts/${publishedPost.id}").andExpect {
             status { isOk() }
             jsonPath("$.id") { value(publishedPost.id.toString()) }
             jsonPath("$.title") { value("Published Post") }
         }
-        waitForAccessCount(publishedPost.id, 1)
+        waitForAccessCount(publishedPost.id, 0)
+        assertEquals(
+            0.0,
+            temperatureService.score("blog.post", publishedPost.id.toString(), "hit").netScore,
+        )
     }
 
     // --- GET /posts/search ---

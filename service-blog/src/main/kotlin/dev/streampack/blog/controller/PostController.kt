@@ -157,9 +157,7 @@ class PostController(
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
         val payload = FindContentRequest.FindBySlug("$year/${"%02d".format(month)}/$slug")
-        return maybeTrackPostAccess(
-            dispatch(payload, "posts/detail", user) { result -> mapError(result) }
-        )
+        return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
     }
 
     @Operation(
@@ -186,9 +184,7 @@ class PostController(
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
         val payload = FindContentRequest.FindById(id)
-        return maybeTrackPostAccess(
-            dispatch(payload, "posts/detail", user) { result -> mapError(result) }
-        )
+        return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
     }
 
     @Operation(summary = "Record a UI-driven access of a blog post")
@@ -498,16 +494,6 @@ class PostController(
                     )
             }
         }
-    }
-
-    private fun maybeTrackPostAccess(response: ResponseEntity<*>): ResponseEntity<*> {
-        val detail = response.body as? ContentDetail ?: return response
-        if (response.statusCode.is2xxSuccessful) {
-            eventGateway.send(
-                MessageBuilder.withPayload(RecordPostAccessRequest(detail.id)).build()
-            )
-        }
-        return response
     }
 
     /** Maps an error to the appropriate HTTP status based on error message content */
