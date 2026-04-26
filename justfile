@@ -105,11 +105,12 @@ image tag="":
       --push \
       .
 
-# Bump the project version and deploy. Defaults to a patch release.
+# Bump the shared revision in .mvn/maven.config and deploy. Defaults to a patch release.
 release level="patch":
     #!/usr/bin/env bash
     set -euo pipefail
     level="{{level}}"
+    config_file=".mvn/maven.config"
     case "$level" in
       patch|minor|major) ;;
       *)
@@ -140,6 +141,5 @@ release level="patch":
     esac
 
     echo "Releasing $current -> $next"
-    {{maven}} -N versions:set -DnewVersion="$next"
-    {{maven}} -N versions:commit
+    perl -0pi -e 's/^-Drevision=.*/-Drevision='"$next"'/m or die "failed to update revision\n"' "$config_file"
     {{maven}} deploy
