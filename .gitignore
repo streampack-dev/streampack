@@ -10,6 +10,7 @@ target/
 node_modules/
 dist/
 *.versionsBackup
+.flattened-pom.xml
 
 ### STS ###
 .apt_generated

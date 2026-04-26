@@ -8,6 +8,9 @@ Build and push the default multi-platform image:
 just image <version>
 ```
 
+If no explicit tag is provided, `just image` uses the resolved Maven project version. In this
+repository that version is sourced from `.mvn/maven.config` via `-Drevision=...`.
+
 Defaults:
 
 | Setting | Default |
