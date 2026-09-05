@@ -24,6 +24,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `GITHUB_CLIENT_ID` | Optional | GitHub OAuth client id. |
 | `GITHUB_CLIENT_SECRET` | Optional | GitHub OAuth client secret. |
 | `GITHUB_WEBHOOK_SECRET_KEY` | Optional | Key that encrypts stored GitHub webhook secrets. Required before any repository can be switched to webhook delivery; placeholders such as `change-me` are rejected at startup. |
+| `GITHUB_<OWNER>_<REPO>_TOKEN` | Per repository | API token for a watched repository that needs authenticated access, e.g. `GITHUB_STREAMPACK_DEV_STREAMPACK_TOKEN`. `github add owner/repo <token>` stores a literal and names this variable; on the next restart the literal is replaced by an `env://` reference and startup fails until the variable is set (with enforcement on). `github add owner/repo env://KEY` references a variable directly. |
 | `GITHUB_WEBHOOK_BASE_URL` | Optional | Public webhook base URL. |
 | `ANTHROPIC_API_KEY` | Optional | Anthropic API key. |
 | `AI_ENABLED` | Optional | Enables AI-backed features. |

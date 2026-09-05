@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.store
 
+import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeReleaseInfo
@@ -26,7 +27,7 @@ interface ForgeStore<P : ForgeProject, S : ForgeSubscription> {
 
     fun createProject(
         path: String,
-        token: String?,
+        token: SecretRef?,
         highestIssueNumber: Int,
         highestChangeRequestNumber: Int,
         polledAt: Instant,

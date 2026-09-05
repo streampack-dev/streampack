@@ -9,6 +9,8 @@ import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeSubscription
+import dev.streampack.forge.secret.ForgeTokenResolver
+import dev.streampack.forge.secret.SecretLookup
 import dev.streampack.forge.store.ForgeStore
 import dev.streampack.polling.service.EgressNotifier
 import jakarta.annotation.PostConstruct
@@ -28,6 +30,7 @@ abstract class AbstractForgePollingService<P : ForgeProject, S : ForgeSubscripti
     protected val client: ForgeClient,
     private val egressNotifier: EgressNotifier,
     private val pollInterval: Duration,
+    private val secretLookup: SecretLookup,
 ) : TickListener {
     private val logger = LoggerFactory.getLogger(javaClass)
     private lateinit var lastPollTime: Instant
@@ -69,7 +72,14 @@ abstract class AbstractForgePollingService<P : ForgeProject, S : ForgeSubscripti
     open fun pollProject(projectId: String) {
         val project = store.findProjectById(projectId) ?: return
         val path = project.displayName
-        val token = project.token
+        val token = ForgeTokenResolver.resolve(project.token, secretLookup)
+        if (project.token != null && token == null) {
+            logger.warn(
+                "Token for {} references environment variable {} which is not set; polling unauthenticated",
+                path,
+                project.token?.envKeyOrNull(),
+            )
+        }
         logger.info(
             "Polling project {} (since issue {}, {} {})",
             path,

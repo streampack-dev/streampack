@@ -2,6 +2,7 @@
 package dev.streampack.github.service
 
 import dev.streampack.forge.ForgeKind
+import dev.streampack.forge.secret.EnvironmentSecretLookup
 import dev.streampack.forge.service.AbstractForgeSubscriptionService
 import dev.streampack.forge.service.AddProjectOutcome
 import dev.streampack.forge.service.RemoveProjectOutcome
@@ -11,11 +12,16 @@ import org.springframework.stereotype.Service
 
 /** Orchestrates GitHub repository registration, subscription, and removal */
 @Service
-class GitHubSubscriptionService(store: GitHubForgeStore, client: GitHubForgeClient) :
+class GitHubSubscriptionService(
+    store: GitHubForgeStore,
+    client: GitHubForgeClient,
+    secretLookup: EnvironmentSecretLookup,
+) :
     AbstractForgeSubscriptionService<GitHubRepo, GitHubSubscription>(
         ForgeKind.GITHUB,
         store,
         client,
+        secretLookup,
     ) {
 
     override fun invalidIdentifierReason(identifier: String): String? =

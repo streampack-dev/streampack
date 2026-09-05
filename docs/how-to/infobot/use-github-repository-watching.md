@@ -14,9 +14,12 @@ For a repository that needs authenticated GitHub API access:
 
 ```text
 github add owner/repo <token>
+github add owner/repo env://GITHUB_OWNER_REPO_TOKEN
 ```
 
 This registers the repository and seeds current issues, pull requests, and releases so later notifications are incremental.
+
+Tokens are not kept in the database as plain text for long. A literal token is accepted, used to seed the repository, and the response names the environment variable that will hold it, in the form `GITHUB_<OWNER>_<REPO>_TOKEN` (non-alphanumeric characters become `_`). Set that variable before the next restart: on startup, literal tokens are rewritten to `env://` references and, with `STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` on, the server refuses to start until every active repository's variable is present, printing the `export` lines to add. Passing `env://KEY` directly skips the literal phase; the variable must already be set.
 
 ## Subscribe a Destination
 

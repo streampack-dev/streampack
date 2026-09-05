@@ -1,6 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.model
 
+import dev.streampack.core.model.SecretRef
+
 /**
  * The view of a watched project that the shared forge services need. Each forge module's entity
  * implements this over its own table; the module keeps ownership of persistence.
@@ -9,8 +11,8 @@ interface ForgeProject {
     /** Human-readable identifier used in messages, e.g. `owner/repo` or `group/sub/project`. */
     val displayName: String
 
-    /** API token for this project, if any. */
-    val token: String?
+    /** API token for this project, if any: a literal or an `env://KEY` reference. */
+    val token: SecretRef?
 
     val highestIssueNumber: Int
 
