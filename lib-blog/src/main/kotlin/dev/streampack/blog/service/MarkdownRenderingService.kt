@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service
 class MarkdownRenderingService(
     private val excerptSummarizerService: ExcerptSummarizerService,
     private val factoidWikiLinkResolver: FactoidWikiLinkResolver? = null,
+    private val renderedHtmlSanitizer: RenderedHtmlSanitizer = RenderedHtmlSanitizer(),
 ) {
     private val factoidAnchorPattern =
         Regex(
@@ -58,12 +59,18 @@ class MarkdownRenderingService(
         renderer = HtmlRenderer.builder(options).build()
     }
 
-    /** Render markdown source to HTML with raw HTML escaped */
+    /**
+     * Render markdown source to HTML with raw HTML escaped and the result sanitized.
+     *
+     * Escaping covers HTML typed by the author; sanitizing covers HTML the renderer generates from
+     * markdown syntax, in particular link and image destinations with `javascript:` or `data:`
+     * schemes (see issue #48).
+     */
     fun render(markdownSource: String): String {
         if (markdownSource.isBlank()) return ""
         val document = parser.parse(markdownSource)
         val html = renderer.render(document).trim()
-        return resolveFactoidWikiLinks(html)
+        return renderedHtmlSanitizer.sanitize(resolveFactoidWikiLinks(html))
     }
 
     /** Generate a plain-text excerpt by stripping markup and truncating at word boundary */
