@@ -2,6 +2,7 @@
 package dev.streampack.blog.service
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
@@ -255,5 +256,70 @@ class MarkdownRenderingServiceTests {
         val result = rendererWithResolver.render("See [[thing]] now.")
         assertTrue(result.contains("<a href=\"/factoids/thing\">thing</a>"))
         assertTrue(!result.contains("javascript:"))
+    }
+
+    @Test
+    fun `javascript link targets are removed`() {
+        val result = markdownRenderingService.render("[click me](javascript:alert('xss'))")
+        assertFalse(result.contains("javascript:", ignoreCase = true), result)
+        assertTrue(result.contains("click me"), result)
+    }
+
+    @Test
+    fun `javascript link targets are removed regardless of case`() {
+        val result = markdownRenderingService.render("[x](JaVaScRiPt:alert(1))")
+        assertFalse(result.contains("javascript:", ignoreCase = true), result)
+    }
+
+    @Test
+    fun `data image sources are removed`() {
+        val result =
+            markdownRenderingService.render(
+                "![img](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)"
+            )
+        assertFalse(result.contains("data:"), result)
+    }
+
+    @Test
+    fun `http https and relative link targets are preserved`() {
+        val result =
+            markdownRenderingService.render(
+                "[a](https://example.com/x) [b](http://example.com) [c](/local/path) [d](#section)"
+            )
+        assertTrue(result.contains("href=\"https://example.com/x\""), result)
+        assertTrue(result.contains("href=\"http://example.com\""), result)
+        assertTrue(result.contains("href=\"/local/path\""), result)
+        assertTrue(result.contains("href=\"#section\""), result)
+    }
+
+    @Test
+    fun `http and relative image sources are preserved`() {
+        val result =
+            markdownRenderingService.render(
+                "![remote](https://example.com/a.png) ![local](/images/b.png)"
+            )
+        assertTrue(result.contains("src=\"https://example.com/a.png\""), result)
+        assertTrue(result.contains("src=\"/images/b.png\""), result)
+    }
+
+    @Test
+    fun `footnotes render and survive sanitization`() {
+        val result = markdownRenderingService.render("Text[^1]\n\n[^1]: The note.")
+        assertTrue(result.contains("footnote"), result)
+        assertTrue(result.contains("The note."), result)
+        assertTrue(result.contains("href=\"#fn"), result)
+    }
+
+    @Test
+    fun `aside renders and survives sanitization`() {
+        val result = markdownRenderingService.render("| This is an aside.")
+        assertTrue(result.contains("<aside>"), result)
+        assertTrue(result.contains("This is an aside."), result)
+    }
+
+    @Test
+    fun `fenced code language class survives sanitization`() {
+        val result = markdownRenderingService.render("```kotlin\nval x = 1\n```")
+        assertTrue(result.contains("class=\"language-kotlin\""), result)
     }
 }
