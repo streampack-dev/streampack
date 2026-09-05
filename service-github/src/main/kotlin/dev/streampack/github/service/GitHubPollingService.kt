@@ -2,6 +2,7 @@
 package dev.streampack.github.service
 
 import dev.streampack.forge.ForgeKind
+import dev.streampack.forge.secret.EnvironmentSecretLookup
 import dev.streampack.forge.service.AbstractForgePollingService
 import dev.streampack.github.config.GitHubProperties
 import dev.streampack.github.entity.GitHubRepo
@@ -19,6 +20,7 @@ class GitHubPollingService(
     client: GitHubForgeClient,
     egressNotifier: EgressNotifier,
     gitHubProperties: GitHubProperties,
+    secretLookup: EnvironmentSecretLookup,
 ) :
     AbstractForgePollingService<GitHubRepo, GitHubSubscription>(
         ForgeKind.GITHUB,
@@ -26,6 +28,7 @@ class GitHubPollingService(
         client,
         egressNotifier,
         gitHubProperties.pollInterval,
+        secretLookup,
     ) {
 
     override fun projectId(project: GitHubRepo): String = project.id.toString()

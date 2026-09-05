@@ -5,6 +5,7 @@ import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.RedactionRule
 import dev.streampack.core.model.Role
+import dev.streampack.core.model.SecretRef
 import dev.streampack.core.parser.CommandArgSpec
 import dev.streampack.core.parser.CommandMatchResult
 import dev.streampack.core.parser.CommandPattern
@@ -12,7 +13,9 @@ import dev.streampack.core.parser.CommandPatternMatcher
 import dev.streampack.core.parser.StringArgType
 import dev.streampack.core.service.TranslatingOperation
 import dev.streampack.forge.service.AddProjectOutcome
+import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.model.AddRepoRequest
+import dev.streampack.github.service.GitHubSecretRefStartupGuard
 import dev.streampack.github.service.GitHubSubscriptionService
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
@@ -68,7 +71,8 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
                     "Watching ${outcome.project.fullName()} " +
                         "(${outcome.issueCount} issues, " +
                         "${outcome.changeRequestCount} PRs, " +
-                        "${outcome.releaseCount} releases)"
+                        "${outcome.releaseCount} releases)" +
+                        tokenExternalizationNote(payload.token, outcome.project)
                 )
             is AddProjectOutcome.AlreadyExists ->
                 OperationResult.Success("Already watching ${outcome.project.fullName()}")
@@ -77,5 +81,16 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
             is AddProjectOutcome.ApiFailed ->
                 OperationResult.Error("Failed to access ${outcome.identifier}: ${outcome.reason}")
         }
+    }
+
+    /**
+     * A literal token is stored as given and externalized to an environment variable on the next
+     * restart; tell the admin which variable to set so that restart succeeds.
+     */
+    private fun tokenExternalizationNote(token: String?, repo: GitHubRepo): String {
+        if (token.isNullOrBlank() || SecretRef.parse(token.trim()).isEnvRef()) return ""
+        val key = GitHubSecretRefStartupGuard.envKeyFor(repo)
+        return " Token stored; set $key in the environment before the next restart, " +
+            "which will externalize it."
     }
 }

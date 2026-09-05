@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.service
 
+import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.model.ForgeReleaseInfo
 import dev.streampack.forge.store.ForgeStore
@@ -37,7 +38,7 @@ class GitHubForgeStore(
 
     override fun createProject(
         path: String,
-        token: String?,
+        token: SecretRef?,
         highestIssueNumber: Int,
         highestChangeRequestNumber: Int,
         polledAt: Instant,

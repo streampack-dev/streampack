@@ -12,7 +12,8 @@ what is identical between forges and leaves everything else to the forge module.
 - `model.ForgeEvent`: `IssueOpened`, `ChangeRequestOpened`, `ReleasePublished`, `Ping`. Polling
   and webhooks both produce these.
 - `model.ForgeProject` / `model.ForgeSubscription`: the view of a module's entities the shared
-  services need.
+  services need. Tokens are `SecretRef`s (literal or `env://KEY`), resolved at use time through
+  `secret.SecretLookup`; modules add a startup guard that externalizes literals.
 - `store.ForgeStore<P, S>`: the persistence port a module implements over its own tables.
 - `format.ForgeEventFormatter`: the one place notification text is built.
 - `service.AbstractForgeSubscriptionService`: add, subscribe, unsubscribe, remove, list.

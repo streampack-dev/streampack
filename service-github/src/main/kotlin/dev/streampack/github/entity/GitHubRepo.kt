@@ -1,9 +1,12 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.entity
 
+import dev.streampack.core.model.SecretRef
+import dev.streampack.core.persistence.SecretRefConverter
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.model.ForgeProject
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -20,7 +23,9 @@ data class GitHubRepo(
     @Id @UuidGenerator(style = UuidGenerator.Style.VERSION_7) val id: UUID = UUID(0, 0),
     @Column(nullable = false, length = 255) val owner: String = "",
     @Column(nullable = false, length = 255) val name: String = "",
-    @Column(length = 500) override val token: String? = null,
+    @Convert(converter = SecretRefConverter::class)
+    @Column(length = 500)
+    override val token: SecretRef? = null,
     @Column(nullable = false) override val highestIssueNumber: Int = 0,
     @Column(nullable = false) val highestPrNumber: Int = 0,
     @Column val lastPolledAt: Instant? = null,

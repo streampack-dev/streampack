@@ -1,10 +1,13 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.service
 
+import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeSubscription
+import dev.streampack.forge.secret.ForgeTokenResolver
+import dev.streampack.forge.secret.SecretLookup
 import dev.streampack.forge.store.ForgeStore
 import java.time.Instant
 import org.slf4j.LoggerFactory
@@ -21,13 +24,19 @@ abstract class AbstractForgeSubscriptionService<P : ForgeProject, S : ForgeSubsc
     protected val kind: ForgeKind,
     protected val store: ForgeStore<P, S>,
     protected val client: ForgeClient,
+    protected val secretLookup: SecretLookup,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     /** A reason when [identifier] is not a valid project path for this forge, else null. */
     protected abstract fun invalidIdentifierReason(identifier: String): String?
 
-    /** Register a project for watching, seeding cursors from its current state. */
+    /**
+     * Register a project for watching, seeding cursors from its current state.
+     *
+     * [token] may be a literal or an `env://KEY` reference; it is stored as given and resolved for
+     * the API calls made here.
+     */
     open fun addProject(identifier: String, token: String?): AddProjectOutcome<P> {
         invalidIdentifierReason(identifier)?.let {
             return AddProjectOutcome.InvalidIdentifier(identifier, it)
@@ -36,23 +45,38 @@ abstract class AbstractForgeSubscriptionService<P : ForgeProject, S : ForgeSubsc
         if (existing != null) {
             return AddProjectOutcome.AlreadyExists(existing)
         }
+        val tokenRef = token?.trim()?.ifBlank { null }?.let { SecretRef.parse(it) }
+        val resolvedToken = ForgeTokenResolver.resolve(tokenRef, secretLookup)
+        val envKey = tokenRef?.envKeyOrNull()
+        if (tokenRef != null && tokenRef.isEnvRef() && envKey == null) {
+            return AddProjectOutcome.InvalidIdentifier(
+                identifier,
+                "Token reference '${tokenRef.asStoredValue()}' is not a valid env://KEY",
+            )
+        }
+        if (envKey != null && resolvedToken == null) {
+            return AddProjectOutcome.ApiFailed(
+                identifier,
+                "Token references environment variable $envKey, which is not set",
+            )
+        }
 
         return try {
-            if (!client.validateProject(identifier, token)) {
+            if (!client.validateProject(identifier, resolvedToken)) {
                 return AddProjectOutcome.ApiFailed(
                     identifier,
                     "Repository not found or not accessible",
                 )
             }
 
-            val issues = client.fetchIssuesSince(identifier, token, 0)
-            val changeRequests = client.fetchChangeRequestsSince(identifier, token, 0)
-            val releases = client.fetchReleases(identifier, token)
+            val issues = client.fetchIssuesSince(identifier, resolvedToken, 0)
+            val changeRequests = client.fetchChangeRequestsSince(identifier, resolvedToken, 0)
+            val releases = client.fetchReleases(identifier, resolvedToken)
 
             val project =
                 store.createProject(
                     path = identifier,
-                    token = token,
+                    token = tokenRef,
                     highestIssueNumber = issues.maxOfOrNull { it.number } ?: 0,
                     highestChangeRequestNumber = changeRequests.maxOfOrNull { it.number } ?: 0,
                     polledAt = Instant.now(),
