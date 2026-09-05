@@ -90,6 +90,7 @@ class GitHubWebhookOperation(
                     "${outcome.ownerRepo} is inactive. Add or reactivate it first."
                 )
             is WebhookEnableOutcome.InvalidRepo -> OperationResult.Error(outcome.reason)
+            is WebhookEnableOutcome.NotConfigured -> OperationResult.Error(outcome.reason)
             is WebhookEnableOutcome.ApiFailed ->
                 OperationResult.Error("Failed to access ${outcome.ownerRepo}: ${outcome.reason}")
         }

@@ -20,6 +20,9 @@ class GitHubWebhookAdminService(
     private val secureRandom = SecureRandom()
 
     fun enableWebhook(ownerRepo: String, privateMode: Boolean = false): WebhookEnableOutcome {
+        if (!secretCipher.isConfigured) {
+            return WebhookEnableOutcome.NotConfigured(WebhookSecretCipher.NOT_CONFIGURED_MESSAGE)
+        }
         val parts = ownerRepo.split("/")
         if (parts.size != 2 || parts[0].isBlank() || parts[1].isBlank()) {
             return WebhookEnableOutcome.InvalidRepo("Expected owner/repo")

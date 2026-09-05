@@ -73,7 +73,7 @@ If you're using the defaults (database named `nevet`, user `nevet`, password `ne
 | `DB_URL` | `jdbc:postgresql://localhost:5432/nevet` | JDBC connection URL |
 | `DB_USERNAME` | `nevet` | Database username |
 | `DB_PASSWORD` | `nevet` | Database password |
-| `JWT_SECRET` | `change-me-in-production` | Secret key for JWT signing |
+| `JWT_SECRET` | none, required | Secret key for JWT signing. Startup fails when it is unset or a placeholder such as `change-me` |
 | `BASE_URL` | `http://localhost:8080` | Public base URL for the application |
 | `MAIL_HOST` | `localhost` | SMTP server hostname |
 | `MAIL_PORT` | `25` | SMTP server port |

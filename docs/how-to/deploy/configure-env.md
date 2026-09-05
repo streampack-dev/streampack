@@ -42,10 +42,10 @@ Optional integrations:
 | `AI_ENABLED` | Enables AI-backed features. |
 | `STREAMPACK_GENERATIVE_PROMPT_DIR` | Filesystem directory for external generative prompt overrides. |
 | `ANTHROPIC_API_KEY` | Anthropic API key. |
-| `GITHUB_WEBHOOK_SECRET_KEY` | GitHub webhook signing secret. |
+| `GITHUB_WEBHOOK_SECRET_KEY` | Key that encrypts stored GitHub webhook secrets. Needed before enabling webhook delivery. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OIDC credentials. |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub OAuth credentials. |
 
-Do not rely on application defaults for production secrets. Compose should fail fast when `JWT_SECRET` is missing.
+Do not rely on application defaults for production secrets. There is no default for `JWT_SECRET`: the server refuses to start when it is missing or set to a placeholder such as `change-me`, and Compose fails fast when it is unset.
 
 If `STREAMPACK_GENERATIVE_PROMPT_DIR` is set, Streampack will look there for runtime prompt overrides such as `suggest-prompt.txt` or `suggest-prompt.clj`.

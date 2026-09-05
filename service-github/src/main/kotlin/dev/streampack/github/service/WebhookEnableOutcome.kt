@@ -9,4 +9,7 @@ sealed interface WebhookEnableOutcome {
     data class InvalidRepo(val reason: String) : WebhookEnableOutcome
 
     data class ApiFailed(val ownerRepo: String, val reason: String) : WebhookEnableOutcome
+
+    /** The server has no webhook secret key configured, so secrets cannot be stored. */
+    data class NotConfigured(val reason: String) : WebhookEnableOutcome
 }
