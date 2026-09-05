@@ -3,9 +3,9 @@ package dev.streampack.github.operation
 
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
-import dev.streampack.github.model.DeliveryMode
-import dev.streampack.github.model.GitHubSubscriptionOutcome
-import dev.streampack.github.model.RemoveRepoOutcome
+import dev.streampack.forge.model.DeliveryMode
+import dev.streampack.forge.service.RemoveProjectOutcome
+import dev.streampack.forge.service.SubscriptionOutcome
 import dev.streampack.github.service.GitHubSubscriptionService
 import dev.streampack.polling.operation.PollingSourceManagementOperation
 import org.springframework.stereotype.Component
@@ -42,29 +42,27 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
             destinationUri,
         )
         return when (val outcome = subscriptionService.subscribe(identifier, destinationUri)) {
-            is GitHubSubscriptionOutcome.Subscribed ->
-                OperationResult.Success("Subscribed to ${outcome.repo.fullName()}")
-            is GitHubSubscriptionOutcome.AlreadySubscribed ->
-                OperationResult.Success("Already subscribed to ${outcome.repo.fullName()}")
-            is GitHubSubscriptionOutcome.RepoNotFound ->
-                OperationResult.Error("No registered repository found for ${outcome.ownerRepo}")
-            is GitHubSubscriptionOutcome.Unsubscribed,
-            is GitHubSubscriptionOutcome.NotSubscribed ->
-                OperationResult.Error("Unexpected outcome")
+            is SubscriptionOutcome.Subscribed ->
+                OperationResult.Success("Subscribed to ${outcome.project.fullName()}")
+            is SubscriptionOutcome.AlreadySubscribed ->
+                OperationResult.Success("Already subscribed to ${outcome.project.fullName()}")
+            is SubscriptionOutcome.ProjectNotFound ->
+                OperationResult.Error("No registered repository found for ${outcome.identifier}")
+            is SubscriptionOutcome.Unsubscribed,
+            is SubscriptionOutcome.NotSubscribed -> OperationResult.Error("Unexpected outcome")
         }
     }
 
     override fun onUnsubscribe(identifier: String, destinationUri: String): OperationOutcome {
         return when (val outcome = subscriptionService.unsubscribe(identifier, destinationUri)) {
-            is GitHubSubscriptionOutcome.Unsubscribed ->
-                OperationResult.Success("Unsubscribed from ${outcome.repo.fullName()}")
-            is GitHubSubscriptionOutcome.NotSubscribed ->
-                OperationResult.Error("Not subscribed to ${outcome.repo.fullName()}")
-            is GitHubSubscriptionOutcome.RepoNotFound ->
-                OperationResult.Error("No registered repository found for ${outcome.ownerRepo}")
-            is GitHubSubscriptionOutcome.Subscribed,
-            is GitHubSubscriptionOutcome.AlreadySubscribed ->
-                OperationResult.Error("Unexpected outcome")
+            is SubscriptionOutcome.Unsubscribed ->
+                OperationResult.Success("Unsubscribed from ${outcome.project.fullName()}")
+            is SubscriptionOutcome.NotSubscribed ->
+                OperationResult.Error("Not subscribed to ${outcome.project.fullName()}")
+            is SubscriptionOutcome.ProjectNotFound ->
+                OperationResult.Error("No registered repository found for ${outcome.identifier}")
+            is SubscriptionOutcome.Subscribed,
+            is SubscriptionOutcome.AlreadySubscribed -> OperationResult.Error("Unexpected outcome")
         }
     }
 
@@ -79,15 +77,15 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
 
     override fun onRemove(identifier: String): OperationOutcome {
         return when (val outcome = subscriptionService.removeRepo(identifier)) {
-            is RemoveRepoOutcome.Removed ->
+            is RemoveProjectOutcome.Removed ->
                 OperationResult.Success(
-                    "Removed ${outcome.repo.fullName()} " +
+                    "Removed ${outcome.project.fullName()} " +
                         "(${outcome.subscriptionsDeactivated} subscriptions deactivated)"
                 )
-            is RemoveRepoOutcome.RepoNotFound ->
-                OperationResult.Error("No registered repository found for ${outcome.ownerRepo}")
-            is RemoveRepoOutcome.AlreadyInactive ->
-                OperationResult.Success("${outcome.repo.fullName()} is already inactive")
+            is RemoveProjectOutcome.ProjectNotFound ->
+                OperationResult.Error("No registered repository found for ${outcome.identifier}")
+            is RemoveProjectOutcome.AlreadyInactive ->
+                OperationResult.Success("${outcome.project.fullName()} is already inactive")
         }
     }
 }

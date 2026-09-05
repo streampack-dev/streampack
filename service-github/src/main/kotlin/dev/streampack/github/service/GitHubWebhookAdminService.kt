@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.service
 
+import dev.streampack.forge.model.DeliveryMode
+import dev.streampack.forge.service.AddProjectOutcome
 import dev.streampack.github.entity.GitHubRepo
-import dev.streampack.github.model.AddRepoOutcome
-import dev.streampack.github.model.DeliveryMode
 import dev.streampack.github.repository.GitHubRepoRepository
 import java.security.SecureRandom
 import java.time.Instant
@@ -35,11 +35,11 @@ class GitHubWebhookAdminService(
                     repoRepository.save(GitHubRepo(owner = owner, name = name))
                 } else {
                     when (val addOutcome = subscriptionService.addRepo("$owner/$name", null)) {
-                        is AddRepoOutcome.Added -> addOutcome.repo
-                        is AddRepoOutcome.AlreadyExists -> addOutcome.repo
-                        is AddRepoOutcome.InvalidRepo ->
+                        is AddProjectOutcome.Added -> addOutcome.project
+                        is AddProjectOutcome.AlreadyExists -> addOutcome.project
+                        is AddProjectOutcome.InvalidIdentifier ->
                             return WebhookEnableOutcome.InvalidRepo(addOutcome.reason)
-                        is AddRepoOutcome.ApiFailed ->
+                        is AddProjectOutcome.ApiFailed ->
                             return WebhookEnableOutcome.ApiFailed(ownerRepo, addOutcome.reason)
                     }
                 }
