@@ -1,5 +1,12 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.model
 
-/** Typed request to register a GitHub repository for watching */
-data class AddRepoRequest(val ownerRepo: String, val token: String? = null)
+/**
+ * Typed request to register a GitHub repository for watching. [host] selects the instance (`on
+ * <host>`); null means github.com.
+ */
+data class AddRepoRequest(
+    val ownerRepo: String,
+    val token: String? = null,
+    val host: String? = null,
+)

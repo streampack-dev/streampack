@@ -1,8 +1,11 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.service
 
+import dev.streampack.github.entity.GitHubRepo
+
 sealed interface WebhookEnableOutcome {
-    data class Enabled(val ownerRepo: String, val secret: String) : WebhookEnableOutcome
+    /** [repo] carries the instance, which decides the webhook URL the operator must configure. */
+    data class Enabled(val repo: GitHubRepo, val secret: String) : WebhookEnableOutcome
 
     data class RepoInactive(val ownerRepo: String) : WebhookEnableOutcome
 

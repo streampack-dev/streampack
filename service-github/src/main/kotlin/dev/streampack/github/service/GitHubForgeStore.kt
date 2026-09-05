@@ -5,9 +5,11 @@ import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.model.ForgeReleaseInfo
 import dev.streampack.forge.store.ForgeStore
+import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.entity.GitHubRelease
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.entity.GitHubSubscription
+import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.github.repository.GitHubReleaseRepository
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.github.repository.GitHubSubscriptionRepository
@@ -18,14 +20,47 @@ import org.springframework.stereotype.Service
 /** GitHub's persistence port: the `github_*` tables behind the shared forge services */
 @Service
 class GitHubForgeStore(
+    private val instanceRepository: GitHubInstanceRepository,
     private val repoRepository: GitHubRepoRepository,
     private val releaseRepository: GitHubReleaseRepository,
     private val subscriptionRepository: GitHubSubscriptionRepository,
-) : ForgeStore<GitHubRepo, GitHubSubscription> {
+) : ForgeStore<GitHubInstance, GitHubRepo, GitHubSubscription> {
 
-    override fun findProject(path: String): GitHubRepo? {
+    /** The github.com row the migration seeds; recreated if it is ever missing */
+    override fun defaultInstance(): GitHubInstance =
+        instanceRepository.findByHost(GitHubInstance.DEFAULT_HOST)
+            ?: instanceRepository.save(GitHubInstance())
+
+    override fun findInstanceByHost(host: String): GitHubInstance? =
+        instanceRepository.findByHost(host)
+
+    override fun findInstanceById(id: String): GitHubInstance? {
+        val uuid =
+            try {
+                UUID.fromString(id)
+            } catch (_: IllegalArgumentException) {
+                return null
+            }
+        return instanceRepository.findById(uuid).orElse(null)
+    }
+
+    override fun listInstances(): List<GitHubInstance> {
+        defaultInstance()
+        return instanceRepository.findAll().sortedWith(compareBy({ !it.isDefault }, { it.host }))
+    }
+
+    override fun createInstance(
+        host: String,
+        apiUrl: String,
+        defaultToken: SecretRef?,
+    ): GitHubInstance =
+        instanceRepository.save(
+            GitHubInstance(host = host, apiUrl = apiUrl, defaultToken = defaultToken)
+        )
+
+    override fun findProject(instance: GitHubInstance, path: String): GitHubRepo? {
         val (owner, name) = splitOwnerName(path) ?: return null
-        return repoRepository.findByOwnerAndName(owner, name)
+        return repoRepository.findByInstanceAndOwnerAndName(instance, owner, name)
     }
 
     override fun findProjectById(id: String): GitHubRepo? =
@@ -37,6 +72,7 @@ class GitHubForgeStore(
         repoRepository.findAllByActiveTrueAndDeliveryMode(deliveryMode)
 
     override fun createProject(
+        instance: GitHubInstance,
         path: String,
         token: SecretRef?,
         highestIssueNumber: Int,
@@ -47,6 +83,7 @@ class GitHubForgeStore(
             splitOwnerName(path) ?: throw IllegalArgumentException("Expected format: owner/repo")
         return repoRepository.save(
             GitHubRepo(
+                instance = instance,
                 owner = owner,
                 name = name,
                 token = token,

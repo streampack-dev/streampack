@@ -8,8 +8,10 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
+import dev.streampack.github.DefaultInstanceEndpoint
+import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.github.repository.GitHubRepoRepository
-import dev.streampack.github.service.GitHubApiClient
+import dev.streampack.github.service.GitHubForgeStore
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
 import java.net.InetSocketAddress
@@ -36,7 +38,9 @@ class GitHubAddOperationTokenTests {
     @Autowired lateinit var repoRepository: GitHubRepoRepository
 
     private lateinit var httpServer: HttpServer
-    private var originalApiEndpoint: String? = null
+    @Autowired lateinit var instanceRepository: GitHubInstanceRepository
+    @Autowired lateinit var store: GitHubForgeStore
+    private lateinit var endpoint: DefaultInstanceEndpoint
     private val adminUser =
         UserPrincipal(
             id = UUID.randomUUID(),
@@ -60,16 +64,16 @@ class GitHubAddOperationTokenTests {
 
     @BeforeEach
     fun setUp() {
-        originalApiEndpoint = GitHubApiClient.apiEndpoint
         httpServer = HttpServer.create(InetSocketAddress(0), 0)
         httpServer.start()
-        GitHubApiClient.apiEndpoint = "http://localhost:${httpServer.address.port}"
+        endpoint = DefaultInstanceEndpoint(instanceRepository, store)
+        endpoint.pointAt("http://localhost:${httpServer.address.port}")
     }
 
     @AfterEach
     fun tearDown() {
         httpServer.stop(0)
-        GitHubApiClient.apiEndpoint = originalApiEndpoint
+        endpoint.restore()
     }
 
     /** Stubs the repo and its sub-resources, recording the Authorization header seen. */
@@ -99,7 +103,10 @@ class GitHubAddOperationTokenTests {
         assertTrue(seen.all { it != null && it.contains("ghp_literal_value") }, seen.toString())
         assertEquals(
             "ghp_literal_value",
-            repoRepository.findByOwnerAndName("owner", "repo")!!.token?.asStoredValue(),
+            repoRepository
+                .findByInstanceAndOwnerAndName(store.defaultInstance(), "owner", "repo")!!
+                .token
+                ?.asStoredValue(),
         )
     }
 
@@ -118,7 +125,10 @@ class GitHubAddOperationTokenTests {
         assertTrue(seen.all { it != null && it.contains("ghp_from_environment") }, seen.toString())
         assertEquals(
             "env://GITHUB_TEST_TOKEN",
-            repoRepository.findByOwnerAndName("owner", "envrepo")!!.token?.asStoredValue(),
+            repoRepository
+                .findByInstanceAndOwnerAndName(store.defaultInstance(), "owner", "envrepo")!!
+                .token
+                ?.asStoredValue(),
         )
     }
 

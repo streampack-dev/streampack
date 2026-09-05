@@ -3,6 +3,7 @@ package dev.streampack.forge.store
 
 import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.model.DeliveryMode
+import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeReleaseInfo
 import dev.streampack.forge.model.ForgeSubscription
@@ -12,12 +13,23 @@ import java.time.Instant
  * Persistence port implemented once per forge module over that module's own tables.
  *
  * The shared services never touch Spring Data types; everything they need to read or write goes
- * through here, which keeps the templates to two type parameters and lets each module keep its own
- * entities, migrations, and cursor columns.
+ * through here, which lets each module keep its own entities, migrations, and cursor columns.
  */
-interface ForgeStore<P : ForgeProject, S : ForgeSubscription> {
-    /** The project registered under [path], or null when unknown or [path] is malformed. */
-    fun findProject(path: String): P?
+interface ForgeStore<I : ForgeInstance, P : ForgeProject, S : ForgeSubscription> {
+    /** The hosted instance used when a command omits `on <host>`; created when absent. */
+    fun defaultInstance(): I
+
+    /** The instance registered under [host] (compared lowercase), or null when unknown. */
+    fun findInstanceByHost(host: String): I?
+
+    fun findInstanceById(id: String): I?
+
+    fun listInstances(): List<I>
+
+    fun createInstance(host: String, apiUrl: String, defaultToken: SecretRef?): I
+
+    /** The project registered under [path] on [instance], or null when unknown or malformed. */
+    fun findProject(instance: I, path: String): P?
 
     fun findProjectById(id: String): P?
 
@@ -26,6 +38,7 @@ interface ForgeStore<P : ForgeProject, S : ForgeSubscription> {
     fun findActiveProjects(deliveryMode: DeliveryMode): List<P>
 
     fun createProject(
+        instance: I,
         path: String,
         token: SecretRef?,
         highestIssueNumber: Int,

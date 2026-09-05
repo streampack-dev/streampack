@@ -199,6 +199,7 @@ useful:
 ```text
 feed list
 feed subscriptions
+github instance list
 github list
 github subscriptions
 ```

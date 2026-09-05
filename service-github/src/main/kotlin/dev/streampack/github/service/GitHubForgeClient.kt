@@ -6,6 +6,7 @@ import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.client.WebhookEnvelope
 import dev.streampack.forge.model.ForgeEvent
+import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
 import dev.streampack.forge.model.ForgeReleaseInfo
 import dev.streampack.github.model.GitHubApiItem
@@ -31,28 +32,42 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
 
     override val kind: ForgeKind = ForgeKind.GITHUB
 
-    override fun validateProject(path: String, token: String?): Boolean {
+    override fun validateProject(instance: ForgeInstance, path: String, token: String?): Boolean {
         val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return false
-        return apiClient.validateRepo(owner, name, token)
+        return apiClient.validateRepo(instance.apiUrl, owner, name, token)
     }
 
-    override fun fetchIssuesSince(path: String, token: String?, sinceNumber: Int): List<ForgeItem> {
-        val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return emptyList()
-        return apiClient.fetchIssues(owner, name, token, sinceNumber).map { it.toForgeItem() }
-    }
-
-    override fun fetchChangeRequestsSince(
+    override fun fetchIssuesSince(
+        instance: ForgeInstance,
         path: String,
         token: String?,
         sinceNumber: Int,
     ): List<ForgeItem> {
         val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return emptyList()
-        return apiClient.fetchPulls(owner, name, token, sinceNumber).map { it.toForgeItem() }
+        return apiClient.fetchIssues(instance.apiUrl, owner, name, token, sinceNumber).map {
+            it.toForgeItem()
+        }
     }
 
-    override fun fetchReleases(path: String, token: String?): List<ForgeReleaseInfo> {
+    override fun fetchChangeRequestsSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        sinceNumber: Int,
+    ): List<ForgeItem> {
         val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return emptyList()
-        return apiClient.fetchReleases(owner, name, token).map {
+        return apiClient.fetchPulls(instance.apiUrl, owner, name, token, sinceNumber).map {
+            it.toForgeItem()
+        }
+    }
+
+    override fun fetchReleases(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+    ): List<ForgeReleaseInfo> {
+        val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return emptyList()
+        return apiClient.fetchReleases(instance.apiUrl, owner, name, token).map {
             ForgeReleaseInfo(tag = it.tagName, name = it.name, url = it.htmlUrl)
         }
     }

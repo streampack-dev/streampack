@@ -10,17 +10,24 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.UuidGenerator
 
-/** A GitHub repository registered for watching */
+/** A GitHub repository registered for watching on one [GitHubInstance] */
 @Entity
 @Table(name = "github_repos")
 data class GitHubRepo(
     @Id @UuidGenerator(style = UuidGenerator.Style.VERSION_7) val id: UUID = UUID(0, 0),
+    /* Eager: the webhook controller reads the host outside any session */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "instance_id", nullable = false)
+    override val instance: GitHubInstance = GitHubInstance(),
     @Column(nullable = false, length = 255) val owner: String = "",
     @Column(nullable = false, length = 255) val name: String = "",
     @Convert(converter = SecretRefConverter::class)
@@ -40,8 +47,12 @@ data class GitHubRepo(
     /** Returns the "owner/name" identifier */
     fun fullName(): String = "$owner/$name"
 
-    override val displayName: String
+    override val path: String
         get() = fullName()
+
+    /** `owner/name` on github.com; `host owner/name` on any other instance */
+    override val displayName: String
+        get() = if (instance.isDefault) fullName() else "${instance.host} ${fullName()}"
 
     override val highestChangeRequestNumber: Int
         get() = highestPrNumber

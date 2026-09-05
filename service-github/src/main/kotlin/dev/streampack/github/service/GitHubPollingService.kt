@@ -5,6 +5,7 @@ import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.secret.EnvironmentSecretLookup
 import dev.streampack.forge.service.AbstractForgePollingService
 import dev.streampack.github.config.GitHubProperties
+import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.entity.GitHubSubscription
 import dev.streampack.polling.service.EgressNotifier
@@ -22,7 +23,7 @@ class GitHubPollingService(
     gitHubProperties: GitHubProperties,
     secretLookup: EnvironmentSecretLookup,
 ) :
-    AbstractForgePollingService<GitHubRepo, GitHubSubscription>(
+    AbstractForgePollingService<GitHubInstance, GitHubRepo, GitHubSubscription>(
         ForgeKind.GITHUB,
         store,
         client,

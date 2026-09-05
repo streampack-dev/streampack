@@ -33,6 +33,18 @@ class GitHubCommandParsingTests {
     }
 
     @Test
+    fun `github add parses on host with and without a token`() {
+        assertEquals(
+            AddRepoRequest("owner/repo", null, "ghe.example.com"),
+            addOperation.translate("github add owner/repo on ghe.example.com", message()),
+        )
+        assertEquals(
+            AddRepoRequest("owner/repo", "tok", "ghe.example.com"),
+            addOperation.translate("github add owner/repo tok ON GHE.example.com", message()),
+        )
+    }
+
+    @Test
     fun `github add requires owner repo argument`() {
         val translated = addOperation.translate("github add", message())
 
@@ -51,6 +63,21 @@ class GitHubCommandParsingTests {
         val translated = webhookOperation.translate("github webhook private owner/repo", message())
 
         assertEquals(GitHubWebhookEnableRequest("owner/repo", privateMode = true), translated)
+    }
+
+    @Test
+    fun `github webhook parses on host in both modes`() {
+        assertEquals(
+            GitHubWebhookEnableRequest("owner/repo", privateMode = false, host = "ghe.example.com"),
+            webhookOperation.translate("github webhook owner/repo on ghe.example.com", message()),
+        )
+        assertEquals(
+            GitHubWebhookEnableRequest("owner/repo", privateMode = true, host = "ghe.example.com"),
+            webhookOperation.translate(
+                "github webhook private owner/repo on ghe.example.com",
+                message(),
+            ),
+        )
     }
 
     @Test

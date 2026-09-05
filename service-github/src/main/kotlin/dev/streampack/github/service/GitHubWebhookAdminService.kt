@@ -3,6 +3,7 @@ package dev.streampack.github.service
 
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.service.AddProjectOutcome
+import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.repository.GitHubRepoRepository
 import java.security.SecureRandom
@@ -19,22 +20,28 @@ class GitHubWebhookAdminService(
 
     private val secureRandom = SecureRandom()
 
-    fun enableWebhook(ownerRepo: String, privateMode: Boolean = false): WebhookEnableOutcome {
+    /** The instance `on <host>` names, or github.com when [host] is null; null when unknown */
+    fun instanceFor(host: String?): GitHubInstance? = subscriptionService.instanceFor(host)
+
+    fun enableWebhook(
+        instance: GitHubInstance,
+        ownerRepo: String,
+        privateMode: Boolean = false,
+    ): WebhookEnableOutcome {
         if (!secretCipher.isConfigured) {
             return WebhookEnableOutcome.NotConfigured(WebhookSecretCipher.NOT_CONFIGURED_MESSAGE)
         }
-        val parts = ownerRepo.split("/")
-        if (parts.size != 2 || parts[0].isBlank() || parts[1].isBlank()) {
-            return WebhookEnableOutcome.InvalidRepo("Expected owner/repo")
-        }
-        val owner = parts[0]
-        val name = parts[1]
+        val (owner, name) =
+            GitHubForgeStore.splitOwnerName(ownerRepo)
+                ?: return WebhookEnableOutcome.InvalidRepo("Expected owner/repo")
         val repo =
-            repoRepository.findByOwnerAndName(owner, name)
+            repoRepository.findByInstanceAndOwnerAndName(instance, owner, name)
                 ?: if (privateMode) {
-                    repoRepository.save(GitHubRepo(owner = owner, name = name))
+                    repoRepository.save(GitHubRepo(instance = instance, owner = owner, name = name))
                 } else {
-                    when (val addOutcome = subscriptionService.addRepo("$owner/$name", null)) {
+                    when (
+                        val addOutcome = subscriptionService.addRepo(instance, "$owner/$name", null)
+                    ) {
                         is AddProjectOutcome.Added -> addOutcome.project
                         is AddProjectOutcome.AlreadyExists -> addOutcome.project
                         is AddProjectOutcome.InvalidIdentifier ->
@@ -44,7 +51,7 @@ class GitHubWebhookAdminService(
                     }
                 }
         if (!repo.active) {
-            return WebhookEnableOutcome.RepoInactive(ownerRepo)
+            return WebhookEnableOutcome.RepoInactive(repo.displayName)
         }
 
         val secret = generateSecret()
@@ -57,7 +64,7 @@ class GitHubWebhookAdminService(
                     webhookConfiguredAt = Instant.now(),
                 )
             )
-        return WebhookEnableOutcome.Enabled(updated.fullName(), secret)
+        return WebhookEnableOutcome.Enabled(updated, secret)
     }
 
     private fun generateSecret(): String {
