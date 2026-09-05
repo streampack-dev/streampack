@@ -18,7 +18,7 @@ spring:
 streampack:
   base-url: http://localhost:8080
   jwt:
-    secret: change-me-in-production
+    secret: test-jwt-secret-not-for-production-0123456789
   github:
     webhook-secret-key: test-github-webhook-secret-key
 

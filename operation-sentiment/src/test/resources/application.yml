@@ -22,6 +22,8 @@ spring:
     port: 3025
 
 streampack:
+  security:
+    enforce-external-secrets: false
   base-url: http://localhost:8080
   ai:
     enabled: true
