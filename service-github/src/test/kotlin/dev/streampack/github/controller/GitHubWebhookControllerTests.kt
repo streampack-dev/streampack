@@ -4,9 +4,9 @@ package dev.streampack.github.controller
 import dev.streampack.core.integration.EgressSubscriber
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
+import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.entity.GitHubSubscription
-import dev.streampack.github.model.DeliveryMode
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.github.repository.GitHubSubscriptionRepository
 import dev.streampack.github.service.WebhookSecretCipher

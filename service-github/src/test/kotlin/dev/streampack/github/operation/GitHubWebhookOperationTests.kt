@@ -8,7 +8,7 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
-import dev.streampack.github.model.DeliveryMode
+import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.github.service.GitHubApiClient
 import dev.streampack.github.service.WebhookSecretCipher

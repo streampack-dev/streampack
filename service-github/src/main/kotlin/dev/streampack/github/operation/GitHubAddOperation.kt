@@ -11,7 +11,7 @@ import dev.streampack.core.parser.CommandPattern
 import dev.streampack.core.parser.CommandPatternMatcher
 import dev.streampack.core.parser.StringArgType
 import dev.streampack.core.service.TranslatingOperation
-import dev.streampack.github.model.AddRepoOutcome
+import dev.streampack.forge.service.AddProjectOutcome
 import dev.streampack.github.model.AddRepoRequest
 import dev.streampack.github.service.GitHubSubscriptionService
 import org.springframework.messaging.Message
@@ -63,19 +63,19 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
 
     override fun handle(payload: AddRepoRequest, message: Message<*>): OperationOutcome {
         return when (val outcome = subscriptionService.addRepo(payload.ownerRepo, payload.token)) {
-            is AddRepoOutcome.Added ->
+            is AddProjectOutcome.Added ->
                 OperationResult.Success(
-                    "Watching ${outcome.repo.fullName()} " +
+                    "Watching ${outcome.project.fullName()} " +
                         "(${outcome.issueCount} issues, " +
-                        "${outcome.prCount} PRs, " +
+                        "${outcome.changeRequestCount} PRs, " +
                         "${outcome.releaseCount} releases)"
                 )
-            is AddRepoOutcome.AlreadyExists ->
-                OperationResult.Success("Already watching ${outcome.repo.fullName()}")
-            is AddRepoOutcome.InvalidRepo ->
+            is AddProjectOutcome.AlreadyExists ->
+                OperationResult.Success("Already watching ${outcome.project.fullName()}")
+            is AddProjectOutcome.InvalidIdentifier ->
                 OperationResult.Error("Invalid repository: ${outcome.reason}")
-            is AddRepoOutcome.ApiFailed ->
-                OperationResult.Error("Failed to access ${outcome.ownerRepo}: ${outcome.reason}")
+            is AddProjectOutcome.ApiFailed ->
+                OperationResult.Error("Failed to access ${outcome.identifier}: ${outcome.reason}")
         }
     }
 }

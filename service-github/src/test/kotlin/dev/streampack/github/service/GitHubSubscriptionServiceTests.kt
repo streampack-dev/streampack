@@ -2,9 +2,9 @@
 package dev.streampack.github.service
 
 import com.sun.net.httpserver.HttpServer
-import dev.streampack.github.model.AddRepoOutcome
-import dev.streampack.github.model.GitHubSubscriptionOutcome
-import dev.streampack.github.model.RemoveRepoOutcome
+import dev.streampack.forge.service.AddProjectOutcome
+import dev.streampack.forge.service.RemoveProjectOutcome
+import dev.streampack.forge.service.SubscriptionOutcome
 import dev.streampack.github.repository.GitHubReleaseRepository
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.test.TestSecurityConfiguration
@@ -85,15 +85,15 @@ class GitHubSubscriptionServiceTests {
     fun `addRepo with valid repo seeds baseline and returns Added`() {
         stubValidRepo("owner", "repo")
         val outcome = subscriptionService.addRepo("owner/repo", null)
-        assertInstanceOf(AddRepoOutcome.Added::class.java, outcome)
-        val added = outcome as AddRepoOutcome.Added
-        assertEquals("owner", added.repo.owner)
-        assertEquals("repo", added.repo.name)
+        assertInstanceOf(AddProjectOutcome.Added::class.java, outcome)
+        val added = outcome as AddProjectOutcome.Added
+        assertEquals("owner", added.project.owner)
+        assertEquals("repo", added.project.name)
         assertEquals(2, added.issueCount)
-        assertEquals(1, added.prCount)
+        assertEquals(1, added.changeRequestCount)
         assertEquals(1, added.releaseCount)
-        assertEquals(2, added.repo.highestIssueNumber)
-        assertEquals(3, added.repo.highestPrNumber)
+        assertEquals(2, added.project.highestIssueNumber)
+        assertEquals(3, added.project.highestPrNumber)
     }
 
     @Test
@@ -111,13 +111,13 @@ class GitHubSubscriptionServiceTests {
         stubValidRepo("owner", "repo")
         subscriptionService.addRepo("owner/repo", null)
         val outcome = subscriptionService.addRepo("owner/repo", null)
-        assertInstanceOf(AddRepoOutcome.AlreadyExists::class.java, outcome)
+        assertInstanceOf(AddProjectOutcome.AlreadyExists::class.java, outcome)
     }
 
     @Test
     fun `addRepo with invalid format returns InvalidRepo`() {
         val outcome = subscriptionService.addRepo("no-slash", null)
-        assertInstanceOf(AddRepoOutcome.InvalidRepo::class.java, outcome)
+        assertInstanceOf(AddProjectOutcome.InvalidIdentifier::class.java, outcome)
     }
 
     @Test
@@ -126,7 +126,7 @@ class GitHubSubscriptionServiceTests {
             exchange.sendResponseHeaders(404, -1)
         }
         val outcome = subscriptionService.addRepo("owner/missing", null)
-        assertInstanceOf(AddRepoOutcome.ApiFailed::class.java, outcome)
+        assertInstanceOf(AddProjectOutcome.ApiFailed::class.java, outcome)
     }
 
     @Test
@@ -135,16 +135,16 @@ class GitHubSubscriptionServiceTests {
         subscriptionService.addRepo("owner/repo", null)
 
         val sub = subscriptionService.subscribe("owner/repo", "irc://libera/%23java")
-        assertInstanceOf(GitHubSubscriptionOutcome.Subscribed::class.java, sub)
+        assertInstanceOf(SubscriptionOutcome.Subscribed::class.java, sub)
 
         val dupe = subscriptionService.subscribe("owner/repo", "irc://libera/%23java")
-        assertInstanceOf(GitHubSubscriptionOutcome.AlreadySubscribed::class.java, dupe)
+        assertInstanceOf(SubscriptionOutcome.AlreadySubscribed::class.java, dupe)
 
         val unsub = subscriptionService.unsubscribe("owner/repo", "irc://libera/%23java")
-        assertInstanceOf(GitHubSubscriptionOutcome.Unsubscribed::class.java, unsub)
+        assertInstanceOf(SubscriptionOutcome.Unsubscribed::class.java, unsub)
 
         val notSub = subscriptionService.unsubscribe("owner/repo", "irc://libera/%23java")
-        assertInstanceOf(GitHubSubscriptionOutcome.NotSubscribed::class.java, notSub)
+        assertInstanceOf(SubscriptionOutcome.NotSubscribed::class.java, notSub)
     }
 
     @Test
@@ -155,13 +155,13 @@ class GitHubSubscriptionServiceTests {
         subscriptionService.unsubscribe("owner/repo", "irc://libera/%23java")
 
         val result = subscriptionService.subscribe("owner/repo", "irc://libera/%23java")
-        assertInstanceOf(GitHubSubscriptionOutcome.Subscribed::class.java, result)
+        assertInstanceOf(SubscriptionOutcome.Subscribed::class.java, result)
     }
 
     @Test
     fun `subscribe to nonexistent repo returns RepoNotFound`() {
         val outcome = subscriptionService.subscribe("owner/missing", "irc://libera/%23java")
-        assertInstanceOf(GitHubSubscriptionOutcome.RepoNotFound::class.java, outcome)
+        assertInstanceOf(SubscriptionOutcome.ProjectNotFound::class.java, outcome)
     }
 
     @Test
@@ -171,8 +171,8 @@ class GitHubSubscriptionServiceTests {
         subscriptionService.subscribe("owner/repo", "irc://libera/%23java")
 
         val outcome = subscriptionService.removeRepo("owner/repo")
-        assertInstanceOf(RemoveRepoOutcome.Removed::class.java, outcome)
-        val removed = outcome as RemoveRepoOutcome.Removed
+        assertInstanceOf(RemoveProjectOutcome.Removed::class.java, outcome)
+        val removed = outcome as RemoveProjectOutcome.Removed
         assertEquals(1, removed.subscriptionsDeactivated)
     }
 
@@ -182,13 +182,13 @@ class GitHubSubscriptionServiceTests {
         subscriptionService.addRepo("owner/repo", null)
         subscriptionService.removeRepo("owner/repo")
         val outcome = subscriptionService.removeRepo("owner/repo")
-        assertInstanceOf(RemoveRepoOutcome.AlreadyInactive::class.java, outcome)
+        assertInstanceOf(RemoveProjectOutcome.AlreadyInactive::class.java, outcome)
     }
 
     @Test
     fun `removeRepo on nonexistent returns RepoNotFound`() {
         val outcome = subscriptionService.removeRepo("owner/missing")
-        assertInstanceOf(RemoveRepoOutcome.RepoNotFound::class.java, outcome)
+        assertInstanceOf(RemoveProjectOutcome.ProjectNotFound::class.java, outcome)
     }
 
     @Test

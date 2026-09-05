@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.entity
 
+import dev.streampack.forge.model.ForgeSubscription
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -20,7 +21,7 @@ data class GitHubSubscription(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "repo_id", nullable = false)
     val repo: GitHubRepo = GitHubRepo(),
-    @Column(nullable = false, length = 2048) val destinationUri: String = "",
+    @Column(nullable = false, length = 2048) override val destinationUri: String = "",
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
-    @Column(nullable = false) val active: Boolean = true,
-)
+    @Column(nullable = false) override val active: Boolean = true,
+) : ForgeSubscription
