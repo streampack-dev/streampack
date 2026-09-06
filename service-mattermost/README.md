@@ -80,6 +80,14 @@ use the configured signal character or mention the bot username directly.
 
 ## Constraints
 
-- The bot must be a member of any private channel it should observe or post into.
-- Channel routing uses the Mattermost channel ID even if registration starts from a name lookup.
+- `join` adds the account to public channels through the API; the account must be added to private
+  channels on Mattermost by an admin. `leave` removes the account, so the server stops sending posts.
+- Private channels and direct messages register hidden and unlogged; public channels register
+  visible and logged. `logged=false` stops capture, not just browsing.
+- Channel routing uses the Mattermost channel ID. Names repeat across teams, so a name registered
+  on two teams must be addressed by id.
+- `mattermost connect … <token>` is redacted in the message log; `env://MATTERMOST_<NAME>_TOKEN` is
+  accepted in place of a literal token.
+- A dropped socket reconnects with doubling delays up to five minutes; `status` reports
+  `reconnecting` until it does.
 - This first pass does not implement slash commands or outgoing webhooks.

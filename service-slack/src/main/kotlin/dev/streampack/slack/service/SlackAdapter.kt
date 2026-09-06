@@ -26,13 +26,17 @@ class SlackAdapter(
     val workspaceName: String,
     private val botToken: String,
     private val appToken: String,
-    override val signalCharacter: String,
+    initialSignalCharacter: String,
     private val eventGateway: EventGateway,
     private val userResolutionService: UserResolutionService,
     private val channelControlService: ChannelControlService,
 ) : ProtocolAdapter {
     override val protocol: Protocol = Protocol.SLACK
     override val serviceName: String = workspaceName
+
+    /** Changed at runtime by `slack signal`; read on every message, so no reconnect is needed */
+    @Volatile override var signalCharacter: String = initialSignalCharacter
+
     private val logger = LoggerFactory.getLogger(SlackAdapter::class.java)
     private lateinit var boltApp: App
     private lateinit var socketModeApp: SocketModeApp
@@ -90,10 +94,11 @@ class SlackAdapter(
     }
 
     /**
-     * Resolves a channel name (e.g., "#general") to a Slack channel ID (e.g., "C0123456789") via
-     * the conversations.list API. Returns null if the channel is not found.
+     * Resolves a channel name (e.g., "#general") to its Slack channel ID (e.g., "C0123456789") via
+     * the conversations.list API, along with whether it is private (a private channel, DM, or group
+     * DM). Returns null if the channel is not found.
      */
-    fun resolveChannelId(channelName: String): String? {
+    fun resolveChannel(channelName: String): SlackConversationRef? {
         val cleanName = channelName.removePrefix("#")
         try {
             val client = methodsClient()
@@ -115,7 +120,10 @@ class SlackAdapter(
                 }
                 for (channel in response.channels) {
                     if (channel.name == cleanName) {
-                        return channel.id
+                        return SlackConversationRef(
+                            id = channel.id,
+                            isPrivate = channel.isPrivate || channel.isIm || channel.isMpim,
+                        )
                     }
                 }
                 cursor = response.responseMetadata?.nextCursor
@@ -330,6 +338,9 @@ class SlackAdapter(
         const val MAX_REACTIONS_PER_MESSAGE = 5
     }
 }
+
+/** A Slack conversation resolved by name: its id and whether it is private */
+data class SlackConversationRef(val id: String, val isPrivate: Boolean)
 
 /** Tracks the last message in a channel for reaction relay filtering */
 internal class LastSlackMessage(

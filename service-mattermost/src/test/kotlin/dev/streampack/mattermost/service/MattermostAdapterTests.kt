@@ -32,6 +32,8 @@ class MattermostAdapterTests {
     private val dispatched = CopyOnWriteArrayList<Message<*>>()
     private val posted = CopyOnWriteArrayList<String>()
     private val authHeaders = CopyOnWriteArrayList<String?>()
+    private val membership = CopyOnWriteArrayList<String>()
+    @Volatile private var failNextDispatch = false
 
     private val gateway =
         object : EventGateway {
@@ -41,6 +43,10 @@ class MattermostAdapterTests {
             }
 
             override fun send(message: Message<*>) {
+                if (failNextDispatch) {
+                    failNextDispatch = false
+                    throw IllegalStateException("gateway down")
+                }
                 dispatched += message
             }
         }
@@ -53,6 +59,23 @@ class MattermostAdapterTests {
             val body = """{"id": "botuser01", "username": "nevet"}"""
             exchange.responseHeaders.add("Content-Type", "application/json")
             exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        httpServer.createContext("/api/v4/channels/chan01/members") { exchange ->
+            membership +=
+                exchange.requestMethod +
+                    " " +
+                    exchange.requestURI.path +
+                    " " +
+                    exchange.requestBody.readAllBytes().toString(Charsets.UTF_8)
+            val body =
+                if (exchange.requestMethod == "DELETE") """{"status":"OK"}"""
+                else """{"channel_id":"chan01","user_id":"botuser01"}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(
+                if (exchange.requestMethod == "DELETE") 200 else 201,
+                body.toByteArray().size.toLong(),
+            )
             exchange.responseBody.use { it.write(body.toByteArray()) }
         }
         httpServer.createContext("/api/v4/posts") { exchange ->
@@ -70,7 +93,7 @@ class MattermostAdapterTests {
                 serverName = "local",
                 baseUrl = "http://localhost:${httpServer.address.port}",
                 token = "mm-token",
-                signalCharacter = "!",
+                initialSignalCharacter = "!",
                 reconnectDelay = Duration.ZERO,
                 eventGateway = gateway,
                 userResolutionService = users,
@@ -174,5 +197,53 @@ class MattermostAdapterTests {
         adapter.handleFrame("""{"event":"posted","data":{"post":""}}""")
         assertEquals(0, dispatched.size)
         assertNull(dispatched.firstOrNull())
+    }
+
+    @Test
+    fun `duplicate tracking is bounded and forgets the oldest ids`() {
+        val limit = MattermostAdapter.RECENT_POST_LIMIT
+        for (i in 0 until limit + 10) adapter.handleFrame(posted("id$i", "!version"))
+        assertEquals(limit + 10, dispatched.size)
+        adapter.handleFrame(posted("id0", "!version"))
+        assertEquals(limit + 11, dispatched.size, "oldest id should have been forgotten")
+        adapter.handleFrame(posted("id${limit + 9}", "!version"))
+        assertEquals(limit + 11, dispatched.size, "recent id must still be deduplicated")
+    }
+
+    @Test
+    fun `a post whose dispatch fails is not remembered as seen`() {
+        failNextDispatch = true
+        adapter.handleFrame(posted("retry1", "!version"))
+        assertEquals(0, dispatched.size)
+        adapter.handleFrame(posted("retry1", "!version"))
+        assertEquals(1, dispatched.size)
+    }
+
+    @Test
+    fun `the signal character can change while connected`() {
+        adapter.signalCharacter = "~"
+        adapter.handleFrame(posted("s1", "~version"))
+        assertEquals(true, dispatched.last().headers[Provenance.ADDRESSED])
+        assertEquals("version", dispatched.last().payload)
+        adapter.handleFrame(posted("s2", "!version"))
+        assertEquals(false, dispatched.last().headers[Provenance.ADDRESSED])
+        assertTrue(adapter.wouldTriggerIngress("~hi"))
+        assertFalse(adapter.wouldTriggerIngress("!hi"))
+    }
+
+    @Test
+    fun `join and leave change channel membership through the API`() {
+        assertTrue(adapter.joinChannel("chan01"))
+        assertTrue(adapter.leaveChannel("chan01"))
+        assertEquals(2, membership.size, membership.toString())
+        assertTrue(
+            membership[0].startsWith("POST /api/v4/channels/chan01/members") &&
+                membership[0].contains("botuser01"),
+            membership[0],
+        )
+        assertTrue(
+            membership[1].startsWith("DELETE /api/v4/channels/chan01/members/botuser01"),
+            membership[1],
+        )
     }
 }

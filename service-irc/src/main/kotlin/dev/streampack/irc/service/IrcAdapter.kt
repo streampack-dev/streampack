@@ -42,11 +42,15 @@ class IrcAdapter(
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
     private val client: Client,
-    override val signalCharacter: String,
+    initialSignalCharacter: String,
     private val identity: String,
 ) : ProtocolAdapter {
     override val protocol: Protocol = Protocol.IRC
     override val serviceName: String = networkName
+
+    /** Changed at runtime by `irc signal`; read on every message, so no reconnect is needed */
+    @Volatile override var signalCharacter: String = initialSignalCharacter
+
     private val logger = LoggerFactory.getLogger(IrcAdapter::class.java)
 
     init {

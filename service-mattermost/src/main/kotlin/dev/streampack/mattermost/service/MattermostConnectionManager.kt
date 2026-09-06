@@ -48,7 +48,14 @@ class MattermostConnectionManager(
             "MattermostConnectionManager started, found {} autoconnect server(s)",
             autoconnectServers.size,
         )
-        autoconnectServers.forEach(::connect)
+        for (server in autoconnectServers) {
+            /* One unreachable server must not stop the application, or the other servers */
+            try {
+                connect(server)
+            } catch (e: Exception) {
+                logger.warn("Autoconnect to Mattermost '{}' failed: {}", server.name, e.message)
+            }
+        }
     }
 
     override fun destroy() {
@@ -79,14 +86,25 @@ class MattermostConnectionManager(
                 serverName = server.name,
                 baseUrl = server.baseUrl,
                 token = token,
-                signalCharacter = signalCharacter,
+                initialSignalCharacter = signalCharacter,
                 reconnectDelay = mattermostProperties.reconnectDelay,
                 eventGateway = eventGateway,
                 userResolutionService = userResolutionService,
                 restClientBuilder = restClientBuilder,
             )
-        adapter.connect()
         adapters[server.name] = adapter
+        try {
+            adapter.connect()
+        } catch (e: Exception) {
+            /* Keep the adapter so status reports it and the backoff loop keeps trying */
+            logger.warn("Connect to Mattermost '{}' failed, will retry: {}", server.name, e.message)
+            adapter.retryLater()
+        }
+    }
+
+    /** Applies a per-server signal override (null = global default) to a live adapter */
+    fun updateSignal(serverName: String, override: String?) {
+        adapters[serverName]?.signalCharacter = override ?: mattermostProperties.signalCharacter
     }
 
     fun disconnect(serverName: String) {
@@ -106,6 +124,10 @@ class MattermostConnectionManager(
         }
 
         if (adapters.isEmpty()) return "No active Mattermost connections"
-        return adapters.keys.sorted().joinToString("\n") { "  $it: connected" }
+        return adapters.entries
+            .sortedBy { it.key }
+            .joinToString("\n") { (name, adapter) ->
+                "  $name: " + if (adapter.isConnected()) "connected" else "reconnecting"
+            }
     }
 }

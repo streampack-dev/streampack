@@ -2,6 +2,7 @@
 package dev.streampack.mattermost.service
 
 import dev.streampack.core.repository.ChannelControlOptionsRepository
+import dev.streampack.mattermost.model.MattermostChannelRef
 import dev.streampack.mattermost.repository.MattermostChannelRepository
 import dev.streampack.mattermost.repository.MattermostServerRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -156,5 +157,109 @@ class MattermostServiceTests {
     @Test
     fun `status with no servers shows empty message`() {
         assertEquals("No Mattermost servers configured", mattermostService.status(null))
+    }
+
+    @Test
+    fun `connect accepts an env reference and stores it as a reference`() {
+        mattermostService.connect(
+            "work",
+            "https://mattermost.example.com",
+            "env://MATTERMOST_WORK_TOKEN",
+        )
+        val server = serverRepository.findByNameAndDeletedFalse("work")!!
+        assertTrue(server.token.isEnvRef())
+        assertEquals("MATTERMOST_WORK_TOKEN", server.token.envKeyOrNull())
+    }
+
+    @Test
+    fun `a removed server can be registered again and keeps its identity`() {
+        mattermostService.connect("work", "https://mattermost.example.com", "token-123")
+        val original = serverRepository.findByNameAndDeletedFalse("work")!!
+        mattermostService.remove("work")
+        assertNull(serverRepository.findByNameAndDeletedFalse("work"))
+
+        val result = mattermostService.connect("work", "https://mm2.example.com", "token-456")
+        /* Flush so the unique name constraint is actually checked inside the test transaction */
+        serverRepository.flush()
+        assertTrue(result.contains("Connecting"), result)
+        val restored = serverRepository.findByNameAndDeletedFalse("work")!!
+        assertEquals(original.id, restored.id)
+        assertEquals("https://mm2.example.com", restored.baseUrl)
+        assertEquals("token-456", restored.token.asStoredValue())
+    }
+
+    @Test
+    fun `private and direct channels register hidden and unlogged while public ones stay visible`() {
+        mattermostService.connect("work", "https://mattermost.example.com", "token-123")
+        val server = serverRepository.findByNameAndDeletedFalse("work")!!
+        mattermostService.registerChannel(
+            server,
+            MattermostChannelRef(
+                id = "priv0000000000000000000000",
+                name = "secret-plans",
+                teamId = "t1",
+                type = "P",
+            ),
+        )
+        mattermostService.registerChannel(
+            server,
+            MattermostChannelRef(id = "dm000000000000000000000000", name = "alice__bot", type = "D"),
+        )
+        mattermostService.registerChannel(
+            server,
+            MattermostChannelRef(
+                id = "pub00000000000000000000000",
+                name = "town-square",
+                teamId = "t1",
+                type = "O",
+            ),
+        )
+
+        fun options(id: String) =
+            channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
+                channelRepository
+                    .findByServerAndChannelIdAndDeletedFalse(server, id)!!
+                    .provenanceUri()
+            )!!
+        assertFalse(options("priv0000000000000000000000").visible)
+        assertFalse(options("priv0000000000000000000000").logged)
+        assertFalse(options("dm000000000000000000000000").visible)
+        assertTrue(options("pub00000000000000000000000").visible)
+        assertTrue(options("pub00000000000000000000000").logged)
+    }
+
+    @Test
+    fun `same-named channels on two teams keep separate records and names must be disambiguated`() {
+        mattermostService.connect("work", "https://mattermost.example.com", "token-123")
+        val server = serverRepository.findByNameAndDeletedFalse("work")!!
+        mattermostService.registerChannel(
+            server,
+            MattermostChannelRef(
+                id = "teama00000000000000000000",
+                name = "town-square",
+                teamId = "ta",
+                teamName = "Team A",
+                type = "O",
+            ),
+        )
+        mattermostService.registerChannel(
+            server,
+            MattermostChannelRef(
+                id = "teamb00000000000000000000",
+                name = "town-square",
+                teamId = "tb",
+                teamName = "Team B",
+                type = "O",
+            ),
+        )
+        assertEquals(2, channelRepository.findByServerAndDeletedFalse(server).size)
+
+        val byName = mattermostService.mute("work", "town-square")
+        assertTrue(
+            byName.startsWith("Error:") && byName.contains("teama00000000000000000000"),
+            byName,
+        )
+        val byId = mattermostService.mute("work", "teamb00000000000000000000")
+        assertTrue(byId.startsWith("Muted"), byId)
     }
 }

@@ -29,4 +29,5 @@ messages. It only defines the persisted state that `service-mattermost` uses.
 - `mattermost_channels`
 
 The channel table stores the stable channel ID because routing should target IDs, not human-readable
-names.
+names. Names are indexed but not unique: every team has a `town-square`, so two registered channels
+may share a name and are told apart by id and team.

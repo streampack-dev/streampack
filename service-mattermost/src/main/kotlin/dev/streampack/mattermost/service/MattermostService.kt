@@ -36,19 +36,28 @@ class MattermostService(
                 serverRepository.save(
                     existing.copy(
                         baseUrl = normalizeBaseUrl(baseUrl),
-                        token = SecretRef.literal(token),
+                        token = SecretRef.parse(token),
                         updatedAt = Instant.now(),
                     )
                 )
             } else if (existing != null) {
                 existing
             } else {
+                /* A removed server keeps its row (and the name stays unique): restore it */
+                val removed = serverRepository.findByName(name)
                 serverRepository.save(
-                    MattermostServer(
-                        name = name,
+                    removed?.copy(
                         baseUrl = normalizeBaseUrl(baseUrl!!),
-                        token = SecretRef.literal(token!!),
+                        token = SecretRef.parse(token!!),
+                        deleted = false,
+                        autoconnect = false,
+                        updatedAt = Instant.now(),
                     )
+                        ?: MattermostServer(
+                            name = name,
+                            baseUrl = normalizeBaseUrl(baseUrl!!),
+                            token = SecretRef.parse(token!!),
+                        )
                 )
             }
 
@@ -75,57 +84,90 @@ class MattermostService(
         return "Server '$name' autoconnect set to $enabled"
     }
 
+    /**
+     * Register a channel and, for public channels, add the account to it so the server starts
+     * sending its posts. Private channels and direct messages cannot be joined by the account
+     * itself; they are registered and the operator is told to add the account on Mattermost.
+     */
     fun join(serverName: String, channelQuery: String): String {
         val server =
             serverRepository.findByNameAndDeletedFalse(serverName)
                 ?: return "Error: Server '$serverName' not found"
 
-        val channel = resolveChannel(serverName, channelQuery)
-        if (channel == null) {
-            return "Error: Could not resolve channel '$channelQuery' on '$serverName'"
-        }
+        val channel =
+            try {
+                resolveChannel(serverName, channelQuery)
+            } catch (e: IllegalArgumentException) {
+                return "Error: ${e.message}"
+            } ?: return "Error: Could not resolve channel '$channelQuery' on '$serverName'"
 
-        val existing =
-            channelRepository.findByServerAndChannelIdAndDeletedFalse(server, channel.id)
-                ?: channelRepository.findByServerAndNameAndDeletedFalse(server, channel.name)
+        val persisted = registerChannel(server, channel)
+        val adapter = connectionManager.ifAvailable?.getAdapter(serverName)
+        val membership =
+            when {
+                adapter == null -> " (not connected; membership unchanged)"
+                channel.type == "O" ->
+                    if (adapter.joinChannel(channel.id)) ""
+                    else " (could not join; add the account on Mattermost)"
+                else -> " (private; add the account to the channel on Mattermost)"
+            }
+        return "Joined '${persisted.name}' on '$serverName'$membership"
+    }
+
+    /**
+     * Persist a channel record keyed by its Mattermost id and create its controls. Private channels
+     * and direct or group messages start hidden and unlogged.
+     */
+    fun registerChannel(
+        server: MattermostServer,
+        channel: MattermostChannelRef,
+    ): MattermostChannel {
+        val existing = channelRepository.findByServerAndChannelIdAndDeletedFalse(server, channel.id)
         val persisted =
-            if (existing != null) {
-                channelRepository.save(
-                    existing.copy(
-                        name = channel.name,
-                        channelId = channel.id,
-                        teamId = channel.teamId,
-                        channelType = channel.type,
-                        updatedAt = Instant.now(),
-                    )
+            channelRepository.save(
+                existing?.copy(
+                    name = channel.name,
+                    teamId = channel.teamId ?: existing.teamId,
+                    channelType = channel.type ?: existing.channelType,
+                    updatedAt = Instant.now(),
                 )
-            } else {
-                channelRepository.save(
-                    MattermostChannel(
+                    ?: MattermostChannel(
                         server = server,
                         name = channel.name,
                         channelId = channel.id,
                         teamId = channel.teamId,
                         channelType = channel.type,
                     )
-                )
-            }
-
-        channelControlService.getOrCreateOptions(persisted.provenanceUri())
-        logger.info("Registered Mattermost channel '{}' on '{}'", persisted.name, serverName)
-        return "Joined '${persisted.name}' on '$serverName'"
+            )
+        val private = channel.type != null && channel.type != "O"
+        channelControlService.getOrCreateOptions(persisted.provenanceUri(), private = private)
+        logger.info(
+            "Registered Mattermost channel '{}' [{}] on '{}'{}",
+            persisted.name,
+            persisted.channelId,
+            server.name,
+            if (private) " (private)" else "",
+        )
+        return persisted
     }
 
+    /** Leave a channel: the account is removed on Mattermost and the record retired */
     fun leave(serverName: String, channelQuery: String): String {
         val server =
             serverRepository.findByNameAndDeletedFalse(serverName)
                 ?: return "Error: Server '$serverName' not found"
         val channel =
-            channelRepository.findByServerAndNameAndDeletedFalse(server, channelQuery)
-                ?: channelRepository.findByServerAndChannelIdAndDeletedFalse(server, channelQuery)
+            findRegistered(server, channelQuery)
                 ?: return "Error: Channel '$channelQuery' not found on '$serverName'"
         channelRepository.save(channel.copy(deleted = true, updatedAt = Instant.now()))
-        return "Left '${channel.name}' on '$serverName'"
+        val adapter = connectionManager.ifAvailable?.getAdapter(serverName)
+        val membership =
+            when {
+                adapter == null -> " (not connected; membership unchanged)"
+                adapter.leaveChannel(channel.channelId) -> ""
+                else -> " (could not leave on Mattermost)"
+            }
+        return "Left '${channel.name}' on '$serverName'$membership"
     }
 
     fun listChannels(serverName: String, searchTerm: String?): String {
@@ -142,48 +184,66 @@ class MattermostService(
 
     fun setAutojoin(serverName: String, channelQuery: String, enabled: Boolean): String {
         val uri =
-            resolveChannelUri(serverName, channelQuery)
-                ?: return channelNotFoundError(serverName, channelQuery)
+            try {
+                resolveChannelUri(serverName, channelQuery)
+            } catch (e: AmbiguousChannelException) {
+                return "Error: ${e.message}"
+            } ?: return channelNotFoundError(serverName, channelQuery)
         channelControlService.setFlag(uri, "autojoin", enabled)
         return "Channel '$channelQuery' on '$serverName' autojoin set to $enabled"
     }
 
     fun mute(serverName: String, channelQuery: String): String {
         val uri =
-            resolveChannelUri(serverName, channelQuery)
-                ?: return channelNotFoundError(serverName, channelQuery)
+            try {
+                resolveChannelUri(serverName, channelQuery)
+            } catch (e: AmbiguousChannelException) {
+                return "Error: ${e.message}"
+            } ?: return channelNotFoundError(serverName, channelQuery)
         channelControlService.setFlag(uri, "automute", true)
         return "Muted '$channelQuery' on '$serverName'"
     }
 
     fun unmute(serverName: String, channelQuery: String): String {
         val uri =
-            resolveChannelUri(serverName, channelQuery)
-                ?: return channelNotFoundError(serverName, channelQuery)
+            try {
+                resolveChannelUri(serverName, channelQuery)
+            } catch (e: AmbiguousChannelException) {
+                return "Error: ${e.message}"
+            } ?: return channelNotFoundError(serverName, channelQuery)
         channelControlService.setFlag(uri, "automute", false)
         return "Unmuted '$channelQuery' on '$serverName'"
     }
 
     fun setAutomute(serverName: String, channelQuery: String, enabled: Boolean): String {
         val uri =
-            resolveChannelUri(serverName, channelQuery)
-                ?: return channelNotFoundError(serverName, channelQuery)
+            try {
+                resolveChannelUri(serverName, channelQuery)
+            } catch (e: AmbiguousChannelException) {
+                return "Error: ${e.message}"
+            } ?: return channelNotFoundError(serverName, channelQuery)
         channelControlService.setFlag(uri, "automute", enabled)
         return "Channel '$channelQuery' on '$serverName' automute set to $enabled"
     }
 
     fun setVisible(serverName: String, channelQuery: String, visible: Boolean): String {
         val uri =
-            resolveChannelUri(serverName, channelQuery)
-                ?: return channelNotFoundError(serverName, channelQuery)
+            try {
+                resolveChannelUri(serverName, channelQuery)
+            } catch (e: AmbiguousChannelException) {
+                return "Error: ${e.message}"
+            } ?: return channelNotFoundError(serverName, channelQuery)
         channelControlService.setFlag(uri, "visible", visible)
         return "Channel '$channelQuery' on '$serverName' visible set to $visible"
     }
 
     fun setLogged(serverName: String, channelQuery: String, logged: Boolean): String {
         val uri =
-            resolveChannelUri(serverName, channelQuery)
-                ?: return channelNotFoundError(serverName, channelQuery)
+            try {
+                resolveChannelUri(serverName, channelQuery)
+            } catch (e: AmbiguousChannelException) {
+                return "Error: ${e.message}"
+            } ?: return channelNotFoundError(serverName, channelQuery)
         channelControlService.setFlag(uri, "logged", logged)
         return "Channel '$channelQuery' on '$serverName' logged set to $logged"
     }
@@ -208,6 +268,7 @@ class MattermostService(
         serverRepository.save(
             server.copy(signalCharacter = signalCharacter, updatedAt = Instant.now())
         )
+        connectionManager.ifAvailable { it.updateSignal(name, signalCharacter) }
         return if (signalCharacter != null) {
             "Server '$name' signal character set to '$signalCharacter'"
         } else {
@@ -244,11 +305,28 @@ class MattermostService(
 
     private fun resolveChannelUri(serverName: String, channelQuery: String): String? {
         val server = serverRepository.findByNameAndDeletedFalse(serverName) ?: return null
-        val channel =
-            channelRepository.findByServerAndNameAndDeletedFalse(server, channelQuery)
-                ?: channelRepository.findByServerAndChannelIdAndDeletedFalse(server, channelQuery)
-                ?: return null
-        return channel.provenanceUri()
+        return findRegistered(server, channelQuery)?.provenanceUri()
+    }
+
+    /**
+     * A registered channel by id, else by name. A name shared by several teams is refused with the
+     * candidate ids, rather than silently picking one.
+     */
+    private fun findRegistered(server: MattermostServer, query: String): MattermostChannel? {
+        val cleaned = query.removePrefix("#").trim()
+        channelRepository.findByServerAndChannelIdAndDeletedFalse(server, cleaned)?.let {
+            return it
+        }
+        val byName = channelRepository.findByServerAndNameAndDeletedFalse(server, cleaned)
+        if (byName.size > 1) {
+            throw AmbiguousChannelException(
+                "Channel '$cleaned' is registered on several teams; use the id: " +
+                    byName.joinToString(", ") {
+                        "${it.channelId}${it.teamId?.let { t -> " (team $t)" } ?: ""}"
+                    }
+            )
+        }
+        return byName.firstOrNull()
     }
 
     private fun normalizeBaseUrl(baseUrl: String): String = baseUrl.trim().trimEnd('/')
@@ -258,3 +336,6 @@ class MattermostService(
     private fun channelNotFoundError(serverName: String, channelQuery: String): String =
         "Error: Channel '$channelQuery' not found on '$serverName'"
 }
+
+/** A channel name that matches several registered channels; the message lists the candidate ids */
+class AmbiguousChannelException(message: String) : IllegalArgumentException(message)

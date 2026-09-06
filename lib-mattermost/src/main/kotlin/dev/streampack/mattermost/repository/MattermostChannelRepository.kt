@@ -7,10 +7,11 @@ import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface MattermostChannelRepository : JpaRepository<MattermostChannel, UUID> {
+    /** Names are unique only within a team, so a name may match several channels */
     fun findByServerAndNameAndDeletedFalse(
         server: MattermostServer,
         name: String,
-    ): MattermostChannel?
+    ): List<MattermostChannel>
 
     fun findByServerAndChannelIdAndDeletedFalse(
         server: MattermostServer,

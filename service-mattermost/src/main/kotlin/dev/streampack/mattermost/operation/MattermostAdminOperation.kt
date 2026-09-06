@@ -14,6 +14,10 @@ import org.springframework.stereotype.Component
 class MattermostAdminOperation(private val mattermostService: MattermostService) :
     TypedOperation<String>(String::class) {
 
+    /** `mattermost connect <name> <base-url> <token>`: the token is a secret */
+    override val redactionRules =
+        listOf(dev.streampack.core.model.RedactionRule("mattermost connect", setOf(4)))
+
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         val trimmed = payload.trim()
         return trimmed == "mattermost" || trimmed.startsWith("mattermost ")

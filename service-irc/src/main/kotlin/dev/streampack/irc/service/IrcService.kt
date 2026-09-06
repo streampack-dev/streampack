@@ -58,15 +58,26 @@ class IrcService(
             } else if (existing != null) {
                 existing
             } else {
+                /* A removed network keeps its row (and the name stays unique): restore it */
+                val removed = networkRepository.findByName(name)
                 networkRepository
                     .save(
-                        IrcNetwork(
-                            name = name,
+                        removed?.copy(
                             host = host!!,
                             nick = nick!!,
                             saslAccount = saslAccount?.let { SecretRef.literal(it) },
                             saslPassword = saslPassword?.let { SecretRef.literal(it) },
+                            deleted = false,
+                            autoconnect = false,
+                            updatedAt = Instant.now(),
                         )
+                            ?: IrcNetwork(
+                                name = name,
+                                host = host!!,
+                                nick = nick!!,
+                                saslAccount = saslAccount?.let { SecretRef.literal(it) },
+                                saslPassword = saslPassword?.let { SecretRef.literal(it) },
+                            )
                     )
                     .also { logger.info("Registered IRC network '{}'", name) }
             }
@@ -206,6 +217,7 @@ class IrcService(
         networkRepository.save(
             network.copy(signalCharacter = signalCharacter, updatedAt = Instant.now())
         )
+        connectionManager.ifAvailable { it.updateSignal(name, signalCharacter) }
         return if (signalCharacter != null) {
             "Network '$name' signal character set to '$signalCharacter'"
         } else {

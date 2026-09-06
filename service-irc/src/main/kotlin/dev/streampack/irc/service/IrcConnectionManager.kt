@@ -145,7 +145,7 @@ class IrcConnectionManager(
                 networkRepository = networkRepository,
                 channelRepository = channelRepository,
                 client = client,
-                signalCharacter = effectiveSignal,
+                initialSignalCharacter = effectiveSignal,
                 identity = ircProperties.identity,
             )
         adapters[network.name] = adapter
@@ -158,6 +158,11 @@ class IrcConnectionManager(
             adapter.disconnect()
             logger.info("Disconnected from '{}'", networkName)
         }
+    }
+
+    /** Applies a per-network signal override (null = global default) to a live adapter */
+    fun updateSignal(networkName: String, override: String?) {
+        adapters[networkName]?.signalCharacter = override ?: ircProperties.signalCharacter
     }
 
     fun join(networkName: String, channelName: String) {

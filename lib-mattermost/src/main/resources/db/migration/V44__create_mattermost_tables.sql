@@ -26,6 +26,6 @@ create unique index uq_mattermost_channel_server_channel_id
     on mattermost_channels(server_id, channel_id)
     where deleted = false;
 
-create unique index uq_mattermost_channel_server_name
-    on mattermost_channels(server_id, name)
-    where deleted = false;
+-- Names repeat across teams (every team has a town-square); the channel id is authoritative
+create index idx_mattermost_channels_server_name
+    on mattermost_channels(server_id, name);

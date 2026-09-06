@@ -48,13 +48,22 @@ class SlackService(
             } else if (existing != null) {
                 existing
             } else {
+                /* A removed workspace keeps its row (and the name stays unique): restore it */
+                val removed = workspaceRepository.findByName(name)
                 workspaceRepository
                     .save(
-                        SlackWorkspace(
-                            name = name,
-                            botToken = SecretRef.literal(botToken!!),
-                            appToken = SecretRef.literal(appToken!!),
+                        removed?.copy(
+                            botToken = SecretRef.parse(botToken!!),
+                            appToken = SecretRef.parse(appToken!!),
+                            deleted = false,
+                            autoconnect = false,
+                            updatedAt = Instant.now(),
                         )
+                            ?: SlackWorkspace(
+                                name = name,
+                                botToken = SecretRef.parse(botToken!!),
+                                appToken = SecretRef.parse(appToken!!),
+                            )
                     )
                     .also { logger.info("Registered Slack workspace '{}'", name) }
             }
@@ -94,27 +103,28 @@ class SlackService(
                         logger.info("Registered channel '{}' on '{}'", channelName, workspaceName)
                     }
 
-        channelControlService.getOrCreateOptions(channel.provenanceUri())
-
-        // Resolve Slack channel ID if connected
+        /* Resolve the Slack channel when connected, so private channels start hidden */
+        var private = false
         connectionManager.ifAvailable { cm ->
             val adapter = cm.getAdapter(workspaceName)
             if (adapter != null && channel.channelId == null) {
-                val resolvedId = adapter.resolveChannelId(channelName)
-                if (resolvedId != null) {
+                val resolved = adapter.resolveChannel(channelName)
+                if (resolved != null) {
+                    private = resolved.isPrivate
                     channel =
                         channelRepository.save(
-                            channel.copy(channelId = resolvedId, updatedAt = Instant.now())
+                            channel.copy(channelId = resolved.id, updatedAt = Instant.now())
                         )
                     logger.info(
                         "Resolved channel ID for '{}' on '{}': {}",
                         channelName,
                         workspaceName,
-                        resolvedId,
+                        resolved.id,
                     )
                 }
             }
         }
+        channelControlService.getOrCreateOptions(channel.provenanceUri(), private = private)
 
         return "Joined '$channelName' on '$workspaceName'"
     }
@@ -209,6 +219,7 @@ class SlackService(
         workspaceRepository.save(
             workspace.copy(signalCharacter = signalCharacter, updatedAt = Instant.now())
         )
+        connectionManager.ifAvailable { it.updateSignal(name, signalCharacter) }
         return if (signalCharacter != null) {
             "Workspace '$name' signal character set to '$signalCharacter'"
         } else {

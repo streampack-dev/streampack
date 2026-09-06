@@ -90,7 +90,7 @@ class SlackConnectionManager(
                 workspaceName = workspace.name,
                 botToken = botToken,
                 appToken = appToken,
-                signalCharacter = effectiveSignal,
+                initialSignalCharacter = effectiveSignal,
                 eventGateway = eventGateway,
                 userResolutionService = userResolutionService,
                 channelControlService = channelControlService,
@@ -105,6 +105,11 @@ class SlackConnectionManager(
             adapter.disconnect()
             logger.info("Disconnected from Slack workspace '{}'", workspaceName)
         }
+    }
+
+    /** Applies a per-workspace signal override (null = global default) to a live adapter */
+    fun updateSignal(workspaceName: String, override: String?) {
+        adapters[workspaceName]?.signalCharacter = override ?: slackProperties.signalCharacter
     }
 
     /** Returns the adapter for the given workspace, or null if not connected */

@@ -13,7 +13,6 @@ import java.net.http.WebSocket
 import java.time.Duration
 import java.util.LinkedHashMap
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import org.slf4j.LoggerFactory
@@ -35,7 +34,7 @@ class MattermostAdapter(
     private val serverName: String,
     baseUrl: String,
     private val token: String,
-    override val signalCharacter: String,
+    initialSignalCharacter: String,
     private val reconnectDelay: Duration,
     private val eventGateway: EventGateway,
     private val userResolutionService: UserResolutionService,
@@ -43,6 +42,11 @@ class MattermostAdapter(
 ) : ProtocolAdapter {
     override val protocol: Protocol = Protocol.MATTERMOST
     override val serviceName: String = serverName
+
+    /**
+     * Changed at runtime by `mattermost signal`; read on every message, so no reconnect is needed
+     */
+    @Volatile override var signalCharacter: String = initialSignalCharacter
 
     private val logger = LoggerFactory.getLogger(MattermostAdapter::class.java)
     private val mapper: JsonMapper = JsonMapper.builder().findAndAddModules().build()
@@ -58,7 +62,14 @@ class MattermostAdapter(
     private val connected = AtomicBoolean(false)
     private val explicitDisconnect = AtomicBoolean(false)
     private val eventBuffer = StringBuilder()
-    private val recentPostIds = ConcurrentHashMap.newKeySet<String>()
+    private val reconnectAttempts = AtomicInteger(0)
+
+    /* Bounded memory of dispatched post ids, oldest evicted first; guarded by synchronized */
+    private val recentPostIds =
+        object : LinkedHashMap<String, Boolean>(256, 0.75f, false) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?) =
+                size > RECENT_POST_LIMIT
+        }
 
     @Volatile private var socket: WebSocket? = null
     @Volatile private var selfUser: MattermostUserView? = null
@@ -96,6 +107,12 @@ class MattermostAdapter(
             }
     }
 
+    /**
+     * Keep trying to connect in the background until it works or [disconnect] is called, backing
+     * off between attempts. Used after a failed [connect] and after the socket drops.
+     */
+    fun retryLater() = scheduleReconnect()
+
     fun disconnect() {
         explicitDisconnect.set(true)
         connected.set(false)
@@ -104,6 +121,51 @@ class MattermostAdapter(
     }
 
     fun isConnected(): Boolean = connected.get()
+
+    /** Adds the connected account to a channel it can join on its own (public channels). */
+    fun joinChannel(channelId: String): Boolean {
+        val self = selfUser?.id ?: return false
+        return runCatching {
+                restClient
+                    .post()
+                    .uri("/api/v4/channels/{channelId}/members", channelId)
+                    .body(mapOf("user_id" to self))
+                    .retrieve()
+                    .toBodilessEntity()
+                true
+            }
+            .getOrElse {
+                logger.warn(
+                    "Could not join channel {} on '{}': {}",
+                    channelId,
+                    serverName,
+                    it.message,
+                )
+                false
+            }
+    }
+
+    /** Removes the connected account from a channel, so the server stops sending its posts. */
+    fun leaveChannel(channelId: String): Boolean {
+        val self = selfUser?.id ?: return false
+        return runCatching {
+                restClient
+                    .delete()
+                    .uri("/api/v4/channels/{channelId}/members/{userId}", channelId, self)
+                    .retrieve()
+                    .toBodilessEntity()
+                true
+            }
+            .getOrElse {
+                logger.warn(
+                    "Could not leave channel {} on '{}': {}",
+                    channelId,
+                    serverName,
+                    it.message,
+                )
+                false
+            }
+    }
 
     override fun wouldTriggerIngress(text: String): Boolean {
         if (signalCharacter.isNotEmpty() && text.startsWith(signalCharacter)) return true
@@ -267,6 +329,7 @@ class MattermostAdapter(
 
         if (root.path("status").asString("") == "OK") {
             connected.set(true)
+            reconnectAttempts.set(0)
             return
         }
 
@@ -283,7 +346,7 @@ class MattermostAdapter(
         if (postJson.isBlank()) return
 
         val post = mapper.readValue<MattermostPostView>(postJson)
-        if (post.id.isBlank() || !recentPostIds.add(post.id)) return
+        if (post.id.isBlank() || alreadySeen(post.id)) return
         if (post.userId == selfUser?.id) return
         if (post.type.isNotBlank()) return
 
@@ -319,6 +382,15 @@ class MattermostAdapter(
         val addressed = channelType == "D" || addressedText != null
         val nick = data.path("sender_name").asString("").ifBlank { null }
         dispatch(addressedText ?: message, provenance, addressed, nick)
+        /* Remembered only once dispatch succeeded, so a redelivery after a failure is processed */
+        markSeen(post.id)
+    }
+
+    private fun alreadySeen(postId: String): Boolean =
+        synchronized(recentPostIds) { recentPostIds.containsKey(postId) }
+
+    private fun markSeen(postId: String) {
+        synchronized(recentPostIds) { recentPostIds[postId] = true }
     }
 
     private fun extractAddressedText(raw: String): String? {
@@ -338,18 +410,17 @@ class MattermostAdapter(
 
     private fun scheduleReconnect() {
         if (explicitDisconnect.get() || reconnectDelay.isZero || reconnectDelay.isNegative) return
+        val attempt = reconnectAttempts.incrementAndGet()
+        val delay = ReconnectBackoff.delay(attempt, reconnectDelay, MAX_RECONNECT_DELAY)
+        logger.info("Reconnecting Mattermost '{}' in {} (attempt {})", serverName, delay, attempt)
         Thread.startVirtualThread {
-            runCatching { Thread.sleep(reconnectDelay.toMillis()) }
-            if (!explicitDisconnect.get()) {
-                runCatching { connect() }
-                    .onFailure {
-                        logger.warn(
-                            "Mattermost reconnect failed for '{}': {}",
-                            serverName,
-                            it.message,
-                        )
-                    }
-            }
+            runCatching { Thread.sleep(delay.toMillis()) }
+            if (explicitDisconnect.get()) return@startVirtualThread
+            runCatching { connect() }
+                .onFailure {
+                    logger.warn("Mattermost reconnect failed for '{}': {}", serverName, it.message)
+                    scheduleReconnect()
+                }
         }
     }
 
@@ -407,5 +478,10 @@ class MattermostAdapter(
             scheduleReconnect()
             return CompletableFuture.completedFuture(null)
         }
+    }
+
+    companion object {
+        const val RECENT_POST_LIMIT: Int = 2048
+        val MAX_RECONNECT_DELAY: Duration = Duration.ofMinutes(5)
     }
 }

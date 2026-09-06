@@ -3,6 +3,7 @@ package dev.streampack.core.integration
 
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.RedactionRule
+import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.MessageLogService
 import dev.streampack.core.service.Operation
 import org.springframework.messaging.Message
@@ -10,10 +11,14 @@ import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.ChannelInterceptor
 import org.springframework.stereotype.Component
 
-/** Captures all inbound messages flowing through the ingress channel to the message log */
+/**
+ * Captures inbound messages flowing through the ingress channel to the message log, except for
+ * channels whose controls say `logged=false`, which are never persisted.
+ */
 @Component
 class IngressLoggingInterceptor(
     private val messageLogService: MessageLogService,
+    private val channelControlService: ChannelControlService,
     operations: List<Operation>,
 ) : ChannelInterceptor {
 
@@ -21,6 +26,7 @@ class IngressLoggingInterceptor(
 
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*> {
         val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return message
+        if (!channelControlService.isLogged(provenance)) return message
         val sender =
             message.headers["nick"] as? String
                 ?: provenance.user?.displayName
