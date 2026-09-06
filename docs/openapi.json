@@ -3497,7 +3497,7 @@
     },
     "/webhooks/github" : {
       "post" : {
-        "description" : "Validates X-Hub-Signature-256, deduplicates deliveries, and fans out supported GitHub events.",
+        "description" : "Validates X-Hub-Signature-256, deduplicates deliveries, and fans out issues, pull_request, release, and completed workflow_run events.",
         "operationId" : "receive_1",
         "parameters" : [ {
           "in" : "header",
@@ -3603,7 +3603,7 @@
     },
     "/webhooks/gitlab" : {
       "post" : {
-        "description" : "Compares X-Gitlab-Token with the project's secret token, deduplicates by X-Gitlab-Event-UUID, and fans out issue, merge request, and release hooks.",
+        "description" : "Compares X-Gitlab-Token with the project's secret token, deduplicates by X-Gitlab-Event-UUID, and fans out issue, merge request, release, and pipeline hooks.",
         "operationId" : "receive",
         "parameters" : [ {
           "in" : "header",

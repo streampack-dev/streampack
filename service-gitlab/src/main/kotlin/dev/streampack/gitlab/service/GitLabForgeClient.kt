@@ -7,10 +7,13 @@ import dev.streampack.forge.client.WebhookEnvelope
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
+import dev.streampack.forge.model.ForgePipeline
 import dev.streampack.forge.model.ForgeProjectRef
 import dev.streampack.forge.model.ForgeReleaseInfo
 import dev.streampack.gitlab.config.ConditionalOnGitLab
 import java.security.MessageDigest
+import java.time.Duration
+import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import tools.jackson.databind.JsonNode
@@ -59,6 +62,29 @@ class GitLabForgeClient(private val apiClient: GitLabApiClient) : ForgeClient {
         token: String?,
     ): List<ForgeReleaseInfo> = apiClient.fetchReleases(instance.apiUrl, path, token)
 
+    override fun fetchPipelinesSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgePipeline> = apiClient.fetchPipelines(instance.apiUrl, path, token, since)
+
+    override fun fetchFailedJobs(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        pipelineId: String,
+    ): List<String> = apiClient.fetchFailedJobs(instance.apiUrl, path, token, pipelineId)
+
+    override fun fetchDefaultBranch(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+    ): String? = apiClient.fetchDefaultBranch(instance.apiUrl, path, token)
+
+    /** The Pipeline Hook lists every job under `builds` */
+    override val webhookCarriesFailedJobs: Boolean = true
+
     override fun webhookEnvelope(header: (String) -> String?): WebhookEnvelope? {
         val token = header(TOKEN_HEADER)
         val event = header(EVENT_HEADER)
@@ -99,6 +125,7 @@ class GitLabForgeClient(private val apiClient: GitLabApiClient) : ForgeClient {
             ISSUE_HOOK -> openedItem(root, "issue", path)?.let { ForgeEvent.IssueOpened(it) }
             MERGE_REQUEST_HOOK ->
                 openedItem(root, "merge request", path)?.let { ForgeEvent.ChangeRequestOpened(it) }
+            PIPELINE_HOOK -> parsePipelineHook(root, path)
             RELEASE_HOOK -> {
                 val action = root.path("action").asString("")
                 if (action != "create") {
@@ -115,6 +142,50 @@ class GitLabForgeClient(private val apiClient: GitLabApiClient) : ForgeClient {
             }
             else -> null
         }
+    }
+
+    /**
+     * A Pipeline Hook. In-progress ones still reach the settlement gate, which records them without
+     * notifying, so a retry that fails again is noticed. The merge request comes inline when the
+     * pipeline belongs to one; the jobs come inline as `builds`.
+     */
+    private fun parsePipelineHook(root: JsonNode, path: String): ForgeEvent? {
+        val attributes = root.path("object_attributes")
+        val status = attributes.path("status").asString("")
+        val outcome = GitLabApiClient.statusOutcome(status)
+        val id = attributes.path("id").asLong(0)
+        if (id <= 0) {
+            ignored("pipeline", path, status)
+            return null
+        }
+        val ref = attributes.path("ref").asString("")
+        val mergeRequest =
+            root.path("merge_request").path("iid").asInt(0).takeIf { it > 0 }
+                ?: GitLabApiClient.mergeRequestNumber(ref)
+        val project = root.path("project")
+        val webUrl = project.path("web_url").asString("")
+        val pipeline =
+            ForgePipeline(
+                id = id.toString(),
+                name = null,
+                ref = ref,
+                changeRequestNumber = mergeRequest,
+                outcome = outcome,
+                reason = status,
+                url = if (webUrl.isBlank()) "" else "$webUrl/-/pipelines/$id",
+                duration =
+                    attributes
+                        .path("duration")
+                        .takeIf { it.isNumber }
+                        ?.let { Duration.ofSeconds(it.asLong()) },
+                updatedAt = Instant.now(),
+            )
+        val defaultBranch = project.path("default_branch").asString("")
+        return ForgeEvent.PipelineSettled(
+            pipeline = pipeline,
+            failedJobs = GitLabApiClient.failedJobNames(root.path("builds")),
+            isDefaultBranch = mergeRequest == null && ref == defaultBranch,
+        )
     }
 
     /** `object_attributes` of an issue or merge request hook, when its action is `open` */
@@ -148,7 +219,9 @@ class GitLabForgeClient(private val apiClient: GitLabApiClient) : ForgeClient {
         const val ISSUE_HOOK = "Issue Hook"
         const val MERGE_REQUEST_HOOK = "Merge Request Hook"
         const val RELEASE_HOOK = "Release Hook"
-        private val supportedEvents = setOf(ISSUE_HOOK, MERGE_REQUEST_HOOK, RELEASE_HOOK)
+        const val PIPELINE_HOOK = "Pipeline Hook"
+        private val supportedEvents =
+            setOf(ISSUE_HOOK, MERGE_REQUEST_HOOK, RELEASE_HOOK, PIPELINE_HOOK)
 
         /** A full path is at least `namespace/project`, with no empty segments */
         fun isValidPath(path: String): Boolean {

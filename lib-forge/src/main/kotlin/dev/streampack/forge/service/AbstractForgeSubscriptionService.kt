@@ -12,6 +12,8 @@ import dev.streampack.forge.model.ForgeSubscription
 import dev.streampack.forge.secret.ForgeTokenResolver
 import dev.streampack.forge.secret.SecretLookup
 import dev.streampack.forge.store.ForgeStore
+import dev.streampack.forge.subscription.PipelineFilter
+import dev.streampack.forge.subscription.SubscriptionEvents
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional
@@ -141,26 +143,41 @@ abstract class AbstractForgeSubscriptionService<
         }
     }
 
-    /** Subscribe a destination to a project's notifications. */
+    /**
+     * Subscribe a destination to a project's notifications. Every subscription receives issues,
+     * change requests, and releases; [filters] opt into pipeline events on top. Given filters
+     * replace any previously stored ones; an empty list on an existing subscription leaves them as
+     * they are.
+     */
     open fun subscribe(
         instance: I,
         identifier: String,
         destinationUri: String,
+        filters: List<PipelineFilter> = emptyList(),
     ): SubscriptionOutcome<P> {
         val project =
             store.findProject(instance, ForgeProjectRef(identifier))
                 ?: return SubscriptionOutcome.ProjectNotFound(identifier)
         val existing = store.findSubscription(project, destinationUri)
         if (existing != null && existing.active) {
-            return SubscriptionOutcome.AlreadySubscribed(project)
+            if (filters.isEmpty()) return SubscriptionOutcome.AlreadySubscribed(project)
+            store.setSubscriptionEvents(existing, SubscriptionEvents.withFilters(filters))
+            logger.info(
+                "Updated filters for {} on {}: {}",
+                destinationUri,
+                project.displayName,
+                filters,
+            )
+            return SubscriptionOutcome.FiltersUpdated(project, filters)
         }
-        if (existing != null) {
-            store.setSubscriptionActive(existing, true)
-        } else {
-            store.createSubscription(project, destinationUri)
+        val subscription =
+            if (existing != null) store.setSubscriptionActive(existing, true)
+            else store.createSubscription(project, destinationUri)
+        if (filters.isNotEmpty() || existing != null) {
+            store.setSubscriptionEvents(subscription, SubscriptionEvents.withFilters(filters))
         }
-        logger.info("Subscribed {} to {}", destinationUri, project.displayName)
-        return SubscriptionOutcome.Subscribed(project)
+        logger.info("Subscribed {} to {} {}", destinationUri, project.displayName, filters)
+        return SubscriptionOutcome.Subscribed(project, filters)
     }
 
     /** Unsubscribe a destination from a project. */

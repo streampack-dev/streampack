@@ -2,6 +2,7 @@
 package dev.streampack.forge.model
 
 import dev.streampack.core.model.SecretRef
+import java.time.Instant
 
 /**
  * The view of a watched project that the shared forge services need. Each forge module's entity
@@ -30,6 +31,9 @@ interface ForgeProject {
 
     val highestChangeRequestNumber: Int
 
+    /** When the project was last polled; pipelines updated after this are candidates to report. */
+    val lastPolledAt: Instant?
+
     val deliveryMode: DeliveryMode
 
     /** Encrypted webhook secret, present when [deliveryMode] is [DeliveryMode.WEBHOOK]. */
@@ -38,9 +42,15 @@ interface ForgeProject {
     val active: Boolean
 }
 
-/** A destination subscribed to a project's notifications. */
+/**
+ * A destination subscribed to a project's notifications. [events] are the stored event tokens (see
+ * [dev.streampack.forge.subscription.SubscriptionEvents]): the base kinds every subscription
+ * receives plus any pipeline filters it opted into.
+ */
 interface ForgeSubscription {
     val destinationUri: String
+
+    val events: List<String>
 
     val active: Boolean
 }

@@ -3,6 +3,7 @@ package dev.streampack.forge.service
 
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
+import dev.streampack.forge.subscription.PipelineFilter
 
 sealed interface AddInstanceOutcome<I : ForgeInstance> {
     data class Added<I : ForgeInstance>(val instance: I) : AddInstanceOutcome<I>
@@ -31,7 +32,14 @@ sealed interface AddProjectOutcome<P : ForgeProject> {
 }
 
 sealed interface SubscriptionOutcome<P : ForgeProject> {
-    data class Subscribed<P : ForgeProject>(val project: P) : SubscriptionOutcome<P>
+    data class Subscribed<P : ForgeProject>(
+        val project: P,
+        val filters: List<PipelineFilter> = emptyList(),
+    ) : SubscriptionOutcome<P>
+
+    /** An active subscription had its pipeline filters replaced. */
+    data class FiltersUpdated<P : ForgeProject>(val project: P, val filters: List<PipelineFilter>) :
+        SubscriptionOutcome<P>
 
     data class Unsubscribed<P : ForgeProject>(val project: P) : SubscriptionOutcome<P>
 

@@ -129,6 +129,18 @@ Rules:
 - A host that has not been registered is an error, not an implicit registration.
 - The instance token is the default credential for its projects; a project token given at `add` time overrides it.
 
+## Pipeline Filters
+
+Both forges accept pipeline filters between the project path and `on <host>` on `subscribe`. Every subscription receives issues, change requests, and releases; filters add pipeline outcomes on top and are reported once per settlement.
+
+| Filter | Reports |
+|--------|---------|
+| `pipelines` | Pipelines that belong to a pull or merge request |
+| `pipelines:default-branch` | Pipelines on the project's default branch |
+| `pipelines:branch:<name>` | Pipelines on one named branch |
+
+Any filter takes a trailing `:failed` to report only pipelines that need attention, e.g. `pipelines:branch:development:failed`. Several filters may be given. Re-subscribing with filters replaces them; unsubscribe and subscribe to drop them. `subscriptions` shows filters in brackets after each project.
+
 ## GitHub Operations
 
 `ADMIN`:
@@ -138,8 +150,8 @@ github instance add <url>
 github instance add <url> <token>
 github add owner/repo [on <host>]
 github add owner/repo <token> [on <host>]
-github subscribe owner/repo [on <host>]
-github subscribe owner/repo [on <host>] to <destination-uri>
+github subscribe owner/repo [<filter>…] [on <host>]
+github subscribe owner/repo [<filter>…] [on <host>] to <destination-uri>
 github unsubscribe owner/repo [on <host>]
 github unsubscribe owner/repo [on <host>] from <destination-uri>
 github remove owner/repo [on <host>]
@@ -175,8 +187,8 @@ gitlab instance add <url>
 gitlab instance add <url> <token>
 gitlab add group/project [on <host>]
 gitlab add group/project <token> [on <host>]
-gitlab subscribe group/project [on <host>]
-gitlab subscribe group/project [on <host>] to <destination-uri>
+gitlab subscribe group/project [<filter>…] [on <host>]
+gitlab subscribe group/project [<filter>…] [on <host>] to <destination-uri>
 gitlab unsubscribe group/project [on <host>]
 gitlab unsubscribe group/project [on <host>] from <destination-uri>
 gitlab remove group/project [on <host>]

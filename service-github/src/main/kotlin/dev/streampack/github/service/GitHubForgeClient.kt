@@ -8,14 +8,18 @@ import dev.streampack.forge.client.WebhookEnvelope
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
+import dev.streampack.forge.model.ForgePipeline
 import dev.streampack.forge.model.ForgeProjectRef
 import dev.streampack.forge.model.ForgeReleaseInfo
+import dev.streampack.forge.model.PipelineOutcome
 import dev.streampack.github.model.GitHubApiItem
 import dev.streampack.github.model.GitHubIssueEvent
 import dev.streampack.github.model.GitHubPullRequestEvent
 import dev.streampack.github.model.GitHubReleaseEvent
 import java.security.DigestException
 import java.security.MessageDigest
+import java.time.Duration
+import java.time.Instant
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import org.slf4j.LoggerFactory
@@ -77,6 +81,38 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
             ForgeReleaseInfo(tag = it.tagName, name = it.name, url = it.htmlUrl)
         }
     }
+
+    override fun fetchPipelinesSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgePipeline> {
+        val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return emptyList()
+        return apiClient.fetchWorkflowRuns(instance.apiUrl, owner, name, token, since)
+    }
+
+    override fun fetchFailedJobs(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        pipelineId: String,
+    ): List<String> {
+        val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return emptyList()
+        return apiClient.fetchFailedJobs(instance.apiUrl, owner, name, token, pipelineId)
+    }
+
+    override fun fetchDefaultBranch(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+    ): String? {
+        val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return null
+        return apiClient.fetchDefaultBranch(instance.apiUrl, owner, name, token)
+    }
+
+    /** `workflow_run` payloads list the run, not its jobs; the receiver fetches those */
+    override val webhookCarriesFailedJobs: Boolean = false
 
     override fun webhookEnvelope(header: (String) -> String?): WebhookEnvelope? {
         val signature = header("X-Hub-Signature-256")
@@ -158,6 +194,7 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
                     ForgeReleaseInfo(event.release.tagName, null, event.release.htmlUrl)
                 )
             }
+            "workflow_run" -> parseWorkflowRun(root, path)
             "ping" -> {
                 logger.info("Received GitHub webhook ping for {}", path)
                 ForgeEvent.Ping(root.path("zen").asString(null))
@@ -165,6 +202,62 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
             else -> null
         }
     }
+
+    /**
+     * Any `workflow_run` action. In-progress runs (`requested`, `in_progress`) still reach the
+     * settlement gate, which records them without notifying, so a re-run that fails again after a
+     * failure is noticed; only a completed run can produce a notification.
+     */
+    private fun parseWorkflowRun(root: JsonNode, path: String): ForgeEvent? {
+        val run = root.path("workflow_run")
+        val id = run.path("id").asLong(0)
+        if (id <= 0) {
+            ignored("workflow run", path, root.path("action").asString(""))
+            return null
+        }
+        val status = run.path("status").asString("")
+        val conclusion = run.path("conclusion").asString("")
+        val outcome =
+            if (status != "completed") PipelineOutcome.IN_PROGRESS
+            else GitHubApiClient.conclusionOutcome(conclusion)
+        val updatedAt = parseInstant(run.path("updated_at").asString(null)) ?: Instant.now()
+        val startedAt = parseInstant(run.path("run_started_at").asString(null))
+        val pullRequest =
+            run.path("pull_requests").firstOrNull()?.path("number")?.asInt(0)?.takeIf { it > 0 }
+        val headBranch = run.path("head_branch").asString("")
+        val pipeline =
+            ForgePipeline(
+                id = id.toString(),
+                name = run.path("name").asString("").ifBlank { null },
+                ref = headBranch,
+                changeRequestNumber = pullRequest,
+                outcome = outcome,
+                reason = GitHubApiClient.reasonWord(conclusion),
+                url = run.path("html_url").asString(""),
+                duration =
+                    if (startedAt != null && outcome != PipelineOutcome.IN_PROGRESS) {
+                        Duration.between(startedAt, updatedAt)
+                    } else {
+                        null
+                    },
+                updatedAt = updatedAt,
+            )
+        val defaultBranch = root.path("repository").path("default_branch").asString("")
+        return ForgeEvent.PipelineSettled(
+            pipeline = pipeline,
+            failedJobs = emptyList(),
+            isDefaultBranch = pullRequest == null && headBranch == defaultBranch,
+        )
+    }
+
+    private fun parseInstant(text: String?): Instant? =
+        text?.let {
+            try {
+                Instant.parse(it)
+            } catch (_: Exception) {
+                null
+            }
+        }
 
     private fun ignored(what: String, path: String, action: String) {
         logger.debug(
@@ -194,6 +287,7 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
     }
 
     companion object {
-        private val supportedEvents = setOf("issues", "pull_request", "release", "ping")
+        private val supportedEvents =
+            setOf("issues", "pull_request", "release", "workflow_run", "ping")
     }
 }

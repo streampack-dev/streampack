@@ -2,6 +2,7 @@
 package dev.streampack.github.controller
 
 import dev.streampack.forge.ForgeKind
+import dev.streampack.forge.secret.EnvironmentSecretLookup
 import dev.streampack.forge.webhook.ForgeWebhookReceiver
 import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.entity.GitHubRepo
@@ -40,6 +41,7 @@ class GitHubWebhookController(
     secretCipher: WebhookSecretCipher,
     webhookService: GitHubWebhookService,
     deliveryTracker: GitHubWebhookDeliveryTracker,
+    secretLookup: EnvironmentSecretLookup,
 ) {
     private val logger = LoggerFactory.getLogger(GitHubWebhookController::class.java)
     private val receiver =
@@ -50,12 +52,13 @@ class GitHubWebhookController(
             secretCipher,
             webhookService,
             deliveryTracker,
+            secretLookup,
         )
 
     @Operation(
         summary = "Receive GitHub webhook deliveries for github.com repositories",
         description =
-            "Validates X-Hub-Signature-256, deduplicates deliveries, and fans out supported GitHub events.",
+            "Validates X-Hub-Signature-256, deduplicates deliveries, and fans out issues, pull_request, release, and completed workflow_run events.",
         responses =
             [
                 ApiResponse(responseCode = "202", description = "Delivery accepted"),

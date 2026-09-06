@@ -8,6 +8,7 @@ import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeSubscription
 import dev.streampack.forge.store.ForgeStore
+import dev.streampack.forge.subscription.SubscriptionEvents
 import dev.streampack.polling.service.EgressNotifier
 import org.slf4j.LoggerFactory
 
@@ -20,7 +21,10 @@ open class ForgeWebhookFanOut<I : ForgeInstance, P : ForgeProject, S : ForgeSubs
     private val logger = LoggerFactory.getLogger(javaClass)
 
     open fun deliver(project: P, event: ForgeEvent) {
-        val subscriptions = store.findActiveSubscriptions(project)
+        val subscriptions =
+            store.findActiveSubscriptions(project).filter {
+                SubscriptionEvents.wants(it.events, event)
+            }
         if (subscriptions.isEmpty()) {
             logger.info(
                 "No active {} subscriptions for {}; webhook notification not delivered",
