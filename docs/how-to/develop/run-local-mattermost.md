@@ -12,6 +12,8 @@ docker compose --profile mattermost up -d mattermost
 
 Open <http://localhost:8065>. The preview image is for evaluation only: it uses known passwords, keeps no durable data across image upgrades, and must not be used in production.
 
+**Apple Silicon:** Mattermost publishes amd64 images only (the preview, team, and enterprise images alike), so the compose service is pinned to `platform: linux/amd64` and runs under emulation. Turn on **Docker Desktop > Settings > General > Use Rosetta for x86_64/amd64 emulation on Apple Silicon**; without it Docker falls back to QEMU, which works but is markedly slower to start. First start takes a minute or two either way; `curl http://localhost:8065/api/v4/system/ping` returns `{"status":"OK"}` when it is ready.
+
 ## 2. Create the admin, a team, and the bot account
 
 1. Sign up at <http://localhost:8065>. The first account becomes the system admin.

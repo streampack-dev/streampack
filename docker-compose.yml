@@ -63,8 +63,11 @@ services:
 
   # Local Mattermost for development: `docker compose --profile mattermost up mattermost`.
   # The preview image bundles its own database, uses known passwords, and is not for production.
+  # Mattermost publishes amd64 images only, so on Apple Silicon this runs under Rosetta
+  # (Docker Desktop > Settings > General > "Use Rosetta for x86_64/amd64 emulation").
   mattermost:
     image: mattermost/mattermost-preview
+    platform: linux/amd64
     profiles: ["mattermost"]
     restart: unless-stopped
     ports:
