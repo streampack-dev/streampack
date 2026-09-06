@@ -87,7 +87,9 @@ use the configured signal character or mention the bot username directly.
 - Channel routing uses the Mattermost channel ID. Names repeat across teams, so a name registered
   on two teams must be addressed by id.
 - `mattermost connect … <token>` is redacted in the message log; `env://MATTERMOST_<NAME>_TOKEN` is
-  accepted in place of a literal token.
+  accepted in place of a literal token. A stored literal is rewritten to that reference only once
+  the variable exists; the startup guard never prints token values.
+- `autojoin` channels are joined on every connect and reconnect.
 - A dropped socket reconnects with doubling delays up to five minutes; `status` reports
   `reconnecting` until it does.
 - This first pass does not implement slash commands or outgoing webhooks.

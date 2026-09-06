@@ -119,7 +119,7 @@ Every registered channel carries four flags, set with the per-protocol `visible`
 - `logged=false` stops message capture for that channel entirely: neither inbound messages nor the bot's replies are written to the message log. It is not merely a browsing switch.
 - `visible=false` hides a channel's log from anonymous and non-admin browsing; admins still see it.
 - Private channels, direct messages, and group messages register with `visible=false` and `logged=false`. Public channels register visible and logged. Opt a private channel in explicitly if its history should be kept.
-- Connect commands that carry credentials (`irc connect`, `slack connect`, `mattermost connect`) are redacted before they reach the message log.
+- Connect commands that carry credentials (`irc connect`, `slack connect`, `mattermost connect`) are redacted before they reach the message log, however the command was spaced or cased; a migration redacts copies logged before this rule existed.
 
 ## Mattermost Operations
 
@@ -145,7 +145,8 @@ mattermost status [server]
 
 Operational notes:
 
-- `connect` with a URL and token registers the server; the token is externalized to `MATTERMOST_<NAME>_TOKEN` on the next restart.
+- `connect` with a URL and token registers the server; the token is externalized to `MATTERMOST_<NAME>_TOKEN` once that variable exists, and startup refuses to run with enforcement on until it does. Token values are never printed.
+- `autojoin` channels are joined through the API on every connect and reconnect (public channels; private ones need an admin to add the account).
 - `channels` lists channels visible to the account across its teams; `join` accepts a channel id or a name and reports an ambiguous name rather than guessing. Names repeat across teams, so a name registered on two teams must be addressed by id afterwards.
 - `join` on a public channel adds the account to it on Mattermost; `leave` removes the account, so the server stops sending that channel's posts. Private channels must be joined by an admin on Mattermost; `join` registers them hidden and unlogged.
 - `signal` takes effect on the live connection immediately.

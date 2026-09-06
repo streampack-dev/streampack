@@ -30,7 +30,7 @@ MATTERMOST_ENABLED=true
 STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS=false
 ```
 
-Enforcement is off so the literal token from `connect` is accepted for the session. With it on, the first restart rewrites the token to `env://MATTERMOST_LOCAL_TOKEN` and requires that variable, exactly as production will.
+Enforcement is off so the literal token from `connect` is accepted for the session. With it on, the next restart refuses to start until `MATTERMOST_LOCAL_TOKEN` is set (the value is never printed; you have it from the bot setup page), and then rewrites the stored token to `env://MATTERMOST_LOCAL_TOKEN`, exactly as production will.
 
 From the console adapter or any super-admin identity:
 

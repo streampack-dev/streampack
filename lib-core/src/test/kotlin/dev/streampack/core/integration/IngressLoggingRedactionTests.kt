@@ -92,4 +92,27 @@ class IngressLoggingRedactionTests {
             )
         assertEquals("irc connect libera irc.libera.chat nevet [REDACTED]", result)
     }
+
+    @Test
+    fun `irregular whitespace and leading spaces cannot bypass redaction`() {
+        val rule = RedactionRule("mattermost connect", setOf(4))
+        assertEquals(
+            "mattermost connect work https://mm.example.com [REDACTED]",
+            IngressLoggingInterceptor.redact(
+                "mattermost  connect   work https://mm.example.com  mm-secret",
+                listOf(rule),
+            ),
+        )
+        assertEquals(
+            "MATTERMOST connect work https://mm.example.com [REDACTED]",
+            IngressLoggingInterceptor.redact(
+                "  \tMATTERMOST connect work https://mm.example.com mm-secret ",
+                listOf(rule),
+            ),
+        )
+        assertEquals(
+            "mattermost connect work",
+            IngressLoggingInterceptor.redact("mattermost   connect work", listOf(rule)),
+        )
+    }
 }

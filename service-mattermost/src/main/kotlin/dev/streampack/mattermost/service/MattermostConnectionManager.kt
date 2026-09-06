@@ -34,6 +34,8 @@ class MattermostConnectionManager(
     private val springEnvironment: Environment,
     private val mattermostProperties: MattermostProperties,
     private val serverRepository: MattermostServerRepository,
+    private val channelRepository: dev.streampack.mattermost.repository.MattermostChannelRepository,
+    private val channelControlService: dev.streampack.core.service.ChannelControlService,
     private val restClientBuilder: RestClient.Builder,
 ) : InitializingBean, DisposableBean, ProtocolAdapter {
     override val protocol: Protocol = Protocol.MATTERMOST
@@ -91,6 +93,7 @@ class MattermostConnectionManager(
                 eventGateway = eventGateway,
                 userResolutionService = userResolutionService,
                 restClientBuilder = restClientBuilder,
+                onConnected = { joinAutojoinChannels(server, it) },
             )
         adapters[server.name] = adapter
         try {
@@ -99,6 +102,24 @@ class MattermostConnectionManager(
             /* Keep the adapter so status reports it and the backoff loop keeps trying */
             logger.warn("Connect to Mattermost '{}' failed, will retry: {}", server.name, e.message)
             adapter.retryLater()
+        }
+    }
+
+    /** `autojoin=true` channels are joined on every (re)connect; public channels only can be */
+    internal fun joinAutojoinChannels(server: MattermostServer, adapter: MattermostAdapter) {
+        val channels = channelRepository.findByServerAndDeletedFalse(server)
+        for (channel in channels) {
+            val options = channelControlService.getOptions(channel.provenanceUri()) ?: continue
+            if (!options.autojoin || !options.active) continue
+            if (adapter.joinChannel(channel.channelId)) {
+                logger.info("Autojoined '{}' on '{}'", channel.name, server.name)
+            } else {
+                logger.warn(
+                    "Autojoin of '{}' on '{}' failed; a private channel needs an admin to add the account",
+                    channel.name,
+                    server.name,
+                )
+            }
         }
     }
 

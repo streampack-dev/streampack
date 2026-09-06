@@ -67,16 +67,17 @@ class GitHubApiClientTests {
 
     @Test
     fun `validateRepo sends authorization header when token provided`() {
-        var authHeader: String? = null
+        /* Written on the server's handler thread, read here: needs a happens-before edge */
+        val authHeader = java.util.concurrent.atomic.AtomicReference<String?>(null)
         httpServer.createContext("/repos/owner/private") { exchange ->
-            authHeader = exchange.requestHeaders.getFirst("Authorization")
+            authHeader.set(exchange.requestHeaders.getFirst("Authorization"))
             val body = """{"id": 1, "full_name": "owner/private"}"""
             exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
             exchange.responseBody.use { it.write(body.toByteArray()) }
         }
 
         apiClient.validateRepo(apiUrl, "owner", "private", "ghp_test123")
-        assertTrue(authHeader != null && authHeader.contains("ghp_test123"))
+        assertTrue(authHeader.get()?.contains("ghp_test123") == true, authHeader.get())
     }
 
     /** Stub the repo endpoint so getRepository() succeeds before sub-resource calls */

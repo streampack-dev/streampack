@@ -24,7 +24,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `GITHUB_CLIENT_ID` | Optional | GitHub OAuth client id. |
 | `GITHUB_CLIENT_SECRET` | Optional | GitHub OAuth client secret. |
 | `GITHUB_WEBHOOK_SECRET_KEY` | Optional | Key that encrypts stored GitHub webhook secrets. Required before any repository can be switched to webhook delivery; placeholders such as `change-me` are rejected at startup. |
-| `GITHUB_<OWNER>_<REPO>_TOKEN` | Per repository | API token for a watched github.com repository that needs authenticated access, e.g. `GITHUB_STREAMPACK_DEV_STREAMPACK_TOKEN`. `github add owner/repo <token>` stores a literal and names this variable; on the next restart the literal is replaced by an `env://` reference and startup fails until the variable is set (with enforcement on). `github add owner/repo env://KEY` references a variable directly. |
+| `GITHUB_<OWNER>_<REPO>_TOKEN` | Per repository | API token for a watched github.com repository that needs authenticated access, e.g. `GITHUB_STREAMPACK_DEV_STREAMPACK_TOKEN`. `github add owner/repo <token>` stores a literal and names this variable; with enforcement on, startup fails until the variable is set (values are never printed), after which the literal is replaced by an `env://` reference. `github add owner/repo env://KEY` references a variable directly. |
 | `GITHUB_<HOST>_<OWNER>_<REPO>_TOKEN` | Per repository | The same, for a repository on an instance other than github.com, e.g. `GITHUB_GHE_EXAMPLE_COM_OWNER_REPO_TOKEN` for `github add owner/repo <token> on ghe.example.com`. |
 | `GITHUB_INSTANCE_<HOST>_TOKEN` | Per instance | Default API token for every repository on a registered GitHub instance that has no token of its own, e.g. `GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN` for `github instance add https://ghe.example.com <token>`. Externalized and enforced at startup the same way. |
 | `GITHUB_WEBHOOK_BASE_URL` | Optional | Public webhook base URL. |
@@ -43,7 +43,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `MATTERMOST_ENABLED` | Optional | Enables the Mattermost adapter (`service-mattermost`). Off by default. |
 | `MATTERMOST_SIGNAL` | Optional | Signal character that addresses the bot in Mattermost channels (default `!`); overridable per server with `mattermost signal`. |
 | `MATTERMOST_RECONNECT_DELAY` | Optional | Delay before reconnecting a dropped Mattermost WebSocket (default `PT15S`). |
-| `MATTERMOST_<NAME>_TOKEN` | Per server | Access token for the Mattermost server registered as `<name>`, e.g. `MATTERMOST_WORK_TOKEN`. `mattermost connect` stores a literal; on the next restart it is rewritten to an `env://` reference and startup fails until the variable is set (with enforcement on). |
+| `MATTERMOST_<NAME>_TOKEN` | Per server | Access token for the Mattermost server registered as `<name>`, e.g. `MATTERMOST_WORK_TOKEN`. `mattermost connect` stores a literal; with enforcement on, startup fails until the variable is set (the value is never printed), after which the literal is rewritten to an `env://` reference. |
 | `RSS_POLL_INTERVAL` | Optional | How long after a poll a feed is next due, ISO-8601 duration (default `PT1H`). |
 | `RSS_SCHEDULER_INTERVAL` | Optional | How often the feed poller wakes to take a batch of due feeds (default `PT90S`). |
 | `RSS_POLL_BATCH_SIZE` | Optional | Maximum feeds polled per wake-up, oldest due first (default `5`). |

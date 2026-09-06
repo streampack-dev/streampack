@@ -97,6 +97,19 @@ class SlackConnectionManager(
             )
         adapters[workspace.name] = adapter
         adapter.connect()
+        joinAutojoinChannels(workspace, adapter)
+    }
+
+    /** `autojoin=true` channels with a resolved id are joined on connect; public channels only */
+    internal fun joinAutojoinChannels(workspace: SlackWorkspace, adapter: SlackAdapter) {
+        for (channel in channelRepository.findByWorkspaceAndDeletedFalse(workspace)) {
+            val channelId = channel.channelId ?: continue
+            val options = channelControlService.getOptions(channel.provenanceUri()) ?: continue
+            if (!options.autojoin || !options.active) continue
+            if (adapter.joinChannel(channelId)) {
+                logger.info("Autojoined '{}' on '{}'", channel.name, workspace.name)
+            }
+        }
     }
 
     fun disconnect(workspaceName: String) {

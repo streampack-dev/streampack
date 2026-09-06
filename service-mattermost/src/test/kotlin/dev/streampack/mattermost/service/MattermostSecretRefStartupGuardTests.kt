@@ -21,7 +21,7 @@ class MattermostSecretRefStartupGuardTests {
         )
 
     @Test
-    fun `literal token is externalized to a server-named variable and startup fails`() {
+    fun `literal token fails startup until its variable exists and is never printed or rewritten early`() {
         val server =
             MattermostServer(
                 name = "work",
@@ -31,7 +31,9 @@ class MattermostSecretRefStartupGuardTests {
         Mockito.`when`(repository.findByDeletedFalse()).thenReturn(listOf(server))
 
         assertThrows(SilentStartupException::class.java) { guard.enforce { null } }
+        Mockito.verify(repository, Mockito.never()).save(Mockito.any())
 
+        guard.enforce { key -> if (key == "MATTERMOST_WORK_TOKEN") "mm-abc" else null }
         val captor = ArgumentCaptor.forClass(MattermostServer::class.java)
         Mockito.verify(repository).save(captor.capture())
         assertEquals("env://MATTERMOST_WORK_TOKEN", captor.value.token.asStoredValue())

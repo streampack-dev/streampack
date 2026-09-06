@@ -39,6 +39,8 @@ class MattermostAdapter(
     private val eventGateway: EventGateway,
     private val userResolutionService: UserResolutionService,
     private val restClientBuilder: RestClient.Builder,
+    /** Runs after every successful socket authentication, including reconnects */
+    private val onConnected: (MattermostAdapter) -> Unit = {},
 ) : ProtocolAdapter {
     override val protocol: Protocol = Protocol.MATTERMOST
     override val serviceName: String = serverName
@@ -330,6 +332,12 @@ class MattermostAdapter(
         if (root.path("status").asString("") == "OK") {
             connected.set(true)
             reconnectAttempts.set(0)
+            Thread.startVirtualThread {
+                runCatching { onConnected(this) }
+                    .onFailure {
+                        logger.warn("Post-connect hook failed for '{}': {}", serverName, it.message)
+                    }
+            }
             return
         }
 

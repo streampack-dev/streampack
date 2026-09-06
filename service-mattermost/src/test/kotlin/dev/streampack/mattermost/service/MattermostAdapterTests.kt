@@ -33,6 +33,7 @@ class MattermostAdapterTests {
     private val posted = CopyOnWriteArrayList<String>()
     private val authHeaders = CopyOnWriteArrayList<String?>()
     private val membership = CopyOnWriteArrayList<String>()
+    private val connectedHooks = java.util.concurrent.atomic.AtomicInteger(0)
     @Volatile private var failNextDispatch = false
 
     private val gateway =
@@ -98,6 +99,7 @@ class MattermostAdapterTests {
                 eventGateway = gateway,
                 userResolutionService = users,
                 restClientBuilder = RestClient.builder(),
+                onConnected = { connectedHooks.incrementAndGet() },
             )
         adapter.identify()
     }
@@ -245,5 +247,14 @@ class MattermostAdapterTests {
             membership[1].startsWith("DELETE /api/v4/channels/chan01/members/botuser01"),
             membership[1],
         )
+    }
+
+    @Test
+    fun `the post-connect hook runs after each successful authentication`() {
+        adapter.handleFrame("""{"status":"OK","seq_reply":1}""")
+        adapter.handleFrame("""{"status":"OK","seq_reply":2}""")
+        val deadline = System.currentTimeMillis() + 2000
+        while (connectedHooks.get() < 2 && System.currentTimeMillis() < deadline) Thread.sleep(10)
+        assertEquals(2, connectedHooks.get())
     }
 }

@@ -139,6 +139,24 @@ class SlackAdapter(
         return null
     }
 
+    /** Joins a public channel by id (`conversations.join`); private channels need an invite */
+    fun joinChannel(channelId: String): Boolean =
+        try {
+            val response = methodsClient().conversationsJoin { r -> r.channel(channelId) }
+            if (!response.isOk) {
+                logger.warn(
+                    "conversations.join {} on '{}' failed: {}",
+                    channelId,
+                    workspaceName,
+                    response.error,
+                )
+            }
+            response.isOk
+        } catch (e: Exception) {
+            logger.warn("Could not join {} on '{}': {}", channelId, workspaceName, e.message)
+            false
+        }
+
     override fun wouldTriggerIngress(text: String): Boolean {
         if (signalCharacter.isNotEmpty() && text.startsWith(signalCharacter)) return true
         val userId = botUserId

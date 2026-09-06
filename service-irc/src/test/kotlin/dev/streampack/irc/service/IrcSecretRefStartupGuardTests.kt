@@ -18,7 +18,7 @@ class IrcSecretRefStartupGuardTests {
     private val guard = IrcSecretRefStartupGuard(repository, environment, true)
 
     @Test
-    fun `literal sasl credentials are externalized and startup fails`() {
+    fun `literal sasl credentials fail startup until their variables exist and are never rewritten early`() {
         val network =
             IrcNetwork(
                 name = "libera",
@@ -30,6 +30,23 @@ class IrcSecretRefStartupGuardTests {
         Mockito.`when`(repository.findByDeletedFalse()).thenReturn(listOf(network))
 
         assertThrows(SilentStartupException::class.java) { guard.enforce { null } }
+        Mockito.verify(repository, Mockito.never()).save(Mockito.any())
+    }
+
+    @Test
+    fun `literal sasl credentials are externalized once their variables exist`() {
+        val network =
+            IrcNetwork(
+                name = "libera",
+                host = "irc.libera.chat",
+                nick = "nevet",
+                saslAccount = SecretRef.literal("acct"),
+                saslPassword = SecretRef.literal("pass"),
+            )
+        Mockito.`when`(repository.findByDeletedFalse()).thenReturn(listOf(network))
+        val env = mapOf("IRC_LIBERA_SASL_ACCOUNT" to "acct", "IRC_LIBERA_SASL_PASSWORD" to "pass")
+
+        guard.enforce { env[it] }
 
         val captor = ArgumentCaptor.forClass(IrcNetwork::class.java)
         Mockito.verify(repository).save(captor.capture())
