@@ -112,6 +112,34 @@ Operational notes:
   - `GET /admin/rss/opml`
   - `POST /admin/rss/opml/import`
 
+## Mattermost Operations
+
+Present only when `streampack.mattermost.enabled` is true. All require `SUPER_ADMIN`:
+
+```text
+mattermost connect <name> [<base-url> <token>]
+mattermost disconnect <name>
+mattermost remove <name>
+mattermost autoconnect <name> <true|false>
+mattermost channels <server> [term]
+mattermost join <server> <channel-id-or-name>
+mattermost leave <server> <channel-id-or-name>
+mattermost autojoin <server> <channel-id-or-name> <true|false>
+mattermost mute <server> <channel-id-or-name>
+mattermost unmute <server> <channel-id-or-name>
+mattermost automute <server> <channel-id-or-name> <true|false>
+mattermost visible <server> <channel-id-or-name> <true|false>
+mattermost logged <server> <channel-id-or-name> <true|false>
+mattermost signal <name> [character]
+mattermost status [server]
+```
+
+Operational notes:
+
+- `connect` with a URL and token registers the server; the token is externalized to `MATTERMOST_<NAME>_TOKEN` on the next restart.
+- `channels` lists channels visible to the account across its teams; `join` accepts a channel id or a name and reports an ambiguous name rather than guessing.
+- The account must already be a member of a private channel for the bot to read or post there.
+
 ## Forge Instances and `on <host>`
 
 Forge modules (GitHub and GitLab) share one grammar for choosing which installation a project lives on. Each forge has a hosted default instance (`github.com`, `gitlab.com`) that is registered automatically. Other installations are registered once with `<forge> instance add <url> [token]`, and then any command that names a project may end in `on <host>`:

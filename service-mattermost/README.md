@@ -23,6 +23,14 @@ streampack:
 `enabled` controls whether the runtime connection infrastructure is started. The admin operations
 and persistence layer still exist even when runtime connectivity is disabled.
 
+Server tokens are stored as `SecretRef` values. A literal token given to `mattermost connect` is
+rewritten on the next restart to `env://MATTERMOST_<NAME>_TOKEN`, and with
+`STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` on, startup fails until that variable is present.
+Identities map by Mattermost user id (`MattermostIdentityProvider`).
+
+For a local development server, see
+[Run a Local Mattermost for Development](../docs/how-to/develop/run-local-mattermost.md).
+
 ## Admin Commands
 
 These commands require `SUPER_ADMIN`:

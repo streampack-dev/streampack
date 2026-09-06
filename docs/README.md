@@ -16,6 +16,8 @@ Two concepts are kept separate throughout the docs:
 
 Start with [What is Streampack?](explanation/what-is-streampack.md) if you are orienting yourself, [Deploy `server-streampack`](tutorials/deploy-server-streampack.md) if you are putting the bundled server on a machine, [Run the infobot on IRC](tutorials/run-infobot-on-irc.md) if you want the protocol path first, [Use GitHub repository watching](how-to/infobot/use-github-repository-watching.md) if you are setting up GitHub notifications, or [Use GitLab project watching](how-to/infobot/use-gitlab-project-watching.md) for GitLab.
 
+For Mattermost development against a private local server, see [Run a Local Mattermost for Development](how-to/develop/run-local-mattermost.md).
+
 For repository-side release mechanics, see [Version and Publish Maven Artifacts to Nexus](how-to/develop/release-and-deploy-server-streampack.md).
 
 For AI prompt customization, see [Configure Generative Prompts](how-to/deploy/configure-generative-prompts.md).

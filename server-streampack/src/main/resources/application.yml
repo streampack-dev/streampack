@@ -9,8 +9,6 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/nevet}
     username: ${DB_USERNAME:nevet}
     password: ${DB_PASSWORD:nevet}
-    hikari:
-      max-lifetime: 60000
   jpa:
     hibernate:
       ddl-auto: validate

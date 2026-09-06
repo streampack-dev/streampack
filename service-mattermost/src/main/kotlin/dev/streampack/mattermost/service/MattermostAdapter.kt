@@ -65,7 +65,7 @@ class MattermostAdapter(
 
     fun connect() {
         explicitDisconnect.set(false)
-        selfUser = fetchCurrentUser()
+        identify()
         logger.info(
             "Connecting Mattermost adapter '{}' as user '{}'",
             serverName,
@@ -77,6 +77,23 @@ class MattermostAdapter(
                 .connectTimeout(Duration.ofSeconds(10))
                 .buildAsync(URI.create(websocketUrl()), Listener())
                 .join()
+    }
+
+    /** Reads the connected account from `/users/me`; the socket is not opened. */
+    internal fun identify() {
+        selfUser = fetchCurrentUser()
+    }
+
+    /** Handles one complete WebSocket text frame; malformed frames are logged and dropped. */
+    internal fun handleFrame(text: String) {
+        runCatching { handleSocketMessage(text) }
+            .onFailure {
+                logger.warn(
+                    "Failed to process Mattermost websocket event on '{}': {}",
+                    serverName,
+                    it.message,
+                )
+            }
     }
 
     fun disconnect() {
@@ -95,12 +112,21 @@ class MattermostAdapter(
     }
 
     override fun sendReply(provenance: Provenance, text: String) {
-        restClient
-            .post()
-            .uri("/api/v4/posts")
-            .body(MattermostCreatePostRequest(channelId = provenance.replyTo, message = text))
-            .retrieve()
-            .toBodilessEntity()
+        try {
+            restClient
+                .post()
+                .uri("/api/v4/posts")
+                .body(MattermostCreatePostRequest(channelId = provenance.replyTo, message = text))
+                .retrieve()
+                .toBodilessEntity()
+        } catch (e: Exception) {
+            logger.error(
+                "Failed to post to {} on '{}': {}",
+                provenance.replyTo,
+                serverName,
+                e.message,
+            )
+        }
     }
 
     fun resolveChannel(query: String): MattermostChannelRef? {
@@ -239,12 +265,12 @@ class MattermostAdapter(
     private fun handleSocketMessage(message: String) {
         val root = mapper.readTree(message)
 
-        if (root.path("status").asText() == "OK") {
+        if (root.path("status").asString("") == "OK") {
             connected.set(true)
             return
         }
 
-        when (root.path("event").asText()) {
+        when (root.path("event").asString("")) {
             "hello" -> logger.info("Mattermost websocket connected for '{}'", serverName)
             "posted" -> handlePostedEvent(root)
             else -> {}
@@ -253,7 +279,7 @@ class MattermostAdapter(
 
     private fun handlePostedEvent(root: JsonNode) {
         val data = root.path("data")
-        val postJson = data.path("post").asText()
+        val postJson = data.path("post").asString("")
         if (postJson.isBlank()) return
 
         val post = mapper.readValue<MattermostPostView>(postJson)
@@ -261,7 +287,7 @@ class MattermostAdapter(
         if (post.userId == selfUser?.id) return
         if (post.type.isNotBlank()) return
 
-        val channelType = data.path("channel_type").asText("")
+        val channelType = data.path("channel_type").asString("")
         val message = post.message.trim()
         if (message.isBlank()) return
 
@@ -277,12 +303,12 @@ class MattermostAdapter(
                         selfUser?.username?.let { put(Provenance.BOT_NICK, it) }
                         data
                             .path("channel_name")
-                            .asText()
+                            .asString("")
                             .takeIf { it.isNotBlank() }
                             ?.let { put("channelName", it) }
                         data
                             .path("team_id")
-                            .asText()
+                            .asString("")
                             .takeIf { it.isNotBlank() }
                             ?.let { put("teamId", it) }
                         channelType.takeIf { it.isNotBlank() }?.let { put("channelType", it) }
@@ -291,7 +317,7 @@ class MattermostAdapter(
 
         val addressedText = extractAddressedText(message)
         val addressed = channelType == "D" || addressedText != null
-        val nick = data.path("sender_name").asText("").ifBlank { null }
+        val nick = data.path("sender_name").asString("").ifBlank { null }
         dispatch(addressedText ?: message, provenance, addressed, nick)
     }
 
@@ -350,14 +376,7 @@ class MattermostAdapter(
             if (last) {
                 val payload = eventBuffer.toString()
                 eventBuffer.setLength(0)
-                runCatching { handleSocketMessage(payload) }
-                    .onFailure {
-                        logger.warn(
-                            "Failed to process Mattermost websocket event on '{}': {}",
-                            serverName,
-                            it.message,
-                        )
-                    }
+                handleFrame(payload)
             }
             webSocket.request(1)
             return CompletableFuture.completedFuture(null)

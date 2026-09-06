@@ -40,6 +40,10 @@ This reference covers the variables commonly used by `server-streampack`.
 | `GITLAB_SCHEDULER_INTERVAL` | Optional | As above, for GitLab (default `PT90S`). |
 | `GITLAB_POLL_BATCH_SIZE` | Optional | As above, for GitLab (default `5`). |
 | `GITLAB_POLL_MAX_BACKOFF` | Optional | As above, for GitLab (default `P1D`). |
+| `MATTERMOST_ENABLED` | Optional | Enables the Mattermost adapter (`service-mattermost`). Off by default. |
+| `MATTERMOST_SIGNAL` | Optional | Signal character that addresses the bot in Mattermost channels (default `!`); overridable per server with `mattermost signal`. |
+| `MATTERMOST_RECONNECT_DELAY` | Optional | Delay before reconnecting a dropped Mattermost WebSocket (default `PT15S`). |
+| `MATTERMOST_<NAME>_TOKEN` | Per server | Access token for the Mattermost server registered as `<name>`, e.g. `MATTERMOST_WORK_TOKEN`. `mattermost connect` stores a literal; on the next restart it is rewritten to an `env://` reference and startup fails until the variable is set (with enforcement on). |
 | `RSS_POLL_INTERVAL` | Optional | How long after a poll a feed is next due, ISO-8601 duration (default `PT1H`). |
 | `RSS_SCHEDULER_INTERVAL` | Optional | How often the feed poller wakes to take a batch of due feeds (default `PT90S`). |
 | `RSS_POLL_BATCH_SIZE` | Optional | Maximum feeds polled per wake-up, oldest due first (default `5`). |

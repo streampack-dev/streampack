@@ -28,6 +28,7 @@ import org.springframework.web.client.RestClient
 @ConditionalOnProperty("streampack.mattermost.enabled", havingValue = "true")
 @EnableConfigurationProperties(MattermostProperties::class)
 class MattermostConnectionManager(
+    @Suppress("unused") private val secretRefStartupGuard: MattermostSecretRefStartupGuard,
     private val eventGateway: dev.streampack.core.integration.EventGateway,
     private val userResolutionService: UserResolutionService,
     private val springEnvironment: Environment,

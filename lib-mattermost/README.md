@@ -23,7 +23,7 @@ messages. It only defines the persisted state that `service-mattermost` uses.
 
 ## Migration
 
-`V37__create_mattermost_tables.sql` creates:
+`V44__create_mattermost_tables.sql` creates:
 
 - `mattermost_servers`
 - `mattermost_channels`
