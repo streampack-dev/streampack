@@ -156,6 +156,10 @@
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
+            <artifactId>service-gitlab</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
             <artifactId>service-features</artifactId>
         </dependency>
     </dependencies>

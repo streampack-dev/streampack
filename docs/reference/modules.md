@@ -10,6 +10,7 @@
 | `lib-irc` | IRC domain and integration support |
 | `lib-slack` | Slack integration support |
 | `lib-polling` | Shared polling infrastructure |
+| `service-gitlab` | Optional GitLab project watching on `lib-forge`: instances, projects, subscriptions, polling, webhooks; active only with `streampack.gitlab.enabled=true` |
 | `lib-forge` | Shared code for watching code forges (GitHub, GitLab): instance and project contracts, client contract, event model, formatting, `on <host>` parsing, polling and subscription templates, webhook receiver. No tables; each forge module owns its own persistence |
 | `lib-taxonomy` | Taxonomy/category support |
 | `lib-web` | Shared web support |

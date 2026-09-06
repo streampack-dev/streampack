@@ -3,6 +3,7 @@ package dev.streampack.github.service
 
 import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.model.DeliveryMode
+import dev.streampack.forge.model.ForgeProjectRef
 import dev.streampack.forge.model.ForgeReleaseInfo
 import dev.streampack.forge.store.ForgeStore
 import dev.streampack.github.entity.GitHubInstance
@@ -58,8 +59,8 @@ class GitHubForgeStore(
             GitHubInstance(host = host, apiUrl = apiUrl, defaultToken = defaultToken)
         )
 
-    override fun findProject(instance: GitHubInstance, path: String): GitHubRepo? {
-        val (owner, name) = splitOwnerName(path) ?: return null
+    override fun findProject(instance: GitHubInstance, ref: ForgeProjectRef): GitHubRepo? {
+        val (owner, name) = splitOwnerName(ref.path) ?: return null
         return repoRepository.findByInstanceAndOwnerAndName(instance, owner, name)
     }
 
@@ -73,14 +74,15 @@ class GitHubForgeStore(
 
     override fun createProject(
         instance: GitHubInstance,
-        path: String,
+        ref: ForgeProjectRef,
         token: SecretRef?,
         highestIssueNumber: Int,
         highestChangeRequestNumber: Int,
         polledAt: Instant,
     ): GitHubRepo {
         val (owner, name) =
-            splitOwnerName(path) ?: throw IllegalArgumentException("Expected format: owner/repo")
+            splitOwnerName(ref.path)
+                ?: throw IllegalArgumentException("Expected format: owner/repo")
         return repoRepository.save(
             GitHubRepo(
                 instance = instance,

@@ -7,6 +7,7 @@ import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.command.InstanceSelector
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
+import dev.streampack.forge.model.ForgeProjectRef
 import dev.streampack.forge.model.ForgeSubscription
 import dev.streampack.forge.secret.ForgeTokenResolver
 import dev.streampack.forge.secret.SecretLookup
@@ -79,7 +80,7 @@ abstract class AbstractForgeSubscriptionService<
         invalidIdentifierReason(identifier)?.let {
             return AddProjectOutcome.InvalidIdentifier(identifier, it)
         }
-        val existing = store.findProject(instance, identifier)
+        val existing = store.findProject(instance, ForgeProjectRef(identifier))
         if (existing != null) {
             return AddProjectOutcome.AlreadyExists(existing)
         }
@@ -95,22 +96,28 @@ abstract class AbstractForgeSubscriptionService<
             ForgeTokenResolver.resolve(tokenRef ?: instance.defaultToken, secretLookup)
 
         return try {
-            if (!client.validateProject(instance, identifier, resolvedToken)) {
-                return AddProjectOutcome.ApiFailed(
-                    identifier,
-                    "Repository not found or not accessible",
-                )
+            val ref =
+                client.lookupProject(instance, identifier, resolvedToken)
+                    ?: return AddProjectOutcome.ApiFailed(
+                        identifier,
+                        "Repository not found or not accessible",
+                    )
+            /* The forge may canonicalize the path (case, redirects); guard against a duplicate */
+            if (ref.path != identifier) {
+                store.findProject(instance, ref)?.let {
+                    return AddProjectOutcome.AlreadyExists(it)
+                }
             }
 
-            val issues = client.fetchIssuesSince(instance, identifier, resolvedToken, 0)
+            val issues = client.fetchIssuesSince(instance, ref.path, resolvedToken, 0)
             val changeRequests =
-                client.fetchChangeRequestsSince(instance, identifier, resolvedToken, 0)
-            val releases = client.fetchReleases(instance, identifier, resolvedToken)
+                client.fetchChangeRequestsSince(instance, ref.path, resolvedToken, 0)
+            val releases = client.fetchReleases(instance, ref.path, resolvedToken)
 
             val project =
                 store.createProject(
                     instance = instance,
-                    path = identifier,
+                    ref = ref,
                     token = tokenRef,
                     highestIssueNumber = issues.maxOfOrNull { it.number } ?: 0,
                     highestChangeRequestNumber = changeRequests.maxOfOrNull { it.number } ?: 0,
@@ -141,7 +148,7 @@ abstract class AbstractForgeSubscriptionService<
         destinationUri: String,
     ): SubscriptionOutcome<P> {
         val project =
-            store.findProject(instance, identifier)
+            store.findProject(instance, ForgeProjectRef(identifier))
                 ?: return SubscriptionOutcome.ProjectNotFound(identifier)
         val existing = store.findSubscription(project, destinationUri)
         if (existing != null && existing.active) {
@@ -163,7 +170,7 @@ abstract class AbstractForgeSubscriptionService<
         destinationUri: String,
     ): SubscriptionOutcome<P> {
         val project =
-            store.findProject(instance, identifier)
+            store.findProject(instance, ForgeProjectRef(identifier))
                 ?: return SubscriptionOutcome.ProjectNotFound(identifier)
         val existing = store.findSubscription(project, destinationUri)
         if (existing == null || !existing.active) {
@@ -177,7 +184,7 @@ abstract class AbstractForgeSubscriptionService<
     /** Deactivate a project and all its subscriptions. */
     open fun removeProject(instance: I, identifier: String): RemoveProjectOutcome<P> {
         val project =
-            store.findProject(instance, identifier)
+            store.findProject(instance, ForgeProjectRef(identifier))
                 ?: return RemoveProjectOutcome.ProjectNotFound(identifier)
         if (!project.active) {
             return RemoveProjectOutcome.AlreadyInactive(project)

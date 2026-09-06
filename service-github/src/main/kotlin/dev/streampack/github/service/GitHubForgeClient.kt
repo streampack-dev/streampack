@@ -8,6 +8,7 @@ import dev.streampack.forge.client.WebhookEnvelope
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
+import dev.streampack.forge.model.ForgeProjectRef
 import dev.streampack.forge.model.ForgeReleaseInfo
 import dev.streampack.github.model.GitHubApiItem
 import dev.streampack.github.model.GitHubIssueEvent
@@ -32,9 +33,14 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
 
     override val kind: ForgeKind = ForgeKind.GITHUB
 
-    override fun validateProject(instance: ForgeInstance, path: String, token: String?): Boolean {
-        val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return false
-        return apiClient.validateRepo(instance.apiUrl, owner, name, token)
+    override fun lookupProject(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+    ): ForgeProjectRef? {
+        val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return null
+        if (!apiClient.validateRepo(instance.apiUrl, owner, name, token)) return null
+        return ForgeProjectRef(path)
     }
 
     override fun fetchIssuesSince(
@@ -86,10 +92,11 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
     override fun isSupportedWebhookEvent(envelope: WebhookEnvelope): Boolean =
         envelope.event in supportedEvents
 
-    override fun webhookProjectPath(root: JsonNode): String? {
+    override fun webhookProjectRef(root: JsonNode): ForgeProjectRef? {
         val fullName = root.path("repository").path("full_name").asString()
         if (fullName.isBlank()) return null
-        return if (GitHubForgeStore.splitOwnerName(fullName) == null) null else fullName
+        return if (GitHubForgeStore.splitOwnerName(fullName) == null) null
+        else ForgeProjectRef(fullName)
     }
 
     override fun verifyWebhook(

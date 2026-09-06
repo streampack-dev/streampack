@@ -5,6 +5,7 @@ import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
+import dev.streampack.forge.model.ForgeProjectRef
 import dev.streampack.forge.model.ForgeReleaseInfo
 import tools.jackson.databind.JsonNode
 
@@ -21,8 +22,11 @@ data class WebhookEnvelope(val event: String, val deliveryId: String?, val signa
 interface ForgeClient {
     val kind: ForgeKind
 
-    /** True when the project exists and is readable with [token]. */
-    fun validateProject(instance: ForgeInstance, path: String, token: String?): Boolean
+    /**
+     * The project at [path] as the forge knows it (canonical path, native id), or null when it does
+     * not exist or is not readable with [token].
+     */
+    fun lookupProject(instance: ForgeInstance, path: String, token: String?): ForgeProjectRef?
 
     /** Issues numbered above [sinceNumber]. */
     fun fetchIssuesSince(
@@ -49,8 +53,8 @@ interface ForgeClient {
     /** Whether the receiver should process this event type at all. */
     fun isSupportedWebhookEvent(envelope: WebhookEnvelope): Boolean
 
-    /** The project path named in the payload, or null when absent or malformed. */
-    fun webhookProjectPath(root: JsonNode): String?
+    /** The project named in the payload, or null when absent or malformed. */
+    fun webhookProjectRef(root: JsonNode): ForgeProjectRef?
 
     /** Verifies the delivery against the project's shared secret. */
     fun verifyWebhook(envelope: WebhookEnvelope, secret: String, body: ByteArray): Boolean

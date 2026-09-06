@@ -84,6 +84,7 @@
         <module>service-factoid</module>
         <module>service-features</module>
         <module>service-github</module>
+        <module>service-gitlab</module>
         <module>service-irc</module>
         <module>service-karma</module>
         <module>service-mail</module>
@@ -458,6 +459,11 @@
             <dependency>
                 <groupId>dev.streampack</groupId>
                 <artifactId>service-github</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.streampack</groupId>
+                <artifactId>service-gitlab</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
