@@ -30,12 +30,20 @@ abstract class DueBatchPollingService<T>(
 ) : TickListener {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    /* The first tick after startup waits a short grace period so protocol adapters can connect */
-    private var lastTick: Instant =
-        Instant.now().minus(schedulerInterval).plusSeconds(STARTUP_GRACE_SECONDS)
+    /*
+     * Anchored to the first tick received rather than construction time, so the startup grace
+     * period (which lets protocol adapters connect) is measured on the tick clock and tests can
+     * drive the service with a synthetic one.
+     */
+    private var lastTick: Instant? = null
 
     override fun onTick(now: Instant) {
-        if (Duration.between(lastTick, now) < schedulerInterval) return
+        val previous =
+            lastTick
+                ?: now.minus(schedulerInterval).plusSeconds(STARTUP_GRACE_SECONDS).also {
+                    lastTick = it
+                }
+        if (Duration.between(previous, now) < schedulerInterval) return
         lastTick = now
         try {
             pollDue(now)
