@@ -1,7 +1,17 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.service
 
+import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
+
+sealed interface AddInstanceOutcome<I : ForgeInstance> {
+    data class Added<I : ForgeInstance>(val instance: I) : AddInstanceOutcome<I>
+
+    data class AlreadyExists<I : ForgeInstance>(val instance: I) : AddInstanceOutcome<I>
+
+    data class Invalid<I : ForgeInstance>(val host: String, val reason: String) :
+        AddInstanceOutcome<I>
+}
 
 sealed interface AddProjectOutcome<P : ForgeProject> {
     data class Added<P : ForgeProject>(

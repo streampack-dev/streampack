@@ -66,6 +66,41 @@ After either command, configure GitHub to deliver webhooks to:
 
 using the one-time secret emitted by Streampack.
 
+## Watch a GitHub Enterprise Server
+
+Every repository belongs to a GitHub instance. `github.com` is registered by default and is what every command uses when you omit `on <host>`. To watch repositories on GitHub Enterprise Server (or another GitHub-compatible forge), register the instance once:
+
+```text
+github instance add https://ghe.example.com
+github instance add https://ghe.example.com <token>
+github instance add https://ghe.example.com env://GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN
+github instance list
+```
+
+A base URL gets Enterprise Server's `/api/v3` appended; give the full API URL instead if your installation serves the API elsewhere. The optional token is the instance default: repositories on that instance use it unless they were added with a token of their own. Literal tokens are externalized on the next restart exactly like repository tokens, to `GITHUB_INSTANCE_<HOST>_TOKEN`.
+
+Then name the instance with `on <host>` on any command that takes a repository. The shared `on <host>` grammar is described in [Admin Text Operations](../../reference/admin-text-operations.md#forge-instances-and-on-host).
+
+```text
+github add owner/repo on ghe.example.com
+github add owner/repo <token> on ghe.example.com
+github subscribe owner/repo on ghe.example.com
+github subscribe owner/repo on ghe.example.com to irc://libera/%23java
+github unsubscribe owner/repo on ghe.example.com
+github webhook owner/repo on ghe.example.com
+github remove owner/repo on ghe.example.com
+```
+
+The same `owner/repo` may be watched on github.com and on an Enterprise Server at once. Notifications from github.com read `[owner/repo]`; notifications from any other instance read `[ghe.example.com owner/repo]` so one channel can tell them apart. Repository tokens on other instances are externalized to `GITHUB_<HOST>_<OWNER>_<REPO>_TOKEN`.
+
+Webhooks for an Enterprise Server repository are delivered to that instance's own route, which `github webhook ... on <host>` prints:
+
+```text
+<base-url>/webhooks/github/<instance-id>
+```
+
+The bare `<base-url>/webhooks/github` route keeps serving github.com, so hooks configured before instances existed continue to verify unchanged.
+
 ## Stop Watching
 
 Unsubscribe the current destination:

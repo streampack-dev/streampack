@@ -7,6 +7,7 @@ import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.format.ForgeEventFormatter
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.model.ForgeEvent
+import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeSubscription
 import dev.streampack.forge.secret.ForgeTokenResolver
@@ -24,9 +25,13 @@ import org.springframework.transaction.annotation.Transactional
  * the stored cursors and notifies subscribers through the egress channel.
  */
 @Transactional
-abstract class AbstractForgePollingService<P : ForgeProject, S : ForgeSubscription>(
+abstract class AbstractForgePollingService<
+    I : ForgeInstance,
+    P : ForgeProject,
+    S : ForgeSubscription,
+>(
     protected val kind: ForgeKind,
-    protected val store: ForgeStore<P, S>,
+    protected val store: ForgeStore<I, P, S>,
     protected val client: ForgeClient,
     private val egressNotifier: EgressNotifier,
     private val pollInterval: Duration,
@@ -72,14 +77,16 @@ abstract class AbstractForgePollingService<P : ForgeProject, S : ForgeSubscripti
     open fun pollProject(projectId: String) {
         val project = store.findProjectById(projectId) ?: return
         val path = project.displayName
-        val token = ForgeTokenResolver.resolve(project.token, secretLookup)
-        if (project.token != null && token == null) {
+        val tokenRef = project.effectiveToken
+        val token = ForgeTokenResolver.resolve(tokenRef, secretLookup)
+        if (tokenRef != null && token == null) {
             logger.warn(
                 "Token for {} references environment variable {} which is not set; polling unauthenticated",
                 path,
-                project.token?.envKeyOrNull(),
+                tokenRef.envKeyOrNull(),
             )
         }
+        val instance = project.instance
         logger.info(
             "Polling project {} (since issue {}, {} {})",
             path,
@@ -88,10 +95,16 @@ abstract class AbstractForgePollingService<P : ForgeProject, S : ForgeSubscripti
             project.highestChangeRequestNumber,
         )
 
-        val newIssues = client.fetchIssuesSince(path, token, project.highestIssueNumber)
+        val newIssues =
+            client.fetchIssuesSince(instance, project.path, token, project.highestIssueNumber)
         val newChangeRequests =
-            client.fetchChangeRequestsSince(path, token, project.highestChangeRequestNumber)
-        val allReleases = client.fetchReleases(path, token)
+            client.fetchChangeRequestsSince(
+                instance,
+                project.path,
+                token,
+                project.highestChangeRequestNumber,
+            )
+        val allReleases = client.fetchReleases(instance, project.path, token)
 
         val knownTags =
             if (allReleases.isNotEmpty()) {

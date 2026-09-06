@@ -6,12 +6,14 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.RedactionRule
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.SecretRef
+import dev.streampack.core.parser.ChoiceArgType
 import dev.streampack.core.parser.CommandArgSpec
 import dev.streampack.core.parser.CommandMatchResult
 import dev.streampack.core.parser.CommandPattern
 import dev.streampack.core.parser.CommandPatternMatcher
 import dev.streampack.core.parser.StringArgType
 import dev.streampack.core.service.TranslatingOperation
+import dev.streampack.forge.command.InstanceSelector
 import dev.streampack.forge.service.AddProjectOutcome
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.model.AddRepoRequest
@@ -20,28 +22,32 @@ import dev.streampack.github.service.GitHubSubscriptionService
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
-/** Handles the "github add <owner/repo> [token]" text command and typed AddRepoRequest payloads */
+/**
+ * Handles the "github add <owner/repo> [token] [on <host>]" text command and typed [AddRepoRequest]
+ * payloads
+ */
 @Component
 class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionService) :
     TranslatingOperation<AddRepoRequest>(AddRepoRequest::class) {
+    private val ownerRepo = CommandArgSpec("ownerRepo", StringArgType)
+    private val token = CommandArgSpec("token", StringArgType)
+    private val on = CommandArgSpec("on", ChoiceArgType(setOf("on")))
+    private val host = CommandArgSpec("host", StringArgType)
     private val commandMatcher =
         CommandPatternMatcher(
             listOf(
-                CommandPattern(
-                    name = "github_add",
-                    literals = listOf("github", "add"),
-                    args =
-                        listOf(
-                            CommandArgSpec("ownerRepo", StringArgType),
-                            CommandArgSpec("token", StringArgType),
-                        ),
-                ),
-                CommandPattern(
-                    name = "github_add",
-                    literals = listOf("github", "add"),
-                    args = listOf(CommandArgSpec("ownerRepo", StringArgType)),
-                ),
-            )
+                    listOf(ownerRepo, token, on, host),
+                    listOf(ownerRepo, on, host),
+                    listOf(ownerRepo, token),
+                    listOf(ownerRepo),
+                )
+                .map {
+                    CommandPattern(
+                        name = "github_add",
+                        literals = listOf("github", "add"),
+                        args = it,
+                    )
+                }
         )
 
     override val priority: Int = 55
@@ -50,14 +56,12 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
     override val redactionRules = listOf(RedactionRule("github add", setOf(3)))
 
     override fun translate(payload: String, message: Message<*>): AddRepoRequest? {
-        return when (val match = commandMatcher.match(payload)) {
-            is CommandMatchResult.Match -> {
-                val ownerRepo = match.captures["ownerRepo"] as String
-                val token = match.captures["token"] as? String
-                AddRepoRequest(ownerRepo = ownerRepo, token = token?.ifBlank { null })
-            }
-            else -> null
-        }
+        val match = commandMatcher.match(payload) as? CommandMatchResult.Match ?: return null
+        return AddRepoRequest(
+            ownerRepo = match.captures["ownerRepo"] as String,
+            token = (match.captures["token"] as? String)?.ifBlank { null },
+            host = (match.captures["host"] as? String)?.let { InstanceSelector.normalizeHost(it) },
+        )
     }
 
     override fun canHandle(payload: AddRepoRequest, message: Message<*>): Boolean {
@@ -65,17 +69,21 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
     }
 
     override fun handle(payload: AddRepoRequest, message: Message<*>): OperationOutcome {
-        return when (val outcome = subscriptionService.addRepo(payload.ownerRepo, payload.token)) {
+        val instance =
+            subscriptionService.instanceFor(payload.host) ?: return unknownInstance(payload.host)
+        return when (
+            val outcome = subscriptionService.addRepo(instance, payload.ownerRepo, payload.token)
+        ) {
             is AddProjectOutcome.Added ->
                 OperationResult.Success(
-                    "Watching ${outcome.project.fullName()} " +
+                    "Watching ${outcome.project.displayName} " +
                         "(${outcome.issueCount} issues, " +
                         "${outcome.changeRequestCount} PRs, " +
                         "${outcome.releaseCount} releases)" +
                         tokenExternalizationNote(payload.token, outcome.project)
                 )
             is AddProjectOutcome.AlreadyExists ->
-                OperationResult.Success("Already watching ${outcome.project.fullName()}")
+                OperationResult.Success("Already watching ${outcome.project.displayName}")
             is AddProjectOutcome.InvalidIdentifier ->
                 OperationResult.Error("Invalid repository: ${outcome.reason}")
             is AddProjectOutcome.ApiFailed ->
@@ -92,5 +100,13 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
         val key = GitHubSecretRefStartupGuard.envKeyFor(repo)
         return " Token stored; set $key in the environment before the next restart, " +
             "which will externalize it."
+    }
+
+    companion object {
+        /** The error every `github` command gives for an `on <host>` that is not registered */
+        fun unknownInstance(host: String?): OperationResult.Error =
+            OperationResult.Error(
+                "No GitHub instance registered for $host. Register it with: github instance add <url>"
+            )
     }
 }

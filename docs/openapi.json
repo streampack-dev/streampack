@@ -3539,7 +3539,65 @@
             "description" : "Signature mismatch"
           }
         },
-        "summary" : "Receive GitHub webhook deliveries",
+        "summary" : "Receive GitHub webhook deliveries for github.com repositories",
+        "tags" : [ "git-hub-webhook-controller" ]
+      }
+    },
+    "/webhooks/github/{instanceId}" : {
+      "post" : {
+        "description" : "Same processing as the bare route, verified against repositories on the instance named by the path.",
+        "operationId" : "receiveForInstance",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "instanceId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-Hub-Signature-256",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-GitHub-Event",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-GitHub-Delivery",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Content-Type",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Delivery accepted"
+          },
+          "400" : {
+            "description" : "Malformed payload or repository metadata"
+          },
+          "401" : {
+            "description" : "Signature mismatch"
+          },
+          "404" : {
+            "description" : "No such instance"
+          }
+        },
+        "summary" : "Receive GitHub webhook deliveries for one registered GitHub instance",
         "tags" : [ "git-hub-webhook-controller" ]
       }
     }

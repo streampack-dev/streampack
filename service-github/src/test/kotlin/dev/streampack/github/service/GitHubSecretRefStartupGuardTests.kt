@@ -4,7 +4,9 @@ package dev.streampack.github.service
 import dev.streampack.core.model.SecretRef
 import dev.streampack.core.service.SilentStartupException
 import dev.streampack.forge.secret.SecretLookup
+import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.entity.GitHubRepo
+import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.github.repository.GitHubRepoRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -14,7 +16,53 @@ import org.mockito.Mockito
 
 class GitHubSecretRefStartupGuardTests {
     private val repository = Mockito.mock(GitHubRepoRepository::class.java)
-    private val guard = GitHubSecretRefStartupGuard(repository, SecretLookup { null }, true)
+    private val instanceRepository = Mockito.mock(GitHubInstanceRepository::class.java)
+    private val guard =
+        GitHubSecretRefStartupGuard(repository, instanceRepository, SecretLookup { null }, true)
+
+    @Test
+    fun `env key is host qualified for repositories off the hosted default`() {
+        val ghe =
+            GitHubInstance(host = "ghe.example.com", apiUrl = "https://ghe.example.com/api/v3")
+        assertEquals(
+            "GITHUB_GHE_EXAMPLE_COM_OWNER_REPO_TOKEN",
+            GitHubSecretRefStartupGuard.envKeyFor(
+                GitHubRepo(instance = ghe, owner = "owner", name = "repo")
+            ),
+        )
+        assertEquals(
+            "GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN",
+            GitHubSecretRefStartupGuard.envKeyFor(ghe),
+        )
+    }
+
+    @Test
+    fun `literal instance token is externalized and a missing active instance variable fails startup`() {
+        val literal =
+            GitHubInstance(
+                host = "ghe.example.com",
+                apiUrl = "https://ghe.example.com/api/v3",
+                defaultToken = SecretRef.literal("ghp_default"),
+            )
+        Mockito.`when`(instanceRepository.findAll()).thenReturn(listOf(literal))
+
+        assertThrows(SilentStartupException::class.java) { guard.enforce { null } }
+
+        val captor = ArgumentCaptor.forClass(GitHubInstance::class.java)
+        Mockito.verify(instanceRepository).save(captor.capture())
+        assertEquals(
+            "env://GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN",
+            captor.value.defaultToken?.asStoredValue(),
+        )
+
+        val referenced =
+            literal.copy(defaultToken = SecretRef.env("GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN"))
+        Mockito.`when`(instanceRepository.findAll()).thenReturn(listOf(referenced))
+        assertThrows(SilentStartupException::class.java) { guard.enforce { null } }
+        guard.enforce { key ->
+            if (key == "GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN") "ghp_default" else null
+        }
+    }
 
     @Test
     fun `env key is derived from owner and name`() {

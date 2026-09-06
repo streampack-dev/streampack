@@ -6,17 +6,30 @@
 
 These commands are normally addressed through a protocol adapter, for example `!github ...`. Administrative commands require an admin-capable identity.
 
+### Register a GitHub instance
+
+```text
+github instance add <url>
+github instance add <url> <token>
+github instance list
+```
+
+`github.com` is registered automatically. Register a GitHub Enterprise Server (or another GitHub-compatible forge) by its base URL; `/api/v3` is appended unless you give the full API URL. The optional token is the default credential for repositories on that instance.
+
 ### Register a repository
 
 ```text
 github add owner/repo
 github add owner/repo <token>
+github add owner/repo on <host>
+github add owner/repo <token> on <host>
 ```
 
 Registers a repository for watching.
 
 - Use the plain form for public repositories.
 - Use the token form when the GitHub API requires authenticated access.
+- Use `on <host>` for a repository on a registered instance other than github.com. Every other command that names a repository accepts the same suffix.
 - The token argument is redacted from command logging.
 
 ### List repositories
@@ -77,11 +90,14 @@ Private webhook mode:
 - creates or reuses the local repository record
 - is intended for operator-managed private repository setups where Streampack cannot validate the repository directly
 
-After enabling webhook mode, configure GitHub to POST to:
+After enabling webhook mode, configure GitHub to POST to the URL the command prints:
 
 ```text
 <base-url>/webhooks/github
+<base-url>/webhooks/github/<instance-id>
 ```
+
+The bare route serves github.com; every other instance has its own route.
 
 Use the one-time secret emitted by Streampack as the webhook secret in GitHub.
 

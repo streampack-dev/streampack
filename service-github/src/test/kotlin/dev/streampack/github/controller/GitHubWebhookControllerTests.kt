@@ -5,10 +5,13 @@ import dev.streampack.core.integration.EgressSubscriber
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.forge.model.DeliveryMode
+import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.entity.GitHubSubscription
+import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.github.repository.GitHubSubscriptionRepository
+import dev.streampack.github.service.GitHubForgeStore
 import dev.streampack.github.service.WebhookSecretCipher
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
@@ -67,11 +70,15 @@ class GitHubWebhookControllerTests {
 
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var repoRepository: GitHubRepoRepository
+    @Autowired lateinit var instanceRepository: GitHubInstanceRepository
     @Autowired lateinit var subscriptionRepository: GitHubSubscriptionRepository
+    @Autowired lateinit var store: GitHubForgeStore
     @Autowired lateinit var cipher: WebhookSecretCipher
     @Autowired lateinit var capturingSubscriber: CapturingSubscriber
 
     private val secret = "integration-secret"
+    private val enterpriseSecret = "enterprise-secret"
+    private lateinit var enterprise: GitHubInstance
 
     @BeforeEach
     fun seedRepo() {
@@ -81,6 +88,7 @@ class GitHubWebhookControllerTests {
         val repo =
             repoRepository.save(
                 GitHubRepo(
+                    instance = store.defaultInstance(),
                     owner = "owner",
                     name = "repo",
                     deliveryMode = DeliveryMode.WEBHOOK,
@@ -90,6 +98,107 @@ class GitHubWebhookControllerTests {
         subscriptionRepository.save(
             GitHubSubscription(repo = repo, destinationUri = "console:///local")
         )
+        enterprise =
+            instanceRepository.save(
+                GitHubInstance(host = "ghe.example.com", apiUrl = "https://ghe.example.com/api/v3")
+            )
+        val enterpriseRepo =
+            repoRepository.save(
+                GitHubRepo(
+                    instance = enterprise,
+                    owner = "owner",
+                    name = "repo",
+                    deliveryMode = DeliveryMode.WEBHOOK,
+                    webhookSecret = cipher.encrypt(enterpriseSecret),
+                )
+            )
+        subscriptionRepository.save(
+            GitHubSubscription(repo = enterpriseRepo, destinationUri = "console:///enterprise")
+        )
+    }
+
+    @Test
+    fun `bare route resolves the hosted default so existing hooks keep verifying`() {
+        val payload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/repo"},
+            "issue":{"number":7,"title":"Hosted issue","html_url":"https://github.com/owner/repo/issues/7"}
+        }"""
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "issues")
+                header("X-GitHub-Delivery", "delivery-hosted-7")
+                header("X-Hub-Signature-256", sign(payload.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
+
+        assertEquals(1, capturingSubscriber.captured.size)
+        val (result, provenance) = capturingSubscriber.captured[0]
+        assertEquals("console:///local", provenance.encode())
+        assertTrue((result as OperationResult.Success).payload.toString().contains("[owner/repo]"))
+    }
+
+    @Test
+    fun `instance route verifies against that instance's repository and names the host`() {
+        val payload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/repo"},
+            "issue":{"number":8,"title":"Enterprise issue","html_url":"https://ghe.example.com/owner/repo/issues/8"}
+        }"""
+        mockMvc
+            .post("/webhooks/github/${enterprise.id}") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "issues")
+                header("X-GitHub-Delivery", "delivery-enterprise-8")
+                header("X-Hub-Signature-256", sign(payload.toByteArray(), enterpriseSecret))
+            }
+            .andExpect { status { isAccepted() } }
+
+        assertEquals(1, capturingSubscriber.captured.size)
+        val (result, provenance) = capturingSubscriber.captured[0]
+        assertEquals("console:///enterprise", provenance.encode())
+        val text = (result as OperationResult.Success).payload.toString()
+        assertTrue(text.contains("[ghe.example.com owner/repo]"), text)
+    }
+
+    @Test
+    fun `instance route rejects the hosted secret and unknown instances`() {
+        val payload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/repo"},
+            "issue":{"number":9,"title":"Wrong secret","html_url":"https://ghe.example.com/owner/repo/issues/9"}
+        }"""
+        mockMvc
+            .post("/webhooks/github/${enterprise.id}") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "issues")
+                header("X-Hub-Signature-256", sign(payload.toByteArray()))
+            }
+            .andExpect { status { isUnauthorized() } }
+        mockMvc
+            .post("/webhooks/github/${java.util.UUID.randomUUID()}") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "issues")
+                header("X-Hub-Signature-256", sign(payload.toByteArray(), enterpriseSecret))
+            }
+            .andExpect { status { isNotFound() } }
+        mockMvc
+            .post("/webhooks/github/not-a-uuid") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "issues")
+                header("X-Hub-Signature-256", sign(payload.toByteArray(), enterpriseSecret))
+            }
+            .andExpect { status { isNotFound() } }
+        assertEquals(0, capturingSubscriber.captured.size)
     }
 
     @Test
@@ -366,9 +475,9 @@ class GitHubWebhookControllerTests {
         }
     }
 
-    private fun sign(body: ByteArray): String {
+    private fun sign(body: ByteArray, key: String = secret): String {
         val mac = Mac.getInstance("HmacSHA256")
-        mac.init(SecretKeySpec(secret.toByteArray(Charsets.UTF_8), "HmacSHA256"))
+        mac.init(SecretKeySpec(key.toByteArray(Charsets.UTF_8), "HmacSHA256"))
         val raw = mac.doFinal(body)
         val hex = raw.joinToString("") { "%02x".format(it) }
         return "sha256=$hex"

@@ -8,7 +8,9 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
-import dev.streampack.github.service.GitHubApiClient
+import dev.streampack.github.DefaultInstanceEndpoint
+import dev.streampack.github.repository.GitHubInstanceRepository
+import dev.streampack.github.service.GitHubForgeStore
 import dev.streampack.test.TestSecurityConfiguration
 import java.net.InetSocketAddress
 import java.util.UUID
@@ -33,7 +35,9 @@ class GitHubAddOperationTests {
     @Autowired lateinit var eventGateway: EventGateway
 
     private lateinit var httpServer: HttpServer
-    private var originalApiEndpoint: String? = null
+    @Autowired lateinit var instanceRepository: GitHubInstanceRepository
+    @Autowired lateinit var store: GitHubForgeStore
+    private lateinit var endpoint: DefaultInstanceEndpoint
 
     private val adminUser =
         UserPrincipal(
@@ -51,16 +55,16 @@ class GitHubAddOperationTests {
 
     @BeforeEach
     fun setUp() {
-        originalApiEndpoint = GitHubApiClient.apiEndpoint
         httpServer = HttpServer.create(InetSocketAddress(0), 0)
         httpServer.start()
-        GitHubApiClient.apiEndpoint = "http://localhost:${httpServer.address.port}"
+        endpoint = DefaultInstanceEndpoint(instanceRepository, store)
+        endpoint.pointAt("http://localhost:${httpServer.address.port}")
     }
 
     @AfterEach
     fun tearDown() {
         httpServer.stop(0)
-        GitHubApiClient.apiEndpoint = originalApiEndpoint
+        endpoint.restore()
     }
 
     private fun stubValidRepo(owner: String, name: String) {

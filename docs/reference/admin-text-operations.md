@@ -112,25 +112,45 @@ Operational notes:
   - `GET /admin/rss/opml`
   - `POST /admin/rss/opml/import`
 
+## Forge Instances and `on <host>`
+
+Forge modules (GitHub today, GitLab when it lands) share one grammar for choosing which installation a project lives on. Each forge has a hosted default instance (`github.com`, `gitlab.com`) that is registered automatically. Other installations are registered once with `<forge> instance add <url> [token]`, and then any command that names a project may end in `on <host>`:
+
+```text
+github add owner/repo on ghe.example.com
+github subscribe owner/repo on ghe.example.com to <destination-uri>
+```
+
+Rules:
+
+- `on <host>` follows the project path (and the token, if one is given); a `to <destination-uri>` or `from <destination-uri>` clause may follow it.
+- Omitting `on <host>` means the hosted default.
+- Hosts are matched case-insensitively.
+- A host that has not been registered is an error, not an implicit registration.
+- The instance token is the default credential for its projects; a project token given at `add` time overrides it.
+
 ## GitHub Operations
 
 `ADMIN`:
 
 ```text
-github add owner/repo
-github add owner/repo <token>
-github subscribe owner/repo
-github subscribe owner/repo to <destination-uri>
-github unsubscribe owner/repo
-github unsubscribe owner/repo from <destination-uri>
-github remove owner/repo
-github webhook owner/repo
-github webhook private owner/repo
+github instance add <url>
+github instance add <url> <token>
+github add owner/repo [on <host>]
+github add owner/repo <token> [on <host>]
+github subscribe owner/repo [on <host>]
+github subscribe owner/repo [on <host>] to <destination-uri>
+github unsubscribe owner/repo [on <host>]
+github unsubscribe owner/repo [on <host>] from <destination-uri>
+github remove owner/repo [on <host>]
+github webhook owner/repo [on <host>]
+github webhook private owner/repo [on <host>]
 ```
 
 Readable without admin:
 
 ```text
+github instance list
 github list
 github subscriptions
 github subscriptions for <destination-uri>
@@ -138,6 +158,7 @@ github subscriptions for <destination-uri>
 
 Operational notes:
 
+- `github instance add https://ghe.example.com` registers a GitHub Enterprise Server; a base URL gets `/api/v3` appended, a full API URL is kept as given.
 - `github add owner/repo <token>` is the authenticated registration path.
 - `github webhook owner/repo` validates and seeds the repository before switching to webhook mode.
 - `github webhook private owner/repo` skips remote validation and is intended for operator-managed

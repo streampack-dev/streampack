@@ -6,8 +6,10 @@ import dev.streampack.core.integration.EgressSubscriber
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.github.DefaultInstanceEndpoint
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.entity.GitHubSubscription
+import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.github.repository.GitHubReleaseRepository
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.github.repository.GitHubSubscriptionRepository
@@ -65,21 +67,23 @@ class GitHubPollingServiceTests {
     @Autowired lateinit var capturingEgressSubscriber: CapturingEgressSubscriber
 
     private lateinit var httpServer: HttpServer
-    private var originalApiEndpoint: String? = null
+    @Autowired lateinit var instanceRepository: GitHubInstanceRepository
+    @Autowired lateinit var store: GitHubForgeStore
+    private lateinit var endpoint: DefaultInstanceEndpoint
 
     @BeforeEach
     fun setUp() {
         capturingEgressSubscriber.clear()
-        originalApiEndpoint = GitHubApiClient.apiEndpoint
         httpServer = HttpServer.create(InetSocketAddress(0), 0)
         httpServer.start()
-        GitHubApiClient.apiEndpoint = "http://localhost:${httpServer.address.port}"
+        endpoint = DefaultInstanceEndpoint(instanceRepository, store)
+        endpoint.pointAt("http://localhost:${httpServer.address.port}")
     }
 
     @AfterEach
     fun tearDown() {
         httpServer.stop(0)
-        GitHubApiClient.apiEndpoint = originalApiEndpoint
+        endpoint.restore()
         subscriptionRepository.deleteAll()
         releaseRepository.deleteAll()
         repoRepository.deleteAll()
@@ -93,6 +97,7 @@ class GitHubPollingServiceTests {
     ): GitHubRepo {
         return repoRepository.save(
             GitHubRepo(
+                instance = store.defaultInstance(),
                 owner = owner,
                 name = name,
                 highestIssueNumber = highestIssue,
@@ -286,7 +291,8 @@ class GitHubPollingServiceTests {
 
         // Baseline updated but no notifications
         assertEquals(0, capturingEgressSubscriber.captured.size)
-        val updated = repoRepository.findByOwnerAndName("owner", "repo")!!
+        val updated =
+            repoRepository.findByInstanceAndOwnerAndName(store.defaultInstance(), "owner", "repo")!!
         assertEquals(1, updated.highestIssueNumber)
     }
 
@@ -329,6 +335,7 @@ class GitHubPollingServiceTests {
         val repo =
             repoRepository.save(
                 GitHubRepo(
+                    instance = store.defaultInstance(),
                     owner = "owner",
                     name = "inactive",
                     active = false,

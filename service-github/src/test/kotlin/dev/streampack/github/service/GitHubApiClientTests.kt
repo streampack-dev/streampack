@@ -2,6 +2,8 @@
 package dev.streampack.github.service
 
 import com.sun.net.httpserver.HttpServer
+import dev.streampack.github.DefaultInstanceEndpoint
+import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.test.TestSecurityConfiguration
 import java.net.InetSocketAddress
 import org.junit.jupiter.api.AfterEach
@@ -23,20 +25,24 @@ class GitHubApiClientTests {
     @Autowired lateinit var apiClient: GitHubApiClient
 
     private lateinit var httpServer: HttpServer
-    private var originalApiEndpoint: String? = null
+    @Autowired lateinit var instanceRepository: GitHubInstanceRepository
+    @Autowired lateinit var store: GitHubForgeStore
+    private lateinit var endpoint: DefaultInstanceEndpoint
+    private val apiUrl: String
+        get() = "http://localhost:${httpServer.address.port}"
 
     @BeforeEach
     fun setUp() {
-        originalApiEndpoint = GitHubApiClient.apiEndpoint
         httpServer = HttpServer.create(InetSocketAddress(0), 0)
         httpServer.start()
-        GitHubApiClient.apiEndpoint = "http://localhost:${httpServer.address.port}"
+        endpoint = DefaultInstanceEndpoint(instanceRepository, store)
+        endpoint.pointAt("http://localhost:${httpServer.address.port}")
     }
 
     @AfterEach
     fun tearDown() {
         httpServer.stop(0)
-        GitHubApiClient.apiEndpoint = originalApiEndpoint
+        endpoint.restore()
     }
 
     @Test
@@ -47,7 +53,7 @@ class GitHubApiClientTests {
             exchange.responseBody.use { it.write(body.toByteArray()) }
         }
 
-        assertTrue(apiClient.validateRepo("owner", "repo", null))
+        assertTrue(apiClient.validateRepo(apiUrl, "owner", "repo", null))
     }
 
     @Test
@@ -56,7 +62,7 @@ class GitHubApiClientTests {
             exchange.sendResponseHeaders(404, -1)
         }
 
-        assertFalse(apiClient.validateRepo("owner", "missing", null))
+        assertFalse(apiClient.validateRepo(apiUrl, "owner", "missing", null))
     }
 
     @Test
@@ -69,7 +75,7 @@ class GitHubApiClientTests {
             exchange.responseBody.use { it.write(body.toByteArray()) }
         }
 
-        apiClient.validateRepo("owner", "private", "ghp_test123")
+        apiClient.validateRepo(apiUrl, "owner", "private", "ghp_test123")
         assertTrue(authHeader != null && authHeader.contains("ghp_test123"))
     }
 
@@ -96,7 +102,7 @@ class GitHubApiClientTests {
             exchange.responseBody.use { it.write(json.toByteArray()) }
         }
 
-        val issues = apiClient.fetchIssues("owner", "repo", null, 0)
+        val issues = apiClient.fetchIssues(apiUrl, "owner", "repo", null, 0)
         assertEquals(2, issues.size)
         assertEquals("Bug report", issues[0].title)
         assertEquals("Another bug", issues[1].title)
@@ -116,7 +122,7 @@ class GitHubApiClientTests {
             exchange.responseBody.use { it.write(json.toByteArray()) }
         }
 
-        val issues = apiClient.fetchIssues("owner", "repo", null, 3)
+        val issues = apiClient.fetchIssues(apiUrl, "owner", "repo", null, 3)
         assertEquals(1, issues.size)
         assertEquals(5, issues[0].number)
     }
@@ -134,7 +140,7 @@ class GitHubApiClientTests {
             exchange.responseBody.use { it.write(json.toByteArray()) }
         }
 
-        val pulls = apiClient.fetchPulls("owner", "repo", null, 5)
+        val pulls = apiClient.fetchPulls(apiUrl, "owner", "repo", null, 5)
         assertEquals(1, pulls.size)
         assertEquals(10, pulls[0].number)
         assertEquals("New PR", pulls[0].title)
@@ -154,7 +160,7 @@ class GitHubApiClientTests {
             exchange.responseBody.use { it.write(json.toByteArray()) }
         }
 
-        val releases = apiClient.fetchReleases("owner", "repo", null)
+        val releases = apiClient.fetchReleases(apiUrl, "owner", "repo", null)
         assertEquals(2, releases.size)
         assertEquals("v1.0.0", releases[0].tagName)
         assertEquals("First Release", releases[0].name)
@@ -168,7 +174,7 @@ class GitHubApiClientTests {
             exchange.sendResponseHeaders(500, -1)
         }
 
-        val issues = apiClient.fetchIssues("owner", "repo", null, 0)
+        val issues = apiClient.fetchIssues(apiUrl, "owner", "repo", null, 0)
         assertTrue(issues.isEmpty())
     }
 
@@ -182,7 +188,7 @@ class GitHubApiClientTests {
             exchange.responseBody.use { it.write(body.toByteArray()) }
         }
 
-        assertTrue(apiClient.validateRepo("owner", "repo", null))
+        assertTrue(apiClient.validateRepo(apiUrl, "owner", "repo", null))
         assertTrue(authHeader == null || !authHeader!!.contains("ghp_"))
     }
 }

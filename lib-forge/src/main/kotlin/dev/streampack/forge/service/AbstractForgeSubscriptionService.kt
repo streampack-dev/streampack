@@ -4,6 +4,8 @@ package dev.streampack.forge.service
 import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
+import dev.streampack.forge.command.InstanceSelector
+import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeSubscription
 import dev.streampack.forge.secret.ForgeTokenResolver
@@ -14,15 +16,20 @@ import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Registration, subscription, and removal of watched projects, written once over [ForgeStore].
+ * Registration, subscription, and removal of watched projects and instances, written once over
+ * [ForgeStore].
  *
  * Subclasses supply the forge, its client and store, and the rule for what a valid project
  * identifier looks like. Methods are open so Spring can proxy the concrete subclass bean.
  */
 @Transactional
-abstract class AbstractForgeSubscriptionService<P : ForgeProject, S : ForgeSubscription>(
+abstract class AbstractForgeSubscriptionService<
+    I : ForgeInstance,
+    P : ForgeProject,
+    S : ForgeSubscription,
+>(
     protected val kind: ForgeKind,
-    protected val store: ForgeStore<P, S>,
+    protected val store: ForgeStore<I, P, S>,
     protected val client: ForgeClient,
     protected val secretLookup: SecretLookup,
 ) {
@@ -32,49 +39,77 @@ abstract class AbstractForgeSubscriptionService<P : ForgeProject, S : ForgeSubsc
     protected abstract fun invalidIdentifierReason(identifier: String): String?
 
     /**
-     * Register a project for watching, seeding cursors from its current state.
+     * The instance a command addresses: the one registered under [host], or the hosted default when
+     * [host] is null. Null when [host] names no registered instance.
+     */
+    open fun instanceFor(host: String?): I? =
+        if (host == null) store.defaultInstance()
+        else store.findInstanceByHost(InstanceSelector.normalizeHost(host))
+
+    /**
+     * Register an instance. [token] is its default credential, stored as given (literal or
+     * `env://KEY`); an env reference must already resolve.
+     */
+    open fun addInstance(host: String, apiUrl: String, token: String?): AddInstanceOutcome<I> {
+        val normalizedHost = InstanceSelector.normalizeHost(host)
+        if (normalizedHost.isBlank()) {
+            return AddInstanceOutcome.Invalid(host, "Instance host must not be blank")
+        }
+        store.findInstanceByHost(normalizedHost)?.let {
+            return AddInstanceOutcome.AlreadyExists(it)
+        }
+        val tokenRef = parseToken(token)
+        checkTokenReference(tokenRef)?.let {
+            return AddInstanceOutcome.Invalid(normalizedHost, it)
+        }
+        val instance = store.createInstance(normalizedHost, apiUrl, tokenRef)
+        logger.info("Added {} instance {} at {}", kind.displayName, normalizedHost, apiUrl)
+        return AddInstanceOutcome.Added(instance)
+    }
+
+    open fun listInstances(): List<I> = store.listInstances()
+
+    /**
+     * Register a project for watching on [instance], seeding cursors from its current state.
      *
      * [token] may be a literal or an `env://KEY` reference; it is stored as given and resolved for
-     * the API calls made here.
+     * the API calls made here. Without one, the instance default credential is used.
      */
-    open fun addProject(identifier: String, token: String?): AddProjectOutcome<P> {
+    open fun addProject(instance: I, identifier: String, token: String?): AddProjectOutcome<P> {
         invalidIdentifierReason(identifier)?.let {
             return AddProjectOutcome.InvalidIdentifier(identifier, it)
         }
-        val existing = store.findProject(identifier)
+        val existing = store.findProject(instance, identifier)
         if (existing != null) {
             return AddProjectOutcome.AlreadyExists(existing)
         }
-        val tokenRef = token?.trim()?.ifBlank { null }?.let { SecretRef.parse(it) }
-        val resolvedToken = ForgeTokenResolver.resolve(tokenRef, secretLookup)
-        val envKey = tokenRef?.envKeyOrNull()
-        if (tokenRef != null && tokenRef.isEnvRef() && envKey == null) {
-            return AddProjectOutcome.InvalidIdentifier(
-                identifier,
-                "Token reference '${tokenRef.asStoredValue()}' is not a valid env://KEY",
-            )
+        val tokenRef = parseToken(token)
+        checkTokenReference(tokenRef)?.let { reason ->
+            return if (tokenRef?.isEnvRef() == true && tokenRef.envKeyOrNull() == null) {
+                AddProjectOutcome.InvalidIdentifier(identifier, reason)
+            } else {
+                AddProjectOutcome.ApiFailed(identifier, reason)
+            }
         }
-        if (envKey != null && resolvedToken == null) {
-            return AddProjectOutcome.ApiFailed(
-                identifier,
-                "Token references environment variable $envKey, which is not set",
-            )
-        }
+        val resolvedToken =
+            ForgeTokenResolver.resolve(tokenRef ?: instance.defaultToken, secretLookup)
 
         return try {
-            if (!client.validateProject(identifier, resolvedToken)) {
+            if (!client.validateProject(instance, identifier, resolvedToken)) {
                 return AddProjectOutcome.ApiFailed(
                     identifier,
                     "Repository not found or not accessible",
                 )
             }
 
-            val issues = client.fetchIssuesSince(identifier, resolvedToken, 0)
-            val changeRequests = client.fetchChangeRequestsSince(identifier, resolvedToken, 0)
-            val releases = client.fetchReleases(identifier, resolvedToken)
+            val issues = client.fetchIssuesSince(instance, identifier, resolvedToken, 0)
+            val changeRequests =
+                client.fetchChangeRequestsSince(instance, identifier, resolvedToken, 0)
+            val releases = client.fetchReleases(instance, identifier, resolvedToken)
 
             val project =
                 store.createProject(
+                    instance = instance,
                     path = identifier,
                     token = tokenRef,
                     highestIssueNumber = issues.maxOfOrNull { it.number } ?: 0,
@@ -86,7 +121,7 @@ abstract class AbstractForgeSubscriptionService<P : ForgeProject, S : ForgeSubsc
             logger.info(
                 "Added {} project {} ({} issues, {} {}s, {} releases)",
                 kind.displayName,
-                identifier,
+                project.displayName,
                 issues.size,
                 changeRequests.size,
                 kind.changeRequestNoun,
@@ -100,9 +135,14 @@ abstract class AbstractForgeSubscriptionService<P : ForgeProject, S : ForgeSubsc
     }
 
     /** Subscribe a destination to a project's notifications. */
-    open fun subscribe(identifier: String, destinationUri: String): SubscriptionOutcome<P> {
+    open fun subscribe(
+        instance: I,
+        identifier: String,
+        destinationUri: String,
+    ): SubscriptionOutcome<P> {
         val project =
-            store.findProject(identifier) ?: return SubscriptionOutcome.ProjectNotFound(identifier)
+            store.findProject(instance, identifier)
+                ?: return SubscriptionOutcome.ProjectNotFound(identifier)
         val existing = store.findSubscription(project, destinationUri)
         if (existing != null && existing.active) {
             return SubscriptionOutcome.AlreadySubscribed(project)
@@ -112,27 +152,33 @@ abstract class AbstractForgeSubscriptionService<P : ForgeProject, S : ForgeSubsc
         } else {
             store.createSubscription(project, destinationUri)
         }
-        logger.info("Subscribed {} to {}", destinationUri, identifier)
+        logger.info("Subscribed {} to {}", destinationUri, project.displayName)
         return SubscriptionOutcome.Subscribed(project)
     }
 
     /** Unsubscribe a destination from a project. */
-    open fun unsubscribe(identifier: String, destinationUri: String): SubscriptionOutcome<P> {
+    open fun unsubscribe(
+        instance: I,
+        identifier: String,
+        destinationUri: String,
+    ): SubscriptionOutcome<P> {
         val project =
-            store.findProject(identifier) ?: return SubscriptionOutcome.ProjectNotFound(identifier)
+            store.findProject(instance, identifier)
+                ?: return SubscriptionOutcome.ProjectNotFound(identifier)
         val existing = store.findSubscription(project, destinationUri)
         if (existing == null || !existing.active) {
             return SubscriptionOutcome.NotSubscribed(project)
         }
         store.setSubscriptionActive(existing, false)
-        logger.info("Unsubscribed {} from {}", destinationUri, identifier)
+        logger.info("Unsubscribed {} from {}", destinationUri, project.displayName)
         return SubscriptionOutcome.Unsubscribed(project)
     }
 
     /** Deactivate a project and all its subscriptions. */
-    open fun removeProject(identifier: String): RemoveProjectOutcome<P> {
+    open fun removeProject(instance: I, identifier: String): RemoveProjectOutcome<P> {
         val project =
-            store.findProject(identifier) ?: return RemoveProjectOutcome.ProjectNotFound(identifier)
+            store.findProject(instance, identifier)
+                ?: return RemoveProjectOutcome.ProjectNotFound(identifier)
         if (!project.active) {
             return RemoveProjectOutcome.AlreadyInactive(project)
         }
@@ -142,7 +188,7 @@ abstract class AbstractForgeSubscriptionService<P : ForgeProject, S : ForgeSubsc
         logger.info(
             "Removed {} project {} and deactivated {} subscriptions",
             kind.displayName,
-            identifier,
+            project.displayName,
             activeSubscriptions.size,
         )
         return RemoveProjectOutcome.Removed(project, activeSubscriptions.size)
@@ -154,4 +200,19 @@ abstract class AbstractForgeSubscriptionService<P : ForgeProject, S : ForgeSubsc
     /** List active subscriptions for a destination. */
     open fun listSubscriptions(destinationUri: String): List<S> =
         store.findActiveSubscriptionsByDestination(destinationUri)
+
+    private fun parseToken(token: String?): SecretRef? =
+        token?.trim()?.ifBlank { null }?.let { SecretRef.parse(it) }
+
+    /** A reason an `env://` token cannot be used now, else null. Literals always pass. */
+    private fun checkTokenReference(tokenRef: SecretRef?): String? {
+        if (tokenRef == null || !tokenRef.isEnvRef()) return null
+        val envKey =
+            tokenRef.envKeyOrNull()
+                ?: return "Token reference '${tokenRef.asStoredValue()}' is not a valid env://KEY"
+        if (ForgeTokenResolver.resolve(tokenRef, secretLookup) == null) {
+            return "Token references environment variable $envKey, which is not set"
+        }
+        return null
+    }
 }

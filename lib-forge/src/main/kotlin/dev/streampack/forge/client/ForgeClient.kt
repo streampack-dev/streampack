@@ -3,6 +3,7 @@ package dev.streampack.forge.client
 
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.model.ForgeEvent
+import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
 import dev.streampack.forge.model.ForgeReleaseInfo
 import tools.jackson.databind.JsonNode
@@ -13,23 +14,34 @@ data class WebhookEnvelope(val event: String, val deliveryId: String?, val signa
 /**
  * Everything that differs between forges: how to talk to the API and how to read a webhook.
  *
- * A project is addressed by its path within the forge (`owner/repo`, `group/sub/project`). All
- * persistence, cursoring, formatting, and fan-out live in the shared services.
+ * A project is addressed by its instance and its path within it (`owner/repo`,
+ * `group/sub/project`). All persistence, cursoring, formatting, and fan-out live in the shared
+ * services.
  */
 interface ForgeClient {
     val kind: ForgeKind
 
     /** True when the project exists and is readable with [token]. */
-    fun validateProject(path: String, token: String?): Boolean
+    fun validateProject(instance: ForgeInstance, path: String, token: String?): Boolean
 
     /** Issues numbered above [sinceNumber]. */
-    fun fetchIssuesSince(path: String, token: String?, sinceNumber: Int): List<ForgeItem>
+    fun fetchIssuesSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        sinceNumber: Int,
+    ): List<ForgeItem>
 
     /** Pull or merge requests numbered above [sinceNumber]. */
-    fun fetchChangeRequestsSince(path: String, token: String?, sinceNumber: Int): List<ForgeItem>
+    fun fetchChangeRequestsSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        sinceNumber: Int,
+    ): List<ForgeItem>
 
     /** All releases the API returns. */
-    fun fetchReleases(path: String, token: String?): List<ForgeReleaseInfo>
+    fun fetchReleases(instance: ForgeInstance, path: String, token: String?): List<ForgeReleaseInfo>
 
     /** Reads the forge's delivery headers; null when a required header is missing. */
     fun webhookEnvelope(header: (String) -> String?): WebhookEnvelope?

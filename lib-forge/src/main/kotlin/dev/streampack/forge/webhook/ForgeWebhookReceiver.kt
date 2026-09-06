@@ -5,6 +5,7 @@ import dev.streampack.core.json.JacksonMappers
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.model.DeliveryMode
+import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeSubscription
 import dev.streampack.forge.store.ForgeStore
@@ -21,16 +22,17 @@ import tools.jackson.databind.JsonNode
  * The body of a webhook controller, independent of forge: header check, payload extraction, project
  * lookup, secret verification, deduplication, event parsing, fan-out.
  *
- * A module's controller owns the route and hands the request here. Responses follow the original
+ * A module's controller owns the route, resolves the instance the route addresses (so the instance
+ * is never inferred from the payload), and hands the request here. Responses follow the original
  * GitHub contract: 202 for accepted or deliberately ignored deliveries, 400 for malformed input,
  * 401 for a failed signature check, 500 when a stored secret cannot be decrypted.
  */
-open class ForgeWebhookReceiver<P : ForgeProject, S : ForgeSubscription>(
+open class ForgeWebhookReceiver<I : ForgeInstance, P : ForgeProject, S : ForgeSubscription>(
     private val kind: ForgeKind,
     private val client: ForgeClient,
-    private val store: ForgeStore<P, S>,
+    private val store: ForgeStore<I, P, S>,
     private val secretCipher: SecretCipher,
-    private val fanOut: ForgeWebhookFanOut<P, S>,
+    private val fanOut: ForgeWebhookFanOut<I, P, S>,
     private val deliveryTracker: WebhookDeliveryTracker,
 ) {
     private val objectMapper = JacksonMappers.standard()
@@ -38,6 +40,7 @@ open class ForgeWebhookReceiver<P : ForgeProject, S : ForgeSubscription>(
     private val name = kind.displayName
 
     fun receive(
+        instance: I,
         header: (String) -> String?,
         contentType: String?,
         body: ByteArray,
@@ -102,12 +105,13 @@ open class ForgeWebhookReceiver<P : ForgeProject, S : ForgeSubscription>(
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
                 }
         val project =
-            store.findProject(path)
+            store.findProject(instance, path)
                 ?: run {
                     logger.warn(
-                        "Ignoring {} webhook delivery for unknown repository {} (deliveryId={}, event={})",
+                        "Ignoring {} webhook delivery for unknown repository {} on {} (deliveryId={}, event={})",
                         name,
                         path,
+                        instance.host,
                         deliveryId,
                         envelope.event,
                     )

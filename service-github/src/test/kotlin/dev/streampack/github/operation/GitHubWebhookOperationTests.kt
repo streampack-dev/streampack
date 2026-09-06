@@ -9,8 +9,10 @@ import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.forge.model.DeliveryMode
+import dev.streampack.github.DefaultInstanceEndpoint
+import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.github.repository.GitHubRepoRepository
-import dev.streampack.github.service.GitHubApiClient
+import dev.streampack.github.service.GitHubForgeStore
 import dev.streampack.github.service.WebhookSecretCipher
 import dev.streampack.test.TestSecurityConfiguration
 import java.net.InetSocketAddress
@@ -39,7 +41,9 @@ class GitHubWebhookOperationTests {
     @Autowired lateinit var cipher: WebhookSecretCipher
 
     private lateinit var httpServer: HttpServer
-    private var originalApiEndpoint: String? = null
+    @Autowired lateinit var instanceRepository: GitHubInstanceRepository
+    @Autowired lateinit var store: GitHubForgeStore
+    private lateinit var endpoint: DefaultInstanceEndpoint
 
     private val adminUser =
         UserPrincipal(
@@ -57,16 +61,16 @@ class GitHubWebhookOperationTests {
 
     @BeforeEach
     fun setUp() {
-        originalApiEndpoint = GitHubApiClient.apiEndpoint
         httpServer = HttpServer.create(InetSocketAddress(0), 0)
         httpServer.start()
-        GitHubApiClient.apiEndpoint = "http://localhost:${httpServer.address.port}"
+        endpoint = DefaultInstanceEndpoint(instanceRepository, store)
+        endpoint.pointAt("http://localhost:${httpServer.address.port}")
     }
 
     @AfterEach
     fun tearDown() {
         httpServer.stop(0)
-        GitHubApiClient.apiEndpoint = originalApiEndpoint
+        endpoint.restore()
     }
 
     private fun stubRepo(owner: String, name: String) {
@@ -111,12 +115,39 @@ class GitHubWebhookOperationTests {
             success.payload.toString().contains("https://hooks.example.com/webhooks/github"),
         )
 
-        val repo = repoRepository.findByOwnerAndName("owner", "repo")
+        val repo =
+            repoRepository.findByInstanceAndOwnerAndName(store.defaultInstance(), "owner", "repo")
         assertNotNull(repo)
         assertEquals(DeliveryMode.WEBHOOK, repo!!.deliveryMode)
         assertNotNull(repo.webhookSecret)
         val decrypted = cipher.decrypt(repo.webhookSecret!!)
         assertEquals(64, decrypted.length)
+    }
+
+    @Test
+    fun `github webhook on another instance names that instance's route`() {
+        val enterprise =
+            instanceRepository.save(
+                dev.streampack.github.entity.GitHubInstance(
+                    host = "ghe.example.com",
+                    apiUrl = "https://ghe.example.com/api/v3",
+                )
+            )
+        val result =
+            eventGateway.process(message("github webhook private owner/repo on ghe.example.com"))
+        val success = assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = success.payload.toString()
+        assertEquals(
+            true,
+            payload.contains("https://hooks.example.com/webhooks/github/${enterprise.id}"),
+            payload,
+        )
+        assertEquals(
+            true,
+            payload.contains("Webhook enabled for ghe.example.com owner/repo"),
+            payload,
+        )
+        assertNotNull(repoRepository.findByInstanceAndOwnerAndName(enterprise, "owner", "repo"))
     }
 
     @Test
@@ -128,7 +159,8 @@ class GitHubWebhookOperationTests {
             success.payload.toString().contains("https://hooks.example.com/webhooks/github"),
         )
 
-        val repo = repoRepository.findByOwnerAndName("owner", "repo")
+        val repo =
+            repoRepository.findByInstanceAndOwnerAndName(store.defaultInstance(), "owner", "repo")
         assertNotNull(repo)
         assertEquals(DeliveryMode.WEBHOOK, repo!!.deliveryMode)
         assertNotNull(repo.webhookSecret)
