@@ -63,6 +63,17 @@ github unsubscribe owner/repo from <destination-uri>
 github subscriptions for <destination-uri>
 ```
 
+### Pipeline outcomes
+
+```text
+github subscribe owner/repo pipelines
+github subscribe owner/repo pipelines:failed
+github subscribe owner/repo pipelines:default-branch
+github subscribe owner/repo pipelines:branch:<name>[:failed]
+```
+
+Filters opt a subscription into pipeline outcomes on top of the always-on issues, pull requests, and releases. A pipeline is reported once when it settles and again only when a retry settles; failures name the failed jobs. Polling and webhooks share one record of what has been reported, so a settlement is never sent twice.
+
 ### Remove a repository
 
 ```text

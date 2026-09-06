@@ -3,6 +3,7 @@ package dev.streampack.gitlab.repository
 
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.gitlab.entity.GitLabInstance
+import dev.streampack.gitlab.entity.GitLabPipeline
 import dev.streampack.gitlab.entity.GitLabProject
 import dev.streampack.gitlab.entity.GitLabRelease
 import dev.streampack.gitlab.entity.GitLabSubscription
@@ -34,4 +35,8 @@ interface GitLabSubscriptionRepository : JpaRepository<GitLabSubscription, UUID>
     fun findByProjectAndActiveTrue(project: GitLabProject): List<GitLabSubscription>
 
     fun findByDestinationUriAndActiveTrue(destinationUri: String): List<GitLabSubscription>
+}
+
+interface GitLabPipelineRepository : JpaRepository<GitLabPipeline, UUID> {
+    fun findByProjectAndPipelineId(project: GitLabProject, pipelineId: String): GitLabPipeline?
 }

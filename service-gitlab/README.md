@@ -39,6 +39,17 @@ gitlab subscriptions [for <destination-uri>]
 gitlab remove group/project [on <host>]
 ```
 
+### Pipeline outcomes
+
+```text
+gitlab subscribe group/project pipelines
+gitlab subscribe group/project pipelines:failed
+gitlab subscribe group/project pipelines:default-branch
+gitlab subscribe group/project pipelines:branch:<name>[:failed]
+```
+
+Filters opt a subscription into pipeline outcomes on top of the always-on issues, merge requests, and releases. A pipeline is reported once when it settles and again only when a retry settles; failures name the failed jobs. Polling and webhooks share one record of what has been reported, so a settlement is never sent twice.
+
 ### Enable webhook delivery
 
 ```text

@@ -5,8 +5,10 @@ import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
+import dev.streampack.forge.model.ForgePipeline
 import dev.streampack.forge.model.ForgeProjectRef
 import dev.streampack.forge.model.ForgeReleaseInfo
+import java.time.Instant
 import tools.jackson.databind.JsonNode
 
 /** Headers a forge attaches to a webhook delivery, normalized across forges. */
@@ -46,6 +48,37 @@ interface ForgeClient {
 
     /** All releases the API returns. */
     fun fetchReleases(instance: ForgeInstance, path: String, token: String?): List<ForgeReleaseInfo>
+
+    /**
+     * Pipelines or workflow runs the forge has touched since [since], in any state. Callers apply
+     * the settlement gate and the subscription filters; this just fetches.
+     */
+    fun fetchPipelinesSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgePipeline>
+
+    /**
+     * Display names of the jobs that failed in [pipelineId] and were not allowed to fail, one per
+     * job name (the latest attempt wins, so retries are not double-reported).
+     */
+    fun fetchFailedJobs(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        pipelineId: String,
+    ): List<String>
+
+    /** The project's default branch, or null when it cannot be read. */
+    fun fetchDefaultBranch(instance: ForgeInstance, path: String, token: String?): String?
+
+    /**
+     * True when this forge's pipeline webhook payload lists the jobs, so a failed pipeline needs no
+     * API call to name them.
+     */
+    val webhookCarriesFailedJobs: Boolean
 
     /** Reads the forge's delivery headers; null when a required header is missing. */
     fun webhookEnvelope(header: (String) -> String?): WebhookEnvelope?

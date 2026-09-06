@@ -35,6 +35,35 @@ gitlab subscriptions
 gitlab subscriptions for irc://libera/%23java
 ```
 
+## Get Pipeline Outcomes
+
+Pipeline notifications are opt-in per subscription. Add filters after the project when subscribing:
+
+```text
+gitlab subscribe group/project pipelines
+gitlab subscribe group/project pipelines:failed
+gitlab subscribe group/project pipelines:default-branch
+gitlab subscribe group/project pipelines:branch:development:failed
+gitlab subscribe group/project pipelines:failed pipelines:branch:development on gitlab.example.com to irc://libera/%23dev
+```
+
+- `pipelines` reports every merge request pipeline; `pipelines:failed` only the ones that need attention (failed, canceled, or blocked on a manual job).
+- `pipelines:default-branch` reports pipelines on whatever the project's default branch is.
+- `pipelines:branch:<name>` reports pipelines on one named branch. Use it when the default branch is for deployment and day-to-day work lands on another branch, such as `development`.
+- Any selector takes a trailing `:failed`. Several filters may be combined. Issues, merge requests, and releases are always included.
+
+Re-subscribing with filters replaces the previous filters; to drop them, unsubscribe and subscribe again. `gitlab subscriptions` shows each subscription's filters in brackets.
+
+A notification is sent once, when a pipeline leaves the in-progress state, and again only when a retry settles. Failed pipelines name the failed jobs as `stage: job`, leaving out jobs that are allowed to fail:
+
+```text
+[group/project] MR !1039 pipeline FAILED (test: unit-tests, lint: ktfmt) - https://gitlab.com/group/project/-/pipelines/42
+[group/project] MR !1040 pipeline succeeded (4m12s) - https://gitlab.com/group/project/-/pipelines/43
+[group/project] development pipeline FAILED (build: package) - https://gitlab.com/group/project/-/pipelines/44
+```
+
+Polling and webhooks report the same pipeline once between them. To receive outcomes by webhook, enable the **Pipeline events** trigger on the GitLab hook; the payload carries the merge request and the jobs, so no extra API call is needed.
+
 ## Enable Webhooks
 
 ```text
@@ -44,7 +73,7 @@ gitlab webhook private group/project
 
 Normal mode validates the project and seeds its baseline before switching to webhook delivery. Private mode skips the API entirely: the project is recorded by path only, without its numeric id, so deliveries for it match on the path.
 
-The command prints the URL to configure and sends the secret token to you directly. On GitLab, open the project's **Settings > Webhooks**, enter the URL and the secret token, and enable the **Issues events**, **Merge request events**, and **Releases events** triggers:
+The command prints the URL to configure and sends the secret token to you directly. On GitLab, open the project's **Settings > Webhooks**, enter the URL and the secret token, and enable the **Issues events**, **Merge request events**, **Releases events**, and, for pipeline outcomes, **Pipeline events** triggers:
 
 ```text
 <base-url>/webhooks/gitlab

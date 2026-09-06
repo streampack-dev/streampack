@@ -2,6 +2,7 @@
 package dev.streampack.gitlab.controller
 
 import dev.streampack.forge.ForgeKind
+import dev.streampack.forge.secret.EnvironmentSecretLookup
 import dev.streampack.forge.webhook.ForgeWebhookReceiver
 import dev.streampack.gitlab.config.ConditionalOnGitLab
 import dev.streampack.gitlab.entity.GitLabInstance
@@ -40,6 +41,7 @@ class GitLabWebhookController(
     secretCipher: GitLabWebhookSecretCipher,
     webhookService: GitLabWebhookService,
     deliveryTracker: GitLabWebhookDeliveryTracker,
+    secretLookup: EnvironmentSecretLookup,
 ) {
     private val logger = LoggerFactory.getLogger(GitLabWebhookController::class.java)
     private val receiver =
@@ -50,12 +52,13 @@ class GitLabWebhookController(
             secretCipher,
             webhookService,
             deliveryTracker,
+            secretLookup,
         )
 
     @Operation(
         summary = "Receive GitLab webhook deliveries for gitlab.com projects",
         description =
-            "Compares X-Gitlab-Token with the project's secret token, deduplicates by X-Gitlab-Event-UUID, and fans out issue, merge request, and release hooks.",
+            "Compares X-Gitlab-Token with the project's secret token, deduplicates by X-Gitlab-Event-UUID, and fans out issue, merge request, release, and pipeline hooks.",
         responses =
             [
                 ApiResponse(responseCode = "202", description = "Delivery accepted"),

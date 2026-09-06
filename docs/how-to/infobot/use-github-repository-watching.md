@@ -42,6 +42,35 @@ github subscriptions
 github subscriptions for irc://libera/%23java
 ```
 
+## Get Pipeline Outcomes
+
+Pipeline notifications are opt-in per subscription. Add filters after the repository when subscribing:
+
+```text
+github subscribe owner/repo pipelines
+github subscribe owner/repo pipelines:failed
+github subscribe owner/repo pipelines:default-branch
+github subscribe owner/repo pipelines:branch:develop:failed
+github subscribe owner/repo pipelines:failed pipelines:branch:develop on ghe.example.com to irc://libera/%23dev
+```
+
+- `pipelines` reports every workflow run that belongs to a pull request; `pipelines:failed` only the ones that need attention.
+- `pipelines:default-branch` reports runs on whatever the repository's default branch is.
+- `pipelines:branch:<name>` reports runs on one named branch, for repositories whose working branch is not the default.
+- Any selector takes a trailing `:failed`. Several filters may be combined. Issues, pull requests, and releases are always included.
+
+Re-subscribing with filters replaces the previous filters; to drop them, unsubscribe and subscribe again. `github subscriptions` shows each subscription's filters in brackets.
+
+A notification is sent once, when a run leaves the in-progress state, and again only when a re-run settles. GitHub starts one workflow run per workflow, so each run is reported separately with its workflow name. Failed runs name the jobs that failed:
+
+```text
+[owner/repo] PR #12 workflow 'CI' FAILED (unit-tests, lint) - https://github.com/owner/repo/actions/runs/123
+[owner/repo] PR #13 workflow 'CI' succeeded (4m12s) - https://github.com/owner/repo/actions/runs/124
+[owner/repo] main workflow 'Deploy' CANCELED - https://github.com/owner/repo/actions/runs/125
+```
+
+Polling and webhooks report the same run once between them. To receive run outcomes by webhook, add `workflow_run` to the events the GitHub hook sends; failed runs cost one extra API call to list their jobs. Runs for pull requests from forks are not associated with the pull request by GitHub and are not reported.
+
 ## Enable Webhooks
 
 For normal validated webhook setup:
@@ -58,7 +87,7 @@ github webhook private owner/repo
 
 Private mode skips remote validation and baseline seeding, creates or reuses the local repository record, and emits the webhook secret anyway.
 
-After either command, configure GitHub to deliver webhooks to:
+After either command, configure GitHub to deliver webhooks (issues, pull requests, releases, and workflow runs if you want pipeline outcomes) to:
 
 ```text
 <base-url>/webhooks/github

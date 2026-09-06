@@ -39,7 +39,7 @@ data class GitLabProject(
     override val token: SecretRef? = null,
     @Column(nullable = false) override val highestIssueNumber: Int = 0,
     @Column(nullable = false, name = "highest_mr_number") val highestMrNumber: Int = 0,
-    @Column val lastPolledAt: Instant? = null,
+    @Column override val lastPolledAt: Instant? = null,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20, name = "delivery_mode")
     override val deliveryMode: DeliveryMode = DeliveryMode.POLLING,

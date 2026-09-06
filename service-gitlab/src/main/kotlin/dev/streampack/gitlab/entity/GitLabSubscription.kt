@@ -2,6 +2,7 @@
 package dev.streampack.gitlab.entity
 
 import dev.streampack.forge.model.ForgeSubscription
+import dev.streampack.forge.subscription.SubscriptionEvents
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -11,7 +12,9 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.UuidGenerator
+import org.hibernate.type.SqlTypes
 
 /** Maps a GitLab project to a notification destination, stored as a Provenance URI */
 @Entity
@@ -23,6 +26,10 @@ data class GitLabSubscription(
     @JoinColumn(name = "project_id", nullable = false)
     val project: GitLabProject = GitLabProject(),
     @Column(nullable = false, length = 2048) override val destinationUri: String = "",
+    /** Base event kinds plus any pipeline filters; see [SubscriptionEvents] */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", nullable = false)
+    override val events: List<String> = SubscriptionEvents.BASE,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     @Column(nullable = false) override val active: Boolean = true,
 ) : ForgeSubscription

@@ -5,9 +5,14 @@ import dev.streampack.core.json.JacksonMappers
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.model.DeliveryMode
+import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeSubscription
+import dev.streampack.forge.model.PipelineOutcome
+import dev.streampack.forge.pipeline.PipelineSettlementGate
+import dev.streampack.forge.secret.ForgeTokenResolver
+import dev.streampack.forge.secret.SecretLookup
 import dev.streampack.forge.store.ForgeStore
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -34,10 +39,16 @@ open class ForgeWebhookReceiver<I : ForgeInstance, P : ForgeProject, S : ForgeSu
     private val secretCipher: SecretCipher,
     private val fanOut: ForgeWebhookFanOut<I, P, S>,
     private val deliveryTracker: WebhookDeliveryTracker,
+    private val secretLookup: SecretLookup,
 ) {
     private val objectMapper = JacksonMappers.standard()
     private val logger = LoggerFactory.getLogger(javaClass)
     private val name = kind.displayName
+    private val settlementGate =
+        PipelineSettlementGate<P>(
+            status = { project, id -> store.pipelineStatus(project, id) },
+            record = { project, id, outcome -> store.recordPipeline(project, id, outcome) },
+        )
 
     fun receive(
         instance: I,
@@ -165,7 +176,7 @@ open class ForgeWebhookReceiver<I : ForgeInstance, P : ForgeProject, S : ForgeSu
             return ResponseEntity.status(HttpStatus.ACCEPTED).build()
         }
 
-        val event = client.parseWebhookEvent(envelope, root)
+        val event = client.parseWebhookEvent(envelope, root)?.let { settle(project, it) }
         if (event == null) {
             logger.debug(
                 "Ignoring {} webhook delivery {} for {}: event '{}' carries no reportable action",
@@ -178,6 +189,35 @@ open class ForgeWebhookReceiver<I : ForgeInstance, P : ForgeProject, S : ForgeSu
             fanOut.deliver(project, event)
         }
         return ResponseEntity.status(HttpStatus.ACCEPTED).build()
+    }
+
+    /**
+     * Pipeline events pass the same settlement gate polling uses, so a settlement seen by both
+     * paths is reported once, and a forge whose payload omits job names gets them from the API.
+     */
+    private fun settle(project: P, event: ForgeEvent): ForgeEvent? {
+        if (event !is ForgeEvent.PipelineSettled) return event
+        if (!settlementGate.shouldNotify(project, event.pipeline)) {
+            logger.debug(
+                "Recorded {} pipeline {} for {} as {} without notifying",
+                name,
+                event.pipeline.id,
+                project.displayName,
+                event.pipeline.outcome,
+            )
+            return null
+        }
+        if (
+            event.pipeline.outcome != PipelineOutcome.NEEDS_ATTENTION ||
+                client.webhookCarriesFailedJobs ||
+                event.failedJobs.isNotEmpty()
+        ) {
+            return event
+        }
+        val token = ForgeTokenResolver.resolve(project.effectiveToken, secretLookup)
+        val failedJobs =
+            client.fetchFailedJobs(project.instance, project.path, token, event.pipeline.id)
+        return event.copy(failedJobs = failedJobs)
     }
 
     /** GitHub can deliver form-encoded payloads with the JSON under a `payload` field. */

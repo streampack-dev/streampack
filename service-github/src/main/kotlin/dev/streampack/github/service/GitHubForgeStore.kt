@@ -5,12 +5,15 @@ import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.model.ForgeProjectRef
 import dev.streampack.forge.model.ForgeReleaseInfo
+import dev.streampack.forge.model.PipelineOutcome
 import dev.streampack.forge.store.ForgeStore
 import dev.streampack.github.entity.GitHubInstance
+import dev.streampack.github.entity.GitHubPipeline
 import dev.streampack.github.entity.GitHubRelease
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.entity.GitHubSubscription
 import dev.streampack.github.repository.GitHubInstanceRepository
+import dev.streampack.github.repository.GitHubPipelineRepository
 import dev.streampack.github.repository.GitHubReleaseRepository
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.github.repository.GitHubSubscriptionRepository
@@ -25,6 +28,7 @@ class GitHubForgeStore(
     private val repoRepository: GitHubRepoRepository,
     private val releaseRepository: GitHubReleaseRepository,
     private val subscriptionRepository: GitHubSubscriptionRepository,
+    private val pipelineRepository: GitHubPipelineRepository,
 ) : ForgeStore<GitHubInstance, GitHubRepo, GitHubSubscription> {
 
     /** The github.com row the migration seeds; recreated if it is ever missing */
@@ -140,6 +144,22 @@ class GitHubForgeStore(
         subscription: GitHubSubscription,
         active: Boolean,
     ): GitHubSubscription = subscriptionRepository.save(subscription.copy(active = active))
+
+    override fun setSubscriptionEvents(
+        subscription: GitHubSubscription,
+        events: List<String>,
+    ): GitHubSubscription = subscriptionRepository.save(subscription.copy(events = events))
+
+    override fun pipelineStatus(project: GitHubRepo, pipelineId: String): PipelineOutcome? =
+        pipelineRepository.findByRepoAndPipelineId(project, pipelineId)?.lastStatus
+
+    override fun recordPipeline(project: GitHubRepo, pipelineId: String, outcome: PipelineOutcome) {
+        val existing = pipelineRepository.findByRepoAndPipelineId(project, pipelineId)
+        pipelineRepository.save(
+            existing?.copy(lastStatus = outcome, updatedAt = Instant.now())
+                ?: GitHubPipeline(repo = project, pipelineId = pipelineId, lastStatus = outcome)
+        )
+    }
 
     override fun findActiveSubscriptions(project: GitHubRepo): List<GitHubSubscription> =
         subscriptionRepository.findByRepoAndActiveTrue(project)
