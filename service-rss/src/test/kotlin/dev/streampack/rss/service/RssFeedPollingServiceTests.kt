@@ -262,7 +262,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        pollingService.pollAllFeeds()
+        pollingService.pollDue(Instant.now())
 
         // No entries stored because inactive feed should not be polled
         assertEquals(0, entryRepository.count())
@@ -283,7 +283,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        pollingService.pollAllFeeds()
+        pollingService.pollDue(Instant.now())
 
         // Working feed's entries should still be stored despite the first feed failing
         val entries =

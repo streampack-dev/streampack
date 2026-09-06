@@ -6,7 +6,7 @@ It covers:
 
 - feed discovery and registration
 - destination subscriptions
-- feed polling and new-entry notifications
+- feed polling in bounded, spread-out batches with backoff, and new-entry notifications
 - OPML export and import for the registered feed catalog
 
 ## Operations

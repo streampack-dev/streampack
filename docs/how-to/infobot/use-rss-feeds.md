@@ -85,6 +85,7 @@ This deactivates the feed and any active subscriptions attached to it.
 - If autodiscovery fails, you can still add the direct feed URL.
 - If a feed is already registered, re-adding it is harmless.
 - Polling stores a baseline of entries and only notifies on new items.
+- Feeds are polled in small batches spread over time, not all at once: every 90 seconds the poller takes the five feeds that have been due longest, and each polled feed is next due an hour later (all configurable, see [Environment Variables](../../reference/environment-variables.md)). A feed that fails to fetch is retried with doubling delays up to a day, so a dead feed never ties up the poller.
 - Duplicate guid entries in one upstream fetch are ignored.
 
 ## OPML Import and Export
