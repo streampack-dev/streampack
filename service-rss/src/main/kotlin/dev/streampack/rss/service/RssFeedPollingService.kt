@@ -2,7 +2,9 @@
 package dev.streampack.rss.service
 
 import com.rometools.rome.feed.synd.SyndEntry
-import dev.streampack.core.integration.TickListener
+import dev.streampack.polling.schedule.DueBatchPollingService
+import dev.streampack.polling.schedule.PollResult
+import dev.streampack.polling.schedule.PollSchedule
 import dev.streampack.polling.service.EgressNotifier
 import dev.streampack.rss.config.RssProperties
 import dev.streampack.rss.entity.RssEntry
@@ -10,15 +12,15 @@ import dev.streampack.rss.entity.RssFeed
 import dev.streampack.rss.repository.RssEntryRepository
 import dev.streampack.rss.repository.RssFeedRepository
 import dev.streampack.rss.repository.RssFeedSubscriptionRepository
-import jakarta.annotation.PostConstruct
-import java.time.Duration
 import java.time.Instant
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Polls all active feeds on a tick-driven interval, stores new entries, and notifies subscribers
+ * Polls due feeds in bounded batches (issue #40), stores new entries, and notifies subscribers.
+ * Each feed carries its own next poll time, so reads spread over time instead of one sweep.
  */
 @Service
 class RssFeedPollingService(
@@ -28,47 +30,57 @@ class RssFeedPollingService(
     private val discoveryService: FeedDiscoveryService,
     private val egressNotifier: EgressNotifier,
     private val rssProperties: RssProperties,
-) : TickListener {
+) : DueBatchPollingService<RssFeed>(rssProperties.schedulerInterval, rssProperties.batchSize) {
     private val logger = LoggerFactory.getLogger(RssFeedPollingService::class.java)
-    private lateinit var lastPollTime: Instant
 
-    /** Delay first poll by 30 seconds so protocol adapters can finish connecting */
-    @PostConstruct
-    fun initLastPollTime() {
-        lastPollTime = Instant.now().minus(rssProperties.pollInterval).plusSeconds(30)
+    override fun findDue(now: Instant, limit: Int): List<RssFeed> =
+        feedRepository.findByActiveTrueAndNextPollAtLessThanEqualOrderByNextPollAtAsc(
+            now,
+            PageRequest.of(0, limit),
+        )
+
+    override fun poll(source: RssFeed): PollResult<RssFeed> = pollFeed(source)
+
+    override fun scheduleAfterSuccess(source: RssFeed, now: Instant) {
+        feedRepository.save(
+            source.copy(
+                nextPollAt = PollSchedule.afterSuccess(now, rssProperties.pollInterval),
+                pollFailures = 0,
+            )
+        )
     }
 
-    override fun onTick(now: Instant) {
-        if (Duration.between(lastPollTime, now) >= rssProperties.pollInterval) {
-            lastPollTime = now
-            pollAllFeeds()
-        }
+    override fun scheduleAfterFailure(source: RssFeed, now: Instant, reason: String?) {
+        val failures = source.pollFailures + 1
+        feedRepository.save(
+            source.copy(
+                nextPollAt =
+                    PollSchedule.afterFailure(
+                        now,
+                        rssProperties.pollInterval,
+                        failures,
+                        rssProperties.maxBackoff,
+                    ),
+                pollFailures = failures,
+            )
+        )
     }
 
-    fun pollAllFeeds() {
-        val feeds = feedRepository.findAllByActiveTrue()
-        logger.debug("Polling {} active feeds", feeds.size)
-        for (feed in feeds) {
-            try {
-                pollFeed(feed)
-            } catch (e: Exception) {
-                logger.warn("Failed to poll feed \"{}\": {}", feed.title, e.message)
-            }
-        }
-    }
+    override fun describe(source: RssFeed): String = "feed \"${source.title}\" (${source.feedUrl})"
 
+    /**
+     * Fetch one feed, store its new entries, and notify subscribers. Returns the feed with its
+     * fetch time recorded, or a failure when the feed could not be fetched or parsed.
+     */
     @Transactional
-    fun pollFeed(feed: RssFeed) {
-        val syndFeed = discoveryService.fetchFeed(feed.feedUrl)
-        if (syndFeed == null) {
-            logger.debug("Could not fetch feed \"{}\" at {}", feed.title, feed.feedUrl)
-            return
-        }
+    fun pollFeed(feed: RssFeed): PollResult<RssFeed> {
+        val syndFeed =
+            discoveryService.fetchFeed(feed.feedUrl)
+                ?: return PollResult.Failure("could not fetch or parse ${feed.feedUrl}")
 
         val fetchedEntries = deduplicateEntries(syndFeed.entries)
         if (fetchedEntries.isEmpty()) {
-            feedRepository.save(feed.copy(lastFetchedAt = Instant.now()))
-            return
+            return PollResult.Success(feedRepository.save(feed.copy(lastFetchedAt = Instant.now())))
         }
 
         val guids = fetchedEntries.mapNotNull { it.uri ?: it.link }
@@ -86,7 +98,7 @@ class RssFeedPollingService(
             logger.info("Stored {} new entries for feed \"{}\"", newEntries.size, feed.title)
         }
 
-        feedRepository.save(feed.copy(lastFetchedAt = Instant.now()))
+        val fetched = feedRepository.save(feed.copy(lastFetchedAt = Instant.now()))
 
         // Notify subscribers about new entries
         val subscriptions = subscriptionRepository.findByFeedAndActiveTrue(feed)
@@ -100,6 +112,7 @@ class RssFeedPollingService(
                 }
             }
         }
+        return PollResult.Success(fetched)
     }
 
     /** Format a new-entry notification for delivery */

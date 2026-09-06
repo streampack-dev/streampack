@@ -19,6 +19,10 @@ data class RssFeed(
     @Column(nullable = false, length = 500) val title: String = "",
     @Column(length = 2000) val description: String? = null,
     @Column val lastFetchedAt: Instant? = null,
+    /** When the feed next becomes eligible for polling; advanced after every poll */
+    @Column(nullable = false) val nextPollAt: Instant = Instant.now(),
+    /** Consecutive failed polls, driving backoff; reset by a success */
+    @Column(nullable = false) val pollFailures: Int = 0,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     @Column(nullable = false) val active: Boolean = true,
 )

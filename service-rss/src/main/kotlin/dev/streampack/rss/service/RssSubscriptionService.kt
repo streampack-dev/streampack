@@ -2,6 +2,8 @@
 package dev.streampack.rss.service
 
 import com.rometools.rome.feed.synd.SyndEntry
+import dev.streampack.polling.schedule.PollSchedule
+import dev.streampack.rss.config.RssProperties
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.entity.RssFeed
 import dev.streampack.rss.entity.RssFeedSubscription
@@ -23,6 +25,7 @@ class RssSubscriptionService(
     private val feedRepository: RssFeedRepository,
     private val entryRepository: RssEntryRepository,
     private val subscriptionRepository: RssFeedSubscriptionRepository,
+    private val rssProperties: RssProperties,
 ) {
 
     private val logger = LoggerFactory.getLogger(RssSubscriptionService::class.java)
@@ -66,6 +69,9 @@ class RssSubscriptionService(
                     title = syndFeed.title ?: result.feedUrl,
                     description = syndFeed.description?.take(2000),
                     lastFetchedAt = Instant.now(),
+                    /* Just fetched: the first poll is one interval out, like any other */
+                    nextPollAt =
+                        PollSchedule.afterSuccess(Instant.now(), rssProperties.pollInterval),
                 )
             )
 
