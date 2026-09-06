@@ -4,7 +4,9 @@ package dev.streampack.github.repository
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.entity.GitHubRepo
+import java.time.Instant
 import java.util.UUID
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface GitHubRepoRepository : JpaRepository<GitHubRepo, UUID> {
@@ -17,4 +19,11 @@ interface GitHubRepoRepository : JpaRepository<GitHubRepo, UUID> {
     fun findAllByActiveTrue(): List<GitHubRepo>
 
     fun findAllByActiveTrueAndDeliveryMode(deliveryMode: DeliveryMode): List<GitHubRepo>
+
+    /** Active repositories in [deliveryMode] due at or before [now], oldest due first */
+    fun findByActiveTrueAndDeliveryModeAndNextPollAtLessThanEqualOrderByNextPollAtAsc(
+        deliveryMode: DeliveryMode,
+        now: Instant,
+        pageable: Pageable,
+    ): List<GitHubRepo>
 }

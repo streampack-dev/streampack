@@ -10,6 +10,9 @@ data class GitLabProperties(
     /** The module registers no beans unless this is true */
     val enabled: Boolean = false,
     val pollInterval: Duration = Duration.ofMinutes(60),
+    val schedulerInterval: Duration = Duration.ofSeconds(90),
+    val batchSize: Int = 5,
+    val maxBackoff: Duration = Duration.ofDays(1),
     val connectTimeoutSeconds: Int = 5,
     val readTimeoutSeconds: Int = 10,
     val webhookSecretKey: String = "",

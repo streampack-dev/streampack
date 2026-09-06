@@ -80,6 +80,9 @@ The bare route serves gitlab.com; every other instance has its own route.
 |----------|----------------------|---------|
 | `streampack.gitlab.enabled` | `GITLAB_ENABLED` | `false` |
 | `streampack.gitlab.poll-interval` | `GITLAB_POLL_INTERVAL` | `PT60M` |
+| `streampack.gitlab.scheduler-interval` | `GITLAB_SCHEDULER_INTERVAL` | `PT90S` |
+| `streampack.gitlab.batch-size` | `GITLAB_POLL_BATCH_SIZE` | `5` |
+| `streampack.gitlab.max-backoff` | `GITLAB_POLL_MAX_BACKOFF` | `P1D` |
 | `streampack.gitlab.webhook-secret-key` | `GITLAB_WEBHOOK_SECRET_KEY` | unset (webhooks refused) |
 | `streampack.gitlab.webhook-base-url` | `GITLAB_WEBHOOK_BASE_URL` | falls back to `BASE_URL` |
 | `streampack.gitlab.delivery-dedupe-ttl` | `GITLAB_WEBHOOK_DEDUPE_TTL` | `PT6H` |

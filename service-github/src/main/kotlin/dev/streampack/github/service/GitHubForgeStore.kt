@@ -19,6 +19,7 @@ import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.github.repository.GitHubSubscriptionRepository
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 
 /** GitHub's persistence port: the `github_*` tables behind the shared forge services */
@@ -76,6 +77,21 @@ class GitHubForgeStore(
     override fun findActiveProjects(deliveryMode: DeliveryMode): List<GitHubRepo> =
         repoRepository.findAllByActiveTrueAndDeliveryMode(deliveryMode)
 
+    override fun findDueProjects(now: Instant, limit: Int): List<GitHubRepo> =
+        repoRepository
+            .findByActiveTrueAndDeliveryModeAndNextPollAtLessThanEqualOrderByNextPollAtAsc(
+                DeliveryMode.POLLING,
+                now,
+                PageRequest.of(0, limit),
+            )
+
+    override fun schedulePoll(
+        project: GitHubRepo,
+        nextPollAt: Instant,
+        pollFailures: Int,
+    ): GitHubRepo =
+        repoRepository.save(project.copy(nextPollAt = nextPollAt, pollFailures = pollFailures))
+
     override fun createProject(
         instance: GitHubInstance,
         ref: ForgeProjectRef,
@@ -83,6 +99,7 @@ class GitHubForgeStore(
         highestIssueNumber: Int,
         highestChangeRequestNumber: Int,
         polledAt: Instant,
+        nextPollAt: Instant,
     ): GitHubRepo {
         val (owner, name) =
             splitOwnerName(ref.path)
@@ -96,6 +113,7 @@ class GitHubForgeStore(
                 highestIssueNumber = highestIssueNumber,
                 highestPrNumber = highestChangeRequestNumber,
                 lastPolledAt = polledAt,
+                nextPollAt = nextPollAt,
             )
         )
     }

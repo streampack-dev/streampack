@@ -4,7 +4,6 @@ package dev.streampack.polling.schedule
 import java.time.Duration
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /** The template's contract, checked over an in-memory list of sources. */
@@ -88,17 +87,27 @@ class DueBatchPollingServiceTests {
     }
 
     @Test
-    fun `ticks only run a batch once per scheduler interval`() {
+    fun `ticks wait out the startup grace and then run one batch per scheduler interval`() {
         val fake = Fake(batchSize = 5)
         fake.sources += Source("a", now.minusSeconds(10))
         fake.sources += Source("b", now.minusSeconds(10))
+
+        /* Grace: the first tick and anything inside the grace window poll nothing */
         fake.onTick(now)
-        val first = fake.polled.size
-        assertTrue(first == 2 || first == 0, "first tick polled $first")
+        fake.onTick(now.plusSeconds(29))
+        assertEquals(0, fake.polled.size, fake.polled.toString())
+
+        /* One scheduler interval after the anchored start: a batch runs */
+        fake.onTick(now.plusSeconds(60))
+        assertEquals(listOf("a", "b"), fake.polled)
+
+        /* Inside the next interval nothing runs, even with a new due source */
         fake.sources += Source("c", now.minusSeconds(5))
-        fake.onTick(now.plusSeconds(30))
-        assertEquals(first, fake.polled.size)
-        fake.onTick(now.plusSeconds(91))
-        assertTrue(fake.polled.contains("c"), fake.polled.toString())
+        fake.onTick(now.plusSeconds(100))
+        assertEquals(2, fake.polled.size, fake.polled.toString())
+
+        /* The next interval picks it up */
+        fake.onTick(now.plusSeconds(150))
+        assertEquals(listOf("a", "b", "c"), fake.polled)
     }
 }

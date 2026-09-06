@@ -42,6 +42,12 @@ interface ForgeStore<I : ForgeInstance, P : ForgeProject, S : ForgeSubscription>
 
     fun findActiveProjects(deliveryMode: DeliveryMode): List<P>
 
+    /** Active polling-mode projects due at or before [now], oldest due first, at most [limit]. */
+    fun findDueProjects(now: Instant, limit: Int): List<P>
+
+    /** Record when [project] is next due and how many polls in a row have failed. */
+    fun schedulePoll(project: P, nextPollAt: Instant, pollFailures: Int): P
+
     fun createProject(
         instance: I,
         ref: ForgeProjectRef,
@@ -49,6 +55,7 @@ interface ForgeStore<I : ForgeInstance, P : ForgeProject, S : ForgeSubscription>
         highestIssueNumber: Int,
         highestChangeRequestNumber: Int,
         polledAt: Instant,
+        nextPollAt: Instant,
     ): P
 
     fun updateCursors(

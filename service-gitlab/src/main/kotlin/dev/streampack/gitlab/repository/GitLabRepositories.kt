@@ -7,7 +7,9 @@ import dev.streampack.gitlab.entity.GitLabPipeline
 import dev.streampack.gitlab.entity.GitLabProject
 import dev.streampack.gitlab.entity.GitLabRelease
 import dev.streampack.gitlab.entity.GitLabSubscription
+import java.time.Instant
 import java.util.UUID
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface GitLabInstanceRepository : JpaRepository<GitLabInstance, UUID> {
@@ -20,6 +22,13 @@ interface GitLabProjectRepository : JpaRepository<GitLabProject, UUID> {
     fun findByInstanceAndProjectId(instance: GitLabInstance, projectId: Long): GitLabProject?
 
     fun findAllByActiveTrueAndDeliveryMode(deliveryMode: DeliveryMode): List<GitLabProject>
+
+    /** Active projects in [deliveryMode] due at or before [now], oldest due first */
+    fun findByActiveTrueAndDeliveryModeAndNextPollAtLessThanEqualOrderByNextPollAtAsc(
+        deliveryMode: DeliveryMode,
+        now: Instant,
+        pageable: Pageable,
+    ): List<GitLabProject>
 }
 
 interface GitLabReleaseRepository : JpaRepository<GitLabRelease, UUID> {

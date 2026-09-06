@@ -4,6 +4,7 @@ package dev.streampack.gitlab.service
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.secret.EnvironmentSecretLookup
 import dev.streampack.forge.service.AbstractForgePollingService
+import dev.streampack.forge.service.ForgePollingSchedule
 import dev.streampack.forge.webhook.ForgeWebhookFanOut
 import dev.streampack.forge.webhook.SecretCipher
 import dev.streampack.forge.webhook.WebhookDeliveryTracker
@@ -15,9 +16,10 @@ import dev.streampack.gitlab.entity.GitLabSubscription
 import dev.streampack.polling.service.EgressNotifier
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
+import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.Transactional
 
-/** Polls active GitLab projects on a tick-driven interval and notifies subscribers */
+/** Polls due GitLab projects in bounded batches and notifies subscribers */
 @Service
 @ConditionalOnGitLab
 class GitLabPollingService(
@@ -26,18 +28,23 @@ class GitLabPollingService(
     egressNotifier: EgressNotifier,
     properties: GitLabProperties,
     secretLookup: EnvironmentSecretLookup,
+    transactionManager: PlatformTransactionManager,
 ) :
     AbstractForgePollingService<GitLabInstance, GitLabProject, GitLabSubscription>(
         ForgeKind.GITLAB,
         store,
         client,
         egressNotifier,
-        properties.pollInterval,
+        ForgePollingSchedule(
+            pollInterval = properties.pollInterval,
+            schedulerInterval = properties.schedulerInterval,
+            batchSize = properties.batchSize,
+            maxBackoff = properties.maxBackoff,
+        ),
         secretLookup,
+        transactionManager,
     ) {
     override fun projectId(project: GitLabProject): String = project.id.toString()
-
-    @Transactional override fun pollAll() = super.pollAll()
 
     @Transactional override fun pollProject(projectId: String) = super.pollProject(projectId)
 }

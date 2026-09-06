@@ -84,12 +84,18 @@ streampack:
     max-backoff: ${RSS_POLL_MAX_BACKOFF:P1D}
   github:
     poll-interval: ${GITHUB_POLL_INTERVAL:PT60M}
+    scheduler-interval: ${GITHUB_SCHEDULER_INTERVAL:PT90S}
+    batch-size: ${GITHUB_POLL_BATCH_SIZE:5}
+    max-backoff: ${GITHUB_POLL_MAX_BACKOFF:P1D}
     webhook-secret-key: ${GITHUB_WEBHOOK_SECRET_KEY:}
     webhook-base-url: ${GITHUB_WEBHOOK_BASE_URL:change-me}
     delivery-dedupe-ttl: ${GITHUB_WEBHOOK_DEDUPE_TTL:PT6H}
   gitlab:
     enabled: ${GITLAB_ENABLED:false}
     poll-interval: ${GITLAB_POLL_INTERVAL:PT60M}
+    scheduler-interval: ${GITLAB_SCHEDULER_INTERVAL:PT90S}
+    batch-size: ${GITLAB_POLL_BATCH_SIZE:5}
+    max-backoff: ${GITLAB_POLL_MAX_BACKOFF:P1D}
     webhook-secret-key: ${GITLAB_WEBHOOK_SECRET_KEY:}
     webhook-base-url: ${GITLAB_WEBHOOK_BASE_URL:change-me}
     delivery-dedupe-ttl: ${GITLAB_WEBHOOK_DEDUPE_TTL:PT6H}

@@ -216,7 +216,17 @@ open class ForgeWebhookReceiver<I : ForgeInstance, P : ForgeProject, S : ForgeSu
         }
         val token = ForgeTokenResolver.resolve(project.effectiveToken, secretLookup)
         val failedJobs =
-            client.fetchFailedJobs(project.instance, project.path, token, event.pipeline.id)
+            try {
+                client.fetchFailedJobs(project.instance, project.path, token, event.pipeline.id)
+            } catch (e: Exception) {
+                logger.warn(
+                    "Could not list failed jobs for {} pipeline {}: {}",
+                    project.displayName,
+                    event.pipeline.id,
+                    e.message,
+                )
+                emptyList()
+            }
         return event.copy(failedJobs = failedJobs)
     }
 

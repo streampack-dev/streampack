@@ -20,6 +20,7 @@ import dev.streampack.gitlab.repository.GitLabReleaseRepository
 import dev.streampack.gitlab.repository.GitLabSubscriptionRepository
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 
 /** GitLab's persistence port: the `gitlab_*` tables behind the shared forge services */
@@ -84,6 +85,21 @@ class GitLabForgeStore(
     override fun findActiveProjects(deliveryMode: DeliveryMode): List<GitLabProject> =
         projectRepository.findAllByActiveTrueAndDeliveryMode(deliveryMode)
 
+    override fun findDueProjects(now: Instant, limit: Int): List<GitLabProject> =
+        projectRepository
+            .findByActiveTrueAndDeliveryModeAndNextPollAtLessThanEqualOrderByNextPollAtAsc(
+                DeliveryMode.POLLING,
+                now,
+                PageRequest.of(0, limit),
+            )
+
+    override fun schedulePoll(
+        project: GitLabProject,
+        nextPollAt: Instant,
+        pollFailures: Int,
+    ): GitLabProject =
+        projectRepository.save(project.copy(nextPollAt = nextPollAt, pollFailures = pollFailures))
+
     override fun createProject(
         instance: GitLabInstance,
         ref: ForgeProjectRef,
@@ -91,6 +107,7 @@ class GitLabForgeStore(
         highestIssueNumber: Int,
         highestChangeRequestNumber: Int,
         polledAt: Instant,
+        nextPollAt: Instant,
     ): GitLabProject {
         require(GitLabForgeClient.isValidPath(ref.path)) { "Expected format: group/project" }
         return projectRepository.save(
@@ -102,6 +119,7 @@ class GitLabForgeStore(
                 highestIssueNumber = highestIssueNumber,
                 highestMrNumber = highestChangeRequestNumber,
                 lastPolledAt = polledAt,
+                nextPollAt = nextPollAt,
             )
         )
     }

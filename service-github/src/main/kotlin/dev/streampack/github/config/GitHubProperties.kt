@@ -8,6 +8,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "streampack.github")
 data class GitHubProperties(
     val pollInterval: Duration = Duration.ofMinutes(60),
+    val schedulerInterval: Duration = Duration.ofSeconds(90),
+    val batchSize: Int = 5,
+    val maxBackoff: Duration = Duration.ofDays(1),
     val connectTimeoutSeconds: Int = 5,
     val readTimeoutSeconds: Int = 10,
     val webhookSecretKey: String = "",

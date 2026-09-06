@@ -1,11 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.service
 
-import dev.streampack.core.integration.TickListener
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.format.ForgeEventFormatter
-import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
@@ -17,18 +15,23 @@ import dev.streampack.forge.secret.SecretLookup
 import dev.streampack.forge.store.ForgeStore
 import dev.streampack.forge.subscription.PipelineTarget
 import dev.streampack.forge.subscription.SubscriptionEvents
+import dev.streampack.polling.schedule.DueBatchPollingService
+import dev.streampack.polling.schedule.PollResult
+import dev.streampack.polling.schedule.PollSchedule
 import dev.streampack.polling.service.EgressNotifier
-import jakarta.annotation.PostConstruct
-import java.time.Duration
 import java.time.Instant
 import org.slf4j.LoggerFactory
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 
 /**
- * Tick-driven polling over [ForgeStore]: detects new issues, change requests, and releases above
- * the stored cursors and notifies subscribers through the egress channel.
+ * Due-batch polling over [ForgeStore] (issue #69): each tick takes the oldest-due polling-mode
+ * projects, detects new issues, change requests, releases, and settled pipelines above the stored
+ * cursors, notifies subscribers through the egress channel, and schedules the next poll. A project
+ * whose API calls fail is backed off rather than retried every tick.
+ *
+ * Each project is polled in its own transaction, so one failure rolls back only that project.
  */
-@Transactional
 abstract class AbstractForgePollingService<
     I : ForgeInstance,
     P : ForgeProject,
@@ -38,46 +41,40 @@ abstract class AbstractForgePollingService<
     protected val store: ForgeStore<I, P, S>,
     protected val client: ForgeClient,
     private val egressNotifier: EgressNotifier,
-    private val pollInterval: Duration,
+    private val schedule: ForgePollingSchedule,
     private val secretLookup: SecretLookup,
-) : TickListener {
+    transactionManager: PlatformTransactionManager,
+) : DueBatchPollingService<P>(schedule.schedulerInterval, schedule.batchSize) {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private lateinit var lastPollTime: Instant
+    private val transactions = TransactionTemplate(transactionManager)
     private val settlementGate =
         PipelineSettlementGate<P>(
             status = { project, id -> store.pipelineStatus(project, id) },
             record = { project, id, outcome -> store.recordPipeline(project, id, outcome) },
         )
 
-    /** Delay first poll by 30 seconds so protocol adapters can finish connecting */
-    @PostConstruct
-    fun initLastPollTime() {
-        lastPollTime = Instant.now().minus(pollInterval).plusSeconds(30)
+    override fun findDue(now: Instant, limit: Int): List<P> = store.findDueProjects(now, limit)
+
+    override fun poll(source: P): PollResult<P> {
+        transactions.execute { pollProject(projectId(source)) }
+        val refreshed = store.findProjectById(projectId(source)) ?: source
+        return PollResult.Success(refreshed)
     }
 
-    override fun onTick(now: Instant) {
-        if (Duration.between(lastPollTime, now) >= pollInterval) {
-            lastPollTime = now
-            pollAll()
-        }
+    override fun scheduleAfterSuccess(source: P, now: Instant) {
+        store.schedulePoll(source, PollSchedule.afterSuccess(now, schedule.pollInterval), 0)
     }
 
-    open fun pollAll() {
-        val projects = store.findActiveProjects(DeliveryMode.POLLING)
-        logger.debug("Polling {} active {} projects", projects.size, kind.displayName)
-        for (project in projects) {
-            try {
-                pollProject(projectId(project))
-            } catch (e: Exception) {
-                logger.warn(
-                    "Failed to poll {} project {}: {}",
-                    kind.displayName,
-                    project.displayName,
-                    e.message,
-                )
-            }
-        }
+    override fun scheduleAfterFailure(source: P, now: Instant, reason: String?) {
+        val failures = source.pollFailures + 1
+        store.schedulePoll(
+            source,
+            PollSchedule.afterFailure(now, schedule.pollInterval, failures, schedule.maxBackoff),
+            failures,
+        )
     }
+
+    override fun describe(source: P): String = "${kind.displayName} project ${source.displayName}"
 
     /** The store's identifier for [project], as accepted by [ForgeStore.findProjectById]. */
     protected abstract fun projectId(project: P): String

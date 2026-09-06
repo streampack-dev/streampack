@@ -108,9 +108,15 @@ class GitLabForgeClientTests {
     }
 
     @Test
-    fun `api failures degrade to empty lists`() {
+    fun `api failures other than not-found are raised so polling can back off`() {
         stub("/api/v4/projects/group/project/issues", "", status = 500)
-        assertTrue(client.fetchIssuesSince(instance, "group/project", null, 0).isEmpty())
+        org.junit.jupiter.api.Assertions.assertThrows(
+            dev.streampack.forge.client.ForgeApiException::class.java
+        ) {
+            client.fetchIssuesSince(instance, "group/project", null, 0)
+        }
+        stub("/api/v4/projects/group/gone/issues", "", status = 404)
+        assertTrue(client.fetchIssuesSince(instance, "group/gone", null, 0).isEmpty())
     }
 
     @Test

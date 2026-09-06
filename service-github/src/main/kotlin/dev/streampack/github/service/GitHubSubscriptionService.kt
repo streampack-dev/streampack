@@ -7,6 +7,7 @@ import dev.streampack.forge.service.AbstractForgeSubscriptionService
 import dev.streampack.forge.service.AddInstanceOutcome
 import dev.streampack.forge.service.AddProjectOutcome
 import dev.streampack.forge.service.RemoveProjectOutcome
+import dev.streampack.github.config.GitHubProperties
 import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.entity.GitHubSubscription
@@ -18,12 +19,14 @@ class GitHubSubscriptionService(
     store: GitHubForgeStore,
     client: GitHubForgeClient,
     secretLookup: EnvironmentSecretLookup,
+    properties: GitHubProperties,
 ) :
     AbstractForgeSubscriptionService<GitHubInstance, GitHubRepo, GitHubSubscription>(
         ForgeKind.GITHUB,
         store,
         client,
         secretLookup,
+        properties.pollInterval,
     ) {
 
     override fun invalidIdentifierReason(identifier: String): String? =
