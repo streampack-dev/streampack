@@ -168,14 +168,17 @@ class GitHubApiClientTests {
     }
 
     @Test
-    fun `fetchIssues returns empty list on API error`() {
+    fun `fetchIssues raises on API error so polling can back off`() {
         stubRepo("owner", "repo")
         httpServer.createContext("/repos/owner/repo/issues") { exchange ->
             exchange.sendResponseHeaders(500, -1)
         }
 
-        val issues = apiClient.fetchIssues(apiUrl, "owner", "repo", null, 0)
-        assertTrue(issues.isEmpty())
+        org.junit.jupiter.api.Assertions.assertThrows(
+            dev.streampack.forge.client.ForgeApiException::class.java
+        ) {
+            apiClient.fetchIssues(apiUrl, "owner", "repo", null, 0)
+        }
     }
 
     @Test

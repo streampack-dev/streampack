@@ -2,6 +2,7 @@
 package dev.streampack.gitlab.service
 
 import dev.streampack.core.json.JacksonMappers
+import dev.streampack.forge.client.ForgeApiException
 import dev.streampack.forge.model.ForgeItem
 import dev.streampack.forge.model.ForgePipeline
 import dev.streampack.forge.model.ForgeProjectRef
@@ -201,7 +202,7 @@ class GitLabApiClient(properties: GitLabProperties) {
         return items
     }
 
-    /** GET [relative] under [apiUrl]; null on any failure, which the caller treats as empty */
+    /** GET [relative] under [apiUrl]; null on 404, [ForgeApiException] on any other failure */
     private fun get(apiUrl: String, relative: String, token: String?, path: String): JsonNode? {
         val uri = URI.create(apiUrl.trimEnd('/') + relative)
         return try {
@@ -216,16 +217,22 @@ class GitLabApiClient(properties: GitLabProperties) {
                     .body(String::class.java) ?: return null
             mapper.readTree(body)
         } catch (e: RestClientResponseException) {
-            logger.debug(
-                "GitLab API {} for {} returned {}",
-                relative.substringBefore('?'),
-                path,
-                e.statusCode.value(),
+            if (e.statusCode.value() == 404) {
+                logger.debug(
+                    "GitLab API {} for {} returned 404",
+                    relative.substringBefore('?'),
+                    path,
+                )
+                return null
+            }
+            throw ForgeApiException(
+                "GitLab API ${relative.substringBefore('?')} for $path returned ${e.statusCode.value()}",
+                e,
             )
-            null
+        } catch (e: ForgeApiException) {
+            throw e
         } catch (e: Exception) {
-            logger.warn("GitLab API call for {} failed: {}", path, e.message)
-            null
+            throw ForgeApiException("GitLab API call for $path failed: ${e.message}", e)
         }
     }
 

@@ -6,6 +6,7 @@ import dev.streampack.forge.secret.EnvironmentSecretLookup
 import dev.streampack.forge.service.AbstractForgeSubscriptionService
 import dev.streampack.forge.service.AddInstanceOutcome
 import dev.streampack.gitlab.config.ConditionalOnGitLab
+import dev.streampack.gitlab.config.GitLabProperties
 import dev.streampack.gitlab.entity.GitLabInstance
 import dev.streampack.gitlab.entity.GitLabProject
 import dev.streampack.gitlab.entity.GitLabSubscription
@@ -18,12 +19,14 @@ class GitLabSubscriptionService(
     store: GitLabForgeStore,
     client: GitLabForgeClient,
     secretLookup: EnvironmentSecretLookup,
+    properties: GitLabProperties,
 ) :
     AbstractForgeSubscriptionService<GitLabInstance, GitLabProject, GitLabSubscription>(
         ForgeKind.GITLAB,
         store,
         client,
         secretLookup,
+        properties.pollInterval,
     ) {
 
     override fun invalidIdentifierReason(identifier: String): String? =

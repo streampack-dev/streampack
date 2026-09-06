@@ -14,6 +14,8 @@ import dev.streampack.forge.secret.SecretLookup
 import dev.streampack.forge.store.ForgeStore
 import dev.streampack.forge.subscription.PipelineFilter
 import dev.streampack.forge.subscription.SubscriptionEvents
+import dev.streampack.polling.schedule.PollSchedule
+import java.time.Duration
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional
@@ -35,6 +37,8 @@ abstract class AbstractForgeSubscriptionService<
     protected val store: ForgeStore<I, P, S>,
     protected val client: ForgeClient,
     protected val secretLookup: SecretLookup,
+    /** How long after registration (which seeds the project) the first poll is due. */
+    private val pollInterval: Duration,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -124,6 +128,7 @@ abstract class AbstractForgeSubscriptionService<
                     highestIssueNumber = issues.maxOfOrNull { it.number } ?: 0,
                     highestChangeRequestNumber = changeRequests.maxOfOrNull { it.number } ?: 0,
                     polledAt = Instant.now(),
+                    nextPollAt = PollSchedule.afterSuccess(Instant.now(), pollInterval),
                 )
             releases.forEach { store.saveRelease(project, it) }
 

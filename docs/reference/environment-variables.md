@@ -33,6 +33,13 @@ This reference covers the variables commonly used by `server-streampack`.
 | `GITLAB_WEBHOOK_BASE_URL` | Optional | Public webhook base URL for GitLab; falls back to `BASE_URL`. |
 | `GITLAB_POLL_INTERVAL` | Optional | Polling interval for GitLab projects, ISO-8601 duration (default `PT60M`). |
 | `GITLAB_WEBHOOK_DEDUPE_TTL` | Optional | How long GitLab delivery UUIDs are remembered for deduplication (default `PT6H`). |
+| `GITHUB_POLL_INTERVAL` | Optional | How long after a poll a watched GitHub repository is next due (default `PT60M`). |
+| `GITHUB_SCHEDULER_INTERVAL` | Optional | How often the GitHub poller wakes to take a batch of due repositories (default `PT90S`). |
+| `GITHUB_POLL_BATCH_SIZE` | Optional | Maximum repositories polled per wake-up, oldest due first (default `5`). |
+| `GITHUB_POLL_MAX_BACKOFF` | Optional | Cap on the exponential backoff applied to a repository whose API calls fail (default `P1D`). |
+| `GITLAB_SCHEDULER_INTERVAL` | Optional | As above, for GitLab (default `PT90S`). |
+| `GITLAB_POLL_BATCH_SIZE` | Optional | As above, for GitLab (default `5`). |
+| `GITLAB_POLL_MAX_BACKOFF` | Optional | As above, for GitLab (default `P1D`). |
 | `RSS_POLL_INTERVAL` | Optional | How long after a poll a feed is next due, ISO-8601 duration (default `PT1H`). |
 | `RSS_SCHEDULER_INTERVAL` | Optional | How often the feed poller wakes to take a batch of due feeds (default `PT90S`). |
 | `RSS_POLL_BATCH_SIZE` | Optional | Maximum feeds polled per wake-up, oldest due first (default `5`). |

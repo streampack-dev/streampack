@@ -34,6 +34,12 @@ interface ForgeProject {
     /** When the project was last polled; pipelines updated after this are candidates to report. */
     val lastPolledAt: Instant?
 
+    /** When the project next becomes eligible for polling; advanced after every poll. */
+    val nextPollAt: Instant
+
+    /** Consecutive failed polls, driving backoff; reset by a success. */
+    val pollFailures: Int
+
     val deliveryMode: DeliveryMode
 
     /** Encrypted webhook secret, present when [deliveryMode] is [DeliveryMode.WEBHOOK]. */

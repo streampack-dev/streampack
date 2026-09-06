@@ -57,7 +57,15 @@ class GitLabWebhookAdminService(
         val project =
             store.findProject(instance, ForgeProjectRef(path))
                 ?: if (privateMode) {
-                    store.createProject(instance, ForgeProjectRef(path), null, 0, 0, Instant.now())
+                    store.createProject(
+                        instance,
+                        ForgeProjectRef(path),
+                        null,
+                        0,
+                        0,
+                        Instant.now(),
+                        Instant.now(),
+                    )
                 } else {
                     when (val outcome = subscriptionService.addProject(instance, path, null)) {
                         is AddProjectOutcome.Added -> outcome.project

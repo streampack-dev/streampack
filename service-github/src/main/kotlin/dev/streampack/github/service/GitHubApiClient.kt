@@ -2,6 +2,7 @@
 package dev.streampack.github.service
 
 import dev.streampack.core.json.JacksonMappers
+import dev.streampack.forge.client.ForgeApiException
 import dev.streampack.forge.model.ForgePipeline
 import dev.streampack.forge.model.PipelineOutcome
 import dev.streampack.github.config.GitHubProperties
@@ -84,8 +85,7 @@ class GitHubApiClient(properties: GitHubProperties) {
                     )
                 }
         } catch (e: Exception) {
-            logger.warn("Failed to fetch issues for {}/{}: {}", owner, name, e.message)
-            emptyList()
+            throw ForgeApiException("Failed to fetch issues for $owner/$name: ${e.message}", e)
         }
     }
 
@@ -111,8 +111,7 @@ class GitHubApiClient(properties: GitHubProperties) {
                     )
                 }
         } catch (e: Exception) {
-            logger.warn("Failed to fetch PRs for {}/{}: {}", owner, name, e.message)
-            emptyList()
+            throw ForgeApiException("Failed to fetch PRs for $owner/$name: ${e.message}", e)
         }
     }
 
@@ -133,8 +132,7 @@ class GitHubApiClient(properties: GitHubProperties) {
                 )
             }
         } catch (e: Exception) {
-            logger.warn("Failed to fetch releases for {}/{}: {}", owner, name, e.message)
-            emptyList()
+            throw ForgeApiException("Failed to fetch releases for $owner/$name: ${e.message}", e)
         }
     }
 
@@ -143,8 +141,10 @@ class GitHubApiClient(properties: GitHubProperties) {
         try {
             connect(apiUrl, token).getRepository("$owner/$name").defaultBranch
         } catch (e: Exception) {
-            logger.warn("Failed to read default branch for {}/{}: {}", owner, name, e.message)
-            null
+            throw ForgeApiException(
+                "Failed to read default branch for $owner/$name: ${e.message}",
+                e,
+            )
         }
 
     /**
@@ -242,8 +242,10 @@ class GitHubApiClient(properties: GitHubProperties) {
                     .body(String::class.java) ?: return null
             mapper.readTree(body)
         } catch (e: Exception) {
-            logger.warn("GitHub API call {} failed: {}", relative.substringBefore('?'), e.message)
-            null
+            throw ForgeApiException(
+                "GitHub API call ${relative.substringBefore('?')} failed: ${e.message}",
+                e,
+            )
         }
     }
 

@@ -40,6 +40,8 @@ data class GitLabProject(
     @Column(nullable = false) override val highestIssueNumber: Int = 0,
     @Column(nullable = false, name = "highest_mr_number") val highestMrNumber: Int = 0,
     @Column override val lastPolledAt: Instant? = null,
+    @Column(nullable = false) override val nextPollAt: Instant = Instant.now(),
+    @Column(nullable = false) override val pollFailures: Int = 0,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20, name = "delivery_mode")
     override val deliveryMode: DeliveryMode = DeliveryMode.POLLING,

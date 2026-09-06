@@ -345,7 +345,7 @@ class GitHubPollingServiceTests {
         subscribeRepo(repo, Provenance(protocol = Protocol.CONSOLE, replyTo = "local").encode())
 
         // No HTTP stubs needed - should not be called
-        pollingService.pollAllRepos()
+        pollingService.pollDue(Instant.now())
         assertEquals(0, capturingEgressSubscriber.captured.size)
     }
 
@@ -386,7 +386,7 @@ class GitHubPollingServiceTests {
             exchange.responseBody.use { it.write(json.toByteArray()) }
         }
 
-        pollingService.pollAllRepos()
+        pollingService.pollDue(Instant.now())
 
         assertTrue(capturingEgressSubscriber.captured.isNotEmpty())
     }
