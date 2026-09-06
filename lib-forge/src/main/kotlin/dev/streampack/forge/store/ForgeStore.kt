@@ -5,6 +5,7 @@ import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
+import dev.streampack.forge.model.ForgeProjectRef
 import dev.streampack.forge.model.ForgeReleaseInfo
 import dev.streampack.forge.model.ForgeSubscription
 import java.time.Instant
@@ -28,8 +29,11 @@ interface ForgeStore<I : ForgeInstance, P : ForgeProject, S : ForgeSubscription>
 
     fun createInstance(host: String, apiUrl: String, defaultToken: SecretRef?): I
 
-    /** The project registered under [path] on [instance], or null when unknown or malformed. */
-    fun findProject(instance: I, path: String): P?
+    /**
+     * The project [ref] names on [instance], or null when unknown or malformed. A store that keeps
+     * the forge's native id matches [ForgeProjectRef.externalId] first and the path second.
+     */
+    fun findProject(instance: I, ref: ForgeProjectRef): P?
 
     fun findProjectById(id: String): P?
 
@@ -39,7 +43,7 @@ interface ForgeStore<I : ForgeInstance, P : ForgeProject, S : ForgeSubscription>
 
     fun createProject(
         instance: I,
-        path: String,
+        ref: ForgeProjectRef,
         token: SecretRef?,
         highestIssueNumber: Int,
         highestChangeRequestNumber: Int,

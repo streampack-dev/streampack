@@ -93,8 +93,8 @@ open class ForgeWebhookReceiver<I : ForgeInstance, P : ForgeProject, S : ForgeSu
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
             }
 
-        val path =
-            client.webhookProjectPath(root)
+        val ref =
+            client.webhookProjectRef(root)
                 ?: run {
                     logger.warn(
                         "Rejecting {} webhook delivery {} because the project identifier is missing or invalid (event={})",
@@ -104,8 +104,9 @@ open class ForgeWebhookReceiver<I : ForgeInstance, P : ForgeProject, S : ForgeSu
                     )
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
                 }
+        val path = ref.path
         val project =
-            store.findProject(instance, path)
+            store.findProject(instance, ref)
                 ?: run {
                     logger.warn(
                         "Ignoring {} webhook delivery for unknown repository {} on {} (deliveryId={}, event={})",

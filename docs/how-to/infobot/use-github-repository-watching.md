@@ -1,6 +1,6 @@
 # Use GitHub Repository Watching
 
-`service-github` lets the bundled infobot watch GitHub repositories and deliver issue, pull request, release, and webhook notifications into subscribed destinations.
+`service-github` lets the bundled infobot watch GitHub repositories and deliver issue, pull request, release, and webhook notifications into subscribed destinations. GitLab projects work the same way through [GitLab project watching](use-gitlab-project-watching.md).
 
 ## Register a Repository
 

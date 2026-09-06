@@ -33,6 +33,7 @@ For module-local command details and implementation notes, see:
 - [lib-core/README.md](../../lib-core/README.md)
 - [operation-factoid/README.md](../../operation-factoid/README.md)
 - [service-github/README.md](../../service-github/README.md)
+- [service-gitlab/README.md](../../service-gitlab/README.md)
 - [service-rss/README.md](../../service-rss/README.md)
 - [service-irc/README.md](../../service-irc/README.md)
 - [service-slack/README.md](../../service-slack/README.md)

@@ -28,6 +28,14 @@ This reference covers the variables commonly used by `server-streampack`.
 | `GITHUB_<HOST>_<OWNER>_<REPO>_TOKEN` | Per repository | The same, for a repository on an instance other than github.com, e.g. `GITHUB_GHE_EXAMPLE_COM_OWNER_REPO_TOKEN` for `github add owner/repo <token> on ghe.example.com`. |
 | `GITHUB_INSTANCE_<HOST>_TOKEN` | Per instance | Default API token for every repository on a registered GitHub instance that has no token of its own, e.g. `GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN` for `github instance add https://ghe.example.com <token>`. Externalized and enforced at startup the same way. |
 | `GITHUB_WEBHOOK_BASE_URL` | Optional | Public webhook base URL. |
+| `GITLAB_ENABLED` | Optional | Enables GitLab project watching (`service-gitlab`). Off by default; when off the module registers no commands, routes, or polling. |
+| `GITLAB_WEBHOOK_SECRET_KEY` | Optional | Key that encrypts stored GitLab webhook secret tokens. Required before any project can be switched to webhook delivery; placeholders such as `change-me` are rejected at startup. |
+| `GITLAB_WEBHOOK_BASE_URL` | Optional | Public webhook base URL for GitLab; falls back to `BASE_URL`. |
+| `GITLAB_POLL_INTERVAL` | Optional | Polling interval for GitLab projects, ISO-8601 duration (default `PT60M`). |
+| `GITLAB_WEBHOOK_DEDUPE_TTL` | Optional | How long GitLab delivery UUIDs are remembered for deduplication (default `PT6H`). |
+| `GITLAB_<PATH>_TOKEN` | Per project | API token for a watched gitlab.com project, with `/` in the path flattened to `_`, e.g. `GITLAB_GROUP_SUBGROUP_PROJECT_TOKEN`. Externalized and enforced at startup like GitHub tokens. |
+| `GITLAB_<HOST>_<PATH>_TOKEN` | Per project | The same, for a project on a self-hosted instance, e.g. `GITLAB_GITLAB_EXAMPLE_COM_GROUP_PROJECT_TOKEN`. |
+| `GITLAB_INSTANCE_<HOST>_TOKEN` | Per instance | Default API token for every project on a registered GitLab instance that has no token of its own. |
 | `ANTHROPIC_API_KEY` | Optional | Anthropic API key. |
 | `AI_ENABLED` | Optional | Enables AI-backed features. |
 | `IRC_ENABLED` | Optional | Enables IRC adapter. |

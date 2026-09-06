@@ -1,0 +1,33 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    url: jdbc:tc:postgresql:17://nevet
+    hikari:
+      maximum-pool-size: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    clean-disabled: true
+    enabled: true
+    out-of-order: true
+  mail:
+    host: localhost
+    port: 3025
+
+streampack:
+  jwt:
+    secret: test-jwt-secret-not-for-production-0123456789
+  gitlab:
+    enabled: true
+    webhook-secret-key: test-gitlab-webhook-secret-key
+  base-url: http://localhost:8080
+  tick:
+    scheduler:
+      enabled: false
+
+springdoc:
+  api-docs:
+    enabled: true

@@ -114,7 +114,7 @@ Operational notes:
 
 ## Forge Instances and `on <host>`
 
-Forge modules (GitHub today, GitLab when it lands) share one grammar for choosing which installation a project lives on. Each forge has a hosted default instance (`github.com`, `gitlab.com`) that is registered automatically. Other installations are registered once with `<forge> instance add <url> [token]`, and then any command that names a project may end in `on <host>`:
+Forge modules (GitHub and GitLab) share one grammar for choosing which installation a project lives on. Each forge has a hosted default instance (`github.com`, `gitlab.com`) that is registered automatically. Other installations are registered once with `<forge> instance add <url> [token]`, and then any command that names a project may end in `on <host>`:
 
 ```text
 github add owner/repo on ghe.example.com
@@ -163,6 +163,42 @@ Operational notes:
 - `github webhook owner/repo` validates and seeds the repository before switching to webhook mode.
 - `github webhook private owner/repo` skips remote validation and is intended for operator-managed
   private repositories.
+
+## GitLab Operations
+
+Present only when `streampack.gitlab.enabled` is true.
+
+`ADMIN`:
+
+```text
+gitlab instance add <url>
+gitlab instance add <url> <token>
+gitlab add group/project [on <host>]
+gitlab add group/project <token> [on <host>]
+gitlab subscribe group/project [on <host>]
+gitlab subscribe group/project [on <host>] to <destination-uri>
+gitlab unsubscribe group/project [on <host>]
+gitlab unsubscribe group/project [on <host>] from <destination-uri>
+gitlab remove group/project [on <host>]
+gitlab webhook group/project [on <host>]
+gitlab webhook private group/project [on <host>]
+```
+
+Readable without admin:
+
+```text
+gitlab instance list
+gitlab list
+gitlab subscriptions
+gitlab subscriptions for <destination-uri>
+```
+
+Operational notes:
+
+- Project paths include subgroups: `group/subgroup/project`.
+- `gitlab instance add https://gitlab.example.com` registers a self-hosted GitLab; a base URL gets `/api/v4` appended, a full API URL is kept as given.
+- `gitlab webhook group/project` validates and seeds the project before switching to webhook mode; the secret token is sent to the requesting user and must travel over HTTPS because GitLab sends it verbatim.
+- `gitlab webhook private group/project` skips the API lookup and records the project by path only.
 
 ## Idea and AI Operations
 

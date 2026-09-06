@@ -18,6 +18,7 @@ Common public URLs:
 | `BASE_URL` | Public backend/API URL. |
 | `BLOG_BASE_URL` | Public frontend/site URL. |
 | `GITHUB_WEBHOOK_BASE_URL` | Public URL GitHub should call for webhooks. |
+| `GITLAB_WEBHOOK_BASE_URL` | Public URL GitLab should call for webhooks; must be HTTPS. |
 
 Mail:
 
@@ -43,6 +44,8 @@ Optional integrations:
 | `STREAMPACK_GENERATIVE_PROMPT_DIR` | Filesystem directory for external generative prompt overrides. |
 | `ANTHROPIC_API_KEY` | Anthropic API key. |
 | `GITHUB_WEBHOOK_SECRET_KEY` | Key that encrypts stored GitHub webhook secrets. Needed before enabling webhook delivery. |
+| `GITLAB_ENABLED` | Turns on GitLab project watching. |
+| `GITLAB_WEBHOOK_SECRET_KEY` | Key that encrypts stored GitLab webhook secret tokens. Needed before enabling GitLab webhook delivery. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OIDC credentials. |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub OAuth credentials. |
 

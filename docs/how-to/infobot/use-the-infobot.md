@@ -193,7 +193,7 @@ interactive `article` flow above.
 
 ## Feed and Repository Status
 
-Most feed and GitHub mutation commands are administrative, but some read commands are broadly
+Most feed, GitHub, and GitLab mutation commands are administrative, but some read commands are broadly
 useful:
 
 ```text
@@ -202,6 +202,9 @@ feed subscriptions
 github instance list
 github list
 github subscriptions
+gitlab instance list
+gitlab list
+gitlab subscriptions
 ```
 
 Operators may grant broader access in their own deployments, but the bundled defaults treat most

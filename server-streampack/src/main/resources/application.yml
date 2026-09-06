@@ -82,6 +82,12 @@ streampack:
     webhook-secret-key: ${GITHUB_WEBHOOK_SECRET_KEY:}
     webhook-base-url: ${GITHUB_WEBHOOK_BASE_URL:change-me}
     delivery-dedupe-ttl: ${GITHUB_WEBHOOK_DEDUPE_TTL:PT6H}
+  gitlab:
+    enabled: ${GITLAB_ENABLED:false}
+    poll-interval: ${GITLAB_POLL_INTERVAL:PT60M}
+    webhook-secret-key: ${GITLAB_WEBHOOK_SECRET_KEY:}
+    webhook-base-url: ${GITLAB_WEBHOOK_BASE_URL:change-me}
+    delivery-dedupe-ttl: ${GITLAB_WEBHOOK_DEDUPE_TTL:PT6H}
 management:
   info:
     git:

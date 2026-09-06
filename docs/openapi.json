@@ -3498,7 +3498,7 @@
     "/webhooks/github" : {
       "post" : {
         "description" : "Validates X-Hub-Signature-256, deduplicates deliveries, and fans out supported GitHub events.",
-        "operationId" : "receive",
+        "operationId" : "receive_1",
         "parameters" : [ {
           "in" : "header",
           "name" : "X-Hub-Signature-256",
@@ -3546,7 +3546,7 @@
     "/webhooks/github/{instanceId}" : {
       "post" : {
         "description" : "Same processing as the bare route, verified against repositories on the instance named by the path.",
-        "operationId" : "receiveForInstance",
+        "operationId" : "receiveForInstance_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "instanceId",
@@ -3599,6 +3599,112 @@
         },
         "summary" : "Receive GitHub webhook deliveries for one registered GitHub instance",
         "tags" : [ "git-hub-webhook-controller" ]
+      }
+    },
+    "/webhooks/gitlab" : {
+      "post" : {
+        "description" : "Compares X-Gitlab-Token with the project's secret token, deduplicates by X-Gitlab-Event-UUID, and fans out issue, merge request, and release hooks.",
+        "operationId" : "receive",
+        "parameters" : [ {
+          "in" : "header",
+          "name" : "X-Gitlab-Token",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-Gitlab-Event",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-Gitlab-Event-UUID",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Content-Type",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Delivery accepted"
+          },
+          "400" : {
+            "description" : "Malformed payload or project metadata"
+          },
+          "401" : {
+            "description" : "Secret token mismatch"
+          }
+        },
+        "summary" : "Receive GitLab webhook deliveries for gitlab.com projects",
+        "tags" : [ "git-lab-webhook-controller" ]
+      }
+    },
+    "/webhooks/gitlab/{instanceId}" : {
+      "post" : {
+        "description" : "Same processing as the bare route, verified against projects on the instance named by the path.",
+        "operationId" : "receiveForInstance",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "instanceId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-Gitlab-Token",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-Gitlab-Event",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-Gitlab-Event-UUID",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Content-Type",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Delivery accepted"
+          },
+          "400" : {
+            "description" : "Malformed payload or project metadata"
+          },
+          "401" : {
+            "description" : "Secret token mismatch"
+          },
+          "404" : {
+            "description" : "No such instance"
+          }
+        },
+        "summary" : "Receive GitLab webhook deliveries for one registered GitLab instance",
+        "tags" : [ "git-lab-webhook-controller" ]
       }
     }
   },
