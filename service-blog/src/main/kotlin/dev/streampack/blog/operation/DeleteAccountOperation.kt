@@ -84,7 +84,10 @@ class DeleteAccountOperation(
 
         // Clean up OTP codes (not FK-linked, so no cascade)
         if (targetUser.email.isNotBlank()) {
-            oneTimeCodeRepository.deleteByEmail(targetUser.email)
+            oneTimeCodeRepository.deleteByChannelAndRecipient(
+                dev.streampack.core.model.CodeChannel.EMAIL,
+                targetUser.email.lowercase(),
+            )
         }
 
         // Hard-delete the original user; service bindings and verification tokens cascade

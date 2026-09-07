@@ -134,6 +134,10 @@ class MattermostConnectionManager(
 
     fun getAdapter(serverName: String): MattermostAdapter? = adapters[serverName]
 
+    /** Names of servers with a live, authenticated connection */
+    fun connectedServerNames(): List<String> =
+        adapters.filterValues { it.isConnected() }.keys.sorted()
+
     fun getStatus(serverName: String?): String {
         if (serverName != null) {
             val adapter = adapters[serverName]

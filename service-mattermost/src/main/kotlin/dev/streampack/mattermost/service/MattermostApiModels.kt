@@ -5,7 +5,21 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class MattermostUserView(val id: String = "", val username: String = "")
+internal data class MattermostUserView(
+    val id: String = "",
+    val username: String = "",
+    @JsonProperty("first_name") val firstName: String? = null,
+    @JsonProperty("last_name") val lastName: String? = null,
+    val nickname: String? = null,
+) {
+    /** Full name, else nickname, else username */
+    val displayName: String
+        get() =
+            listOfNotNull(firstName, lastName)
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+                .ifBlank { nickname?.ifBlank { null } ?: username }
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class MattermostTeamView(

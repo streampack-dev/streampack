@@ -13,6 +13,12 @@
       },
       "AuthenticationFeatures" : {
         "properties" : {
+          "codeChannels" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CodeChannelFeature"
+            },
+            "type" : "array"
+          },
           "oidc" : {
             "oneOf" : [ {
               "$ref" : "#/components/schemas/OidcFeatures"
@@ -27,7 +33,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "otp", "otpFrom" ],
+        "required" : [ "codeChannels", "otp", "otpFrom" ],
         "type" : "object"
       },
       "CategorySummary" : {
@@ -47,6 +53,21 @@
           }
         },
         "required" : [ "id", "name", "slug" ],
+        "type" : "object"
+      },
+      "CodeChannelFeature" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string"
+          },
+          "servers" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "channel", "servers" ],
         "type" : "object"
       },
       "CommentDetail" : {
@@ -835,23 +856,43 @@
       },
       "OtpRequest" : {
         "properties" : {
-          "email" : {
+          "address" : {
+            "type" : [ "string", "null" ]
+          },
+          "channel" : {
+            "enum" : [ "email", "mattermost", "sms" ],
             "type" : "string"
+          },
+          "email" : {
+            "type" : [ "string", "null" ]
+          },
+          "server" : {
+            "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "email" ],
+        "required" : [ "channel" ],
         "type" : "object"
       },
       "OtpVerifyRequest" : {
         "properties" : {
+          "address" : {
+            "type" : [ "string", "null" ]
+          },
+          "channel" : {
+            "enum" : [ "email", "mattermost", "sms" ],
+            "type" : "string"
+          },
           "code" : {
             "type" : "string"
           },
           "email" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
+          },
+          "server" : {
+            "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "code", "email" ],
+        "required" : [ "channel", "code" ],
         "type" : "object"
       },
       "ProblemDetail" : {
@@ -2078,7 +2119,7 @@
                 }
               }
             },
-            "description" : "Code sent if email is valid"
+            "description" : "Accepted; a code is sent only when the identity resolves on the chosen channel"
           }
         },
         "summary" : "Request a one-time sign-in code",

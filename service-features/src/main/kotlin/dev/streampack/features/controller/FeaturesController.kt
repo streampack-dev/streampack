@@ -2,9 +2,11 @@
 package dev.streampack.features.controller
 
 import dev.streampack.core.config.StreampackProperties
+import dev.streampack.core.service.CodeDelivery
 import dev.streampack.core.service.Operation
 import dev.streampack.core.service.ProtocolAdapter
 import dev.streampack.features.model.AuthenticationFeatures
+import dev.streampack.features.model.CodeChannelFeature
 import dev.streampack.features.model.FeaturesResponse
 import dev.streampack.features.model.OidcFeatures
 import dev.streampack.features.model.VersionInfo
@@ -41,6 +43,7 @@ class FeaturesController(
     private val anonymousSubmission: Boolean,
     @Value("\${streampack.blog.site-name:Nevet}") private val siteName: String,
     private val streampackProperties: StreampackProperties,
+    private val codeDeliveries: List<CodeDelivery>,
 ) {
 
     private val cachedResponse: FeaturesResponse = buildResponse()
@@ -49,7 +52,19 @@ class FeaturesController(
     fun getFeatures(): ResponseEntity<FeaturesResponse> =
         ResponseEntity.ok()
             .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
-            .body(cachedResponse)
+            .body(withLiveCodeChannels(cachedResponse))
+
+    /** Chat servers connect and disconnect at runtime, so their list is read on each request */
+    private fun withLiveCodeChannels(response: FeaturesResponse): FeaturesResponse =
+        response.copy(
+            authentication =
+                response.authentication.copy(
+                    codeChannels =
+                        codeDeliveries
+                            .sortedBy { it.channel.name }
+                            .map { CodeChannelFeature(it.channel.wireName(), it.servers()) }
+                )
+        )
 
     private fun buildResponse(): FeaturesResponse {
         val version = buildVersionInfo()
@@ -103,6 +118,10 @@ class FeaturesController(
             otp = otp,
             otpFrom = streampackProperties.mail.from,
             oidc = oidc,
+            codeChannels =
+                codeDeliveries
+                    .sortedBy { it.channel.name }
+                    .map { CodeChannelFeature(it.channel.wireName(), it.servers()) },
         )
     }
 
