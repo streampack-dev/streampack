@@ -53,6 +53,7 @@
         <module>lib-forge</module>
         <module>lib-generative</module>
         <module>lib-irc</module>
+        <module>lib-mattermost</module>
         <module>lib-slack</module>
         <module>lib-polling</module>
         <module>lib-startrader</module>
@@ -88,6 +89,7 @@
         <module>service-irc</module>
         <module>service-karma</module>
         <module>service-mail</module>
+        <module>service-mattermost</module>
         <module>service-mcp</module>
         <module>service-rss</module>
         <module>service-slack</module>
@@ -303,6 +305,11 @@
             </dependency>
             <dependency>
                 <groupId>dev.streampack</groupId>
+                <artifactId>lib-mattermost</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.streampack</groupId>
                 <artifactId>lib-slack</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -479,6 +486,11 @@
             <dependency>
                 <groupId>dev.streampack</groupId>
                 <artifactId>service-mail</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.streampack</groupId>
+                <artifactId>service-mattermost</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

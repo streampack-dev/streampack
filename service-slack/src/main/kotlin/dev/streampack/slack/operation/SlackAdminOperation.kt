@@ -14,6 +14,10 @@ import org.springframework.stereotype.Component
 class SlackAdminOperation(private val slackService: SlackService) :
     TypedOperation<String>(String::class) {
 
+    /** `slack connect <name> <bot-token> <app-token>`: both tokens are secrets */
+    override val redactionRules =
+        listOf(dev.streampack.core.model.RedactionRule("slack connect", setOf(3, 4)))
+
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         val trimmed = payload.trim()
         return trimmed == "slack" || trimmed.startsWith("slack ")

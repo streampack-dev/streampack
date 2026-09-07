@@ -47,7 +47,11 @@ class GitHubSecretRefStartupGuardTests {
         Mockito.`when`(instanceRepository.findAll()).thenReturn(listOf(literal))
 
         assertThrows(SilentStartupException::class.java) { guard.enforce { null } }
+        Mockito.verify(instanceRepository, Mockito.never()).save(Mockito.any())
 
+        guard.enforce { key ->
+            if (key == "GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN") "ghp_default" else null
+        }
         val captor = ArgumentCaptor.forClass(GitHubInstance::class.java)
         Mockito.verify(instanceRepository).save(captor.capture())
         assertEquals(
@@ -75,11 +79,20 @@ class GitHubSecretRefStartupGuardTests {
     }
 
     @Test
-    fun `literal token is externalized and startup fails`() {
+    fun `literal token fails startup until its variable exists and is never rewritten early`() {
         val repo = GitHubRepo(owner = "owner", name = "repo", token = SecretRef.literal("ghp_abc"))
         Mockito.`when`(repository.findAll()).thenReturn(listOf(repo))
 
         assertThrows(SilentStartupException::class.java) { guard.enforce { null } }
+        Mockito.verify(repository, Mockito.never()).save(Mockito.any())
+    }
+
+    @Test
+    fun `literal token is externalized once its variable exists`() {
+        val repo = GitHubRepo(owner = "owner", name = "repo", token = SecretRef.literal("ghp_abc"))
+        Mockito.`when`(repository.findAll()).thenReturn(listOf(repo))
+
+        guard.enforce { key -> if (key == "GITHUB_OWNER_REPO_TOKEN") "ghp_abc" else null }
 
         val captor = ArgumentCaptor.forClass(GitHubRepo::class.java)
         Mockito.verify(repository).save(captor.capture())

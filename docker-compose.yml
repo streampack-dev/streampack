@@ -42,6 +42,7 @@ services:
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
       DISCORD_PERMISSIONS_VALUE: ${DISCORD_PERMISSIONS_VALUE:-3072}
       SLACK_ENABLED: ${SLACK_ENABLED:-false}
+      MATTERMOST_ENABLED: ${MATTERMOST_ENABLED:-false}
       AI_ENABLED: ${AI_ENABLED:-false}
       STREAMPACK_GENERATIVE_PROMPT_DIR: ${STREAMPACK_GENERATIVE_PROMPT_DIR:-/opt/streampack/generative}
     ports:
@@ -60,6 +61,19 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  # Local Mattermost for development: `docker compose --profile mattermost up mattermost`.
+  # The preview image bundles its own database, uses known passwords, and is not for production.
+  # Mattermost publishes amd64 images only, so on Apple Silicon this runs under Rosetta
+  # (Docker Desktop > Settings > General > "Use Rosetta for x86_64/amd64 emulation").
+  mattermost:
+    image: mattermost/mattermost-preview
+    platform: linux/amd64
+    profiles: ["mattermost"]
+    restart: unless-stopped
+    ports:
+      - "8065:8065"
+    extra_hosts:
+      - "dockerhost:127.0.0.1"
 
 volumes:
   pgdata:

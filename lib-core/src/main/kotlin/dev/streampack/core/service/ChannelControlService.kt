@@ -2,6 +2,7 @@
 package dev.streampack.core.service
 
 import dev.streampack.core.entity.ChannelControlOptions
+import dev.streampack.core.model.Provenance
 import dev.streampack.core.repository.ChannelControlOptionsRepository
 import java.time.Instant
 import org.slf4j.LoggerFactory
@@ -16,12 +17,38 @@ class ChannelControlService(private val repository: ChannelControlOptionsReposit
     fun getOptions(provenanceUri: String): ChannelControlOptions? =
         repository.findByProvenanceUriAndDeletedFalse(provenanceUri)
 
-    /** Returns existing options or creates a new entry with defaults */
-    fun getOrCreateOptions(provenanceUri: String): ChannelControlOptions {
+    /**
+     * Returns existing options or creates a new entry. A [private] channel (private channel, direct
+     * or group message) starts hidden from log browsing and not captured; an operator can opt it in
+     * with `visible` and `logged` afterwards. Public channels keep the visible, logged defaults.
+     */
+    fun getOrCreateOptions(provenanceUri: String, private: Boolean = false): ChannelControlOptions {
         val existing = repository.findByProvenanceUriAndDeletedFalse(provenanceUri)
         if (existing != null) return existing
-        logger.debug("Creating default channel control options for {}", provenanceUri)
-        return repository.save(ChannelControlOptions(provenanceUri = provenanceUri))
+        logger.debug(
+            "Creating {} channel control options for {}",
+            if (private) "private" else "default",
+            provenanceUri,
+        )
+        return repository.save(
+            ChannelControlOptions(
+                provenanceUri = provenanceUri,
+                visible = !private,
+                logged = !private,
+            )
+        )
+    }
+
+    /**
+     * Whether messages for [provenance] may be written to the message log. Governed by the `logged`
+     * flag on the channel's controls; a channel with no controls is logged.
+     */
+    fun isLogged(provenance: Provenance): Boolean {
+        val options =
+            repository.findByProvenanceUriAndDeletedFalse(provenance.encode())
+                ?: repository.findByProvenanceUriAndDeletedFalse(provenance.identityEncode())
+                ?: return true
+        return options.logged
     }
 
     /** Updates a single flag on the options for the given provenance URI */

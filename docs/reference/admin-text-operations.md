@@ -112,6 +112,46 @@ Operational notes:
   - `GET /admin/rss/opml`
   - `POST /admin/rss/opml/import`
 
+## Channel Controls
+
+Every registered channel carries four flags, set with the per-protocol `visible`, `logged`, `automute`, and `autojoin` commands:
+
+- `logged=false` stops message capture for that channel entirely: neither inbound messages nor the bot's replies are written to the message log. It is not merely a browsing switch.
+- `visible=false` hides a channel's log from anonymous and non-admin browsing; admins still see it.
+- Private channels, direct messages, and group messages register with `visible=false` and `logged=false`. Public channels register visible and logged. Opt a private channel in explicitly if its history should be kept.
+- Connect commands that carry credentials (`irc connect`, `slack connect`, `mattermost connect`) are redacted before they reach the message log, however the command was spaced or cased; a migration redacts copies logged before this rule existed.
+
+## Mattermost Operations
+
+Present only when `streampack.mattermost.enabled` is true. All require `SUPER_ADMIN`:
+
+```text
+mattermost connect <name> [<base-url> <token>]
+mattermost disconnect <name>
+mattermost remove <name>
+mattermost autoconnect <name> <true|false>
+mattermost channels <server> [term]
+mattermost join <server> <channel-id-or-name>
+mattermost leave <server> <channel-id-or-name>
+mattermost autojoin <server> <channel-id-or-name> <true|false>
+mattermost mute <server> <channel-id-or-name>
+mattermost unmute <server> <channel-id-or-name>
+mattermost automute <server> <channel-id-or-name> <true|false>
+mattermost visible <server> <channel-id-or-name> <true|false>
+mattermost logged <server> <channel-id-or-name> <true|false>
+mattermost signal <name> [character]
+mattermost status [server]
+```
+
+Operational notes:
+
+- `connect` with a URL and token registers the server; the token is externalized to `MATTERMOST_<NAME>_TOKEN` once that variable exists, and startup refuses to run with enforcement on until it does. Token values are never printed.
+- `autojoin` channels are joined through the API on every connect and reconnect (public channels; private ones need an admin to add the account).
+- `channels` lists channels visible to the account across its teams; `join` accepts a channel id or a name and reports an ambiguous name rather than guessing. Names repeat across teams, so a name registered on two teams must be addressed by id afterwards.
+- `join` on a public channel adds the account to it on Mattermost; `leave` removes the account, so the server stops sending that channel's posts. Private channels must be joined by an admin on Mattermost; `join` registers them hidden and unlogged.
+- `signal` takes effect on the live connection immediately.
+- A dropped socket is retried with doubling delays (from `MATTERMOST_RECONNECT_DELAY`, capped at five minutes) until it reconnects or the server is disconnected; `status` shows `reconnecting` meanwhile. An unreachable server at startup does not stop the application.
+
 ## Forge Instances and `on <host>`
 
 Forge modules (GitHub and GitLab) share one grammar for choosing which installation a project lives on. Each forge has a hosted default instance (`github.com`, `gitlab.com`) that is registered automatically. Other installations are registered once with `<forge> instance add <url> [token]`, and then any command that names a project may end in `on <host>`:

@@ -24,6 +24,8 @@ class SlackSecretRefStartupGuard(
     private val springEnvironment: Environment,
     @Value("\${streampack.security.enforce-external-secrets:true}") private val enforce: Boolean,
 ) : InitializingBean {
+    private val logger = org.slf4j.LoggerFactory.getLogger(javaClass)
+
     override fun afterPropertiesSet() {
         if (!enforce) return
         enforce { key -> System.getenv(key) ?: springEnvironment.getProperty(key) }
@@ -69,7 +71,12 @@ class SlackSecretRefStartupGuard(
             if (changed) workspaceRepository.save(updated)
         }
 
-        if (migrationExports.isEmpty() && validationErrors.isEmpty()) return
+        if (migrationExports.isNotEmpty() && validationErrors.isEmpty()) {
+            /* Externalized this start with nothing missing: informational, not a failure */
+            migrationExports.forEach { logger.info("Externalized literal credential to {}", it) }
+            return
+        }
+        if (validationErrors.isEmpty()) return
 
         printFailure(migrationExports, validationErrors)
         throw SilentStartupException(
@@ -84,10 +91,17 @@ class SlackSecretRefStartupGuard(
         description: String,
     ): GuardResult {
         if (!current.isEnvRef()) {
-            val literal = current.asStoredValue()
-            if (literal.isBlank()) return GuardResult(newRef = current)
-            val exportLine = "export $envKey=${SecretRefEnvironment.shellQuote(literal)}"
-            return GuardResult(newRef = SecretRef.env(envKey), exportLine = exportLine)
+            if (current.asStoredValue().isBlank()) return GuardResult(newRef = current)
+            /* Never print the value: rewrite to a reference only once the variable exists */
+            if (secretLookup(envKey).isNullOrBlank()) {
+                return GuardResult(
+                    newRef = current,
+                    error =
+                        "$description is stored as a literal; set $envKey (the value is in the " +
+                            "database, or issue a new credential) so it can be externalized",
+                )
+            }
+            return GuardResult(newRef = SecretRef.env(envKey), exportLine = envKey)
         }
 
         val key = current.envKeyOrNull()
@@ -111,9 +125,8 @@ class SlackSecretRefStartupGuard(
         System.err.println("SECURITY STARTUP CHECK FAILED (Slack secrets)")
         System.err.println("============================================================")
         if (migrationExports.isNotEmpty()) {
-            System.err.println("Literal credentials were migrated to env:// references.")
-            System.err.println("Add the following to your environment before restart:")
-            migrationExports.forEach { System.err.println(it) }
+            System.err.println("Literal credentials were externalized to these variables:")
+            migrationExports.forEach { System.err.println("- $it") }
         }
         if (validationErrors.isNotEmpty()) {
             System.err.println("Missing/invalid environment variables:")

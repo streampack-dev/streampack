@@ -72,6 +72,10 @@ streampack:
   slack:
     enabled: ${SLACK_ENABLED:false}
     signal-character: ${SLACK_SIGNAL:!}
+  mattermost:
+    enabled: ${MATTERMOST_ENABLED:false}
+    signal-character: ${MATTERMOST_SIGNAL:!}
+    reconnect-delay: ${MATTERMOST_RECONNECT_DELAY:PT15S}
   security:
     enforce-external-secrets: ${STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS:true}
   ai:

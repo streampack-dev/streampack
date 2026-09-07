@@ -3,18 +3,25 @@ package dev.streampack.core.integration
 
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.MessageLogService
 import org.springframework.stereotype.Component
 
-/** Captures all outbound operation results to the protocol-agnostic message log */
+/**
+ * Captures outbound operation results to the protocol-agnostic message log, except for channels
+ * whose controls say `logged=false`.
+ */
 @Component
-class LoggingEgressSubscriber(private val messageLogService: MessageLogService) :
-    EgressSubscriber() {
+class LoggingEgressSubscriber(
+    private val messageLogService: MessageLogService,
+    private val channelControlService: ChannelControlService,
+) : EgressSubscriber() {
 
-    /** Matches all protocols -- logging is unconditional */
+    /** Matches all protocols; the per-channel `logged` flag is checked at delivery */
     override fun matches(provenance: Provenance): Boolean = true
 
     override fun deliver(result: OperationResult, provenance: Provenance) {
+        if (!channelControlService.isLogged(provenance)) return
         val sender = provenance.metadata[Provenance.BOT_NICK] as? String ?: "bot"
         when (result) {
             is OperationResult.Success ->

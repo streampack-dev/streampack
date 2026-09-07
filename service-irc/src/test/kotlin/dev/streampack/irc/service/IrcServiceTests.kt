@@ -219,11 +219,17 @@ class IrcServiceTests {
     }
 
     @Test
-    fun `connect after remove reuses name`() {
+    fun `connect after remove restores the network under its name`() {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
+        val original = networkRepository.findByNameAndDeletedFalse("libera")!!
         ircService.remove("libera")
-        val result = ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
+        val result = ircService.connect("libera", "irc.libera.chat", "nevet2", null, null)
+        /* Flush so the unique name constraint is actually checked inside the test transaction */
+        networkRepository.flush()
         assertTrue(result.contains("Connecting"))
+        val restored = networkRepository.findByNameAndDeletedFalse("libera")!!
+        assertEquals(original.id, restored.id)
+        assertEquals("nevet2", restored.nick)
     }
 
     @Test

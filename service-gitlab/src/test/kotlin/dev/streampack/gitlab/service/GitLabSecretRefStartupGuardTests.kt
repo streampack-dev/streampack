@@ -52,6 +52,9 @@ class GitLabSecretRefStartupGuardTests {
         Mockito.`when`(instances.findAll()).thenReturn(emptyList())
 
         assertThrows(SilentStartupException::class.java) { guard.enforce { null } }
+        Mockito.verify(projects, Mockito.never()).save(Mockito.any())
+
+        guard.enforce { key -> if (key == "GITLAB_GROUP_PROJECT_TOKEN") "glpat-abc" else null }
         val captor = ArgumentCaptor.forClass(GitLabProject::class.java)
         Mockito.verify(projects).save(captor.capture())
         assertEquals("env://GITLAB_GROUP_PROJECT_TOKEN", captor.value.token?.asStoredValue())

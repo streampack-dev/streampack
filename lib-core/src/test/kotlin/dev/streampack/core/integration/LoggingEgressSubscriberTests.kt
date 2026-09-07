@@ -57,6 +57,8 @@ class LoggingEgressSubscriberTests {
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var messageLogRepository: MessageLogRepository
+    @Autowired lateinit var messageLogService: dev.streampack.core.service.MessageLogService
+    @Autowired lateinit var channelControlService: dev.streampack.core.service.ChannelControlService
 
     private fun uniqueProvenance(): Provenance =
         Provenance(
@@ -146,5 +148,37 @@ class LoggingEgressSubscriberTests {
 
         val outbound = page.content.filter { it.direction == MessageDirection.OUTBOUND }
         assertEquals(0, outbound.size)
+    }
+
+    /* Egress delivery happens on another thread, so the flag must be committed, not just flushed */
+    @Test
+    @org.springframework.transaction.annotation.Transactional(
+        propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED
+    )
+    fun `a channel with logged=false is captured neither inbound nor outbound`() {
+        val provenance = uniqueProvenance()
+        channelControlService.setFlag(provenance.encode(), "logged", false)
+
+        eventGateway.process(messageWith("echo not for the record", provenance))
+
+        val entries =
+            messageLogService.findMessages(
+                provenance.encode(),
+                java.time.Instant.EPOCH,
+                java.time.Instant.now().plusSeconds(3600),
+                100,
+            )
+        assertEquals(emptyList<Any>(), entries.map { it.content })
+    }
+
+    @Test
+    fun `private channel controls start hidden and unlogged while public ones do not`() {
+        val private =
+            channelControlService.getOrCreateOptions("slack://work/G0PRIVATE", private = true)
+        assertEquals(false, private.visible)
+        assertEquals(false, private.logged)
+        val public = channelControlService.getOrCreateOptions("slack://work/C0PUBLIC")
+        assertEquals(true, public.visible)
+        assertEquals(true, public.logged)
     }
 }

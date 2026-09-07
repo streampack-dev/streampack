@@ -90,13 +90,26 @@ class SlackConnectionManager(
                 workspaceName = workspace.name,
                 botToken = botToken,
                 appToken = appToken,
-                signalCharacter = effectiveSignal,
+                initialSignalCharacter = effectiveSignal,
                 eventGateway = eventGateway,
                 userResolutionService = userResolutionService,
                 channelControlService = channelControlService,
             )
         adapters[workspace.name] = adapter
         adapter.connect()
+        joinAutojoinChannels(workspace, adapter)
+    }
+
+    /** `autojoin=true` channels with a resolved id are joined on connect; public channels only */
+    internal fun joinAutojoinChannels(workspace: SlackWorkspace, adapter: SlackAdapter) {
+        for (channel in channelRepository.findByWorkspaceAndDeletedFalse(workspace)) {
+            val channelId = channel.channelId ?: continue
+            val options = channelControlService.getOptions(channel.provenanceUri()) ?: continue
+            if (!options.autojoin || !options.active) continue
+            if (adapter.joinChannel(channelId)) {
+                logger.info("Autojoined '{}' on '{}'", channel.name, workspace.name)
+            }
+        }
     }
 
     fun disconnect(workspaceName: String) {
@@ -105,6 +118,11 @@ class SlackConnectionManager(
             adapter.disconnect()
             logger.info("Disconnected from Slack workspace '{}'", workspaceName)
         }
+    }
+
+    /** Applies a per-workspace signal override (null = global default) to a live adapter */
+    fun updateSignal(workspaceName: String, override: String?) {
+        adapters[workspaceName]?.signalCharacter = override ?: slackProperties.signalCharacter
     }
 
     /** Returns the adapter for the given workspace, or null if not connected */

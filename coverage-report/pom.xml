@@ -160,6 +160,14 @@
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
+            <artifactId>lib-mattermost</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>service-mattermost</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
             <artifactId>service-features</artifactId>
         </dependency>
     </dependencies>

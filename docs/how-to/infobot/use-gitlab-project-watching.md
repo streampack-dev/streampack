@@ -24,7 +24,7 @@ gitlab add group/project env://GITLAB_GROUP_PROJECT_TOKEN
 
 This looks the project up, records its numeric GitLab id, and seeds current issues, merge requests, and releases so later notifications are incremental.
 
-Tokens follow the same externalization rule as GitHub tokens: a literal token is stored, the response names the environment variable that will hold it (`GITLAB_<PATH>_TOKEN`, with `/` and other non-alphanumerics becoming `_`, e.g. `GITLAB_GROUP_SUBGROUP_PROJECT_TOKEN`), and on the next restart the literal is replaced by an `env://` reference. With `STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` on, startup fails until every active project's variable is present.
+Tokens follow the same externalization rule as GitHub tokens: a literal token is stored, the response names the environment variable that will hold it (`GITLAB_<PATH>_TOKEN`, with `/` and other non-alphanumerics becoming `_`, e.g. `GITLAB_GROUP_SUBGROUP_PROJECT_TOKEN`), and once that variable exists the literal is rewritten to an `env://` reference at startup. With `STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` on, startup fails while any active project still holds a literal whose variable is not set, naming the variables; token values are never printed.
 
 ## Subscribe a Destination
 

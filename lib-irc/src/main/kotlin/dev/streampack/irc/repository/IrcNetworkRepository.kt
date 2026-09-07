@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface IrcNetworkRepository : JpaRepository<IrcNetwork, UUID> {
     fun findByNameAndDeletedFalse(name: String): IrcNetwork?
 
+    /** Any row by name, removed or not; names stay unique across soft deletes */
+    fun findByName(name: String): IrcNetwork?
+
     fun findByDeletedFalse(): List<IrcNetwork>
 
     fun findByAutoconnectTrueAndDeletedFalse(): List<IrcNetwork>

@@ -217,11 +217,17 @@ class SlackServiceTests {
     }
 
     @Test
-    fun `connect after remove reuses name`() {
+    fun `connect after remove restores the workspace under its name`() {
         slackService.connect("jvm-news", "xoxb-test", "xapp-test")
+        val original = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
         slackService.remove("jvm-news")
         val result = slackService.connect("jvm-news", "xoxb-new", "xapp-new")
+        /* Flush so the unique name constraint is actually checked inside the test transaction */
+        workspaceRepository.flush()
         assertTrue(result.contains("Connecting"))
+        val restored = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
+        assertEquals(original.id, restored.id)
+        assertEquals("xoxb-new", restored.botToken.asStoredValue())
     }
 
     @Test

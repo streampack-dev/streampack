@@ -27,6 +27,8 @@ class GitHubSecretRefStartupGuard(
     private val secretLookup: SecretLookup,
     @Value("\${streampack.security.enforce-external-secrets:true}") private val enforce: Boolean,
 ) : InitializingBean {
+    private val logger = org.slf4j.LoggerFactory.getLogger(javaClass)
+
     override fun afterPropertiesSet() {
         if (!enforce) return
         enforce { key -> secretLookup.lookup(key) }
@@ -64,7 +66,12 @@ class GitHubSecretRefStartupGuard(
             }
         }
 
-        if (migrationExports.isEmpty() && validationErrors.isEmpty()) return
+        if (migrationExports.isNotEmpty() && validationErrors.isEmpty()) {
+            /* Externalized this start with nothing missing: informational, not a failure */
+            migrationExports.forEach { logger.info("Externalized literal credential to {}", it) }
+            return
+        }
+        if (validationErrors.isEmpty()) return
 
         printFailure(migrationExports, validationErrors)
         throw SilentStartupException(
@@ -83,10 +90,17 @@ class GitHubSecretRefStartupGuard(
         externalize: (String) -> Unit,
     ) {
         if (!current.isEnvRef()) {
-            val literal = current.asStoredValue()
-            if (literal.isBlank()) return
-            migrationExports.add("export $envKey=${SecretRefEnvironment.shellQuote(literal)}")
-            externalize(envKey)
+            if (current.asStoredValue().isBlank()) return
+            /* Never print the value: rewrite to a reference only once the variable exists */
+            if (lookup(envKey).isNullOrBlank()) {
+                validationErrors.add(
+                    "$description is stored as a literal; set $envKey (the value is in the " +
+                        "database, or issue a new token) so it can be externalized"
+                )
+            } else {
+                externalize(envKey)
+                migrationExports.add(envKey)
+            }
             return
         }
 
@@ -105,9 +119,8 @@ class GitHubSecretRefStartupGuard(
         System.err.println("SECURITY STARTUP CHECK FAILED (GitHub secrets)")
         System.err.println("============================================================")
         if (migrationExports.isNotEmpty()) {
-            System.err.println("Literal GitHub tokens were migrated to env:// references.")
-            System.err.println("Add the following to your environment before restart:")
-            migrationExports.forEach { System.err.println(it) }
+            System.err.println("Literal credentials were externalized to these variables:")
+            migrationExports.forEach { System.err.println("- $it") }
         }
         if (validationErrors.isNotEmpty()) {
             System.err.println("Missing/invalid environment variables:")

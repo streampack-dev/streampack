@@ -18,7 +18,7 @@ class SlackSecretRefStartupGuardTests {
     private val guard = SlackSecretRefStartupGuard(repository, environment, true)
 
     @Test
-    fun `literal slack tokens are externalized and startup fails`() {
+    fun `literal slack tokens fail startup until their variables exist and are never rewritten early`() {
         val workspace =
             SlackWorkspace(
                 name = "jvm-news",
@@ -28,6 +28,25 @@ class SlackSecretRefStartupGuardTests {
         Mockito.`when`(repository.findByDeletedFalse()).thenReturn(listOf(workspace))
 
         assertThrows(SilentStartupException::class.java) { guard.enforce { null } }
+        Mockito.verify(repository, Mockito.never()).save(Mockito.any())
+    }
+
+    @Test
+    fun `literal slack tokens are externalized once their variables exist`() {
+        val workspace =
+            SlackWorkspace(
+                name = "jvm-news",
+                botToken = SecretRef.literal("xoxb-123"),
+                appToken = SecretRef.literal("xapp-456"),
+            )
+        Mockito.`when`(repository.findByDeletedFalse()).thenReturn(listOf(workspace))
+        val env =
+            mapOf(
+                "SLACK_JVM_NEWS_BOT_TOKEN" to "xoxb-123",
+                "SLACK_JVM_NEWS_APP_TOKEN" to "xapp-456",
+            )
+
+        guard.enforce { env[it] }
 
         val captor = ArgumentCaptor.forClass(SlackWorkspace::class.java)
         Mockito.verify(repository).save(captor.capture())
