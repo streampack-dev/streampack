@@ -49,7 +49,7 @@ class OtpVerifyOperationTests {
         expiresAt: Instant = Instant.now().plusSeconds(300),
     ): OneTimeCode {
         return oneTimeCodeRepository.saveAndFlush(
-            OneTimeCode(email = email, code = code, expiresAt = expiresAt)
+            OneTimeCode(recipient = email, code = code, expiresAt = expiresAt)
         )
     }
 
@@ -69,7 +69,11 @@ class OtpVerifyOperationTests {
         assertTrue(user!!.emailVerified)
         assertEquals(
             null,
-            oneTimeCodeRepository.findByEmailAndCode("newuser@example.com", "123456"),
+            oneTimeCodeRepository.findByChannelAndRecipientAndCode(
+                dev.streampack.core.model.CodeChannel.EMAIL,
+                "newuser@example.com",
+                "123456",
+            ),
             "successful verification should delete the OTP row",
         )
     }
@@ -112,7 +116,11 @@ class OtpVerifyOperationTests {
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals(
             null,
-            oneTimeCodeRepository.findByEmailAndCode("user@example.com", "123456"),
+            oneTimeCodeRepository.findByChannelAndRecipientAndCode(
+                dev.streampack.core.model.CodeChannel.EMAIL,
+                "user@example.com",
+                "123456",
+            ),
             "expired OTP should be opportunistically cleaned",
         )
     }
@@ -121,7 +129,7 @@ class OtpVerifyOperationTests {
     fun `already-used code is not reusable and gets cleaned`() {
         oneTimeCodeRepository.saveAndFlush(
             OneTimeCode(
-                email = "user@example.com",
+                recipient = "user@example.com",
                 code = "444444",
                 expiresAt = Instant.now().plusSeconds(300),
                 usedAt = Instant.now().minusSeconds(30),
@@ -133,7 +141,11 @@ class OtpVerifyOperationTests {
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals(
             null,
-            oneTimeCodeRepository.findByEmailAndCode("user@example.com", "444444"),
+            oneTimeCodeRepository.findByChannelAndRecipientAndCode(
+                dev.streampack.core.model.CodeChannel.EMAIL,
+                "user@example.com",
+                "444444",
+            ),
             "already-used OTP should not be reusable and should be cleaned",
         )
     }

@@ -27,6 +27,7 @@ class FeaturesControllerTests {
             jsonPath("$.authentication") { exists() }
             jsonPath("$.authentication.otp") { isBoolean() }
             jsonPath("$.authentication.otpFrom") { isNotEmpty() }
+            jsonPath("$.authentication.codeChannels") { isArray() }
             jsonPath("$.operationGroups") { isArray() }
             jsonPath("$.adapters") { isArray() }
             jsonPath("$.ai") { isBoolean() }
@@ -64,6 +65,7 @@ class FeaturesControllerTests {
             status { isOk() }
             jsonPath("$.authentication.otp") { isBoolean() }
             jsonPath("$.authentication.otpFrom") { isNotEmpty() }
+            jsonPath("$.authentication.codeChannels") { isArray() }
         }
     }
 

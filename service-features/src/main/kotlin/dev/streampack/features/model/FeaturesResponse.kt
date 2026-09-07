@@ -22,7 +22,16 @@ data class VersionInfo(
 )
 
 /** Authentication method availability */
-data class AuthenticationFeatures(val otp: Boolean, val otpFrom: String, val oidc: OidcFeatures?)
+data class AuthenticationFeatures(
+    val otp: Boolean,
+    val otpFrom: String,
+    val oidc: OidcFeatures?,
+    /** One-time-code channels this deployment can deliver on, for the sign-in form */
+    val codeChannels: List<CodeChannelFeature> = emptyList(),
+)
+
+/** A one-time-code channel and, for chat channels, the registered servers to choose from */
+data class CodeChannelFeature(val channel: String, val servers: List<String> = emptyList())
 
 /** Per-provider OIDC availability */
 data class OidcFeatures(val google: Boolean, val github: Boolean)

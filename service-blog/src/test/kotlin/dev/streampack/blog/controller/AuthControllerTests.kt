@@ -74,7 +74,7 @@ class AuthControllerTests {
         expiresAt: Instant = Instant.now().plusSeconds(300),
     ) {
         oneTimeCodeRepository.saveAndFlush(
-            OneTimeCode(email = email, code = code, expiresAt = expiresAt)
+            OneTimeCode(recipient = email, code = code, expiresAt = expiresAt)
         )
     }
 
