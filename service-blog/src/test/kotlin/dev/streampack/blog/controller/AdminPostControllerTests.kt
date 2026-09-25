@@ -2,8 +2,10 @@
 package dev.streampack.blog.controller
 
 import dev.streampack.blog.entity.Post
+import dev.streampack.blog.entity.Slug
 import dev.streampack.blog.model.PostStatus
 import dev.streampack.blog.repository.PostRepository
+import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
@@ -29,6 +31,7 @@ class AdminPostControllerTests {
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
+    @Autowired lateinit var slugRepository: SlugRepository
     @Autowired lateinit var jwtService: JwtService
 
     private lateinit var adminUser: User
@@ -78,6 +81,9 @@ class AdminPostControllerTests {
                     updatedAt = now,
                 )
             )
+        slugRepository.save(
+            Slug(path = "2026/02/draft-for-admin", post = draftPost, canonical = true)
+        )
     }
 
     // --- GET /admin/posts/pending ---
@@ -201,12 +207,131 @@ class AdminPostControllerTests {
             .andExpect {
                 status { isOk() }
                 jsonPath("$.title") { value("Admin Edited") }
+                jsonPath("$.slug") { value("2026/02/draft-for-admin") }
                 jsonPath("$.sortOrder") { value(-5) }
             }
 
         val updated = postRepository.findById(draftPost.id).orElseThrow()
         assertEquals(publishedAt, updated.publishedAt)
         assertEquals(-5, updated.sortOrder)
+    }
+
+    @Test
+    fun `PUT admin edit changes canonical slug and preserves old slug as alias`() {
+        mockMvc
+            .put("/admin/posts/${draftPost.id}") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $adminToken")
+                content =
+                    """{"title":"Admin Edited","markdownSource":"Admin edited content.","slug":"2026/02/admin-edited"}"""
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.slug") { value("2026/02/admin-edited") }
+            }
+
+        assertFalse(
+            slugRepository
+                .findByPost(draftPost.id)
+                .single { it.path == "2026/02/draft-for-admin" }
+                .canonical
+        )
+        assertTrue(
+            slugRepository
+                .findByPost(draftPost.id)
+                .single { it.path == "2026/02/admin-edited" }
+                .canonical
+        )
+    }
+
+    @Test
+    fun `PUT admin edit rejects slug already used by another post`() {
+        val otherPost =
+            postRepository.save(
+                Post(
+                    title = "Other Post",
+                    markdownSource = "Other content.",
+                    renderedHtml = "<p>Other content.</p>",
+                    excerpt = "Other content.",
+                    status = PostStatus.DRAFT,
+                    author = regularUser,
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                )
+            )
+        slugRepository.save(Slug(path = "2026/02/occupied", post = otherPost, canonical = true))
+
+        mockMvc
+            .put("/admin/posts/${draftPost.id}") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $adminToken")
+                content =
+                    """{"title":"Admin Edited","markdownSource":"Admin edited content.","slug":"2026/02/occupied"}"""
+            }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.detail") { value("Slug already in use") }
+            }
+
+        assertEquals("2026/02/draft-for-admin", slugRepository.findCanonical(draftPost.id)!!.path)
+    }
+
+    @Test
+    fun `old and new slugs both resolve while response reports new canonical slug`() {
+        mockMvc
+            .put("/admin/posts/${draftPost.id}") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $adminToken")
+                content =
+                    """{"title":"Admin Edited","markdownSource":"Admin edited content.","slug":"2026/02/admin-edited"}"""
+            }
+            .andExpect { status { isOk() } }
+
+        mockMvc
+            .get("/posts/2026/02/draft-for-admin") { header("Authorization", "Bearer $adminToken") }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.slug") { value("2026/02/admin-edited") }
+            }
+
+        mockMvc
+            .get("/posts/2026/02/admin-edited") { header("Authorization", "Bearer $adminToken") }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.slug") { value("2026/02/admin-edited") }
+            }
+    }
+
+    @Test
+    fun `PUT admin edit can promote an existing slug alias to canonical`() {
+        slugRepository.save(
+            Slug(path = "2026/02/previous-title", post = draftPost, canonical = false)
+        )
+
+        mockMvc
+            .put("/admin/posts/${draftPost.id}") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $adminToken")
+                content =
+                    """{"title":"Admin Edited","markdownSource":"Admin edited content.","slug":"2026/02/previous-title"}"""
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.slug") { value("2026/02/previous-title") }
+            }
+
+        assertFalse(
+            slugRepository
+                .findByPost(draftPost.id)
+                .single { it.path == "2026/02/draft-for-admin" }
+                .canonical
+        )
+        assertTrue(
+            slugRepository
+                .findByPost(draftPost.id)
+                .single { it.path == "2026/02/previous-title" }
+                .canonical
+        )
     }
 
     @Test

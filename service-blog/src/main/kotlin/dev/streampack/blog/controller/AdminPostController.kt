@@ -151,6 +151,7 @@ class AdminPostController(
                 id = id,
                 title = request.title,
                 markdownSource = request.markdownSource,
+                slug = request.slug,
                 tags = request.tags,
                 categoryIds = request.categoryIds,
                 summary = request.summary,

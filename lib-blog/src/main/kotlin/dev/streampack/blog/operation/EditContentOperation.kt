@@ -18,9 +18,11 @@ import dev.streampack.core.service.TypedOperation
 import java.util.*
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 /** Modifies an existing post's title and markdown content */
 @Component
+@Transactional
 class EditContentOperation(
     private val postRepository: PostRepository,
     private val slugRepository: SlugRepository,
@@ -56,6 +58,18 @@ class EditContentOperation(
             return OperationResult.Error("Not authorized to edit this post")
         }
 
+        val currentCanonicalSlug = slugRepository.findCanonical(post.id)
+        val requestedSlug = payload.slug?.trim()
+        if (payload.slug != null && requestedSlug.isNullOrBlank()) {
+            return OperationResult.Error("Slug is required")
+        }
+        if (requestedSlug != null && requestedSlug != currentCanonicalSlug?.path) {
+            val conflictingSlug = slugRepository.resolve(requestedSlug)
+            if (conflictingSlug != null && conflictingSlug.post.id != post.id) {
+                return OperationResult.Error("Slug already in use")
+            }
+        }
+
         val saved = postRepository.save(payload.applyTo(post, markdownRenderingService))
         val updated =
             postRepository.findActiveByIdWithAuthor(saved.id)
@@ -64,7 +78,7 @@ class EditContentOperation(
         val tagNames = replaceTags(updated, payload.tags ?: emptyList())
         val categoryNames = replaceCategories(updated, payload.categoryIds ?: emptyList())
 
-        val canonicalSlug = slugRepository.findCanonical(updated.id)
+        val canonicalSlug = updateCanonicalSlug(updated, currentCanonicalSlug, requestedSlug)
 
         logger.info("Post edited: {}", updated.id)
 
@@ -88,6 +102,29 @@ class EditContentOperation(
                 markdownSource = updated.markdownSource,
             )
         )
+    }
+
+    private fun updateCanonicalSlug(
+        post: Post,
+        currentCanonicalSlug: dev.streampack.blog.entity.Slug?,
+        requestedSlug: String?,
+    ): dev.streampack.blog.entity.Slug? {
+        if (requestedSlug == null || requestedSlug == currentCanonicalSlug?.path) {
+            return currentCanonicalSlug
+        }
+
+        currentCanonicalSlug?.let {
+            if (it.canonical) slugRepository.save(it.copy(canonical = false))
+        }
+
+        val existingSlug = slugRepository.resolve(requestedSlug)
+        return if (existingSlug != null) {
+            slugRepository.save(existingSlug.copy(canonical = true))
+        } else {
+            slugRepository.save(
+                dev.streampack.blog.entity.Slug(path = requestedSlug, post = post, canonical = true)
+            )
+        }
     }
 
     /** Removes existing tag associations and creates new ones from the request */
