@@ -134,6 +134,22 @@ class SsrControllerTests {
     }
 
     @Test
+    fun `SSR post redirects historical slug to canonical URL`() {
+        val parts = slugPath.split("/")
+        val oldSlugPath = "${parts[0]}/${parts[1]}/old-ssr-test-post"
+        slugRepository.save(Slug(path = oldSlugPath, post = publishedPost, canonical = false))
+
+        mockMvc
+            .get("/ssr/posts/${parts[0]}/${parts[1]}/old-ssr-test-post") {
+                accept = MediaType.TEXT_HTML
+            }
+            .andExpect {
+                status { is3xxRedirection() }
+                header { string("Location", "http://localhost:3001/posts/$slugPath") }
+            }
+    }
+
+    @Test
     fun `SSR post returns 404 HTML for unknown slug`() {
         mockMvc
             .get("/ssr/posts/2025/01/nonexistent") { accept = MediaType.TEXT_HTML }

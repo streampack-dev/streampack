@@ -9,6 +9,8 @@ import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import java.net.URI
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.messaging.support.MessageBuilder
@@ -77,7 +79,13 @@ class SsrController(
         }
 
         val detail = result.payload as ContentDetail
-        val canonicalUrl = "$baseUrl/posts/${esc(detail.slug)}"
+        val canonicalPath = "/posts/${detail.slug}"
+        val canonicalUrl = "$baseUrl${esc(canonicalPath)}"
+        if (path != detail.slug) {
+            return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+                .location(URI.create("$baseUrl$canonicalPath"))
+                .build()
+        }
         val tags = detail.tags.joinToString(", ")
 
         val html =
