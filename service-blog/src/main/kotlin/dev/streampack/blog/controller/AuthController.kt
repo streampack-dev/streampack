@@ -56,7 +56,11 @@ class AuthController(
     private val logger = LoggerFactory.getLogger(AuthController::class.java)
 
     @Operation(summary = "Request a one-time sign-in code")
-    @ApiResponse(responseCode = "202", description = "Code sent if email is valid")
+    @ApiResponse(
+        responseCode = "202",
+        description =
+            "Accepted; a code is sent only when the identity resolves on the chosen channel",
+    )
     @PostMapping("/otp/request", produces = ["application/json"], consumes = ["application/json"])
     fun requestOtp(@RequestBody request: OtpRequest): ResponseEntity<*> {
         return dispatch(request, "auth/otp/request", successStatus = HttpStatus.ACCEPTED) { result

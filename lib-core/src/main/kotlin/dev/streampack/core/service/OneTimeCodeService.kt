@@ -3,6 +3,7 @@ package dev.streampack.core.service
 
 import dev.streampack.core.config.StreampackProperties
 import dev.streampack.core.entity.OneTimeCode
+import dev.streampack.core.model.CodeChannel
 import dev.streampack.core.repository.OneTimeCodeRepository
 import java.security.SecureRandom
 import java.time.Instant
@@ -10,7 +11,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/** Generates and validates one-time passcodes for email-based authentication */
+/**
+ * Generates and validates one-time passcodes for passwordless authentication over any channel. A
+ * code is scoped to the channel and recipient it was issued for; the active-code cap applies per
+ * such pair. Email recipients are normalized to lowercase; other channels pass their canonical
+ * recipient key as given.
+ */
 @Service
 class OneTimeCodeService(
     private val oneTimeCodeRepository: OneTimeCodeRepository,
@@ -21,39 +27,54 @@ class OneTimeCodeService(
     private val maxActiveCodes = properties.otp.maxActiveCodes
     private val expirationMinutes = properties.otp.expirationMinutes
 
-    /** Generates a 6-digit code for the given email, enforcing the active code limit */
+    /** Generates a 6-digit code for an email address, enforcing the active code limit */
     @Transactional
-    fun generateCode(email: String): OneTimeCode {
-        val normalizedEmail = email.lowercase()
+    fun generateCode(email: String): OneTimeCode = generateCode(CodeChannel.EMAIL, email)
+
+    /** Generates a 6-digit code for [recipient] on [channel], enforcing the active code limit */
+    @Transactional
+    fun generateCode(channel: CodeChannel, recipient: String): OneTimeCode {
+        val key = normalize(channel, recipient)
         val now = Instant.now()
         cleanupStaleCodes(now)
-        val activeCount = oneTimeCodeRepository.countActiveByEmail(normalizedEmail, now)
+        val activeCount = oneTimeCodeRepository.countActive(channel, key, now)
         if (activeCount >= maxActiveCodes) {
-            throw IllegalStateException("Too many active codes for this email")
+            throw IllegalStateException("Too many active codes for this recipient")
         }
         val code = random.nextInt(1_000_000).toString().padStart(6, '0')
         val otc =
             OneTimeCode(
-                email = normalizedEmail,
+                channel = channel,
+                recipient = key,
                 code = code,
                 expiresAt = now.plusSeconds(expirationMinutes * 60L),
             )
-        logger.debug("Generated OTP code for email {}", normalizedEmail)
+        logger.debug("Generated OTP code for {} recipient {}", channel, key)
         return oneTimeCodeRepository.saveAndFlush(otc)
     }
 
-    /** Validates and consumes a code, returning true if the code was valid */
+    /** Validates and consumes an email code, returning true if the code was valid */
     @Transactional
-    fun consumeCode(email: String, code: String): Boolean {
-        val normalizedEmail = email.lowercase()
+    fun consumeCode(email: String, code: String): Boolean =
+        consumeCode(CodeChannel.EMAIL, email, code)
+
+    /** Validates and consumes a code for [recipient] on [channel] */
+    @Transactional
+    fun consumeCode(channel: CodeChannel, recipient: String, code: String): Boolean {
+        val key = normalize(channel, recipient)
         val now = Instant.now()
-        oneTimeCodeRepository.deleteStaleByEmail(normalizedEmail, now)
-        val consumed = oneTimeCodeRepository.consumeValidCode(normalizedEmail, code, now) > 0
+        oneTimeCodeRepository.deleteStaleFor(channel, key, now)
+        val consumed = oneTimeCodeRepository.consumeValidCode(channel, key, code, now) > 0
         if (!consumed) {
-            oneTimeCodeRepository.deleteStaleByEmail(normalizedEmail, now)
+            oneTimeCodeRepository.deleteStaleFor(channel, key, now)
         }
         return consumed
     }
+
+    /** Removes every code for a recipient, used when an account is erased */
+    @Transactional
+    fun forget(channel: CodeChannel, recipient: String) =
+        oneTimeCodeRepository.deleteByChannelAndRecipient(channel, normalize(channel, recipient))
 
     /** Opportunistic cleanup for used and expired rows to reduce retention. */
     @Transactional
@@ -64,4 +85,7 @@ class OneTimeCodeService(
         }
         return deleted
     }
+
+    private fun normalize(channel: CodeChannel, recipient: String): String =
+        if (channel == CodeChannel.EMAIL) recipient.trim().lowercase() else recipient.trim()
 }

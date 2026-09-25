@@ -60,7 +60,7 @@ class OtpRequestOperationTests {
 
         assertInstanceOf(OperationResult.Success::class.java, result)
 
-        val codes = oneTimeCodeRepository.findAll().filter { it.email == "user@example.com" }
+        val codes = oneTimeCodeRepository.findAll().filter { it.recipient == "user@example.com" }
         assertEquals(1, codes.size)
         assertEquals(6, codes[0].code.length)
         assertTrue(codes[0].expiresAt.isAfter(Instant.now()))
@@ -87,7 +87,7 @@ class OtpRequestOperationTests {
         val result = eventGateway.process(otpRequestMessage("limited@example.com"))
         assertInstanceOf(OperationResult.Success::class.java, result)
 
-        val codes = oneTimeCodeRepository.findAll().filter { it.email == "limited@example.com" }
+        val codes = oneTimeCodeRepository.findAll().filter { it.recipient == "limited@example.com" }
         assertEquals(3, codes.size)
     }
 }

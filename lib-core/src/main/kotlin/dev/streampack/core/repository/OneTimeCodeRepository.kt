@@ -2,50 +2,51 @@
 package dev.streampack.core.repository
 
 import dev.streampack.core.entity.OneTimeCode
+import dev.streampack.core.model.CodeChannel
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 
-/** Persistence for one-time authentication codes */
+/** Persistence for one-time authentication codes, keyed by channel and recipient */
 interface OneTimeCodeRepository : JpaRepository<OneTimeCode, UUID> {
-
-    fun findByEmailAndCode(email: String, code: String): OneTimeCode?
+    fun findByChannelAndRecipientAndCode(
+        channel: CodeChannel,
+        recipient: String,
+        code: String,
+    ): OneTimeCode?
 
     /** Counts codes that have not been used and have not expired */
     @Query(
-        "SELECT COUNT(c) FROM OneTimeCode c WHERE c.email = :email AND c.usedAt IS NULL AND c.expiresAt > :now"
+        "SELECT COUNT(c) FROM OneTimeCode c WHERE c.channel = :channel AND c.recipient = :recipient " +
+            "AND c.usedAt IS NULL AND c.expiresAt > :now"
     )
-    fun countActiveByEmail(email: String, now: Instant): Long
+    fun countActive(channel: CodeChannel, recipient: String, now: Instant): Long
 
-    /** Removes all codes for a given email address (for account erasure) */
+    /** Removes all codes for a recipient on a channel (for account erasure) */
     @Modifying
-    @Query("DELETE FROM OneTimeCode c WHERE c.email = :email")
-    fun deleteByEmail(email: String)
-
-    /** Removes codes that expired before the given cutoff */
-    @Modifying
-    @Query("DELETE FROM OneTimeCode c WHERE c.expiresAt < :cutoff")
-    fun deleteExpired(cutoff: Instant)
+    @Query("DELETE FROM OneTimeCode c WHERE c.channel = :channel AND c.recipient = :recipient")
+    fun deleteByChannelAndRecipient(channel: CodeChannel, recipient: String)
 
     /** Removes used and expired codes in one pass */
     @Modifying
     @Query("DELETE FROM OneTimeCode c WHERE c.expiresAt < :cutoff OR c.usedAt IS NOT NULL")
     fun deleteStale(cutoff: Instant): Int
 
-    /** Removes used and expired codes for a specific email */
+    /** Removes used and expired codes for one recipient on a channel */
     @Modifying
     @Query(
-        "DELETE FROM OneTimeCode c WHERE c.email = :email AND (c.expiresAt < :cutoff OR c.usedAt IS NOT NULL)"
+        "DELETE FROM OneTimeCode c WHERE c.channel = :channel AND c.recipient = :recipient " +
+            "AND (c.expiresAt < :cutoff OR c.usedAt IS NOT NULL)"
     )
-    fun deleteStaleByEmail(email: String, cutoff: Instant): Int
+    fun deleteStaleFor(channel: CodeChannel, recipient: String, cutoff: Instant): Int
 
     /** Atomically consumes a valid code by deleting it */
     @Modifying
     @Query(
-        "DELETE FROM OneTimeCode c WHERE c.email = :email AND c.code = :code " +
-            "AND c.usedAt IS NULL AND c.expiresAt > :now"
+        "DELETE FROM OneTimeCode c WHERE c.channel = :channel AND c.recipient = :recipient " +
+            "AND c.code = :code AND c.usedAt IS NULL AND c.expiresAt > :now"
     )
-    fun consumeValidCode(email: String, code: String, now: Instant): Int
+    fun consumeValidCode(channel: CodeChannel, recipient: String, code: String, now: Instant): Int
 }

@@ -124,6 +124,53 @@ class MattermostAdapter(
 
     fun isConnected(): Boolean = connected.get()
 
+    /** A user on this server by username, or null when there is none or the lookup fails. */
+    internal fun lookupUser(username: String): MattermostUserView? =
+        runCatching {
+                restClient
+                    .get()
+                    .uri("/api/v4/users/username/{username}", username.trim().removePrefix("@"))
+                    .retrieve()
+                    .body(MattermostUserView::class.java)
+            }
+            .onFailure {
+                logger.debug(
+                    "User lookup for '{}' on '{}' failed: {}",
+                    username,
+                    serverName,
+                    it.toString(),
+                )
+            }
+            .getOrNull()
+
+    /** The connected account's display name and id, once identified. */
+    internal fun self(): MattermostUserView? = selfUser
+
+    /** Opens (or reuses) the direct-message channel with [userId] and posts [text] there. */
+    fun sendDirectMessage(userId: String, text: String): Boolean {
+        val self = selfUser?.id ?: return false
+        return runCatching {
+                val channel =
+                    restClient
+                        .post()
+                        .uri("/api/v4/channels/direct")
+                        .body(listOf(self, userId))
+                        .retrieve()
+                        .body(MattermostChannelView::class.java) ?: return false
+                restClient
+                    .post()
+                    .uri("/api/v4/posts")
+                    .body(MattermostCreatePostRequest(channelId = channel.id, message = text))
+                    .retrieve()
+                    .toBodilessEntity()
+                true
+            }
+            .getOrElse {
+                logger.warn("Could not DM user {} on '{}': {}", userId, serverName, it.message)
+                false
+            }
+    }
+
     /** Adds the connected account to a channel it can join on its own (public channels). */
     fun joinChannel(channelId: String): Boolean {
         val self = selfUser?.id ?: return false

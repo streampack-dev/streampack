@@ -89,8 +89,34 @@ Both are addressed commands; the reply appears in the channel. A direct message 
 
 For deployments, the same `connect` command with the production URL and token is all that changes, plus setting `MATTERMOST_<NAME>_TOKEN` in the environment. Outbound HTTPS from Streampack to the Mattermost server is the only network path required.
 
+## 5. Sign in to the site with a Mattermost code
+
+Once a server is connected, anyone with a Mattermost account on it can sign in to the blog/site
+API without an email address. With the bot connected as `local` and a Mattermost user `alice`:
+
+```bash
+curl -fsS http://localhost:8080/features | jq .authentication.codeChannels
+curl -fsS -X POST http://localhost:8080/auth/otp/request \
+  -H 'Content-Type: application/json' \
+  -d '{"channel":"mattermost","server":"local","address":"alice"}'
+```
+
+The bot opens a direct message to `alice` containing a six-digit code. Present it:
+
+```bash
+curl -fsS -X POST http://localhost:8080/auth/otp/verify \
+  -H 'Content-Type: application/json' \
+  -d '{"channel":"mattermost","server":"local","address":"alice","code":"123456"}'
+```
+
+The first verification creates an account named `alice` with no email address and a binding to
+the `local` server; later sign-ins reuse it. The request endpoint answers `202` even for unknown
+usernames, so if no message arrives check that the username exists on that server and that
+`status` shows the server as connected.
+
 ## Troubleshooting
 
 - `Server 'local': not connected` after `connect`: check the token with `curl -H "Authorization: Bearer <token>" http://localhost:8065/api/v4/users/me`.
 - Replies never arrive: the account must be a member of the channel, and the channel must not be muted (`mattermost unmute local town-square`).
 - Messages are ignored: the signal character defaults to `!`; change it per server with `mattermost signal local ~` or globally with `MATTERMOST_SIGNAL`.
+- No sign-in code arrives: `GET /features` must list the server under `codeChannels`; the bot account needs permission to open direct messages (the default for members of the same team).
