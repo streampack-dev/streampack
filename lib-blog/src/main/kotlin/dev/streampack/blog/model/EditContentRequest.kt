@@ -11,6 +11,7 @@ data class EditContentRequest(
     val id: UUID,
     val title: String?,
     val markdownSource: String?,
+    val slug: String? = null,
     val tags: List<String>? = emptyList(),
     val categoryIds: List<UUID>? = emptyList(),
     /** Optional UI-facing summary value, persisted internally as excerpt. */

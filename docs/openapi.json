@@ -524,6 +524,9 @@
             "format" : "date-time",
             "type" : [ "string", "null" ]
           },
+          "slug" : {
+            "type" : [ "string", "null" ]
+          },
           "sortOrder" : {
             "format" : "int32",
             "type" : [ "integer", "null" ]

@@ -14,6 +14,7 @@ import dev.streampack.core.model.ResolvedRecipient
 import dev.streampack.core.repository.ServiceBindingRepository
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.CodeDelivery
+import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
 import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -32,7 +33,6 @@ import org.springframework.http.MediaType
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
-import org.springframework.transaction.annotation.Transactional
 
 /**
  * One-time codes over a chat channel, exercised through a fake delivery that knows two users on a
@@ -42,7 +42,7 @@ import org.springframework.transaction.annotation.Transactional
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestSecurityConfiguration::class)
-@Transactional
+@ResetDatabaseBeforeEach
 class ChannelNeutralOtpTests {
 
     @TestConfiguration
