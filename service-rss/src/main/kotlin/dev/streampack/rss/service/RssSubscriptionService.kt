@@ -100,13 +100,12 @@ class RssSubscriptionService(
     private fun deduplicateEntries(entries: List<SyndEntry>): List<SyndEntry> {
         val seenGuids = LinkedHashSet<String>()
         var duplicates = 0
-        val deduplicated =
-            entries.filter { entry ->
-                val guid = entry.uri ?: entry.link ?: return@filter false
-                val added = seenGuids.add(guid)
-                if (!added) duplicates++
-                added
-            }
+        val deduplicated = entries.filter { entry ->
+            val guid = entry.uri ?: entry.link ?: return@filter false
+            val added = seenGuids.add(guid)
+            if (!added) duplicates++
+            added
+        }
         if (duplicates > 0) {
             logger.info("Ignored {} duplicate RSS entries during feed registration", duplicates)
         }

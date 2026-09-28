@@ -23,7 +23,11 @@ class CategoryController(private val categoryRepository: CategoryRepository) {
         responseCode = "200",
         description = "List of active categories",
         content =
-            [Content(array = ArraySchema(schema = Schema(implementation = CategorySummary::class)))],
+            [
+                Content(
+                    array = ArraySchema(schema = Schema(implementation = CategorySummary::class))
+                )
+            ],
     )
     @GetMapping("/categories", produces = ["application/json"])
     fun listCategories(): ResponseEntity<List<CategorySummary>> {

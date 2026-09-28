@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Component
  * message which a second operation handles.
  */
 @SpringBootTest
+@Import(LoopbackTests.LoopbackTestConfig::class, LoopbackTests.LoopbackEgressSubscriber::class)
 class LoopbackTests {
 
     @TestConfiguration

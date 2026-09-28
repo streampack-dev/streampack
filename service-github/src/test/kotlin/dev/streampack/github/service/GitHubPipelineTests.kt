@@ -180,10 +180,9 @@ class GitHubPipelineTests {
         )
 
     private fun stubJobs(runId: Long, vararg jobs: Pair<String, String>) {
-        val body =
-            jobs.mapIndexed { i, (name, conclusion) ->
-                """{"id": ${runId * 10 + i}, "name": "$name", "status": "completed", "conclusion": "$conclusion"}"""
-            }
+        val body = jobs.mapIndexed { i, (name, conclusion) ->
+            """{"id": ${runId * 10 + i}, "name": "$name", "status": "completed", "conclusion": "$conclusion"}"""
+        }
         stub(
             "/repos/owner/repo/actions/runs/$runId/jobs",
             """{"total_count": ${jobs.size}, "jobs": [${body.joinToString(",")}]}""",
@@ -265,7 +264,9 @@ class GitHubPipelineTests {
             other,
             listOf(
                 dev.streampack.forge.subscription.PipelineFilter.parse("pipelines")!!,
-                dev.streampack.forge.subscription.PipelineFilter.parse("pipelines:default-branch")!!,
+                dev.streampack.forge.subscription.PipelineFilter.parse(
+                    "pipelines:default-branch"
+                )!!,
             ),
         )
         val old = Instant.now().minusSeconds(7200)

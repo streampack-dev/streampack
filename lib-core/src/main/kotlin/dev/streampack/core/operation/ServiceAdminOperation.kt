@@ -65,12 +65,11 @@ class ServiceAdminOperation(private val configService: OperationConfigService) :
     private fun handleList(): OperationResult {
         val configs = configService.findAll().filter { it.operationGroup.startsWith("service:") }
         if (configs.isEmpty()) return OperationResult.Success("No service configurations found.")
-        val lines =
-            configs.map {
-                val status = if (it.enabled) "enabled" else "disabled"
-                val name = it.operationGroup.removePrefix("service:")
-                "  $name: $status"
-            }
+        val lines = configs.map {
+            val status = if (it.enabled) "enabled" else "disabled"
+            val name = it.operationGroup.removePrefix("service:")
+            "  $name: $status"
+        }
         return OperationResult.Success("Service configurations:\n${lines.joinToString("\n")}")
     }
 

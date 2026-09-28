@@ -13,28 +13,28 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <flattenPluginVersion>1.7.3</flattenPluginVersion>
+        <flattenPluginVersion>1.8.0</flattenPluginVersion>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
-        <springBootVersion>4.0.2</springBootVersion>
+        <springBootVersion>4.0.6</springBootVersion>
         <kotlinVersion>2.3.21</kotlinVersion>
-        <logbackVersion>1.5.32</logbackVersion>
+        <logbackVersion>1.6.4</logbackVersion>
         <testcontainersVersion>2.0.5</testcontainersVersion>
         <springdocVersion>3.0.3</springdocVersion>
-        <surefireVersion>3.5.5</surefireVersion>
-        <spotlessVersion>3.4.0</spotlessVersion>
-        <jacocoVersion>0.8.14</jacocoVersion>
+        <surefireVersion>3.6.0</surefireVersion>
+        <spotlessVersion>3.10.3</spotlessVersion>
+        <jacocoVersion>0.8.15</jacocoVersion>
         <jjwtVersion>0.13.0</jjwtVersion>
-        <greenmailVersion>2.1.8</greenmailVersion>
+        <greenmailVersion>2.1.14</greenmailVersion>
         <flexmarkVersion>0.64.8</flexmarkVersion>
         <kittehVersion>9.0.0</kittehVersion>
-        <jsoupVersion>1.22.2</jsoupVersion>
+        <jsoupVersion>1.23.2</jsoupVersion>
         <romeVersion>2.1.0</romeVersion>
-        <jdaVersion>6.4.1</jdaVersion>
-        <slackSdkVersion>1.48.0</slackSdkVersion>
+        <jdaVersion>6.7.0</jdaVersion>
+        <slackSdkVersion>1.51.0</slackSdkVersion>
         <githubApiVersion>1.330</githubApiVersion>
         <springAiVersion>2.0.0-M2</springAiVersion>
-        <gitCommitIdVersion>9.0.2</gitCommitIdVersion>
+        <gitCommitIdVersion>9.2.0</gitCommitIdVersion>
         <dokkaVersion>2.0.0</dokkaVersion>
     </properties>
 
@@ -589,7 +589,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.4.0</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -733,7 +733,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -753,7 +753,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>3.6.4</version>
                 <executions>
                     <execution>
                         <id>warn-operation-web-coupling</id>

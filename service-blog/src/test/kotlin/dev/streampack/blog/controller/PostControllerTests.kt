@@ -151,10 +151,9 @@ class PostControllerTests {
         temperatureService.accrue("blog.post", posts[1].id.toString(), "hit", positiveDelta = 4L)
         temperatureService.accrue("blog.post", posts[2].id.toString(), "hit", positiveDelta = 3L)
         temperatureService.accrue("blog.post", posts[3].id.toString(), "hit", positiveDelta = 2L)
-        val scoresBefore =
-            posts.associate { post ->
-                post.id to temperatureService.score("blog.post", post.id.toString(), "hit").netScore
-            }
+        val scoresBefore = posts.associate { post ->
+            post.id to temperatureService.score("blog.post", post.id.toString(), "hit").netScore
+        }
 
         mockMvc.get("/posts/popular").andExpect {
             status { isOk() }
@@ -166,10 +165,9 @@ class PostControllerTests {
             jsonPath("$.totalCount") { value(4) }
         }
 
-        val scoresAfter =
-            posts.associate { post ->
-                post.id to temperatureService.score("blog.post", post.id.toString(), "hit").netScore
-            }
+        val scoresAfter = posts.associate { post ->
+            post.id to temperatureService.score("blog.post", post.id.toString(), "hit").netScore
+        }
         assertEquals(scoresBefore, scoresAfter)
     }
 

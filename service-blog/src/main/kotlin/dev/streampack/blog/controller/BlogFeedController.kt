@@ -38,26 +38,25 @@ class BlogFeedController(
         feed.link = baseUrl
         feed.description = "Latest posts on ${blogProperties.siteName}"
 
-        feed.entries =
-            posts.mapNotNull { post ->
-                val slug = slugRepository.findCanonical(post.id) ?: return@mapNotNull null
-                if (!BLOG_POST_SLUG.matches(slug.path)) return@mapNotNull null
+        feed.entries = posts.mapNotNull { post ->
+            val slug = slugRepository.findCanonical(post.id) ?: return@mapNotNull null
+            if (!BLOG_POST_SLUG.matches(slug.path)) return@mapNotNull null
 
-                val entry = SyndEntryImpl()
-                entry.title = post.title
-                entry.link = "$baseUrl/posts/${slug.path}"
-                entry.publishedDate = Date.from(post.publishedAt ?: post.createdAt)
-                entry.author = post.author?.displayName ?: "Anonymous"
+            val entry = SyndEntryImpl()
+            entry.title = post.title
+            entry.link = "$baseUrl/posts/${slug.path}"
+            entry.publishedDate = Date.from(post.publishedAt ?: post.createdAt)
+            entry.author = post.author?.displayName ?: "Anonymous"
 
-                val content = SyndContentImpl()
-                content.type = "text/plain"
-                content.value =
-                    post.excerpt?.takeIf { it.isNotBlank() }
-                        ?: markdownRenderingService.excerpt(post.markdownSource)
-                entry.description = content
+            val content = SyndContentImpl()
+            content.type = "text/plain"
+            content.value =
+                post.excerpt?.takeIf { it.isNotBlank() }
+                    ?: markdownRenderingService.excerpt(post.markdownSource)
+            entry.description = content
 
-                entry
-            }
+            entry
+        }
 
         val output = SyndFeedOutput()
         val xml = output.outputString(feed)

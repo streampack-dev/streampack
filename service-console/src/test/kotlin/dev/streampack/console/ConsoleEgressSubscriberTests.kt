@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
@@ -26,6 +27,10 @@ import org.springframework.stereotype.Component
  * streampack.console.enabled, we use a capturing test subscriber to verify the egress flow.
  */
 @SpringBootTest
+@Import(
+    ConsoleEgressSubscriberTests.Config::class,
+    ConsoleEgressSubscriberTests.CapturingConsoleSubscriber::class,
+)
 class ConsoleEgressSubscriberTests {
 
     @TestConfiguration

@@ -249,14 +249,13 @@ class GitHubApiClient(properties: GitHubProperties) {
         }
     }
 
-    private fun instant(text: String?): Instant? =
-        text?.let {
-            try {
-                Instant.parse(it)
-            } catch (_: Exception) {
-                null
-            }
+    private fun instant(text: String?): Instant? = text?.let {
+        try {
+            Instant.parse(it)
+        } catch (_: Exception) {
+            null
         }
+    }
 
     /** Build a GitHub client for [apiUrl] with an optional token */
     private fun connect(apiUrl: String, token: String?): GitHub {

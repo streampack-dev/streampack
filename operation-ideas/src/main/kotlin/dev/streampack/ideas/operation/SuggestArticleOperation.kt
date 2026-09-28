@@ -323,19 +323,18 @@ internal object AiJsonParser {
         val raw = response.trim()
         if (raw.isBlank()) return null
         val strippedPrefix = raw.removePrefix("json").trim()
-        val candidates =
-            buildList {
-                    add(raw)
-                    add(strippedPrefix)
-                    add(raw.removeSurrounding("```json", "```").trim())
-                    add(raw.removeSurrounding("```", "```").trim())
-                    val firstBrace = raw.indexOf('{')
-                    val lastBrace = raw.lastIndexOf('}')
-                    if (firstBrace >= 0 && lastBrace > firstBrace) {
-                        add(raw.substring(firstBrace, lastBrace + 1).trim())
-                    }
-                }
-                .distinct()
+        val candidates = buildList {
+            add(raw)
+            add(strippedPrefix)
+            add(raw.removeSurrounding("```json", "```").trim())
+            add(raw.removeSurrounding("```", "```").trim())
+            val firstBrace = raw.indexOf('{')
+            val lastBrace = raw.lastIndexOf('}')
+            if (firstBrace >= 0 && lastBrace > firstBrace) {
+                add(raw.substring(firstBrace, lastBrace + 1).trim())
+            }
+        }
+            .distinct()
 
         for (candidate in candidates) {
             if (candidate.isBlank()) continue

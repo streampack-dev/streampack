@@ -158,8 +158,10 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
         return if (pair.firstUri == uri) pair.secondUri else pair.firstUri
     }
 
-    private fun String.toProvenanceIdentityUri(): String =
-        runCatching { Provenance.decode(this).identityEncode() }.getOrDefault(this)
+    private fun String.toProvenanceIdentityUri(): String = runCatching {
+        Provenance.decode(this).identityEncode()
+    }
+        .getOrDefault(this)
 
     private fun warnIfDiscordLegacyBridgeExists(
         provenanceUri: String,

@@ -123,8 +123,9 @@ class OidcAuthenticationSuccessHandlerTests {
         assertTrue(accessHeader!!.contains("test-jwt-token"))
         assertTrue(accessHeader.contains("HttpOnly"))
 
-        val refreshHeader =
-            setCookieHeaders.find { it.contains(CookieService.REFRESH_TOKEN_COOKIE) }
+        val refreshHeader = setCookieHeaders.find {
+            it.contains(CookieService.REFRESH_TOKEN_COOKIE)
+        }
         assertNotNull(refreshHeader)
         assertTrue(refreshHeader!!.contains("test-refresh-token"))
         assertTrue(refreshHeader.contains("HttpOnly"))

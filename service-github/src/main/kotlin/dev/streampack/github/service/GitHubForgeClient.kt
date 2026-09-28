@@ -250,14 +250,13 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
         )
     }
 
-    private fun parseInstant(text: String?): Instant? =
-        text?.let {
-            try {
-                Instant.parse(it)
-            } catch (_: Exception) {
-                null
-            }
+    private fun parseInstant(text: String?): Instant? = text?.let {
+        try {
+            Instant.parse(it)
+        } catch (_: Exception) {
+            null
         }
+    }
 
     private fun ignored(what: String, path: String, action: String) {
         logger.debug(

@@ -86,11 +86,10 @@ class RssFeedPollingService(
         val guids = fetchedEntries.mapNotNull { it.uri ?: it.link }
         val existingGuids = entryRepository.findByFeedAndGuidIn(feed, guids).map { it.guid }.toSet()
 
-        val newSyndEntries =
-            fetchedEntries.filter { entry ->
-                val guid = entry.uri ?: entry.link
-                guid != null && guid !in existingGuids
-            }
+        val newSyndEntries = fetchedEntries.filter { entry ->
+            val guid = entry.uri ?: entry.link
+            guid != null && guid !in existingGuids
+        }
 
         val newEntries = newSyndEntries.mapNotNull { entry -> toRssEntry(entry, feed) }
         if (newEntries.isNotEmpty()) {
@@ -136,13 +135,12 @@ class RssFeedPollingService(
     private fun deduplicateEntries(entries: List<SyndEntry>): List<SyndEntry> {
         val seenGuids = LinkedHashSet<String>()
         var duplicates = 0
-        val deduplicated =
-            entries.filter { entry ->
-                val guid = entry.uri ?: entry.link ?: return@filter false
-                val added = seenGuids.add(guid)
-                if (!added) duplicates++
-                added
-            }
+        val deduplicated = entries.filter { entry ->
+            val guid = entry.uri ?: entry.link ?: return@filter false
+            val added = seenGuids.add(guid)
+            if (!added) duplicates++
+            added
+        }
         if (duplicates > 0) {
             logger.info("Ignored {} duplicate RSS entries while polling feed updates", duplicates)
         }

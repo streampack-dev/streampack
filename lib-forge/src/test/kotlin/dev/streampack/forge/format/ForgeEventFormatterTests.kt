@@ -19,7 +19,11 @@ class ForgeEventFormatterTests {
     fun `issue text matches the original GitHub wording`() {
         assertEquals(
             "[owner/repo] New issue #42: Fix the thing - https://example.com/42",
-            ForgeEventFormatter.format(ForgeKind.GITHUB, "owner/repo", ForgeEvent.IssueOpened(item)),
+            ForgeEventFormatter.format(
+                ForgeKind.GITHUB,
+                "owner/repo",
+                ForgeEvent.IssueOpened(item),
+            ),
         )
     }
 

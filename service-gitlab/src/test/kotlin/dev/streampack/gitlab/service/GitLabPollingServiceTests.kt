@@ -103,7 +103,8 @@ class GitLabPollingServiceTests {
         subscriptionRepository.save(
             GitLabSubscription(
                 project = project,
-                destinationUri = Provenance(protocol = Protocol.CONSOLE, replyTo = "local").encode(),
+                destinationUri =
+                    Provenance(protocol = Protocol.CONSOLE, replyTo = "local").encode(),
             )
         )
         stub(

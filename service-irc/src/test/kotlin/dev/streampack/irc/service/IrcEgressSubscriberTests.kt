@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
@@ -27,6 +28,10 @@ import org.springframework.stereotype.Component
  * protocol messages.
  */
 @SpringBootTest
+@Import(
+    IrcEgressSubscriberTests.Config::class,
+    IrcEgressSubscriberTests.CapturingIrcSubscriber::class,
+)
 class IrcEgressSubscriberTests {
 
     @TestConfiguration

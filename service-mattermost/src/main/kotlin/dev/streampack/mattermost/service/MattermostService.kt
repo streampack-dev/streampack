@@ -62,9 +62,9 @@ class MattermostService(
             }
 
         return runCatching {
-                connectionManager.ifAvailable { it.connect(server) }
-                "Connecting to '$name'..."
-            }
+            connectionManager.ifAvailable { it.connect(server) }
+            "Connecting to '$name'..."
+        }
             .getOrElse { "Error: ${it.message ?: "Failed to connect to '$name'"}" }
     }
 
