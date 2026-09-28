@@ -173,4 +173,31 @@ class SearchCoverageTests {
 
         assertEquals(listOf("Edited"), search("gradle"))
     }
+
+    @Test
+    fun `recording an access doesn't rebuild the search vector`() {
+        val p = post("Often read")
+        // Plant a sentinel vector; only a rebuild would replace it.
+        entityManager
+            .createNativeQuery(
+                "UPDATE posts SET search_vector = to_tsvector('simple', 'sentinel') WHERE id = :id"
+            )
+            .setParameter("id", p.id)
+            .executeUpdate()
+        entityManager.clear()
+
+        // What RecordPostAccessOperation does: save the whole entity with a new access count.
+        val loaded = postRepository.findById(p.id).orElseThrow()
+        postRepository.save(
+            loaded.copy(accessCount = loaded.accessCount + 1, lastAccessedAt = Instant.now())
+        )
+        entityManager.flush()
+
+        val vector =
+            entityManager
+                .createNativeQuery("SELECT search_vector::text FROM posts WHERE id = :id")
+                .setParameter("id", p.id)
+                .singleResult
+        assertEquals("'sentinel':1", vector)
+    }
 }

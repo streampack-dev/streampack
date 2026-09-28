@@ -22,11 +22,21 @@ AS $$
         || setweight(to_tsvector('english', regexp_replace(coalesce(p_html, ''), '<[^>]+>', ' ', 'g')), 'C')
 $$;
 
--- Recomputed only when searchable content changes: access tracking updates posts on every read.
+-- Recomputed only when searchable content changes. Hibernate's UPDATE sets every mapped column,
+-- so "UPDATE OF title, ..." fires on any save, including access tracking on every read; the values
+-- are compared instead. The tag triggers clear search_vector to force a rebuild.
 CREATE FUNCTION posts_search_vector_refresh() RETURNS trigger
     LANGUAGE plpgsql
 AS $$
 BEGIN
+    IF TG_OP = 'UPDATE'
+        AND NEW.search_vector IS NOT NULL
+        AND NEW.title IS NOT DISTINCT FROM OLD.title
+        AND NEW.excerpt IS NOT DISTINCT FROM OLD.excerpt
+        AND NEW.rendered_html IS NOT DISTINCT FROM OLD.rendered_html
+    THEN
+        RETURN NEW;
+    END IF;
     NEW.search_vector := posts_search_vector(NEW.id, NEW.title, NEW.excerpt, NEW.rendered_html);
     RETURN NEW;
 END
