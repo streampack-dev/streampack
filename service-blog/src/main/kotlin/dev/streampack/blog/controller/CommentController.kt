@@ -9,6 +9,7 @@ import dev.streampack.blog.model.CreateCommentRequest
 import dev.streampack.blog.model.EditCommentHttpRequest
 import dev.streampack.blog.model.EditCommentRequest
 import dev.streampack.blog.model.FindCommentsRequest
+import dev.streampack.blog.repository.ContentValidators
 import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
@@ -24,6 +25,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import java.time.Instant
 import java.util.UUID
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -45,6 +48,8 @@ class CommentController(
     jwtService: JwtService,
     private val slugRepository: SlugRepository,
     blogProperties: BlogProperties,
+    private val validators: ContentValidators,
+    private val conditionalGet: ConditionalGet,
 ) : UserAwareController(jwtService) {
     private val serviceId = blogProperties.serviceId
     private val logger = LoggerFactory.getLogger(CommentController::class.java)
@@ -66,13 +71,22 @@ class CommentController(
         @PathVariable @Schema(minimum = "1", maximum = "12") month: Int,
         @PathVariable slug: String,
         httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse,
     ): ResponseEntity<*> {
-        val postId =
-            resolvePostId("$year/${"%02d".format(month)}/$slug")
-                ?: return notFound("Post not found")
+        val path = "$year/${"%02d".format(month)}/$slug"
         val user = resolveUser(httpRequest)
-        val payload = FindCommentsRequest(postId)
-        return dispatch(payload, "posts/comments", user) { result -> mapError(result) }
+        return conditionalGet.respond(
+            httpRequest,
+            httpResponse,
+            personal = user != null,
+            key = listOf("comments", path),
+            validator = { validators.article(path, Instant.now()) },
+        ) {
+            val postId = resolvePostId(path) ?: return@respond notFound("Post not found")
+            dispatch(FindCommentsRequest(postId), "posts/comments", user) { result ->
+                mapError(result)
+            }
+        }
     }
 
     @Operation(summary = "Add a comment to a post")

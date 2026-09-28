@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.controller
 
+import dev.streampack.blog.repository.ContentValidators
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
@@ -12,6 +13,9 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import java.time.Instant
 import org.springframework.http.ResponseEntity
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,7 +24,11 @@ import org.springframework.web.bind.annotation.RestController
 /** Public taxonomy endpoint for tags/categories and aggregate union counts. */
 @RestController
 @Tag(name = "Taxonomy")
-class TaxonomyController(private val eventGateway: EventGateway) {
+class TaxonomyController(
+    private val eventGateway: EventGateway,
+    private val validators: ContentValidators,
+    private val conditionalGet: ConditionalGet,
+) {
 
     @Operation(summary = "List taxonomy tags, categories, and aggregate union counts")
     @ApiResponse(
@@ -29,7 +37,19 @@ class TaxonomyController(private val eventGateway: EventGateway) {
         content = [Content(schema = Schema(implementation = TaxonomySnapshot::class))],
     )
     @GetMapping("/taxonomy", produces = ["application/json"])
-    fun getTaxonomy(): ResponseEntity<TaxonomySnapshot> {
+    fun getTaxonomy(request: HttpServletRequest, response: HttpServletResponse): ResponseEntity<*> =
+        // The snapshot is the same for every reader, so it's conditional for everyone.
+        conditionalGet.respond(
+            request,
+            response,
+            personal = false,
+            key = listOf("taxonomy"),
+            validator = { validators.taxonomy(Instant.now()) },
+        ) {
+            snapshot()
+        }
+
+    private fun snapshot(): ResponseEntity<TaxonomySnapshot> {
         val message =
             MessageBuilder.withPayload(FindTaxonomySnapshotRequest as Any)
                 .setHeader(
