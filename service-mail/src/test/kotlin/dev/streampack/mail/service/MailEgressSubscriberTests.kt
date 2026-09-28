@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
@@ -29,6 +30,10 @@ import org.springframework.stereotype.Component
 
 /** Tests the mail egress subscriber using GreenMail to capture sent emails */
 @SpringBootTest(properties = ["streampack.mail.enabled=true"])
+@Import(
+    MailEgressSubscriberTests.Config::class,
+    MailEgressSubscriberTests.CapturingConsoleSubscriber::class,
+)
 class MailEgressSubscriberTests {
 
     companion object {

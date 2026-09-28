@@ -19,11 +19,17 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
 @SpringBootTest
+@Import(
+    EgressChannelTests.EgressTestConfig::class,
+    EgressChannelTests.ConsoleTestSubscriber::class,
+    EgressChannelTests.IrcTestSubscriber::class,
+)
 class EgressChannelTests {
 
     @TestConfiguration
