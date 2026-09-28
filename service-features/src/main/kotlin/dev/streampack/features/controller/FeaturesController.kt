@@ -10,8 +10,10 @@ import dev.streampack.features.model.CodeChannelFeature
 import dev.streampack.features.model.FeaturesResponse
 import dev.streampack.features.model.OidcFeatures
 import dev.streampack.features.model.VersionInfo
+import java.security.MessageDigest
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Base64
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.info.BuildProperties
@@ -23,6 +25,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.context.request.WebRequest
 
 /**
  * Exposes build identity and classpath capabilities. The response is computed once at construction
@@ -48,11 +51,23 @@ class FeaturesController(
 
     private val cachedResponse: FeaturesResponse = buildResponse()
 
+    /**
+     * The answer changes only with configuration or connected chat servers, so after `max-age` a
+     * client revalidates and usually gets 304. The ETag hashes the response's text form, which is
+     * stable across restarts (unlike hashCode, which enums would make vary).
+     */
     @GetMapping("/features", produces = ["application/json"])
-    fun getFeatures(): ResponseEntity<FeaturesResponse> =
-        ResponseEntity.ok()
+    fun getFeatures(request: WebRequest): ResponseEntity<FeaturesResponse>? {
+        val body = withLiveCodeChannels(cachedResponse)
+        val digest = MessageDigest.getInstance("SHA-256").digest(body.toString().toByteArray())
+        val etag =
+            "W/\"" + Base64.getUrlEncoder().withoutPadding().encodeToString(digest).take(27) + "\""
+        if (request.checkNotModified(etag)) return null
+        return ResponseEntity.ok()
+            .eTag(etag)
             .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
-            .body(withLiveCodeChannels(cachedResponse))
+            .body(body)
+    }
 
     /** Chat servers connect and disconnect at runtime, so their list is read on each request */
     private fun withLiveCodeChannels(response: FeaturesResponse): FeaturesResponse =

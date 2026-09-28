@@ -44,6 +44,20 @@ class FeaturesControllerTests {
     }
 
     @Test
+    fun `GET features carries a weak ETag and answers a match with 304`() {
+        val etag = mockMvc.get("/features").andReturn().response.getHeader("ETag")
+        requireNotNull(etag) { "ETag on /features" }
+        check(etag.startsWith("W/\"")) { "weak ETag: $etag" }
+
+        mockMvc
+            .get("/features") { header("If-None-Match", etag) }
+            .andExpect {
+                status { isNotModified() }
+                header { string("ETag", etag) }
+            }
+    }
+
+    @Test
     fun `GET features includes Cache-Control header`() {
         mockMvc.get("/features").andExpect {
             status { isOk() }

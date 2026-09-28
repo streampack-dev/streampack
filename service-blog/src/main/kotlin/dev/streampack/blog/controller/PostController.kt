@@ -18,6 +18,7 @@ import dev.streampack.blog.model.RecordPostAccessRequest
 import dev.streampack.blog.model.SuggestTagsHttpRequest
 import dev.streampack.blog.model.SuggestTagsRequest
 import dev.streampack.blog.model.SuggestTagsResponse
+import dev.streampack.blog.repository.ContentValidators
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
@@ -33,6 +34,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.time.Instant
 import java.util.UUID
 import org.slf4j.LoggerFactory
@@ -55,6 +57,8 @@ class PostController(
     private val eventGateway: EventGateway,
     jwtService: JwtService,
     private val blogProperties: BlogProperties,
+    private val validators: ContentValidators,
+    private val conditionalGet: ConditionalGet,
 ) : UserAwareController(jwtService) {
     private val serviceId = blogProperties.serviceId
     private val logger = LoggerFactory.getLogger(PostController::class.java)
@@ -85,6 +89,7 @@ class PostController(
         category: String?,
         @Parameter(description = "Filter by tag name") @RequestParam(required = false) tag: String?,
         httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
         val payload =
@@ -95,7 +100,22 @@ class PostController(
             } else {
                 FindContentRequest.FindPublished(page, size)
             }
-        return dispatch(payload, "posts/list", user) { result -> mapError(result) }
+        val now = Instant.now()
+        return conditionalGet.respond(
+            httpRequest,
+            httpResponse,
+            personal = user != null,
+            key = listOf("posts", page, size, category, tag),
+            validator = {
+                when {
+                    tag != null -> validators.byTag(tag, now)
+                    category != null -> validators.byCategory(category, now)
+                    else -> validators.board(now)
+                }
+            },
+        ) {
+            dispatch(payload, "posts/list", user) { result -> mapError(result) }
+        }
     }
 
     @Operation(
@@ -154,10 +174,20 @@ class PostController(
         @PathVariable
         slug: String,
         httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
-        val payload = FindContentRequest.FindBySlug("$year/${"%02d".format(month)}/$slug")
-        return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
+        val path = "$year/${"%02d".format(month)}/$slug"
+        val payload = FindContentRequest.FindBySlug(path)
+        return conditionalGet.respond(
+            httpRequest,
+            httpResponse,
+            personal = user != null,
+            key = listOf("post", path),
+            validator = { validators.article(path, Instant.now()) },
+        ) {
+            dispatch(payload, "posts/detail", user) { result -> mapError(result) }
+        }
     }
 
     @Operation(
@@ -222,10 +252,19 @@ class PostController(
         @RequestParam(defaultValue = "20")
         size: Int,
         httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
         val payload = FindContentRequest.Search(q, page, size)
-        return dispatch(payload, "posts/search", user) { result -> mapError(result) }
+        return conditionalGet.respond(
+            httpRequest,
+            httpResponse,
+            personal = user != null,
+            key = listOf("search", q, page, size),
+            validator = { validators.searchable(Instant.now()) },
+        ) {
+            dispatch(payload, "posts/search", user) { result -> mapError(result) }
+        }
     }
 
     @Operation(
