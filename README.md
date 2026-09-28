@@ -10,7 +10,7 @@ Those are a distribution of Streampack, not the boundary of what Streampack is.
 
 - **JDK 25** or later
 - **Maven 3.8.0** or later (wrapper included via `mvnw`; also compatible with `mvnd`)
-- **PostgreSQL 17** (via Docker or system service)
+- **PostgreSQL 18** (via Docker or system service), the version production runs
 - **Docker** (required for running tests, optional for production database)
 
 ## Database Setup
@@ -29,8 +29,33 @@ docker run -d \
   -e POSTGRES_PASSWORD=nevet \
   -e POSTGRES_DB=nevet \
   -p 5432:5432 \
-  postgres:17
+  postgres:18
 ```
+
+The `postgres:18` image keeps its data under `/var/lib/postgresql/18/docker`, so mount a volume at `/var/lib/postgresql` (not `/var/lib/postgresql/data`) if you want it to persist.
+
+#### Upgrading a local database from PostgreSQL 17
+
+A data directory from 17 can't be opened by 18, and the `postgres:18` image mounts its volume at a
+different path, so `docker compose up` on an existing `pgdata` volume won't carry the data across.
+Dump and restore instead:
+
+```bash
+# 1. While the db service still runs postgres:17 (before pulling the 18 change):
+docker compose exec db pg_dumpall -U nevet > nevet-17.sql
+
+# 2. Remove the old volume and start 18 on a fresh one:
+docker compose down
+docker volume rm "$(basename "$PWD")_pgdata"
+docker compose up -d db
+
+# 3. Restore:
+docker compose exec -T db psql -U nevet -d nevet < nevet-17.sql
+```
+
+If you've already pulled, run step 1 against the old volume with a temporary 17 container:
+`docker run --rm -d --name pg17 -v "$(basename "$PWD")_pgdata:/var/lib/postgresql/data" -e POSTGRES_PASSWORD=nevet postgres:17`,
+then `docker exec pg17 pg_dumpall -U nevet > nevet-17.sql` and `docker stop pg17`.
 
 ### Option B: Existing Docker PostgreSQL
 

@@ -18,6 +18,8 @@
         <maven.compiler.target>25</maven.compiler.target>
         <springBootVersion>4.0.6</springBootVersion>
         <kotlinVersion>2.3.21</kotlinVersion>
+        <!-- PostgreSQL major version production runs; Testcontainers URLs read it as @postgresVersion@. -->
+        <postgresVersion>18</postgresVersion>
         <logbackVersion>1.6.4</logbackVersion>
         <testcontainersVersion>2.0.5</testcontainersVersion>
         <springdocVersion>3.0.3</springdocVersion>

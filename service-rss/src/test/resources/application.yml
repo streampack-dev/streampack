@@ -2,7 +2,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:tc:postgresql:17://nevet
+    url: jdbc:tc:postgresql:@postgresVersion@://nevet
     hikari:
       maximum-pool-size: 2
   jpa:
