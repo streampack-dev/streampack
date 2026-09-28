@@ -50,7 +50,7 @@ services:
     volumes:
       - ${GENERATIVE_PROMPT_VOLUME:-./generative}:/opt/streampack/generative:ro
   db:
-    image: postgres:17
+    image: postgres:18
     restart: unless-stopped
     environment:
       POSTGRES_DB: nevet
@@ -59,7 +59,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # postgres:18 keeps data under /var/lib/postgresql/18/docker and expects the volume here.
+      - pgdata:/var/lib/postgresql
 
   # Local Mattermost for development: `docker compose --profile mattermost up mattermost`.
   # The preview image bundles its own database, uses known passwords, and is not for production.
