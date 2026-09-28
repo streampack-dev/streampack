@@ -104,12 +104,11 @@ class SlackAdapter(
             val client = methodsClient()
             var cursor: String? = null
             do {
-                val response =
-                    client.conversationsList { r ->
-                        r.limit(200)
-                        if (cursor != null) r.cursor(cursor)
-                        r
-                    }
+                val response = client.conversationsList { r ->
+                    r.limit(200)
+                    if (cursor != null) r.cursor(cursor)
+                    r
+                }
                 if (!response.isOk) {
                     logger.warn(
                         "conversations.list failed on '{}': {}",

@@ -203,7 +203,11 @@ class MattermostServiceTests {
         )
         mattermostService.registerChannel(
             server,
-            MattermostChannelRef(id = "dm000000000000000000000000", name = "alice__bot", type = "D"),
+            MattermostChannelRef(
+                id = "dm000000000000000000000000",
+                name = "alice__bot",
+                type = "D",
+            ),
         )
         mattermostService.registerChannel(
             server,

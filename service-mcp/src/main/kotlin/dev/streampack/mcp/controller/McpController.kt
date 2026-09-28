@@ -136,11 +136,12 @@ class McpController(private val toolService: McpToolService) {
             return error(id, -32602, "Invalid params")
         }
 
-        val toolCall =
-            runCatching { mapper.convertValue(params, ToolCallParams::class.java) }
-                .getOrElse {
-                    return error(id, -32602, "Invalid tool call params")
-                }
+        val toolCall = runCatching {
+            mapper.convertValue(params, ToolCallParams::class.java)
+        }
+            .getOrElse {
+                return error(id, -32602, "Invalid tool call params")
+            }
 
         if (toolCall.name.isBlank()) {
             return error(id, -32602, "Missing tool name")

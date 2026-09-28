@@ -443,19 +443,18 @@ class ArticleOperation(
         val raw = response.trim()
         if (raw.isBlank()) return null
 
-        val candidates =
-            buildList {
-                    add(raw)
-                    add(raw.removeSurrounding("```json", "```").trim())
-                    add(raw.removeSurrounding("```", "```").trim())
-                    val firstBrace = raw.indexOf('{')
-                    val lastBrace = raw.lastIndexOf('}')
-                    if (firstBrace >= 0 && lastBrace > firstBrace) {
-                        add(raw.substring(firstBrace, lastBrace + 1).trim())
-                    }
-                }
-                .distinct()
-                .filter { it.startsWith("{") && it.endsWith("}") }
+        val candidates = buildList {
+            add(raw)
+            add(raw.removeSurrounding("```json", "```").trim())
+            add(raw.removeSurrounding("```", "```").trim())
+            val firstBrace = raw.indexOf('{')
+            val lastBrace = raw.lastIndexOf('}')
+            if (firstBrace >= 0 && lastBrace > firstBrace) {
+                add(raw.substring(firstBrace, lastBrace + 1).trim())
+            }
+        }
+            .distinct()
+            .filter { it.startsWith("{") && it.endsWith("}") }
 
         for (candidate in candidates) {
             try {

@@ -178,7 +178,9 @@ class GitHubInstanceOperationTests {
                 host = "ghe.example.com",
                 apiUrl = "${localApiUrl()}/api/v3",
                 defaultToken =
-                    dev.streampack.core.model.SecretRef.env("GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN"),
+                    dev.streampack.core.model.SecretRef.env(
+                        "GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN"
+                    ),
             )
         )
 

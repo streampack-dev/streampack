@@ -156,14 +156,13 @@ class GitLabApiClient(properties: GitLabProperties) {
         return failedJobNames(node)
     }
 
-    private fun instant(text: String?): Instant? =
-        text?.let {
-            try {
-                Instant.parse(it)
-            } catch (_: Exception) {
-                null
-            }
+    private fun instant(text: String?): Instant? = text?.let {
+        try {
+            Instant.parse(it)
+        } catch (_: Exception) {
+            null
         }
+    }
 
     /**
      * Walks pages newest-first and stops at the first item at or below [sinceIid], so a poll

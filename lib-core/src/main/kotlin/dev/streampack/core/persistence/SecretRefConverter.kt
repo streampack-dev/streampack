@@ -11,6 +11,7 @@ class SecretRefConverter : AttributeConverter<SecretRef, String> {
     override fun convertToDatabaseColumn(attribute: SecretRef?): String? =
         attribute?.asStoredValue()
 
-    override fun convertToEntityAttribute(dbData: String?): SecretRef? =
-        dbData?.let { SecretRef.parse(it) }
+    override fun convertToEntityAttribute(dbData: String?): SecretRef? = dbData?.let {
+        SecretRef.parse(it)
+    }
 }

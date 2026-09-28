@@ -45,8 +45,9 @@ class GetFactoidOperation(
 
             // Follow .see redirects for default queries
             if (payload.attribute == FactoidAttributeType.UNKNOWN) {
-                val seeAttr =
-                    attributes.firstOrNull { it.attributeType == FactoidAttributeType.SEE }
+                val seeAttr = attributes.firstOrNull {
+                    it.attributeType == FactoidAttributeType.SEE
+                }
                 if (seeAttr != null) {
                     return resolveWithHops(
                         seeAttr.attributeValue ?: return null,

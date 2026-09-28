@@ -41,25 +41,24 @@ class RssFeedService(
         feed.link = baseUrl
         feed.language = rssFeedProperties.language
 
-        feed.entries =
-            posts.map { post ->
-                val slug = slugRepository.findCanonical(post.id)
-                val entry: SyndEntry = SyndEntryImpl()
-                entry.title = post.title
-                entry.link = "$baseUrl/${slug?.path ?: post.id}"
-                entry.uri = post.id.toString()
+        feed.entries = posts.map { post ->
+            val slug = slugRepository.findCanonical(post.id)
+            val entry: SyndEntry = SyndEntryImpl()
+            entry.title = post.title
+            entry.link = "$baseUrl/${slug?.path ?: post.id}"
+            entry.uri = post.id.toString()
 
-                val description = SyndContentImpl()
-                description.type = "text/plain"
-                description.value = post.excerpt ?: ""
-                entry.description = description
+            val description = SyndContentImpl()
+            description.type = "text/plain"
+            description.value = post.excerpt ?: ""
+            entry.description = description
 
-                if (post.publishedAt != null) {
-                    entry.publishedDate = Date.from(post.publishedAt)
-                }
-                entry.author = post.author?.displayName ?: ""
-                entry
+            if (post.publishedAt != null) {
+                entry.publishedDate = Date.from(post.publishedAt)
             }
+            entry.author = post.author?.displayName ?: ""
+            entry
+        }
 
         return feed
     }

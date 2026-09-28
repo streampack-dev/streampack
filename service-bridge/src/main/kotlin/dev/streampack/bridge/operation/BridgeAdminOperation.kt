@@ -91,13 +91,12 @@ class BridgeAdminOperation(private val bridgeService: BridgeService) :
         if (pairs.isEmpty()) {
             return OperationResult.Success("No bridge pairs configured")
         }
-        val lines =
-            pairs.map { pair ->
-                val directions = mutableListOf<String>()
-                if (pair.copyFirstToSecond) directions.add("${pair.firstUri} -> ${pair.secondUri}")
-                if (pair.copySecondToFirst) directions.add("${pair.secondUri} -> ${pair.firstUri}")
-                "  " + directions.joinToString(", ")
-            }
+        val lines = pairs.map { pair ->
+            val directions = mutableListOf<String>()
+            if (pair.copyFirstToSecond) directions.add("${pair.firstUri} -> ${pair.secondUri}")
+            if (pair.copySecondToFirst) directions.add("${pair.secondUri} -> ${pair.firstUri}")
+            "  " + directions.joinToString(", ")
+        }
         return OperationResult.Success("Bridge pairs:\n${lines.joinToString("\n")}")
     }
 

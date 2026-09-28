@@ -93,14 +93,13 @@ class OperationAdminOperation(
     private fun handleConfig(): OperationResult {
         val groups = knownGroups()
         if (groups.isEmpty()) return OperationResult.Success("No operation groups registered.")
-        val lines =
-            groups.map { group ->
-                val config = configService.findConfig("", group)
-                val status = if (config?.enabled != false) "enabled" else "disabled"
-                val configMap = config?.config ?: emptyMap()
-                val configStr = if (configMap.isEmpty()) "" else " $configMap"
-                "  $group: $status$configStr"
-            }
+        val lines = groups.map { group ->
+            val config = configService.findConfig("", group)
+            val status = if (config?.enabled != false) "enabled" else "disabled"
+            val configMap = config?.config ?: emptyMap()
+            val configStr = if (configMap.isEmpty()) "" else " $configMap"
+            "  $group: $status$configStr"
+        }
         return OperationResult.Success("Global operation config:\n${lines.joinToString("\n")}")
     }
 

@@ -102,7 +102,11 @@ class MailEgressSubscriberTests {
         MessageBuilder.withPayload(text)
             .setHeader(
                 Provenance.HEADER,
-                Provenance(protocol = Protocol.MAILTO, serviceId = "", replyTo = "user@example.com"),
+                Provenance(
+                    protocol = Protocol.MAILTO,
+                    serviceId = "",
+                    replyTo = "user@example.com",
+                ),
             )
             .build()
 

@@ -98,11 +98,10 @@ class KarmaService(
     }
 
     private fun computeScore(records: List<KarmaRecord>, now: LocalDate): Int {
-        val score =
-            records.sumOf { record ->
-                val ageInDays = ChronoUnit.DAYS.between(record.recordDate, now)
-                record.delta * exp(-0.002 * ageInDays)
-            }
+        val score = records.sumOf { record ->
+            val ageInDays = ChronoUnit.DAYS.between(record.recordDate, now)
+            record.delta * exp(-0.002 * ageInDays)
+        }
         return score.roundToInt()
     }
 

@@ -53,10 +53,9 @@ class OperationService(
      * Protocol adapters with trigger detection (e.g. IRC) call this before submitting unaddressed
      * messages. If no non-addressed operation claims interest, the message is dropped silently.
      */
-    fun hasUnaddressedInterest(message: Message<*>): Boolean =
-        sortedOperations.any {
-            !it.addressed && isGroupEnabled(it, message) && it.canHandle(message)
-        }
+    fun hasUnaddressedInterest(message: Message<*>): Boolean = sortedOperations.any {
+        !it.addressed && isGroupEnabled(it, message) && it.canHandle(message)
+    }
 
     /** Receives from the ingress channel and returns the result to the gateway's reply channel */
     @ServiceActivator(inputChannel = "ingressChannel")

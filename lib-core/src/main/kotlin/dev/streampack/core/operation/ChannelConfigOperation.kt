@@ -124,14 +124,13 @@ class ChannelConfigOperation(
         val groups = knownGroups()
         if (groups.isEmpty()) return OperationResult.Success("No operation groups registered.")
 
-        val lines =
-            groups.map { group ->
-                val enabled = configService.isOperationEnabled(pattern, group)
-                val config = configService.getOperationConfig(pattern, group)
-                val status = if (enabled) "enabled" else "disabled"
-                val configStr = if (config.isEmpty()) "" else " $config"
-                "  $group: $status$configStr"
-            }
+        val lines = groups.map { group ->
+            val enabled = configService.isOperationEnabled(pattern, group)
+            val config = configService.getOperationConfig(pattern, group)
+            val status = if (enabled) "enabled" else "disabled"
+            val configStr = if (config.isEmpty()) "" else " $config"
+            "  $group: $status$configStr"
+        }
         val target = pattern.ifEmpty { "(global)" }
         return OperationResult.Success(
             "Resolved config for '$target':\n${lines.joinToString("\n")}"

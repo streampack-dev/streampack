@@ -10,8 +10,9 @@ import org.springframework.stereotype.Component
 @Component
 class CalendarService(private val calendars: List<CalendarSystem>) {
     private val logger = LoggerFactory.getLogger(CalendarService::class.java)
-    private val calendarsByName: Map<String, CalendarSystem> =
-        calendars.associateBy { it.name.lowercase() }
+    private val calendarsByName: Map<String, CalendarSystem> = calendars.associateBy {
+        it.name.lowercase()
+    }
 
     init {
         logger.info(

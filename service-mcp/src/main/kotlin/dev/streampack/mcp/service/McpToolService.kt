@@ -150,10 +150,9 @@ class McpToolService(
 
         val factoid =
             factoidService.findFactoid(selector) ?: return ToolResult.error("Factoid not found")
-        val values =
-            attributes.associate { attribute ->
-                attribute.attributeType to (attribute.attributeValue ?: "")
-            }
+        val values = attributes.associate { attribute ->
+            attribute.attributeType to (attribute.attributeValue ?: "")
+        }
 
         val rawAttributes =
             attributes

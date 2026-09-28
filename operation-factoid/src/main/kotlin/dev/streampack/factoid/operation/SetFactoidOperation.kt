@@ -98,11 +98,10 @@ class SetFactoidOperation(
 
         /** Falls back to first "=" or " is " as a simple TEXT delimiter */
         private fun trySimpleSplit(input: String): FactoidSetRequest? {
-            val candidates =
-                DELIMITERS.mapNotNull { (delim, len) ->
-                    val idx = input.indexOf(delim)
-                    if (idx >= 1) idx to len else null
-                }
+            val candidates = DELIMITERS.mapNotNull { (delim, len) ->
+                val idx = input.indexOf(delim)
+                if (idx >= 1) idx to len else null
+            }
             if (candidates.isEmpty()) return null
 
             val (splitIdx, delimLen) = candidates.minByOrNull { it.first }!!

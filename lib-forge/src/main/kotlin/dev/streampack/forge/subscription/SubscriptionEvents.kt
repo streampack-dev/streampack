@@ -21,8 +21,9 @@ object SubscriptionEvents {
     fun withFilters(filters: List<PipelineFilter>): List<String> =
         BASE + filters.map { it.render() }.distinct()
 
-    fun pipelineFilters(events: List<String>): List<PipelineFilter> =
-        events.mapNotNull { PipelineFilter.parse(it) }
+    fun pipelineFilters(events: List<String>): List<PipelineFilter> = events.mapNotNull {
+        PipelineFilter.parse(it)
+    }
 
     fun wants(events: List<String>, event: ForgeEvent): Boolean =
         when (event) {
