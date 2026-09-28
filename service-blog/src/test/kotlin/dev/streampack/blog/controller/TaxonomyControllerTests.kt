@@ -124,9 +124,14 @@ class TaxonomyControllerTests {
             .andExpect {
                 status { isOk() }
 
-                jsonPath("$.tags.xyz") { value(4) }
+                // Post tags only: post two is in the hidden "_ideas" category, and factoid uses
+                // are reported separately.
+                jsonPath("$.tags.xyz") { value(1) }
                 jsonPath("$.tags.kotlin") { value(1) }
-                jsonPath("$.tags.tools") { value(1) }
+                jsonPath("$.tags.tools") { doesNotExist() }
+                jsonPath("$.factoidTags.xyz") { value(2) }
+                jsonPath("$.factoidTags.tools") { value(1) }
+                jsonPath("$.factoidTags._page") { doesNotExist() }
                 jsonPath("$.tags._sidebar") { doesNotExist() }
                 jsonPath("$.tags._page") { doesNotExist() }
 
@@ -134,7 +139,7 @@ class TaxonomyControllerTests {
                 jsonPath("$.categories.xyz") { value(1) }
                 jsonPath("$.categories._ideas") { doesNotExist() }
 
-                jsonPath("$.aggregate.xyz") { value(5) }
+                jsonPath("$.aggregate.xyz") { value(4) }
                 jsonPath("$.aggregate.guides") { value(1) }
                 jsonPath("$.aggregate.kotlin") { value(1) }
                 jsonPath("$.aggregate.tools") { value(1) }

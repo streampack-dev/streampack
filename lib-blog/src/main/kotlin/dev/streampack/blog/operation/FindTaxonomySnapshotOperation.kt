@@ -17,7 +17,7 @@ import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
-/** Collates taxonomy counts across blog and factoid operations. */
+/** Collates taxonomy counts: post tags, factoid tags and categories apart, and their union. */
 @Component
 class FindTaxonomySnapshotOperation(private val eventGateway: EventGateway) :
     TypedOperation<FindTaxonomySnapshotRequest>(FindTaxonomySnapshotRequest::class) {
@@ -38,12 +38,19 @@ class FindTaxonomySnapshotOperation(private val eventGateway: EventGateway) :
         val factoidTags = dispatchTerms(FindFactoidTagTaxonomyRequest, provenance)
         val categoryTerms = dispatchTerms(FindBlogCategoryTaxonomyRequest, provenance)
 
-        val tags = mergeCounts(blogTags, factoidTags)
+        // Tag boards list posts only, so post tag counts stand apart from factoid uses.
+        val tags = mergeCounts(blogTags)
+        val factoidTagCounts = mergeCounts(factoidTags)
         val categories = mergeCounts(categoryTerms)
         val aggregate = mergeCounts(blogTags, factoidTags, categoryTerms)
 
         return OperationResult.Success(
-            TaxonomySnapshot(tags = tags, categories = categories, aggregate = aggregate)
+            TaxonomySnapshot(
+                tags = tags,
+                categories = categories,
+                aggregate = aggregate,
+                factoidTags = factoidTagCounts,
+            )
         )
     }
 

@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.domain.PageRequest
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.transaction.annotation.Transactional
 
@@ -116,9 +117,57 @@ class FindBlogTaxonomyOperationsTests {
         val tags = (result as OperationResult.Success).payload as List<*>
         val counts = tags.filterIsInstance<TaxonomyTermCount>().associate { it.name to it.count }
 
-        assertEquals(2L, counts["xyz"])
+        // Post two is in the hidden "_ideas" category, which the tag listing leaves out too.
+        assertEquals(1L, counts["xyz"])
         assertEquals(1L, counts["kotlin"])
         assertTrue("_sidebar" !in counts.keys)
+    }
+
+    @Test
+    fun `blog tag counts include only published posts, matching the tag listing`() {
+        val author = userRepository.findAll().first()
+        fun post(
+            title: String,
+            status: PostStatus,
+            publishedAt: Instant?,
+            deleted: Boolean = false,
+        ) =
+            postRepository.save(
+                Post(
+                    title = title,
+                    markdownSource = title,
+                    renderedHtml = "<p>$title</p>",
+                    excerpt = title,
+                    status = status,
+                    publishedAt = publishedAt,
+                    author = author,
+                    deleted = deleted,
+                )
+            )
+        val now = Instant.now()
+        val shared = tagRepository.save(Tag(name = "shared", slug = "shared"))
+        val hidden = categoryRepository.findAll().first { it.name == "_ideas" }
+        listOf(
+                post("Published", PostStatus.APPROVED, now.minusSeconds(60)),
+                post("Draft", PostStatus.DRAFT, null),
+                post("Scheduled", PostStatus.APPROVED, now.plusSeconds(86_400)),
+                post("Deleted", PostStatus.APPROVED, now.minusSeconds(60), deleted = true),
+                post("Hidden", PostStatus.APPROVED, now.minusSeconds(60)).also {
+                    postCategoryRepository.save(PostCategory(post = it, category = hidden))
+                },
+            )
+            .forEach { postTagRepository.save(PostTag(post = it, tag = shared)) }
+
+        val result = eventGateway.process(message(FindBlogTagTaxonomyRequest))
+        val counts =
+            ((result as OperationResult.Success).payload as List<*>)
+                .filterIsInstance<TaxonomyTermCount>()
+                .associate { it.name to it.count }
+        val listed =
+            postRepository.findByTag("shared", Instant.now(), PageRequest.of(0, 20)).totalElements
+
+        assertEquals(1L, counts["shared"])
+        assertEquals(listed, counts["shared"])
     }
 
     @Test

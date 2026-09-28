@@ -1060,12 +1060,14 @@
         "type" : "object"
       },
       "TaxonomySnapshot" : {
+        "description" : "Usage counts per taxonomy term. Terms starting with _ are never included.",
         "properties" : {
           "aggregate" : {
             "additionalProperties" : {
               "format" : "int64",
               "type" : "integer"
             },
+            "description" : "The union of tags, factoidTags and categories, summed per term.",
             "type" : "object"
           },
           "categories" : {
@@ -1073,6 +1075,15 @@
               "format" : "int64",
               "type" : "integer"
             },
+            "description" : "Posts in each category.",
+            "type" : "object"
+          },
+          "factoidTags" : {
+            "additionalProperties" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "description" : "Factoids carrying each tag.",
             "type" : "object"
           },
           "tags" : {
@@ -1080,10 +1091,11 @@
               "format" : "int64",
               "type" : "integer"
             },
+            "description" : "Published posts carrying each tag: approved, published by now, not deleted and not in a hidden category. Matches the totalCount of GET /posts?tag=.",
             "type" : "object"
           }
         },
-        "required" : [ "aggregate", "categories", "tags" ],
+        "required" : [ "aggregate", "categories", "factoidTags", "tags" ],
         "type" : "object"
       },
       "UserPrincipal" : {

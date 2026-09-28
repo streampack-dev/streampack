@@ -7,6 +7,7 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.service.TypedOperation
 import dev.streampack.taxonomy.model.FindBlogTagTaxonomyRequest
 import dev.streampack.taxonomy.model.TaxonomyTermCount
+import java.time.Instant
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -19,7 +20,10 @@ class FindBlogTagTaxonomyOperation(private val postTagRepository: PostTagReposit
         payload: FindBlogTagTaxonomyRequest,
         message: Message<*>,
     ): OperationOutcome {
-        val tags = postTagRepository.findTagCounts().map { TaxonomyTermCount(it.name, it.count) }
+        val tags =
+            postTagRepository.findTagCounts(Instant.now()).map {
+                TaxonomyTermCount(it.name, it.count)
+            }
         return OperationResult.Success(tags)
     }
 }
