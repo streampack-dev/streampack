@@ -134,25 +134,31 @@ class FindTaxonomySnapshotOperationTests {
     }
 
     @Test
-    fun `operation returns merged taxonomy snapshot`() {
+    fun `tags count published posts only, factoid uses are separate, aggregate unions all`() {
         val result = eventGateway.process(requestMessage())
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val snapshot = (result as OperationResult.Success).payload as TaxonomySnapshot
 
-        assertEquals(4L, snapshot.tags["xyz"])
+        // Post two is in the hidden "_ideas" category, so only post one counts for xyz; factoid
+        // uses (alpha, beta) are not post tags.
+        assertEquals(1L, snapshot.tags["xyz"])
         assertEquals(1L, snapshot.tags["kotlin"])
-        assertEquals(1L, snapshot.tags["tools"])
+        assertFalse("tools" in snapshot.tags.keys)
+
+        assertEquals(2L, snapshot.factoidTags["xyz"])
+        assertEquals(1L, snapshot.factoidTags["tools"])
 
         assertEquals(1L, snapshot.categories["guides"])
         assertEquals(1L, snapshot.categories["xyz"])
 
-        assertEquals(5L, snapshot.aggregate["xyz"])
+        assertEquals(4L, snapshot.aggregate["xyz"])
         assertEquals(1L, snapshot.aggregate["guides"])
         assertEquals(1L, snapshot.aggregate["kotlin"])
         assertEquals(1L, snapshot.aggregate["tools"])
 
         assertFalse(snapshot.tags.keys.any { it.startsWith("_") })
+        assertFalse(snapshot.factoidTags.keys.any { it.startsWith("_") })
         assertFalse(snapshot.categories.keys.any { it.startsWith("_") })
         assertFalse(snapshot.aggregate.keys.any { it.startsWith("_") })
     }
@@ -164,9 +170,9 @@ class FindTaxonomySnapshotOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val snapshot = (result as OperationResult.Success).payload as TaxonomySnapshot
 
-        assertEquals(4L, snapshot.tags["xyz"])
+        assertEquals(1L, snapshot.tags["xyz"])
         assertEquals(1L, snapshot.categories["xyz"])
-        assertEquals(5L, snapshot.aggregate["xyz"])
+        assertEquals(4L, snapshot.aggregate["xyz"])
         assertFalse(snapshot.aggregate.keys.any { it.startsWith("_") })
     }
 }
