@@ -125,14 +125,16 @@ interface PostRepository : JpaRepository<Post, UUID> {
 
     /**
      * Full-text search on published posts, ranked by relevance over title (A), tags and excerpt (B)
-     * and body text (C). Queries read like a web search box: quoted phrases, `or`, `-term`.
+     * and body text (C). Queries read like a web search box: quoted phrases, `or`, `-term`. Visible
+     * posts only, by the same rule as the board and tag listings: approved, published, not deleted,
+     * not in a hidden (`_`) category.
      */
     @Query(
         nativeQuery = true,
         value =
-            "SELECT p.* FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now ORDER BY ts_rank(p.search_vector, websearch_to_tsquery('english', :query)) DESC",
+            "SELECT p.* FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now AND NOT EXISTS (SELECT 1 FROM post_categories pc JOIN categories c ON c.id = pc.category_id WHERE pc.post_id = p.id AND c.name LIKE '\\_%' ESCAPE '\\') ORDER BY ts_rank(p.search_vector, websearch_to_tsquery('english', :query)) DESC",
         countQuery =
-            "SELECT count(*) FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now",
+            "SELECT count(*) FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now AND NOT EXISTS (SELECT 1 FROM post_categories pc JOIN categories c ON c.id = pc.category_id WHERE pc.post_id = p.id AND c.name LIKE '\\_%' ESCAPE '\\')",
     )
     fun searchPublished(query: String, now: Instant, pageable: Pageable): Page<Post>
 }

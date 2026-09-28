@@ -1,12 +1,16 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.operation
 
+import dev.streampack.blog.entity.Category
 import dev.streampack.blog.entity.Post
+import dev.streampack.blog.entity.PostCategory
 import dev.streampack.blog.entity.PostTag
 import dev.streampack.blog.entity.Tag
 import dev.streampack.blog.model.ContentListResponse
 import dev.streampack.blog.model.FindContentRequest
 import dev.streampack.blog.model.PostStatus
+import dev.streampack.blog.repository.CategoryRepository
+import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.TagRepository
@@ -37,6 +41,8 @@ class SearchCoverageTests {
     @Autowired lateinit var tagRepository: TagRepository
     @Autowired lateinit var postTagRepository: PostTagRepository
     @Autowired lateinit var entityManager: EntityManager
+    @Autowired lateinit var categoryRepository: CategoryRepository
+    @Autowired lateinit var postCategoryRepository: PostCategoryRepository
 
     private lateinit var author: User
 
@@ -199,5 +205,21 @@ class SearchCoverageTests {
                 .setParameter("id", p.id)
                 .singleResult
         assertEquals("'sentinel':1", vector)
+    }
+
+    @Test
+    fun `posts in hidden categories aren't found, and are again once moved out`() {
+        val hidden = categoryRepository.save(Category(name = "_drafts-desk", slug = "drafts-desk"))
+        post("Visible zeppelin")
+        val tucked = post("Hidden zeppelin")
+        val link = postCategoryRepository.save(PostCategory(post = tucked, category = hidden))
+        entityManager.flush()
+
+        assertEquals(listOf("Visible zeppelin"), search("zeppelin"))
+
+        postCategoryRepository.delete(link)
+        entityManager.flush()
+
+        assertEquals(setOf("Visible zeppelin", "Hidden zeppelin"), search("zeppelin").toSet())
     }
 }
