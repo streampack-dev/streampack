@@ -18,6 +18,7 @@ import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -148,7 +149,12 @@ class AdminUserController(
     }
 
     @Operation(summary = "List erased user sentinels")
-    @ApiResponse(responseCode = "200", description = "Erased user sentinels")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Users with the requested status",
+        content =
+            [Content(array = ArraySchema(schema = Schema(implementation = UserPrincipal::class)))],
+    )
     @GetMapping(params = ["status"], produces = ["application/json"])
     fun listByStatus(
         @RequestParam status: UserStatus,
