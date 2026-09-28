@@ -123,13 +123,16 @@ interface PostRepository : JpaRepository<Post, UUID> {
     @Query("UPDATE Post p SET p.author.id = :toUserId WHERE p.author.id = :fromUserId")
     fun reassignAuthor(fromUserId: UUID, toUserId: UUID)
 
-    /** Full-text search on published posts, ranked by relevance */
+    /**
+     * Full-text search on published posts, ranked by relevance over title (A), tags and excerpt (B)
+     * and body text (C). Queries read like a web search box: quoted phrases, `or`, `-term`.
+     */
     @Query(
         nativeQuery = true,
         value =
-            "SELECT p.* FROM posts p WHERE p.search_vector @@ plainto_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now ORDER BY ts_rank(p.search_vector, plainto_tsquery('english', :query)) DESC",
+            "SELECT p.* FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now ORDER BY ts_rank(p.search_vector, websearch_to_tsquery('english', :query)) DESC",
         countQuery =
-            "SELECT count(*) FROM posts p WHERE p.search_vector @@ plainto_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now",
+            "SELECT count(*) FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now",
     )
     fun searchPublished(query: String, now: Instant, pageable: Pageable): Page<Post>
 }
