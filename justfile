@@ -1,4 +1,5 @@
-set dotenv-load := true
+# No dotenv-load: .env is the application's runtime configuration (production-style secrets
+# enforcement, chat integrations). Loaded into a build, it reaches the tests and breaks them.
 maven := `if command -v mvnd >/dev/null 2>&1; then printf '%s' mvnd; else printf '%s' ./mvnw; fi`
 
 default:
@@ -106,6 +107,8 @@ image tag="":
       .
 
 # Bump the shared revision in .mvn/maven.config and deploy. Defaults to a patch release.
+# Nothing is published unless every module builds and passes (deployAtEnd), and a failed
+# release puts .mvn/maven.config back, so retrying doesn't bump the version again.
 release level="patch":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -118,6 +121,11 @@ release level="patch":
         exit 1
         ;;
     esac
+
+    if ! git diff --quiet -- "$config_file"; then
+      echo "$config_file has uncommitted changes (a failed release?). Commit or restore it first." >&2
+      exit 1
+    fi
 
     current="$(./mvnw -q -N help:evaluate -Dexpression=project.version -DforceStdout | tail -n 1)"
     base="${current%-SNAPSHOT}"
@@ -142,4 +150,6 @@ release level="patch":
 
     echo "Releasing $current -> $next"
     perl -0pi -e 's/^-Drevision=.*/-Drevision='"$next"'/m or die "failed to update revision\n"' "$config_file"
-    {{maven}} deploy
+    trap 'status=$?; if [[ $status -ne 0 ]]; then git checkout -- "$config_file"; echo "Release failed; $config_file restored to $current." >&2; fi' EXIT
+    {{maven}} deploy -DdeployAtEnd=true
+    echo "Released $next. Commit $config_file."
