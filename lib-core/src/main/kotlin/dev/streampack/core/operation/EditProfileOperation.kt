@@ -2,6 +2,7 @@
 package dev.streampack.core.operation
 
 import dev.streampack.core.model.EditProfileRequest
+import dev.streampack.core.model.EmailAddresses
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -10,7 +11,7 @@ import dev.streampack.core.service.TypedOperation
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
-/** Self-service profile editing for authenticated users */
+/** Self-service profile editing for authenticated users: their display name. */
 @Component
 class EditProfileOperation(private val userRepository: UserRepository) :
     TypedOperation<EditProfileRequest>(EditProfileRequest::class) {
@@ -27,11 +28,20 @@ class EditProfileOperation(private val userRepository: UserRepository) :
             userRepository.findByUsername(principal.username)
                 ?: return OperationResult.Error("User not found")
 
-        val updated =
-            user.copy(
-                displayName = payload.displayName ?: user.displayName,
-                email = payload.email ?: user.email,
-            )
+        // Email is the sign-in identity, and nothing here proves the new address is the user's,
+        // so it can't be changed this way. Sending the current address back is not a change.
+        if (
+            payload.email != null &&
+                EmailAddresses.normalize(payload.email) != EmailAddresses.normalize(user.email)
+        ) {
+            return OperationResult.Error("Email address can't be changed here")
+        }
+        val displayName = payload.displayName?.trim()
+        if (displayName != null && displayName.isEmpty()) {
+            return OperationResult.Error("Display name can't be blank")
+        }
+
+        val updated = user.copy(displayName = displayName ?: user.displayName)
         val saved = userRepository.saveAndFlush(updated)
         return OperationResult.Success(saved.toUserPrincipal())
     }

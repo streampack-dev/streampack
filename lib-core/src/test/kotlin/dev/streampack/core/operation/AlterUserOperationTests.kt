@@ -28,6 +28,7 @@ class AlterUserOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var userRegistrationService: UserRegistrationService
+    @Autowired lateinit var userRepository: dev.streampack.core.repository.UserRepository
 
     private lateinit var regularUser: UserPrincipal
     private lateinit var adminUser: UserPrincipal
@@ -120,6 +121,35 @@ class AlterUserOperationTests {
         val result = eventGateway.process(alterUserMessage(request, superAdmin))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    @Test
+    fun `an email set by an admin is normalized and needs verifying again`() {
+        val request = AlterUserRequest(username = "regularuser", email = "  New@Example.COM ")
+        val result = eventGateway.process(alterUserMessage(request, superAdmin))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val stored = userRepository.findByUsername("regularuser")!!
+        assertEquals("new@example.com", stored.email)
+        assertEquals(false, stored.emailVerified)
+    }
+
+    @Test
+    fun `an admin cannot give a user another account's email`() {
+        val request = AlterUserRequest(username = "regularuser", email = "ADMIN@example.com")
+        val result = eventGateway.process(alterUserMessage(request, superAdmin))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Email address is already in use", (result as OperationResult.Error).message)
+        assertEquals("regular@example.com", userRepository.findByUsername("regularuser")!!.email)
+    }
+
+    @Test
+    fun `an admin cannot set an address that isn't one`() {
+        val request = AlterUserRequest(username = "regularuser", email = "not an address")
+        val result = eventGateway.process(alterUserMessage(request, superAdmin))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
     }
 
     @Test

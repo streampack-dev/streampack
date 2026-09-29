@@ -3,6 +3,7 @@ package dev.streampack.core.operation
 
 import dev.streampack.core.extensions.compress
 import dev.streampack.core.model.AlterUserRequest
+import dev.streampack.core.model.EmailAddresses
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -87,11 +88,25 @@ class AlterUserOperation(private val userRepository: UserRepository) :
             }
         }
 
+        // An address an admin sets is normalized, must be free, and must be verified again by
+        // its owner signing in with it.
+        val email = payload.email?.let(EmailAddresses::normalize)
+        val emailChanged = email != null && email != targetUser.email
+        if (emailChanged && email!!.isNotEmpty()) {
+            if (!EmailAddresses.isPlausible(email)) {
+                return OperationResult.Error("That isn't an email address")
+            }
+            if (userRepository.existsByEmailAndIdNot(email, targetUser.id)) {
+                return OperationResult.Error(EmailAddresses.IN_USE)
+            }
+        }
+
         return try {
             val updated =
                 targetUser.copy(
                     username = payload.newUsername ?: targetUser.username,
-                    email = payload.email ?: targetUser.email,
+                    email = email ?: targetUser.email,
+                    emailVerified = if (emailChanged) false else targetUser.emailVerified,
                     displayName = payload.displayName ?: targetUser.displayName,
                     role = payload.role ?: targetUser.role,
                 )

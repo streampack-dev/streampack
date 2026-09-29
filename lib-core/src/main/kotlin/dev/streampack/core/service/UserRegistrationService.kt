@@ -3,6 +3,7 @@ package dev.streampack.core.service
 
 import dev.streampack.core.entity.ServiceBinding
 import dev.streampack.core.entity.User
+import dev.streampack.core.model.EmailAddresses
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
@@ -33,7 +34,12 @@ class UserRegistrationService(
     ): UserPrincipal {
         val user =
             userRepository.saveAndFlush(
-                User(username = username, email = email, displayName = displayName, role = role)
+                User(
+                    username = username,
+                    email = claim(email),
+                    displayName = displayName,
+                    role = role,
+                )
             )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -85,13 +91,25 @@ class UserRegistrationService(
             userRepository.saveAndFlush(
                 User(
                     username = username,
-                    email = email,
+                    email = claim(email),
                     displayName = displayName,
                     role = role,
                     emailVerified = true,
                 )
             )
         return user.toUserPrincipal()
+    }
+
+    /**
+     * The normalized form of [email] for a new account, refused if another account already has it.
+     * Accounts from chat identities have no email, and any number of them may.
+     */
+    private fun claim(email: String): String {
+        val normalized = EmailAddresses.normalize(email)
+        require(normalized.isEmpty() || !userRepository.existsByEmail(normalized)) {
+            EmailAddresses.IN_USE
+        }
+        return normalized
     }
 
     /** Removes a protocol identity binding */

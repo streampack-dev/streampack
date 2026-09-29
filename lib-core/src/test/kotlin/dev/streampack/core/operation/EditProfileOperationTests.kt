@@ -69,27 +69,54 @@ class EditProfileOperationTests {
     }
 
     @Test
-    fun `authenticated user can change own email`() {
-        val request = EditProfileRequest(email = "new@example.com")
+    fun `email cannot be changed through the profile`() {
+        val request = EditProfileRequest(email = "someone-else@example.com")
         val result = eventGateway.process(editProfileMessage(request, user))
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-
-        val updated = userRepository.findByUsername("testuser")!!
-        assertEquals("new@example.com", updated.email)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("test@example.com", userRepository.findByUsername("testuser")!!.email)
     }
 
     @Test
-    fun `can change both at once`() {
+    fun `a refused email change applies nothing else either`() {
         val request = EditProfileRequest(displayName = "New Name", email = "new@example.com")
         val result = eventGateway.process(editProfileMessage(request, user))
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val principal = (result as OperationResult.Success).payload as UserPrincipal
-        assertEquals("New Name", principal.displayName)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        val stored = userRepository.findByUsername("testuser")!!
+        assertEquals("Test User", stored.displayName)
+        assertEquals("test@example.com", stored.email)
+    }
 
-        val updated = userRepository.findByUsername("testuser")!!
-        assertEquals("new@example.com", updated.email)
+    @Test
+    fun `sending the current email back, in any case, is not a change`() {
+        val request = EditProfileRequest(displayName = "New Name", email = " Test@Example.COM ")
+        val result = eventGateway.process(editProfileMessage(request, user))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val stored = userRepository.findByUsername("testuser")!!
+        assertEquals("New Name", stored.displayName)
+        assertEquals("test@example.com", stored.email)
+    }
+
+    @Test
+    fun `a blank display name is refused`() {
+        val result =
+            eventGateway.process(editProfileMessage(EditProfileRequest(displayName = "  "), user))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Test User", userRepository.findByUsername("testuser")!!.displayName)
+    }
+
+    @Test
+    fun `a display name is trimmed`() {
+        val result =
+            eventGateway.process(
+                editProfileMessage(EditProfileRequest(displayName = "  Spaced  "), user)
+            )
+
+        val principal = (result as OperationResult.Success).payload as UserPrincipal
+        assertEquals("Spaced", principal.displayName)
     }
 
     @Test

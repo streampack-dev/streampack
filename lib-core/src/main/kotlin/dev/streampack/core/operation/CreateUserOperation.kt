@@ -67,6 +67,8 @@ class CreateUserOperation(private val userRegistrationService: UserRegistrationS
                     role = payload.role,
                 )
             OperationResult.Success(created)
+        } catch (e: IllegalArgumentException) {
+            OperationResult.Error(e.message ?: "Invalid user")
         } catch (e: Exception) {
             logger.warn("Failed to create user {}: {}", payload.username, e.message)
             OperationResult.Error("Username already exists")
