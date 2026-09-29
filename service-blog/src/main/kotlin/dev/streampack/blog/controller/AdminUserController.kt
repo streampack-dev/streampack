@@ -3,6 +3,7 @@ package dev.streampack.blog.controller
 
 import dev.streampack.blog.config.BlogProperties
 import dev.streampack.blog.model.DeleteAccountRequest
+import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.model.PurgeErasedContentRequest
 import dev.streampack.blog.model.RoleUpdateRequest
 import dev.streampack.blog.model.SuspendAccountRequest
@@ -91,7 +92,11 @@ class AdminUserController(
     }
 
     @Operation(summary = "Suspend a user account")
-    @ApiResponse(responseCode = "200", description = "Account suspended")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Account suspended",
+        content = [Content(schema = Schema(implementation = MessageResponse::class))],
+    )
     @PutMapping("/{username}/suspend", produces = ["application/json"])
     fun suspendAccount(
         @PathVariable username: String,
@@ -104,7 +109,11 @@ class AdminUserController(
     }
 
     @Operation(summary = "Unsuspend a user account")
-    @ApiResponse(responseCode = "200", description = "Account unsuspended")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Account unsuspended",
+        content = [Content(schema = Schema(implementation = MessageResponse::class))],
+    )
     @PutMapping("/{username}/unsuspend", produces = ["application/json"])
     fun unsuspendAccount(
         @PathVariable username: String,
@@ -118,7 +127,11 @@ class AdminUserController(
     }
 
     @Operation(summary = "Erase a user account (admin-initiated)")
-    @ApiResponse(responseCode = "200", description = "Account erased")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Account erased",
+        content = [Content(schema = Schema(implementation = MessageResponse::class))],
+    )
     @DeleteMapping("/{username}", produces = ["application/json"])
     fun eraseAccount(
         @PathVariable username: String,
@@ -131,7 +144,11 @@ class AdminUserController(
     }
 
     @Operation(summary = "Purge all content from an erased user sentinel")
-    @ApiResponse(responseCode = "200", description = "Content purged")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Content purged",
+        content = [Content(schema = Schema(implementation = MessageResponse::class))],
+    )
     @DeleteMapping("/{username}/purge", produces = ["application/json"])
     fun purgeErasedContent(
         @PathVariable username: String,
@@ -209,7 +226,7 @@ class AdminUserController(
             MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance).build()
 
         return when (val result = eventGateway.process(message)) {
-            is OperationResult.Success -> ResponseEntity.ok(result.payload)
+            is OperationResult.Success -> ResponseEntity.ok(MessageResponse.body(result.payload))
             is OperationResult.Error -> onError(result)
             is OperationResult.NotHandled -> {
                 logger.warn("Request to {} was not handled by any operation", replyTo)

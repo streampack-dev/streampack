@@ -5,6 +5,7 @@ import dev.streampack.blog.config.BlogProperties
 import dev.streampack.blog.model.ContentOperationConfirmation
 import dev.streampack.blog.model.CreateCategoryRequest
 import dev.streampack.blog.model.CreateCategoryResponse
+import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.model.SoftDeleteCategoryRequest
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
@@ -119,7 +120,7 @@ class AdminCategoryController(
             MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance).build()
 
         return when (val result = eventGateway.process(message)) {
-            is OperationResult.Success -> ResponseEntity.ok(result.payload)
+            is OperationResult.Success -> ResponseEntity.ok(MessageResponse.body(result.payload))
             is OperationResult.Error -> onError(result)
             is OperationResult.NotHandled -> {
                 logger.warn("Request to {} was not handled by any operation", replyTo)
@@ -153,7 +154,7 @@ class AdminCategoryController(
 
         return when (val result = eventGateway.process(message)) {
             is OperationResult.Success ->
-                ResponseEntity.status(HttpStatus.CREATED).body(result.payload)
+                ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.body(result.payload))
             is OperationResult.Error -> onError(result)
             is OperationResult.NotHandled -> {
                 logger.warn("Request to {} was not handled by any operation", replyTo)

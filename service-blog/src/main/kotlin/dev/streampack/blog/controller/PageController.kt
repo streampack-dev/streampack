@@ -2,6 +2,7 @@
 package dev.streampack.blog.controller
 
 import dev.streampack.blog.model.FindContentRequest
+import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.repository.ContentValidators
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
@@ -70,7 +71,7 @@ class PageController(
                 .build()
 
         return when (val result = eventGateway.process(message)) {
-            is OperationResult.Success -> ResponseEntity.ok(result.payload)
+            is OperationResult.Success -> ResponseEntity.ok(MessageResponse.body(result.payload))
             is OperationResult.Error -> {
                 logger.debug("Page not found: {}", slug)
                 ResponseEntity.status(HttpStatus.NOT_FOUND)

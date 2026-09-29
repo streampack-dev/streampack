@@ -87,7 +87,13 @@ class AuthControllerTests {
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"email":"test@example.com"}"""
             }
-            .andExpect { status { isAccepted() } }
+            .andExpect {
+                status { isAccepted() }
+                content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
+                jsonPath("$.message") {
+                    value("If that identity is registered or valid, a code has been sent")
+                }
+            }
 
         val messages = greenMail.receivedMessages
         assertEquals(1, messages.size)
@@ -312,7 +318,11 @@ class AuthControllerTests {
                 header("Authorization", "Bearer $testUserToken")
                 content = """{}"""
             }
-            .andExpect { status { isOk() } }
+            .andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
+                jsonPath("$.message") { value("Account deleted") }
+            }
 
         // Original user is hard-deleted
         assertNull(userRepository.findByUsername("testuser"))

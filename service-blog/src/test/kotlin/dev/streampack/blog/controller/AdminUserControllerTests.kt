@@ -183,10 +183,18 @@ class AdminUserControllerTests {
     fun `admin can suspend and unsuspend active user`() {
         mockMvc
             .put("/admin/users/regular/suspend") { header("Authorization", "Bearer $adminToken") }
-            .andExpect { status { isOk() } }
+            .andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
+                jsonPath("$.message") { value("Account suspended") }
+            }
         mockMvc
             .put("/admin/users/regular/unsuspend") { header("Authorization", "Bearer $adminToken") }
-            .andExpect { status { isOk() } }
+            .andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
+                jsonPath("$.message") { value("Account unsuspended") }
+            }
     }
 
     @Test
@@ -223,7 +231,11 @@ class AdminUserControllerTests {
     fun `admin can erase a regular user account`() {
         mockMvc
             .delete("/admin/users/regular") { header("Authorization", "Bearer $adminToken") }
-            .andExpect { status { isOk() } }
+            .andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
+                jsonPath("$.message") { value("Account deleted") }
+            }
     }
 
     @Test
@@ -252,7 +264,11 @@ class AdminUserControllerTests {
             .delete("/admin/users/erased-test/purge") {
                 header("Authorization", "Bearer $adminToken")
             }
-            .andExpect { status { isOk() } }
+            .andExpect {
+                status { isOk() }
+                content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
+                jsonPath("$.message") { value("Content purged") }
+            }
     }
 
     @Test

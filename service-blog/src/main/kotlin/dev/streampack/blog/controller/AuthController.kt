@@ -5,6 +5,7 @@ import dev.streampack.blog.config.BlogProperties
 import dev.streampack.blog.model.DeleteAccountRequest
 import dev.streampack.blog.model.ExportUserDataRequest
 import dev.streampack.blog.model.LoginResponse
+import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.model.OtpRequest
 import dev.streampack.blog.model.OtpVerifyRequest
 import dev.streampack.blog.service.CookieService
@@ -60,6 +61,7 @@ class AuthController(
         responseCode = "202",
         description =
             "Accepted; a code is sent only when the identity resolves on the chosen channel",
+        content = [Content(schema = Schema(implementation = MessageResponse::class))],
     )
     @PostMapping("/otp/request", produces = ["application/json"], consumes = ["application/json"])
     fun requestOtp(@RequestBody request: OtpRequest): ResponseEntity<*> {
@@ -166,6 +168,11 @@ class AuthController(
 
     @Operation(summary = "Erase the authenticated user's account")
     @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Account deleted",
+        content = [Content(schema = Schema(implementation = MessageResponse::class))],
+    )
     @DeleteMapping("/account", produces = ["application/json"], consumes = ["application/json"])
     fun deleteAccount(
         @RequestBody request: DeleteAccountRequest,
@@ -257,7 +264,8 @@ class AuthController(
             MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance).build()
 
         return when (val result = eventGateway.process(message)) {
-            is OperationResult.Success -> ResponseEntity.status(successStatus).body(result.payload)
+            is OperationResult.Success ->
+                ResponseEntity.status(successStatus).body(MessageResponse.body(result.payload))
             is OperationResult.Error -> onError(result)
             is OperationResult.NotHandled -> {
                 logger.warn("Request to {} was not handled by any operation", replyTo)
