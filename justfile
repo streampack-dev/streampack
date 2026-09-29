@@ -78,7 +78,7 @@ image tag="":
     platforms="${DOCKER_PLATFORMS:-linux/amd64,linux/arm64}"
     builder="${DOCKER_BUILDX_BUILDER:-streampack-builder}"
 
-    {{maven}} -pl server-streampack -am -DskipTests clean package
+    ./mvnw -pl server-streampack -am -DskipTests clean package
 
     mkdir -p target/docker
     cp "server-streampack/target/server-streampack-${version}-exec.jar" target/docker/server-streampack.jar
