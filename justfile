@@ -96,7 +96,7 @@ image tag="":
     docker buildx inspect --bootstrap >/dev/null
 
     tags=(-t "${image}:${version}")
-    if [[ "${DOCKER_PUSH_LATEST:-false}" == "true" ]]; then
+    if [[ "${DOCKER_PUSH_LATEST:-true}" == "true" ]]; then
       tags+=(-t "${image}:latest")
     fi
 
