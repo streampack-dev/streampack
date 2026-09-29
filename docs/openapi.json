@@ -845,6 +845,15 @@
         "required" : [ "principal", "token" ],
         "type" : "object"
       },
+      "MessageResponse" : {
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ],
+        "type" : "object"
+      },
       "OidcFeatures" : {
         "properties" : {
           "github" : {
@@ -1845,7 +1854,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/MessageResponse"
                 }
               }
             },
@@ -1905,7 +1914,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/MessageResponse"
                 }
               }
             },
@@ -2005,7 +2014,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/MessageResponse"
                 }
               }
             },
@@ -2035,7 +2044,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/MessageResponse"
                 }
               }
             },
@@ -2067,11 +2076,11 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/MessageResponse"
                 }
               }
             },
-            "description" : "OK"
+            "description" : "Account deleted"
           }
         },
         "security" : [ {
@@ -2133,7 +2142,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/MessageResponse"
                 }
               }
             },

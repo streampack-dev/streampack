@@ -13,6 +13,7 @@ import dev.streampack.blog.model.DeriveTagsResponse
 import dev.streampack.blog.model.EditContentHttpRequest
 import dev.streampack.blog.model.EditContentRequest
 import dev.streampack.blog.model.FindDraftsRequest
+import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.model.RemoveContentRequest
 import dev.streampack.blog.model.SoftDeleteContentRequest
 import dev.streampack.core.integration.EventGateway
@@ -252,7 +253,7 @@ class AdminPostController(
             MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance).build()
 
         return when (val result = eventGateway.process(message)) {
-            is OperationResult.Success -> ResponseEntity.ok(result.payload)
+            is OperationResult.Success -> ResponseEntity.ok(MessageResponse.body(result.payload))
             is OperationResult.Error -> onError(result)
             is OperationResult.NotHandled -> {
                 logger.warn("Request to {} was not handled by any operation", replyTo)

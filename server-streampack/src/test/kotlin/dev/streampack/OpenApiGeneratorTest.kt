@@ -43,6 +43,25 @@ class OpenApiGeneratorTest {
         @Suppress("DEPRECATION") val mapper = JacksonMappers.pretty()
         val root = mapper.readTree(response.body()) as ObjectNode
 
+        // Endpoints whose result is a sentence answer a JSON object, not a bare string (#91).
+        for ((path, method, status) in
+            listOf(
+                Triple("/auth/otp/request", "post", "202"),
+                Triple("/auth/account", "delete", "200"),
+                Triple("/admin/users/{username}/suspend", "put", "200"),
+                Triple("/admin/users/{username}/unsuspend", "put", "200"),
+                Triple("/admin/users/{username}", "delete", "200"),
+                Triple("/admin/users/{username}/purge", "delete", "200"),
+            )) {
+            val ref =
+                root
+                    .at("/paths/${path.replace("/", "~1")}/$method/responses/$status/content")
+                    .toString()
+            check(ref.contains("#/components/schemas/MessageResponse")) {
+                "$method $path $status should be a MessageResponse: $ref"
+            }
+        }
+
         // Replace random test port with a stable placeholder
         val servers = mapper.createArrayNode()
         val server = mapper.createObjectNode()

@@ -4,6 +4,7 @@ package dev.streampack.blog.controller
 import dev.streampack.blog.config.BlogProperties
 import dev.streampack.blog.model.ContentOperationConfirmation
 import dev.streampack.blog.model.HardDeleteCommentRequest
+import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.model.SoftDeleteCommentRequest
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
@@ -95,7 +96,7 @@ class AdminCommentController(
             MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance).build()
 
         return when (val result = eventGateway.process(message)) {
-            is OperationResult.Success -> ResponseEntity.ok(result.payload)
+            is OperationResult.Success -> ResponseEntity.ok(MessageResponse.body(result.payload))
             is OperationResult.Error -> onError(result)
             is OperationResult.NotHandled -> {
                 logger.warn("Request to {} was not handled by any operation", replyTo)

@@ -13,6 +13,7 @@ import dev.streampack.blog.model.DeriveSummaryResponse
 import dev.streampack.blog.model.EditContentHttpRequest
 import dev.streampack.blog.model.EditContentRequest
 import dev.streampack.blog.model.FindContentRequest
+import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.model.PostStatus
 import dev.streampack.blog.model.RecordPostAccessRequest
 import dev.streampack.blog.model.SuggestTagsHttpRequest
@@ -487,7 +488,7 @@ class PostController(
             MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance).build()
 
         return when (val result = eventGateway.process(message)) {
-            is OperationResult.Success -> ResponseEntity.ok(result.payload)
+            is OperationResult.Success -> ResponseEntity.ok(MessageResponse.body(result.payload))
             is OperationResult.Error -> onError(result)
             is OperationResult.NotHandled -> {
                 logger.warn("Request to {} was not handled by any operation", replyTo)
@@ -521,7 +522,7 @@ class PostController(
 
         return when (val result = eventGateway.process(message)) {
             is OperationResult.Success ->
-                ResponseEntity.status(HttpStatus.CREATED).body(result.payload)
+                ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.body(result.payload))
             is OperationResult.Error -> onError(result)
             is OperationResult.NotHandled -> {
                 logger.warn("Request to {} was not handled by any operation", replyTo)
