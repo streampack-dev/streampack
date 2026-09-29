@@ -2,6 +2,7 @@
 package dev.streampack.blog.bootstrap
 
 import dev.streampack.blog.config.BlogProperties
+import dev.streampack.core.model.EmailAddresses
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
@@ -17,10 +18,11 @@ import org.springframework.stereotype.Component
 class SuperAdminBootstrap(
     private val userRepository: UserRepository,
     private val userRegistrationService: UserRegistrationService,
-    @Value("\${ADMIN_EMAIL:}") private val adminEmail: String,
+    @Value("\${ADMIN_EMAIL:}") configuredEmail: String,
     blogProperties: BlogProperties,
 ) : ApplicationRunner {
     private val serviceId = blogProperties.serviceId
+    private val adminEmail = EmailAddresses.normalize(configuredEmail)
     private val logger = LoggerFactory.getLogger(SuperAdminBootstrap::class.java)
 
     override fun run(args: ApplicationArguments) {

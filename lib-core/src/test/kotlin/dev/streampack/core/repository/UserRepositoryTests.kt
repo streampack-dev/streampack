@@ -97,7 +97,7 @@ class UserRepositoryTests {
     }
 
     @Test
-    fun `find distinct active admin email addresses dedupes and excludes suspended admins`() {
+    fun `active admin email addresses skip blank addresses and suspended admins`() {
         userRepository.save(
             User(
                 username = "admin1",
@@ -109,7 +109,7 @@ class UserRepositoryTests {
         userRepository.save(
             User(
                 username = "super1",
-                email = "admins@test.com",
+                email = "",
                 displayName = "Super One",
                 role = Role.SUPER_ADMIN,
             )

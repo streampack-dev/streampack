@@ -140,6 +140,37 @@ class UserRegistrationServiceTests {
     }
 
     @Test
+    fun `register stores the email normalized`() {
+        userRegistrationService.register(
+            username = "mixed",
+            email = "  Mixed.Case@Example.COM ",
+            displayName = "Mixed",
+            protocol = Protocol.HTTP,
+            serviceId = "blog-service",
+            externalIdentifier = "mixed",
+        )
+
+        assertEquals("mixed.case@example.com", userRepository.findByUsername("mixed")!!.email)
+    }
+
+    @Test
+    fun `an email another account has is refused, whatever its case`() {
+        userRegistrationService.createUser("first", "shared@example.com", "First")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            userRegistrationService.createUser("second", "Shared@Example.com", "Second")
+        }
+    }
+
+    @Test
+    fun `accounts without an email don't collide`() {
+        userRegistrationService.register("chat-one", "", "One", Protocol.DISCORD, "g", "one")
+        userRegistrationService.register("chat-two", "", "Two", Protocol.DISCORD, "g", "two")
+
+        assertEquals("", userRepository.findByUsername("chat-two")!!.email)
+    }
+
+    @Test
     fun `register with duplicate username throws`() {
         userRegistrationService.register(
             username = "testuser",

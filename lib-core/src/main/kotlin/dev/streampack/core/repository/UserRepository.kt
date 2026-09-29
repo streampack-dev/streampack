@@ -14,6 +14,10 @@ interface UserRepository : JpaRepository<User, UUID> {
 
     fun findByEmail(email: String): User?
 
+    fun existsByEmail(email: String): Boolean
+
+    fun existsByEmailAndIdNot(email: String, id: UUID): Boolean
+
     @Query("SELECT u FROM User u WHERE u.status = dev.streampack.core.model.UserStatus.ACTIVE")
     fun findActive(): List<User>
 
