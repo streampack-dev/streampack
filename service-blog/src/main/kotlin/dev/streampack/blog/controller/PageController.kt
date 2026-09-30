@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.controller
 
+import dev.streampack.blog.model.ContentDetail
 import dev.streampack.blog.model.FindContentRequest
 import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.repository.ContentValidators
@@ -10,6 +11,12 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.JwtService
 import dev.streampack.web.controller.UserAwareController
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.time.Instant
@@ -26,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController
 /** Serves system pages from the _pages category by slug */
 @RestController
 @RequestMapping("/pages")
+@Tag(name = "Pages")
 class PageController(
     private val eventGateway: EventGateway,
     jwtService: JwtService,
@@ -35,9 +43,26 @@ class PageController(
 
     private val logger = LoggerFactory.getLogger(PageController::class.java)
 
+    @Operation(
+        summary = "Get a system page by slug",
+        description =
+            "Returns a page from the _pages or _sidebar category (About, Policies, and the " +
+                "like) as the same ContentDetail a post has, at its undated address.",
+        operationId = "getPage",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Page detail",
+        content = [Content(schema = Schema(implementation = ContentDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Page not found",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @GetMapping("/{slug}", produces = ["application/json"])
     fun getPage(
-        @PathVariable slug: String,
+        @Parameter(description = "The page's slug", example = "about") @PathVariable slug: String,
         httpRequest: HttpServletRequest,
         httpResponse: HttpServletResponse,
     ): ResponseEntity<*> {

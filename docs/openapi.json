@@ -2675,8 +2675,11 @@
     },
     "/pages/{slug}" : {
       "get" : {
+        "description" : "Returns a page from the _pages or _sidebar category (About, Policies, and the like) as the same ContentDetail a post has, at its undated address.",
         "operationId" : "getPage",
         "parameters" : [ {
+          "description" : "The page's slug",
+          "example" : "about",
           "in" : "path",
           "name" : "slug",
           "required" : true,
@@ -2689,14 +2692,25 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
             },
-            "description" : "OK"
+            "description" : "Page detail"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Page not found"
           }
         },
-        "tags" : [ "page-controller" ]
+        "summary" : "Get a system page by slug",
+        "tags" : [ "Pages" ]
       }
     },
     "/posts" : {
