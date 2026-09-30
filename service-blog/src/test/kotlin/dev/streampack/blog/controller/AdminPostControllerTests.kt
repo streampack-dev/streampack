@@ -164,6 +164,58 @@ class AdminPostControllerTests {
             }
     }
 
+    // --- Editing a slug (#28) ---
+
+    private fun putSlug(slug: String) =
+        mockMvc.put("/admin/posts/${draftPost.id}") {
+            contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer $adminToken")
+            content =
+                """{"title":"Draft for Admin","markdownSource":"Draft content.","slug":"$slug"}"""
+        }
+
+    @Test
+    fun `PUT edit changes the slug, and the post answers at its new address and its old one`() {
+        putSlug("2026/02/a-better-address").andExpect {
+            status { isOk() }
+            jsonPath("$.slug") { value("2026/02/a-better-address") }
+        }
+
+        for (path in listOf("/posts/2026/2/a-better-address", "/posts/2026/2/draft-for-admin")) {
+            mockMvc
+                .get(path) { header("Authorization", "Bearer $adminToken") }
+                .andExpect {
+                    status { isOk() }
+                    // The old address answers with the canonical slug, so a client can redirect.
+                    jsonPath("$.slug") { value("2026/02/a-better-address") }
+                }
+        }
+    }
+
+    @Test
+    fun `PUT edit to a slug another post uses is a 400 saying so`() {
+        val other =
+            postRepository.save(
+                Post(
+                    title = "Other",
+                    markdownSource = "Other.",
+                    renderedHtml = "<p>Other.</p>",
+                    excerpt = "Other.",
+                    status = PostStatus.DRAFT,
+                    author = regularUser,
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                )
+            )
+        slugRepository.save(Slug(path = "2026/02/taken", post = other, canonical = true))
+
+        putSlug("2026/02/taken").andExpect {
+            status { isBadRequest() }
+            jsonPath("$.detail") { value("Slug already in use") }
+        }
+        assertEquals("2026/02/draft-for-admin", slugRepository.findCanonical(draftPost.id)?.path)
+    }
+
     @Test
     fun `PUT approve by non-admin returns 403`() {
         mockMvc
