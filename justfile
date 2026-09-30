@@ -190,7 +190,8 @@ release level="patch":
     trap 'status=$?; if [[ $status -ne 0 && $restore -eq 1 ]]; then git checkout -- "$config_file"; echo "Release failed; nothing was published, and $config_file is restored to $current." >&2; fi' EXIT
 
     echo "[1/3] Building and testing $next"
-    {{maven}} clean verify
+    # mvnw, not mvnd: mvnd's parallel modules starve timing-sensitive tests (Mattermost).
+    ./mvnw clean verify
     echo "[2/3] Building the image"
     just _image "$next" cache
     echo "[3/3] Publishing"
