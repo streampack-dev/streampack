@@ -62,6 +62,30 @@ class OpenApiGeneratorTest {
             }
         }
 
+        // A page is a post's ContentDetail, typed like getPostBySlug, so clients get it typed
+        // (#90).
+        val page = root.at("/paths/~1pages~1{slug}/get")
+        check(page.at("/operationId").asText() == "getPage") {
+            "GET /pages/{slug} operationId: $page"
+        }
+        check(page.at("/tags").toString().contains("\"Pages\"")) { "GET /pages/{slug} tag: $page" }
+        check(
+            page
+                .at("/responses/200/content")
+                .toString()
+                .contains("#/components/schemas/ContentDetail")
+        ) {
+            "GET /pages/{slug} 200 should be a ContentDetail: ${page.at("/responses/200")}"
+        }
+        check(
+            page
+                .at("/responses/404/content")
+                .toString()
+                .contains("#/components/schemas/ProblemDetail")
+        ) {
+            "GET /pages/{slug} 404 should be a ProblemDetail: ${page.at("/responses/404")}"
+        }
+
         // Replace random test port with a stable placeholder
         val servers = mapper.createArrayNode()
         val server = mapper.createObjectNode()
