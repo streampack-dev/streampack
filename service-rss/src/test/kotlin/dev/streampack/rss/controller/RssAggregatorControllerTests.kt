@@ -69,6 +69,7 @@ class RssAggregatorControllerTests {
                         guid = "bytecode-1",
                         link = "https://bytecode.news/posts/spring-signals",
                         title = "Spring Signals",
+                        summary = "What changed in Spring this week.",
                         publishedAt = Instant.parse("2026-04-16T12:00:00Z"),
                     )
                 )
@@ -125,6 +126,9 @@ class RssAggregatorControllerTests {
             jsonPath("$.items[1].title") { value("Spring Release Notes") }
             jsonPath("$.items[2].id") { value(bytecodeSpringId.toString()) }
             jsonPath("$.items[2].title") { value("Spring Signals") }
+            // Each item's summary, when its feed gave one (#98).
+            jsonPath("$.items[2].summary") { value("What changed in Spring this week.") }
+            jsonPath("$.items[0].summary") { doesNotExist() }
             jsonPath("$.items[3].title") { value("Kotlin Roundup") }
             jsonPath("$.totalCount") { value(4) }
         }

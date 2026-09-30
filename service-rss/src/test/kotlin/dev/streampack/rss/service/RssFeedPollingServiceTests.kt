@@ -269,6 +269,34 @@ class RssFeedPollingServiceTests {
     }
 
     @Test
+    fun `a polled entry keeps its summary, as plain text`() {
+        val feed = createFeed("Summaries", "/summaries.xml")
+        httpServer.createContext("/summaries.xml") { exchange ->
+            val rss =
+                """<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel>
+                <title>Summaries</title><link>http://example.com</link><description>d</description>
+                <item><title>With one</title><link>http://example.com/s/1</link><guid>http://example.com/s/1</guid>
+                <description>&lt;p&gt;What it &lt;b&gt;says&lt;/b&gt;.&lt;/p&gt;</description></item>
+                <item><title>Without</title><link>http://example.com/s/2</link><guid>http://example.com/s/2</guid></item>
+                </channel></rss>"""
+            exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(rss.toByteArray()) }
+        }
+
+        pollingService.pollFeed(feed)
+
+        val entries =
+            entryRepository
+                .findByFeedAndGuidIn(
+                    feed,
+                    listOf("http://example.com/s/1", "http://example.com/s/2"),
+                )
+                .associateBy { it.guid }
+        assertEquals("What it says.", entries["http://example.com/s/1"]?.summary)
+        assertEquals(null, entries["http://example.com/s/2"]?.summary)
+    }
+
+    @Test
     fun `feed fetch failure is handled gracefully`() {
         val feed1 = createFeed("Failing Feed", "/fail.xml")
         val feed2 = createFeed("Working Feed", "/work.xml")
