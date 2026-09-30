@@ -78,4 +78,41 @@ class RenderedHtmlSanitizerTests {
         assertEquals("", sanitizer.sanitize(""))
         assertEquals("", sanitizer.sanitize("   "))
     }
+
+    @Test
+    fun `admonition icons may reference the sprite, and nothing else`() {
+        val sanitizer = RenderedHtmlSanitizer()
+        fun kept(html: String) = sanitizer.sanitize(html)
+
+        assertTrue(
+            kept("<svg class=\"adm-icon\"><use xlink:href=\"#adm-note\"></use></svg>")
+                .contains("#adm-note")
+        )
+        assertTrue(
+            kept("<svg class=\"adm-icon\"><use href=\"#adm-tip\"></use></svg>").contains("#adm-tip")
+        )
+        for (bad in
+            listOf(
+                "https://evil.example/x.svg#adm-note",
+                "#other",
+                "javascript:alert(1)",
+                "#adm-note x",
+                "/x.svg#adm-note",
+            )) {
+            val result = kept("<svg><use href=\"$bad\"></use><use xlink:href=\"$bad\"></use></svg>")
+            assertFalse(result.contains("href"), "$bad -> $result")
+        }
+    }
+
+    @Test
+    fun `keeps a checkbox's name and a decorative icon's aria-hidden`() {
+        val result =
+            RenderedHtmlSanitizer()
+                .sanitize(
+                    "<input type=\"checkbox\" aria-label=\"Done\" disabled>" +
+                        "<svg class=\"adm-icon\" aria-hidden=\"true\"></svg>"
+                )
+        assertTrue(result.contains("aria-label=\"Done\""), result)
+        assertTrue(result.contains("aria-hidden=\"true\""), result)
+    }
 }

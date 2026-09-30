@@ -13,6 +13,7 @@ import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
 import java.net.URI
+import org.jsoup.Jsoup
 import org.springframework.stereotype.Service
 
 /** Converts markdown source to sanitized HTML and generates plain-text excerpts */
@@ -70,8 +71,43 @@ class MarkdownRenderingService(
         if (markdownSource.isBlank()) return ""
         val document = parser.parse(markdownSource)
         val html = renderer.render(document).trim()
-        return renderedHtmlSanitizer.sanitize(resolveFactoidWikiLinks(html))
+        return renderedHtmlSanitizer.sanitize(refine(resolveFactoidWikiLinks(html)))
     }
+
+    /**
+     * What flexmark writes, made accessible and valid (#95): each task-list checkbox is named by
+     * its item's own text (not a nested list's), the admonition icons are hidden from screen
+     * readers as decoration, and a factoid link's target is percent-encoded once, so `[[spring
+     * boot]]` is `/factoids/spring%20boot`, not a URL with a raw space.
+     */
+    private fun refine(html: String): String {
+        if (
+            !html.contains("task-list-item-checkbox") &&
+                !html.contains("adm-icon") &&
+                !html.contains("/factoids/")
+        ) {
+            return html
+        }
+        val doc = Jsoup.parseBodyFragment(html)
+        doc.outputSettings().prettyPrint(false)
+        doc.select("input.task-list-item-checkbox").forEach { box ->
+            val item = box.closest("li") ?: return@forEach
+            val own = item.clone()
+            own.select("ul, ol").remove()
+            val name = own.text().replace('\u00a0', ' ').trim()
+            if (name.isNotEmpty()) box.attr("aria-label", name)
+        }
+        doc.select("svg.adm-icon").attr("aria-hidden", "true")
+        doc.select("a[href^=/factoids/]").forEach { link ->
+            val selector = decodeSelector(link.attr("href").removePrefix(FACTOID_PREFIX))
+            if (selector.isNotEmpty()) link.attr("href", FACTOID_PREFIX + encodeSelector(selector))
+        }
+        return doc.body().html()
+    }
+
+    private fun encodeSelector(selector: String): String =
+        java.net.URLEncoder.encode(selector, java.nio.charset.StandardCharsets.UTF_8)
+            .replace("+", "%20")
 
     /** Generate a plain-text excerpt by stripping markup and truncating at word boundary */
     fun excerpt(markdownSource: String, maxLength: Int = 400, maxSentences: Int = 3): String {
@@ -191,5 +227,9 @@ class MarkdownRenderingService(
         val attrs = if (mergedAttrs.isBlank()) "" else " $mergedAttrs"
         val titleAttr = if (title.isBlank()) "" else " title=\"${htmlEscape(title)}\""
         return "<a href=\"${htmlEscape(href)}\"$titleAttr$attrs>$innerHtml</a>"
+    }
+
+    companion object {
+        private const val FACTOID_PREFIX = "/factoids/"
     }
 }
