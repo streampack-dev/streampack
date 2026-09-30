@@ -58,6 +58,9 @@ streampack:
     anonymous-submission: ${ANONYMOUS_SUBMISSION:false}
     site-name: ${BLOG_SITE_NAME:Nevet}
     base-url: ${BLOG_BASE_URL:http://localhost:3001}
+    summary:
+      # The system prompt for admins' AI summaries (#102); empty uses the built-in editorial stance.
+      system-prompt: ${BLOG_SUMMARY_PROMPT:}
   karma:
     immune-subjects: ${KARMA_IMMUNE_SUBJECTS:nevet}
   weather:
