@@ -7,6 +7,9 @@ import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.Role
+import dev.streampack.core.model.UserPrincipal
+import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -22,11 +25,16 @@ class DeriveSummaryOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
 
-    private fun message(request: DeriveSummaryRequest) =
+    private fun message(request: DeriveSummaryRequest, user: UserPrincipal? = null) =
         MessageBuilder.withPayload(request)
             .setHeader(
                 Provenance.HEADER,
-                Provenance(protocol = Protocol.HTTP, serviceId = "blog-service", replyTo = "posts"),
+                Provenance(
+                    protocol = Protocol.HTTP,
+                    serviceId = "blog-service",
+                    replyTo = "posts",
+                    user = user,
+                ),
             )
             .build()
 
@@ -41,6 +49,19 @@ class DeriveSummaryOperationTests {
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val response = (result as OperationResult.Success).payload as DeriveSummaryResponse
+        assertTrue(response.summary.isNotBlank())
+        assertEquals("heuristic", response.source)
+    }
+
+    @Test
+    fun `without AI, even an admin gets the heuristic, and is told so`() {
+        val request =
+            DeriveSummaryRequest(title = "Summary Test", markdownSource = "Sentence one. Two.")
+        val admin = UserPrincipal(UUID.randomUUID(), "admin", "Admin", Role.ADMIN)
+        val result = eventGateway.process(message(request, admin))
+
+        val response = (result as OperationResult.Success).payload as DeriveSummaryResponse
+        assertEquals("heuristic", response.source)
         assertTrue(response.summary.isNotBlank())
     }
 

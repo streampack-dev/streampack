@@ -429,11 +429,12 @@ class PostController(
     }
 
     @Operation(
-        summary = "Derive a summary heuristically from unsaved draft content",
+        summary = "Derive a summary from unsaved draft content",
         description =
             "Returns a non-persistent summary generated from title + markdown content. " +
-                "Requires authentication. The returned value is the same text shape used for " +
-                "persisted excerpts unless manually overridden.",
+                "Requires authentication. For an admin, with AI enabled, the model writes it in " +
+                "the site's editorial voice (source=ai); otherwise it is the heuristic excerpt " +
+                "(source=heuristic), the same text shape used for persisted excerpts.",
         operationId = "deriveSummary",
     )
     @SecurityRequirement(name = "bearerAuth")

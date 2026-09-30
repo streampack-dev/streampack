@@ -53,6 +53,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `GITLAB_INSTANCE_<HOST>_TOKEN` | Per instance | Default API token for every project on a registered GitLab instance that has no token of its own. |
 | `ANTHROPIC_API_KEY` | Optional | Anthropic API key. |
 | `AI_ENABLED` | Optional | Enables AI-backed features. |
+| `BLOG_SUMMARY_PROMPT` | Optional | System prompt for admins' AI-derived post summaries. Empty uses the built-in stance: lead with the substance, never tease or bury the lede. |
 | `IRC_ENABLED` | Optional | Enables IRC adapter. |
 | `DISCORD_ENABLED` | Optional | Enables Discord adapter. |
 | `DISCORD_APPLICATION_ID` | Optional | Discord application id. |
