@@ -267,6 +267,85 @@ class EditContentOperationTests {
         assertEquals("2026/02/original-draft-title", detail.slug)
     }
 
+    // Admins edit a post's slug (#28): unique, canonical once changed, the old one kept as an
+    // alias.
+
+    private fun editSlug(post: Post, slug: String?) =
+        eventGateway.process(
+            editMessage(
+                EditContentRequest(post.id, post.title, post.markdownSource, slug = slug),
+                admin,
+            )
+        )
+
+    @Test
+    fun `an admin changes a slug, which becomes the canonical one the post is found by`() {
+        val result = editSlug(draftPost, "2026/02/a-better-address")
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            "2026/02/a-better-address",
+            ((result as OperationResult.Success).payload as ContentDetail).slug,
+        )
+        assertEquals("2026/02/a-better-address", slugRepository.findCanonical(draftPost.id)?.path)
+        assertEquals(draftPost.id, slugRepository.resolve("2026/02/a-better-address")?.post?.id)
+    }
+
+    @Test
+    fun `the old slug still finds the post, as an alias, so old addresses keep working`() {
+        editSlug(draftPost, "2026/02/a-better-address")
+
+        val old = slugRepository.resolve("2026/02/original-draft-title")
+        assertEquals(draftPost.id, old?.post?.id)
+        assertEquals(false, old?.canonical)
+    }
+
+    @Test
+    fun `a slug another post uses is refused, and nothing changes`() {
+        val result = editSlug(draftPost, "2026/02/approved-post")
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Slug already in use", (result as OperationResult.Error).message)
+        assertEquals(
+            "2026/02/original-draft-title",
+            slugRepository.findCanonical(draftPost.id)?.path,
+        )
+        assertEquals(approvedPost.id, slugRepository.resolve("2026/02/approved-post")?.post?.id)
+    }
+
+    @Test
+    fun `a slug another post once had is refused too`() {
+        editSlug(approvedPost, "2026/02/approved-post-renamed")
+
+        val result = editSlug(draftPost, "2026/02/approved-post")
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Slug already in use", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `a blank slug is refused`() {
+        val result = editSlug(draftPost, "   ")
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Slug is required", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `going back to the post's own earlier slug makes it canonical again, and only it`() {
+        editSlug(draftPost, "2026/02/a-better-address")
+
+        val result = editSlug(draftPost, "2026/02/original-draft-title")
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            "2026/02/original-draft-title",
+            slugRepository.findCanonical(draftPost.id)?.path,
+        )
+        assertEquals(false, slugRepository.resolve("2026/02/a-better-address")?.canonical)
+        assertEquals(draftPost.id, slugRepository.resolve("2026/02/a-better-address")?.post?.id)
+    }
+
     @Test
     fun `edit falls back excerpt to title when markdown has no plain text`() {
         val request = EditContentRequest(draftPost.id, "Fallback Edit Title", "***")
