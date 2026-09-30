@@ -2,7 +2,9 @@
 package dev.streampack.blog.service
 
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Attribute
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import org.jsoup.safety.Safelist
 import org.springframework.stereotype.Component
 
@@ -24,11 +26,11 @@ import org.springframework.stereotype.Component
 class RenderedHtmlSanitizer {
 
     private val safelist: Safelist =
-        Safelist.relaxed()
+        IconReferences(Safelist.relaxed())
             // Structural and inline elements emitted by flexmark extensions that relaxed() omits.
             .addTags("hr", "del", "s", "ins", "aside", "input", "section", "details", "summary")
             // Task list checkboxes; raw <input> from authors is already escaped upstream.
-            .addAttributes("input", "type", "checked", "disabled", "readonly")
+            .addAttributes("input", "type", "checked", "disabled", "readonly", "aria-label")
             // Footnotes, admonitions, task lists, and fenced code rely on class and id hooks.
             .addAttributes(":all", "class", "id")
             .addAttributes("a", "rel", "target")
@@ -37,12 +39,11 @@ class RenderedHtmlSanitizer {
             // Admonition icon sheet: <svg class="adm-hidden"><symbol id="adm-note"><path d=".."/>
             // and per-block <svg class="adm-icon"><use xlink:href="#adm-note"/>.
             .addTags("svg", "symbol", "path", "use")
-            .addAttributes("svg", "xmlns", "viewBox", "viewbox", "width", "height")
+            .addAttributes("svg", "xmlns", "viewBox", "viewbox", "width", "height", "aria-hidden")
             .addAttributes("symbol", "viewBox", "viewbox")
             .addAttributes("path", "d", "fill", "stroke", "stroke-width")
+            // Checked by IconReferences: same-document #adm-* fragments only (#95).
             .addAttributes("use", "href", "xlink:href")
-            .addProtocols("use", "href", "#")
-            .addProtocols("use", "xlink:href", "#")
             .removeProtocols("a", "href", "ftp")
             .addProtocols("a", "href", "http", "https", "mailto", "#")
             .addProtocols("img", "src", "http", "https")
@@ -57,7 +58,25 @@ class RenderedHtmlSanitizer {
         return Jsoup.clean(html, RELATIVE_BASE, safelist, outputSettings).trim()
     }
 
+    /**
+     * The safelist, admitting a `<use>` reference only when it names one of the admonition sprite's
+     * symbols in the same document. jsoup's protocol check resolves the value against the base
+     * first, so a `#` protocol never matched and every icon was emptied (#95); this checks the
+     * value as written instead, and refuses anything else, other fragments and external sheets
+     * included.
+     */
+    private class IconReferences(base: Safelist) : Safelist(base) {
+        override fun isSafeAttribute(tagName: String, el: Element, attr: Attribute): Boolean {
+            if (tagName == "use" && (attr.key == "href" || attr.key == "xlink:href")) {
+                return ICON.matches(attr.value)
+            }
+            return super.isSafeAttribute(tagName, el, attr)
+        }
+    }
+
     companion object {
+        private val ICON = Regex("""#adm-[a-z0-9-]+""")
+
         /**
          * jsoup resolves relative URLs against a base to test their scheme and drops them when no
          * base is given. With preserveRelativeLinks the original relative value is what gets kept,

@@ -182,9 +182,46 @@ class MarkdownRenderingServiceTests {
     }
 
     @Test
-    fun `factoid wikilink selector preserves spaces`() {
+    fun `factoid wikilink selector preserves spaces, percent-encoded`() {
+        // Not rewritten to hyphens, and a valid URL (#95).
         val result = markdownRenderingService.render("See [[spring boot]] for details.")
-        assertTrue(result.contains("<a href=\"/factoids/spring boot\">spring boot</a>"))
+        assertTrue(result.contains("<a href=\"/factoids/spring%20boot\">spring boot</a>"), result)
+    }
+
+    @Test
+    fun `factoid wikilink targets are encoded once, whatever they hold`() {
+        val result =
+            markdownRenderingService.render("See [[the JVM|jvm tuning & gc]] and [[a%20b]].")
+        assertTrue(result.contains("href=\"/factoids/jvm%20tuning%20%26%20gc\""), result)
+        assertTrue(result.contains("href=\"/factoids/a%20b\""), result)
+    }
+
+    @Test
+    fun `task list checkboxes are named by their item`() {
+        // WCAG's label rule: a screen reader announces the box with its item's text (#95).
+        val result =
+            markdownRenderingService.render("- [x] Done\n- [ ] Todo **soon**\n    - [ ] Nested")
+        assertTrue(result.contains("aria-label=\"Done\""), result)
+        assertTrue(result.contains("aria-label=\"Todo soon\""), result)
+        assertTrue(result.contains("aria-label=\"Nested\""), result)
+        assertFalse(result.contains("aria-label=\"Todo soon Nested\""), result)
+    }
+
+    @Test
+    fun `admonition icons point at the sprite, and are hidden from screen readers`() {
+        val result = markdownRenderingService.render("!!! warning \"Careful\"\n    Hot.")
+        // The sanitizer used to strip the reference, leaving every icon empty (#95).
+        assertTrue(
+            Regex("""<use (xlink:)?href="#adm-warning"""").containsMatchIn(result),
+            result,
+        )
+        assertTrue(
+            Regex(
+                    """<svg[^>]*class="adm-icon"[^>]*aria-hidden="true"|<svg[^>]*aria-hidden="true"[^>]*class="adm-icon""""
+                )
+                .containsMatchIn(result),
+            result,
+        )
     }
 
     @Test
