@@ -74,6 +74,7 @@ class RssAggregatorService(
             guid = guid,
             link = link,
             title = title,
+            summary = summary,
             publishedAt = publishedAt,
             receivedAt = createdAt,
         )

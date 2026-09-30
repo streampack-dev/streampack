@@ -128,6 +128,7 @@ class RssFeedPollingService(
             guid = guid,
             link = link,
             title = title.take(500),
+            summary = EntrySummary.of(syndEntry),
             publishedAt = publishedAt,
         )
     }

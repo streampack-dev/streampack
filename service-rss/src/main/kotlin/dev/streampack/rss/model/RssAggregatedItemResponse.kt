@@ -13,6 +13,8 @@ data class RssAggregatedItemResponse(
     val guid: String,
     val link: String,
     val title: String,
+    /** The feed's own summary of the item, as plain text; absent when it gave none (#98). */
+    val summary: String? = null,
     val publishedAt: Instant?,
     val receivedAt: Instant,
 )

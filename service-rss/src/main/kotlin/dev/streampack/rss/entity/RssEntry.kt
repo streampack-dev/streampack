@@ -23,6 +23,8 @@ data class RssEntry(
     @Column(nullable = false, length = 2048) val guid: String = "",
     @Column(nullable = false, length = 2048) val link: String = "",
     @Column(nullable = false, length = 500) val title: String = "",
+    /** The feed's own summary of the entry, as plain text (#98); null when it gave none. */
+    @Column(length = 500) val summary: String? = null,
     @Column val publishedAt: Instant? = null,
     @Column(nullable = false) val accessCount: Long = 0,
     @Column val lastAccessedAt: Instant? = null,
