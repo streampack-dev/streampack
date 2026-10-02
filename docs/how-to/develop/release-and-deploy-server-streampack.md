@@ -110,7 +110,7 @@ operation, and service each contain their POM, main JAR, and `-sources.jar`.
 ## Use the Release Helper
 
 The repository provides a shortcut that calculates a semantic version, updates
-`.mvn/maven.config`, and invokes Maven `deploy`:
+`.mvn/maven.config`, builds and tests it, deploys the Maven artifacts, and pushes the server image:
 
 ```bash
 just release          # patch by default
@@ -122,10 +122,21 @@ just release major
 For example, when the current version is `1.2.9`, `just release patch` publishes `1.2.10`. If the
 current value ends in `-SNAPSHOT`, the suffix is removed before calculating the next version.
 
-The helper does not switch branches, pull, require a clean worktree, commit the version change,
-create a Git tag, or publish the container image. It updates the version before Maven runs, so a
-failed deployment leaves the new value in `.mvn/maven.config`; diagnose the failure and retry that
-same version only if Nexus did not accept a release artifact.
+It releases only from `main`, up to date with `origin/main`: on any other branch, or behind
+`origin`, it stops before changing anything. It doesn't commit the new version, create a Git tag,
+or push. If the build or deploy fails, `.mvn/maven.config` is restored; if only the image push
+fails, the version is kept so the image can be pushed by hand (`just image <version>`).
+
+### The Full Release
+
+A full release is the helper, then the version committed and pushed:
+
+```bash
+just release && git add .mvn && git commit -m "updating release version" && git push
+```
+
+`just full-release` does exactly that, each step only if the one before it worked
+(`just full-release minor` and `just full-release major` too).
 
 ## Publish the Server Container
 

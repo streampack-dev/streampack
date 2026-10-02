@@ -217,3 +217,12 @@ release level="patch": _on-main
       exit 1
     fi
     echo "Released $next: the artifacts are in Nexus and the image is pushed. Commit $config_file."
+
+# The whole release, as it's done from the shell: release, then commit the new version in .mvn and
+# push it. Each step runs only if the one before it worked.
+full-release level="patch":
+    just release {{level}}
+    git add .mvn
+    git commit -m "updating release version"
+    git push
+
