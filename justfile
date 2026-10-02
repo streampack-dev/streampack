@@ -146,6 +146,21 @@ _image version mode:
       echo "Pushed ${image}:${version}$([[ "${DOCKER_PUSH_LATEST:-true}" == "true" ]] && printf ' and :latest')"
     fi
 
+# Releases come from main, up to date with origin's: never from a feature branch.
+_on-main:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    branch="$(git branch --show-current)"
+    if [[ "$branch" != "main" ]]; then
+      echo "Release from main, not ${branch:-a detached HEAD}." >&2
+      exit 1
+    fi
+    git fetch -q origin main
+    if [[ -n "$(git rev-list HEAD..origin/main)" ]]; then
+      echo "main is behind origin/main. Pull first." >&2
+      exit 1
+    fi
+
 # A -SNAPSHOT version releases as itself first (0.1.0-SNAPSHOT -> 0.1.0); after that, level is
 # patch, minor or major. Two phases, then publishing (#105): build and test every module, then
 # build the image for every platform; only if both succeed are the artifacts deployed to Nexus
@@ -153,7 +168,7 @@ _image version mode:
 # .mvn/maven.config back, so a retry doesn't bump again; a failed image push after Nexus took the
 # artifacts keeps the version, since Nexus won't take a release twice.
 # Release: bump the version in .mvn/maven.config, deploy the artifacts and push the image
-release level="patch":
+release level="patch": _on-main
     #!/usr/bin/env bash
     set -euo pipefail
     level="{{level}}"
