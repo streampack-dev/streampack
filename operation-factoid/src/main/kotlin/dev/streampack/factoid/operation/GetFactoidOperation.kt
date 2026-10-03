@@ -127,9 +127,16 @@ class GetFactoidOperation(
         val provenance = message.headers[Provenance.HEADER] as? Provenance
         val senderNick =
             message.headers["nick"] as? String ?: provenance?.user?.username ?: "unknown"
-        factoidService.deleteSelector(selector)
-        logger.debug("Factoid '{}' forgotten by {}", selector, senderNick)
-        return OperationResult.Success("ok, forgot $selector.")
+        return when (val result = factoidService.deleteSelector(selector)) {
+            is FactoidService.DeleteResult.Ok -> {
+                logger.debug("Factoid '{}' forgotten by {}", selector, senderNick)
+                OperationResult.Success("ok, forgot $selector.")
+            }
+            is FactoidService.DeleteResult.Locked ->
+                OperationResult.Error("Factoid '${result.selector}' is locked.")
+            is FactoidService.DeleteResult.NotFound ->
+                OperationResult.Error("Factoid '$selector' not found.")
+        }
     }
 
     /** Renders all includeInSummary attributes in ordinal order */

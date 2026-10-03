@@ -11,6 +11,7 @@ import dev.streampack.factoid.repository.FactoidRepository
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -473,6 +474,16 @@ class FactoidOperationTests {
         eventGateway.process(msg("note=(just a note)"))
         val result = eventGateway.process(msg("note"))
         assertSuccess(result, "note is (just a note).")
+    }
+
+    @Test
+    fun `a locked factoid can't be forgotten, either way it's asked`() {
+        eventGateway.process(msg("keepsafe=Not to be lost"))
+        eventGateway.process(msg("keepsafe.lock", role = Role.ADMIN))
+
+        assertError(eventGateway.process(msg("forget keepsafe")))
+        assertError(eventGateway.process(msg("keepsafe.forget")))
+        assertNotNull(factoidRepository.findBySelectorIgnoreCase("keepsafe"))
     }
 
     // -- Forget verb command --
