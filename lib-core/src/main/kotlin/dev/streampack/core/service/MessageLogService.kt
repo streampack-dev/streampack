@@ -6,6 +6,7 @@ import dev.streampack.core.model.MessageDirection
 import dev.streampack.core.repository.MessageLogRepository
 import java.time.Instant
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 
@@ -55,6 +56,20 @@ class MessageLogService(private val repository: MessageLogRepository) {
                 PageRequest.of(0, limit),
             )
             .content
+    }
+
+    /**
+     * Messages in one provenance containing [text], ignoring case, newest first: page [page] of
+     * [size]. The text is matched as written: `%`, `_` and `\` in it are literal.
+     */
+    fun searchMessages(
+        provenanceUri: String,
+        text: String,
+        page: Int,
+        size: Int,
+    ): Page<MessageLog> {
+        val literal = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return repository.searchContent(provenanceUri, "%$literal%", PageRequest.of(page, size))
     }
 
     /** Returns the most recent message for a provenance, if any. */
