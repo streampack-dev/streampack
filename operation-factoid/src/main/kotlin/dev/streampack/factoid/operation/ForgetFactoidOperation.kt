@@ -67,14 +67,20 @@ class ForgetFactoidOperation(private val factoidService: FactoidService) :
         }
     }
 
-    /** Deletes an entire factoid and all its attributes */
+    /** Deletes an entire factoid and all its attributes, unless it's locked */
     private fun handleFullForget(selector: String, senderNick: String): OperationOutcome {
-        val attributes = factoidService.findBySelector(selector)
-        if (attributes.isEmpty()) {
+        if (factoidService.findBySelector(selector).isEmpty()) {
             return OperationResult.Error("Factoid '$selector' not found.")
         }
-        factoidService.deleteSelector(selector)
-        logger.debug("Factoid '{}' forgotten by {}", selector, senderNick)
-        return OperationResult.Success("ok, forgot $selector.")
+        return when (val result = factoidService.deleteSelector(selector)) {
+            is FactoidService.DeleteResult.Ok -> {
+                logger.debug("Factoid '{}' forgotten by {}", selector, senderNick)
+                OperationResult.Success("ok, forgot $selector.")
+            }
+            is FactoidService.DeleteResult.Locked ->
+                OperationResult.Error("Factoid '${result.selector}' is locked.")
+            is FactoidService.DeleteResult.NotFound ->
+                OperationResult.Error("Factoid '$selector' not found.")
+        }
     }
 }

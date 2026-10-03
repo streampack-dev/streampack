@@ -3,6 +3,7 @@ package dev.streampack.factoid.operation
 
 import dev.streampack.core.extensions.compress
 import dev.streampack.core.integration.EventGateway
+import dev.streampack.core.integration.forFollowUp
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -46,7 +47,7 @@ class SetFactoidVerbOperation(
             is FactoidService.SaveResult.Ok -> {
                 eventGateway.send(
                     MessageBuilder.withPayload(FactoidUpdatedEvent(payload.selector))
-                        .copyHeadersIfAbsent(message.headers)
+                        .copyHeadersIfAbsent(message.headers.forFollowUp())
                         .build()
                 )
                 logger.debug("Factoid '{}' updated by {}", payload.selector, senderNick)

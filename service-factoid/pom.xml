@@ -21,9 +21,19 @@
             <groupId>dev.streampack</groupId>
             <artifactId>operation-factoid</artifactId>
         </dependency>
+        <!-- The signed-in caller, from the access token, for the write endpoints. -->
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-web</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- The endpoints' OpenAPI descriptions (summaries, errors, auth). -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>

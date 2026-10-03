@@ -633,6 +633,22 @@
         "required" : [ "factoids", "page", "totalCount", "totalPages" ],
         "type" : "object"
       },
+      "FactoidSetHttpRequest" : {
+        "properties" : {
+          "attribute" : {
+            "description" : "The attribute to set: text (the default), urls, tags, languages, type, seealso, see or maven",
+            "example" : "text",
+            "type" : [ "string", "null" ]
+          },
+          "value" : {
+            "description" : "The attribute's new value",
+            "example" : "a string-searching algorithm",
+            "type" : "string"
+          }
+        },
+        "required" : [ "value" ],
+        "type" : "object"
+      },
       "FactoidSummaryResponse" : {
         "properties" : {
           "accessCount" : {
@@ -2462,10 +2478,96 @@
             "description" : "OK"
           }
         },
-        "tags" : [ "factoid-controller" ]
+        "tags" : [ "Factoids" ]
       }
     },
     "/factoids/{selector}" : {
+      "delete" : {
+        "description" : "As chat's `forget selector` (or `forget selector.attribute`), as the signed-in user. A locked factoid is refused.",
+        "operationId" : "forget",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "selector",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "attribute",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Forgotten"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "An attribute that can't be forgotten"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not signed in"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Factoid changes aren't enabled for the web"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such factoid, or no such attribute on it"
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The factoid is locked"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Forget a factoid, or one of its attributes",
+        "tags" : [ "Factoids" ]
+      },
       "get" : {
         "operationId" : "get",
         "parameters" : [ {
@@ -2488,7 +2590,214 @@
             "description" : "OK"
           }
         },
-        "tags" : [ "factoid-controller" ]
+        "tags" : [ "Factoids" ]
+      },
+      "put" : {
+        "description" : "Sets one attribute (the text, unless another is named) as chat's `selector=value` does, as the signed-in user. A locked factoid is refused.",
+        "operationId" : "set",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "selector",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FactoidSetHttpRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FactoidDetailResponse"
+                }
+              }
+            },
+            "description" : "Updated; the factoid as it now stands"
+          },
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FactoidDetailResponse"
+                }
+              }
+            },
+            "description" : "Created; the new factoid"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No value, or an attribute that can't be set"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not signed in"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Factoid changes aren't enabled for the web"
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The factoid is locked"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Set a factoid's attribute, creating the factoid if it's new",
+        "tags" : [ "Factoids" ]
+      }
+    },
+    "/factoids/{selector}/lock" : {
+      "delete" : {
+        "operationId" : "unlock",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "selector",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Unlocked"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not signed in"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not an admin"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such factoid"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Unlock a factoid (admins)",
+        "tags" : [ "Factoids" ]
+      },
+      "put" : {
+        "operationId" : "lock",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "selector",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Locked"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not signed in"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not an admin"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such factoid"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Lock a factoid against changes (admins)",
+        "tags" : [ "Factoids" ]
       }
     },
     "/features" : {

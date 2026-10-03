@@ -103,17 +103,18 @@ class FactoidService(
         return SaveResult.Ok
     }
 
-    /** Deletes a factoid and all its attributes */
+    /** Deletes a factoid and all its attributes; respects lock, as every other change does */
     @Transactional
-    fun deleteSelector(selector: String) {
-        val factoid = factoidRepository.findBySelectorIgnoreCase(selector)
-        if (factoid != null) {
-            val attributes = factoidAttributeRepository.findByFactoidSelectorIgnoreCase(selector)
-            factoidAttributeRepository.deleteAll(attributes)
-            factoidAttributeRepository.flush()
-            factoidRepository.delete(factoid)
-            factoidRepository.flush()
-        }
+    fun deleteSelector(selector: String): DeleteResult {
+        val factoid =
+            factoidRepository.findBySelectorIgnoreCase(selector) ?: return DeleteResult.NotFound
+        if (factoid.locked) return DeleteResult.Locked(selector)
+        val attributes = factoidAttributeRepository.findByFactoidSelectorIgnoreCase(selector)
+        factoidAttributeRepository.deleteAll(attributes)
+        factoidAttributeRepository.flush()
+        factoidRepository.delete(factoid)
+        factoidRepository.flush()
+        return DeleteResult.Ok
     }
 
     /** Deletes a single attribute from a factoid; respects lock */
@@ -240,7 +241,7 @@ class FactoidService(
         data class Locked(val selector: String) : SaveResult
     }
 
-    /** Result of a delete-attribute attempt */
+    /** Result of a delete attempt, of a whole factoid or one attribute */
     sealed interface DeleteResult {
         data object Ok : DeleteResult
 
