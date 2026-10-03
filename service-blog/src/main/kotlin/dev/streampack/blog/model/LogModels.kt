@@ -37,7 +37,8 @@ data class LogSearchHit(
 /** One page of a channel's search results, newest first. */
 data class LogSearchResponse(
     val provenanceUri: String,
-    val query: String,
+    val query: String?,
+    val sender: String?,
     val page: Int,
     val size: Int,
     val totalCount: Long,

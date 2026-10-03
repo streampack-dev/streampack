@@ -128,10 +128,12 @@ class LogController(
     @Operation(
         summary = "Search one channel's logs",
         description =
-            "Lines in one channel whose text contains `q`, ignoring case, newest first. Only a " +
-                "channel the caller may browse is searched; any other is a 404, as for the day " +
-                "logs, so a search can't reveal that a hidden channel exists. `q` is matched as " +
-                "written, between $MIN_QUERY and $MAX_QUERY characters.",
+            "Lines in one channel whose text contains `q`, ignoring case, and written by " +
+                "`sender` (a nick, ignoring case), newest first. Give `q`, `sender`, or both: " +
+                "`sender` alone lists everything that person said there. Only a channel the " +
+                "caller may browse is searched; any other is a 404, as for the day logs, so a " +
+                "search can't reveal that a hidden channel exists. `q` is matched as written, " +
+                "between $MIN_QUERY and $MAX_QUERY characters.",
     )
     @ApiResponse(
         responseCode = "200",
@@ -140,7 +142,7 @@ class LogController(
     )
     @ApiResponse(
         responseCode = "400",
-        description = "A missing, short or long query, or a bad page or size",
+        description = "Neither a query nor a sender, a short or long query, or a bad page or size",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
     @ApiResponse(
@@ -157,6 +159,7 @@ class LogController(
     fun search(
         @RequestParam provenance: String,
         @RequestParam(required = false) q: String?,
+        @RequestParam(required = false) sender: String?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "50") size: Int,
         httpRequest: HttpServletRequest,
@@ -165,15 +168,20 @@ class LogController(
         if (provenance !in authorizedChannelProvenances(user)) {
             return notFound("Log provenance not found")
         }
-        val query = q?.trim().orEmpty()
-        if (query.length < MIN_QUERY || query.length > MAX_QUERY) {
+        val query = q?.trim()?.takeIf { it.isNotEmpty() }
+        val nick = sender?.trim()?.takeIf { it.isNotEmpty() }
+        if (query == null && nick == null)
+            return badRequest("Search for some text, a sender, or both.")
+        if (query != null && (query.length < MIN_QUERY || query.length > MAX_QUERY)) {
             return badRequest("Search for $MIN_QUERY to $MAX_QUERY characters.")
         }
+        if (nick != null && nick.length > MAX_SENDER)
+            return badRequest("A sender is at most $MAX_SENDER characters.")
         if (page < 0) return badRequest("The page can't be negative.")
         if (size < 1 || size > MAX_SIZE) return badRequest("The size is 1 to $MAX_SIZE.")
         if (!searchAllowed(user)) return tooManyRequests("Too many searches; try again shortly.")
 
-        val found = messageLogService.searchMessages(provenance, query, page, size)
+        val found = messageLogService.searchMessages(provenance, query, nick, page, size)
         val hits =
             found.content.map {
                 LogSearchHit(
@@ -188,6 +196,7 @@ class LogController(
             LogSearchResponse(
                 provenanceUri = provenance,
                 query = query,
+                sender = nick,
                 page = page,
                 size = size,
                 totalCount = found.totalElements,
@@ -255,6 +264,8 @@ class LogController(
         const val MIN_QUERY = 3
         const val MAX_QUERY = 200
         const val MAX_SIZE = 100
+        /** A sender's longest, as the log holds it. */
+        const val MAX_SENDER = 255
         private val PER_USER = ThrottlePolicy(30, Duration.ofMinutes(1))
         private val ANONYMOUS = ThrottlePolicy(60, Duration.ofMinutes(1))
     }

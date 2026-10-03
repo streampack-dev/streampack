@@ -46,6 +46,54 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
     )
     fun searchContent(provenanceUri: String, pattern: String, pageable: Pageable): Page<MessageLog>
 
+    /** As [searchContent], only the lines [sender] wrote (the nick as logged, ignoring case). */
+    @Query(
+        value =
+            """
+            SELECT * FROM message_log
+            WHERE provenance_uri = :provenanceUri
+              AND lower(sender) = lower(:sender)
+              AND content ILIKE :pattern ESCAPE '\'
+            ORDER BY timestamp DESC, id DESC
+            """,
+        countQuery =
+            """
+            SELECT count(*) FROM message_log
+            WHERE provenance_uri = :provenanceUri
+              AND lower(sender) = lower(:sender)
+              AND content ILIKE :pattern ESCAPE '\'
+            """,
+        nativeQuery = true,
+    )
+    fun searchContentBySender(
+        provenanceUri: String,
+        sender: String,
+        pattern: String,
+        pageable: Pageable,
+    ): Page<MessageLog>
+
+    /**
+     * Every line [sender] wrote in one provenance (the nick as logged, ignoring case), newest
+     * first.
+     */
+    @Query(
+        value =
+            """
+            SELECT * FROM message_log
+            WHERE provenance_uri = :provenanceUri
+              AND lower(sender) = lower(:sender)
+            ORDER BY timestamp DESC, id DESC
+            """,
+        countQuery =
+            """
+            SELECT count(*) FROM message_log
+            WHERE provenance_uri = :provenanceUri
+              AND lower(sender) = lower(:sender)
+            """,
+        nativeQuery = true,
+    )
+    fun findBySender(provenanceUri: String, sender: String, pageable: Pageable): Page<MessageLog>
+
     /** Returns recent messages by a sender on a given protocol, case-insensitive */
     @Query(
         """

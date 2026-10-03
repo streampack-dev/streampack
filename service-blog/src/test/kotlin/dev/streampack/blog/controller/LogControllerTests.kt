@@ -159,10 +159,12 @@ class LogControllerTests {
         token: String? = null,
         page: Int? = null,
         size: Int? = null,
+        sender: String? = null,
     ) =
         mockMvc.get("/logs/search") {
             param("provenance", provenance)
             if (q != null) param("q", q)
+            if (sender != null) param("sender", sender)
             if (page != null) param("page", page.toString())
             if (size != null) param("size", size.toString())
             if (token != null) header("Authorization", "Bearer $token")
@@ -247,5 +249,27 @@ class LogControllerTests {
         search(visibleProv, "hello", token = userToken).andExpect { status { isTooManyRequests() } }
         // Another caller has their own allowance.
         search(visibleProv, "hello", token = adminToken).andExpect { status { isOk() } }
+    }
+
+    @Test
+    fun `search narrows to what one person said, or lists it all`() {
+        messageLogService.logInbound(visibleProv, "dreamreal", "the rover project is late")
+        messageLogService.logInbound(visibleProv, "grace", "rover, rover, send the rover over")
+        messageLogService.logInbound(visibleProv, "dreamreal", "lunch?")
+
+        search(visibleProv, "rover", sender = "DreamReal").andExpect {
+            status { isOk() }
+            jsonPath("$.sender") { value("DreamReal") }
+            jsonPath("$.totalCount") { value(1) }
+            jsonPath("$.hits[0].content") { value("the rover project is late") }
+        }
+        search(visibleProv, null, sender = "dreamreal").andExpect {
+            status { isOk() }
+            jsonPath("$.totalCount") { value(2) }
+            jsonPath("$.hits[0].content") { value("lunch?") }
+            jsonPath("$.hits[1].content") { value("the rover project is late") }
+        }
+        search(visibleProv, null, sender = "  ").andExpect { status { isBadRequest() } }
+        search(visibleProv, null, sender = "x".repeat(256)).andExpect { status { isBadRequest() } }
     }
 }

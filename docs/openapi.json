@@ -892,7 +892,10 @@
             "type" : "string"
           },
           "query" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
+          },
+          "sender" : {
+            "type" : [ "string", "null" ]
           },
           "size" : {
             "format" : "int32",
@@ -907,7 +910,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "hits", "page", "provenanceUri", "query", "size", "totalCount", "totalPages" ],
+        "required" : [ "hits", "page", "provenanceUri", "size", "totalCount", "totalPages" ],
         "type" : "object"
       },
       "LoginResponse" : {
@@ -3004,7 +3007,7 @@
     },
     "/logs/search" : {
       "get" : {
-        "description" : "Lines in one channel whose text contains `q`, ignoring case, newest first. Only a channel the caller may browse is searched; any other is a 404, as for the day logs, so a search can't reveal that a hidden channel exists. `q` is matched as written, between 3 and 200 characters.",
+        "description" : "Lines in one channel whose text contains `q`, ignoring case, and written by `sender` (a nick, ignoring case), newest first. Give `q`, `sender`, or both: `sender` alone lists everything that person said there. Only a channel the caller may browse is searched; any other is a 404, as for the day logs, so a search can't reveal that a hidden channel exists. `q` is matched as written, between 3 and 200 characters.",
         "operationId" : "search",
         "parameters" : [ {
           "in" : "query",
@@ -3016,6 +3019,13 @@
         }, {
           "in" : "query",
           "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "sender",
           "required" : false,
           "schema" : {
             "type" : "string"
@@ -3058,7 +3068,7 @@
                 }
               }
             },
-            "description" : "A missing, short or long query, or a bad page or size"
+            "description" : "Neither a query nor a sender, a short or long query, or a bad page or size"
           },
           "404" : {
             "content" : {
