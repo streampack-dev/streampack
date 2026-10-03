@@ -74,8 +74,9 @@ interface Operation {
 
     /**
      * Optional rate limit for this operation. When set, OperationService checks a token bucket
-     * before calling [execute]. If the bucket is empty, the operation is skipped as if it did not
-     * handle the message. Throttle is keyed per provenance URI.
+     * before calling [execute]. If the bucket is empty, the message is answered with an error and
+     * the chain ends there: the operation recognized it ([canHandle]), so no later operation may
+     * reinterpret it. Throttle is keyed per provenance URI.
      */
     val throttlePolicy: ThrottlePolicy?
         get() = null
