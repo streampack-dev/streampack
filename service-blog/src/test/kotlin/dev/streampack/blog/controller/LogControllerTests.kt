@@ -8,6 +8,7 @@ import dev.streampack.core.repository.ChannelControlOptionsRepository
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.MessageLogService
+import dev.streampack.core.service.ThrottleService
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestChannelConfiguration
 import java.time.Instant
@@ -31,6 +32,7 @@ class LogControllerTests {
     @Autowired lateinit var jwtService: JwtService
     @Autowired lateinit var optionsRepository: ChannelControlOptionsRepository
     @Autowired lateinit var messageLogService: MessageLogService
+    @Autowired lateinit var throttleService: ThrottleService
 
     private lateinit var adminToken: String
     private lateinit var userToken: String
@@ -39,6 +41,7 @@ class LogControllerTests {
 
     @BeforeEach
     fun setUp() {
+        throttleService.clear()
         val admin =
             userRepository.save(
                 User(
@@ -146,5 +149,127 @@ class LogControllerTests {
                 jsonPath("$.provenanceUri") { value(hiddenProv) }
                 jsonPath("$.entries") { isArray() }
             }
+    }
+
+    // -- Search (#101) --
+
+    private fun search(
+        provenance: String,
+        q: String?,
+        token: String? = null,
+        page: Int? = null,
+        size: Int? = null,
+        sender: String? = null,
+    ) =
+        mockMvc.get("/logs/search") {
+            param("provenance", provenance)
+            if (q != null) param("q", q)
+            if (sender != null) param("sender", sender)
+            if (page != null) param("page", page.toString())
+            if (size != null) param("size", size.toString())
+            if (token != null) header("Authorization", "Bearer $token")
+        }
+
+    @Test
+    fun `search finds a channel's lines containing the text, ignoring case, newest first`() {
+        messageLogService.logInbound(visibleProv, "carol", "Graal native images")
+        messageLogService.logInbound(visibleProv, "dave", "graalvm is fast")
+        messageLogService.logInbound(hiddenProv, "bob", "graal in secret")
+        val today = Instant.now().toString().substring(0, 10)
+
+        search(visibleProv, "GRAAL").andExpect {
+            status { isOk() }
+            jsonPath("$.provenanceUri") { value(visibleProv) }
+            jsonPath("$.totalCount") { value(2) }
+            jsonPath("$.hits.length()") { value(2) }
+            jsonPath("$.hits[0].content") { value("graalvm is fast") }
+            jsonPath("$.hits[0].sender") { value("dave") }
+            jsonPath("$.hits[0].day") { value(today) }
+            jsonPath("$.hits[1].content") { value("Graal native images") }
+        }
+    }
+
+    @Test
+    fun `search of a hidden channel is a 404 for readers and anonymous callers, and works for admins`() {
+        search(hiddenProv, "hello").andExpect { status { isNotFound() } }
+        search(hiddenProv, "hello", token = userToken).andExpect { status { isNotFound() } }
+        search(hiddenProv, "hello", token = adminToken).andExpect {
+            status { isOk() }
+            jsonPath("$.hits[0].content") { value("Hidden hello") }
+        }
+        search("irc://libera/alice", "hello").andExpect { status { isNotFound() } }
+    }
+
+    @Test
+    fun `search wants three to two hundred characters, and a sane page`() {
+        search(visibleProv, null).andExpect { status { isBadRequest() } }
+        search(visibleProv, " ab ").andExpect { status { isBadRequest() } }
+        search(visibleProv, "x".repeat(201)).andExpect { status { isBadRequest() } }
+        search(visibleProv, "hello", page = -1).andExpect { status { isBadRequest() } }
+        search(visibleProv, "hello", size = 0).andExpect { status { isBadRequest() } }
+        search(visibleProv, "hello", size = 101).andExpect { status { isBadRequest() } }
+    }
+
+    @Test
+    fun `search pages through its results`() {
+        repeat(5) { messageLogService.logInbound(visibleProv, "erin", "page item $it") }
+
+        search(visibleProv, "page item", page = 1, size = 2).andExpect {
+            status { isOk() }
+            jsonPath("$.totalCount") { value(5) }
+            jsonPath("$.totalPages") { value(3) }
+            jsonPath("$.page") { value(1) }
+            jsonPath("$.hits.length()") { value(2) }
+            jsonPath("$.hits[0].content") { value("page item 2") }
+        }
+    }
+
+    @Test
+    fun `search matches wildcard characters as written`() {
+        messageLogService.logInbound(visibleProv, "frank", "100% sure")
+        messageLogService.logInbound(visibleProv, "frank", "1000 sure")
+        messageLogService.logInbound(visibleProv, "frank", "a_b test")
+        messageLogService.logInbound(visibleProv, "frank", "axb test")
+
+        search(visibleProv, "0% s").andExpect {
+            jsonPath("$.totalCount") { value(1) }
+            jsonPath("$.hits[0].content") { value("100% sure") }
+        }
+        search(visibleProv, "a_b").andExpect {
+            jsonPath("$.totalCount") { value(1) }
+            jsonPath("$.hits[0].content") { value("a_b test") }
+        }
+    }
+
+    @Test
+    fun `search is limited for a signed-in caller`() {
+        repeat(30) {
+            search(visibleProv, "hello", token = userToken).andExpect { status { isOk() } }
+        }
+        search(visibleProv, "hello", token = userToken).andExpect { status { isTooManyRequests() } }
+        // Another caller has their own allowance.
+        search(visibleProv, "hello", token = adminToken).andExpect { status { isOk() } }
+    }
+
+    @Test
+    fun `search narrows to what one person said, or lists it all`() {
+        messageLogService.logInbound(visibleProv, "dreamreal", "the rover project is late")
+        messageLogService.logInbound(visibleProv, "grace", "rover, rover, send the rover over")
+        messageLogService.logInbound(visibleProv, "dreamreal", "lunch?")
+
+        search(visibleProv, "rover", sender = "DreamReal").andExpect {
+            status { isOk() }
+            jsonPath("$.sender") { value("DreamReal") }
+            jsonPath("$.totalCount") { value(1) }
+            jsonPath("$.hits[0].content") { value("the rover project is late") }
+        }
+        search(visibleProv, null, sender = "dreamreal").andExpect {
+            status { isOk() }
+            jsonPath("$.totalCount") { value(2) }
+            jsonPath("$.hits[0].content") { value("lunch?") }
+            jsonPath("$.hits[1].content") { value("the rover project is late") }
+        }
+        search(visibleProv, null, sender = "  ").andExpect { status { isBadRequest() } }
+        search(visibleProv, null, sender = "x".repeat(256)).andExpect { status { isBadRequest() } }
     }
 }

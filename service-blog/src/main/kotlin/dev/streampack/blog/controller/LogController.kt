@@ -5,13 +5,17 @@ import dev.streampack.blog.model.LogDayResponse
 import dev.streampack.blog.model.LogEntry
 import dev.streampack.blog.model.LogProvenanceListResponse
 import dev.streampack.blog.model.LogProvenanceSummary
+import dev.streampack.blog.model.LogSearchHit
+import dev.streampack.blog.model.LogSearchResponse
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
+import dev.streampack.core.model.ThrottlePolicy
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.ChannelControlOptionsRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.MessageLogService
+import dev.streampack.core.service.ThrottleService
 import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -19,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import java.time.Duration
 import java.time.LocalDate
 import java.time.ZoneOffset
 import org.springframework.http.HttpStatus
@@ -36,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController
 class LogController(
     private val channelOptionsRepository: ChannelControlOptionsRepository,
     private val messageLogService: MessageLogService,
+    private val throttleService: ThrottleService,
     jwtService: JwtService,
 ) : UserAwareController(jwtService) {
 
@@ -119,6 +125,100 @@ class LogController(
         return ResponseEntity.ok(LogDayResponse(provenance, targetDay.toString(), entries))
     }
 
+    @Operation(
+        summary = "Search one channel's logs",
+        description =
+            "Lines in one channel whose text contains `q`, ignoring case, and written by " +
+                "`sender` (a nick, ignoring case), newest first. Give `q`, `sender`, or both: " +
+                "`sender` alone lists everything that person said there. Only a channel the " +
+                "caller may browse is searched; any other is a 404, as for the day logs, so a " +
+                "search can't reveal that a hidden channel exists. `q` is matched as written, " +
+                "between $MIN_QUERY and $MAX_QUERY characters.",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "A page of matching lines",
+        content = [Content(schema = Schema(implementation = LogSearchResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Neither a query nor a sender, a short or long query, or a bad page or size",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Provenance not found or not authorized",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "429",
+        description = "Too many searches; try again shortly",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @GetMapping("/search", produces = ["application/json"])
+    fun search(
+        @RequestParam provenance: String,
+        @RequestParam(required = false) q: String?,
+        @RequestParam(required = false) sender: String?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "50") size: Int,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest)
+        if (provenance !in authorizedChannelProvenances(user)) {
+            return notFound("Log provenance not found")
+        }
+        val query = q?.trim()?.takeIf { it.isNotEmpty() }
+        val nick = sender?.trim()?.takeIf { it.isNotEmpty() }
+        if (query == null && nick == null)
+            return badRequest("Search for some text, a sender, or both.")
+        if (query != null && (query.length < MIN_QUERY || query.length > MAX_QUERY)) {
+            return badRequest("Search for $MIN_QUERY to $MAX_QUERY characters.")
+        }
+        if (nick != null && nick.length > MAX_SENDER)
+            return badRequest("A sender is at most $MAX_SENDER characters.")
+        if (page < 0) return badRequest("The page can't be negative.")
+        if (size < 1 || size > MAX_SIZE) return badRequest("The size is 1 to $MAX_SIZE.")
+        if (!searchAllowed(user)) return tooManyRequests("Too many searches; try again shortly.")
+
+        val found = messageLogService.searchMessages(provenance, query, nick, page, size)
+        val hits =
+            found.content.map {
+                LogSearchHit(
+                    timestamp = it.timestamp,
+                    day = it.timestamp.atZone(ZoneOffset.UTC).toLocalDate().toString(),
+                    sender = it.sender,
+                    content = it.content,
+                    direction = it.direction,
+                )
+            }
+        return ResponseEntity.ok(
+            LogSearchResponse(
+                provenanceUri = provenance,
+                query = query,
+                sender = nick,
+                page = page,
+                size = size,
+                totalCount = found.totalElements,
+                totalPages = found.totalPages,
+                hits = hits,
+            )
+        )
+    }
+
+    /**
+     * A search costs more than a page of a day's logs, so it's limited: a bucket for each signed-in
+     * caller, and one shared by everyone signed out. (Behind the proxy every anonymous caller has
+     * the same address, so a bucket per address would be the same shared one; per-person anonymous
+     * limits need forwarded client addresses, which streampack doesn't read.)
+     */
+    private fun searchAllowed(user: UserPrincipal?): Boolean =
+        if (user != null) {
+            throttleService.tryAcquire("log-search:user:${user.id}", PER_USER)
+        } else {
+            throttleService.tryAcquire("log-search:anonymous", ANONYMOUS)
+        }
+
     private fun authorizedChannelProvenances(user: UserPrincipal?): Set<String> {
         val isAdmin = user?.role == Role.ADMIN || user?.role == Role.SUPER_ADMIN
         val options =
@@ -147,9 +247,26 @@ class LogController(
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(pd)
     }
 
+    private fun tooManyRequests(message: String): ResponseEntity<*> {
+        val pd = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, message)
+        pd.title = "Too Many Requests"
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(pd)
+    }
+
     private fun badRequest(message: String): ResponseEntity<*> {
         val pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message)
         pd.title = "Bad Request"
         return ResponseEntity.badRequest().body(pd)
+    }
+
+    companion object {
+        /** A search's shortest query: a trigram, the least the index can serve. */
+        const val MIN_QUERY = 3
+        const val MAX_QUERY = 200
+        const val MAX_SIZE = 100
+        /** A sender's longest, as the log holds it. */
+        const val MAX_SENDER = 255
+        private val PER_USER = ThrottlePolicy(30, Duration.ofMinutes(1))
+        private val ANONYMOUS = ThrottlePolicy(60, Duration.ofMinutes(1))
     }
 }
