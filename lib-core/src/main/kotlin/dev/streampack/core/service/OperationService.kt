@@ -29,8 +29,9 @@ import org.springframework.stereotype.Service
  * message. The first operation to return a terminal [OperationResult] wins -- the chain
  * short-circuits and that result is returned to the caller via the egress path.
  *
- * [Declined] results are consumed here (logged with operation context) and the chain continues. If
- * no operation handles the message, [OperationResult.NotHandled] is returned.
+ * [Declined] results are consumed here (logged with operation context) and the chain continues. An
+ * operation that recognizes a message but is throttled ends the chain with [THROTTLED]. If no
+ * operation handles the message, [OperationResult.NotHandled] is returned.
  */
 @Service
 class OperationService(
@@ -105,12 +106,15 @@ class OperationService(
             if (!isGroupEnabled(op, message)) continue
             if (op.canHandle(message)) {
                 if (op.throttlePolicy != null && !tryThrottle(op, message)) {
+                    // The operation recognized the message, so it's this operation's command,
+                    // refused for now. Passing it on would let a later operation reinterpret it:
+                    // a throttled "ask why is foo" would become the factoid "ask why" (#116).
                     logger.info(
-                        "Operation {} throttled for message {}",
+                        "Operation {} throttled for message {}; ending the chain",
                         op::class.simpleName,
                         message.headers.id,
                     )
-                    continue
+                    return OperationResult.Error(THROTTLED)
                 }
                 logger.debug(
                     "Operation {} handling message {}",
@@ -276,5 +280,10 @@ class OperationService(
             }
         }
         return OperationResult.Success("Dispatched $dispatched messages")
+    }
+
+    companion object {
+        /** What a throttled command is answered with. */
+        const val THROTTLED = "That command is rate-limited here; try again later."
     }
 }

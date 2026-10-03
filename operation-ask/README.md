@@ -12,7 +12,7 @@
 
 `AskOperation` is active only when `streampack.ai.enabled=true`. It uses `MessageLogService` to collect recent conversation from the current provenance and includes that context in the AI prompt when available.
 
-The operation is addressed, uses operation group `ask`, and is throttled to 5 requests per hour per provenance URI.
+The operation is addressed, uses operation group `ask`, and is throttled to 5 requests per hour per provenance URI. A question past the limit is answered with a rate-limit error; it isn't passed on, so `ask why is foo` can't become the factoid `ask why`.
 
 ## Example Flows
 
