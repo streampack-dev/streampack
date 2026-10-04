@@ -8,7 +8,6 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.PageFetcher
 import dev.streampack.specs.model.SpecRequest
-import dev.streampack.specs.model.SpecType
 import dev.streampack.specs.service.SpecLookupService
 import dev.streampack.specs.service.SpecLookupServiceTests.Companion.jepHtml
 import dev.streampack.specs.service.SpecLookupServiceTests.Companion.jsrHtml
@@ -65,7 +64,7 @@ class SpecsOperationTests {
 
     @Test
     fun `rfc lookup returns title and URL`() {
-        httpServer.createContext("/rfc/rfc2812.html") { exchange ->
+        httpServer.createContext("/info/rfc2812") { exchange ->
             val html = rfcHtml(2812, "Internet Relay Chat: Client Protocol")
             exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
             exchange.responseBody.use { it.write(html.toByteArray()) }
@@ -107,8 +106,43 @@ class SpecsOperationTests {
     }
 
     @Test
+    fun `jcp is another name for jsr`() {
+        httpServer.createContext("/en/jsr/detail") { exchange ->
+            val html = jsrHtml(380, "Bean Validation 2.0")
+            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(html.toByteArray()) }
+        }
+
+        for (asked in listOf("jcp 380", "jcp380")) {
+            val result = eventGateway.process(message(asked))
+            assertInstanceOf(OperationResult.Success::class.java, result, asked)
+            val payload = (result as OperationResult.Success).payload.toString()
+            assertTrue(payload.startsWith("jsr 380: Bean Validation 2.0"), payload)
+            assertTrue(payload.contains("https://jcp.org/en/jsr/detail?id=380"), payload)
+        }
+    }
+
+    @Test
+    fun `an RFC's reply links its own page, though its title is read from the info page`() {
+        httpServer.createContext("/info/rfc2616") { exchange ->
+            val html = rfcHtml(2616, "Hypertext Transfer Protocol -- HTTP/1.1")
+            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(html.toByteArray()) }
+        }
+
+        val result = eventGateway.process(message("rfc 2616"))
+        val payload = (result as OperationResult.Success).payload.toString()
+        assertTrue(
+            payload ==
+                "rfc 2616: Hypertext Transfer Protocol -- HTTP/1.1 " +
+                    "(https://www.rfc-editor.org/rfc/rfc2616.html)",
+            payload,
+        )
+    }
+
+    @Test
     fun `spec lookup is case insensitive`() {
-        httpServer.createContext("/rfc/rfc2812.html") { exchange ->
+        httpServer.createContext("/info/rfc2812") { exchange ->
             val html = rfcHtml(2812, "Internet Relay Chat: Client Protocol")
             exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
             exchange.responseBody.use { it.write(html.toByteArray()) }
@@ -120,7 +154,7 @@ class SpecsOperationTests {
 
     @Test
     fun `spec lookup without space between type and number works`() {
-        httpServer.createContext("/rfc/rfc2812.html") { exchange ->
+        httpServer.createContext("/info/rfc2812") { exchange ->
             val html = rfcHtml(2812, "Internet Relay Chat: Client Protocol")
             exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
             exchange.responseBody.use { it.write(html.toByteArray()) }
@@ -132,7 +166,7 @@ class SpecsOperationTests {
 
     @Test
     fun `non-existent spec returns not handled`() {
-        httpServer.createContext("/rfc/rfc999999.html") { exchange ->
+        httpServer.createContext("/info/rfc999999") { exchange ->
             exchange.sendResponseHeaders(404, -1)
         }
 
@@ -154,7 +188,7 @@ class SpecsOperationTests {
 
     @Test
     fun `triggered spec lookup is handled`() {
-        httpServer.createContext("/rfc/rfc2812.html") { exchange ->
+        httpServer.createContext("/info/rfc2812") { exchange ->
             val html = rfcHtml(2812, "Internet Relay Chat: Client Protocol")
             exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
             exchange.responseBody.use { it.write(html.toByteArray()) }
@@ -171,13 +205,9 @@ class LocalSpecLookupService(pageFetcher: PageFetcher) : SpecLookupService(pageF
 
     override fun lookup(request: SpecRequest): String? {
         if (baseUrl.isBlank()) return super.lookup(request)
-        val path =
-            when (request.type) {
-                SpecType.RFC -> "/rfc/rfc${request.identifier}.html"
-                SpecType.JEP -> "/jeps/${request.identifier}"
-                SpecType.JSR -> "/en/jsr/detail?id=${request.identifier}"
-                SpecType.PEP -> "/pep-${"%04d".format(request.identifier)}/"
-            }
+        // The page the real service would read, served from the local server instead.
+        val page = java.net.URI(request.lookupUrl)
+        val path = page.rawPath + (page.rawQuery?.let { "?$it" } ?: "")
         return lookupUrl("$baseUrl$path", request.type)
     }
 }

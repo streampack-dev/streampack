@@ -10,4 +10,8 @@ data class SpecRequest(val type: SpecType, val identifier: Int) {
     /** The URL for this spec */
     val url: String
         get() = type.urlTemplate.format(identifier)
+
+    /** The page its title is read from */
+    val lookupUrl: String
+        get() = type.lookupTemplate.format(identifier)
 }

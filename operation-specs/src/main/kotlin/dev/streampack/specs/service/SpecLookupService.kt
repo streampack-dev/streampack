@@ -16,7 +16,7 @@ class SpecLookupService(private val pageFetcher: PageFetcher) {
 
     /** Look up the title for a spec request, or null if the spec does not exist */
     fun lookup(request: SpecRequest): String? {
-        return lookupUrl(request.url, request.type)
+        return lookupUrl(request.lookupUrl, request.type)
     }
 
     /** Fetch a spec page by URL and extract its title */
@@ -29,8 +29,12 @@ class SpecLookupService(private val pageFetcher: PageFetcher) {
         return try {
             val document = Jsoup.parse(html)
             val element = document.selectFirst(type.cssSelector) ?: return null
+            // Trademark marks, as older JSR titles have them ("Java<sup>TM</sup> Message Service").
+            element.select("sup").remove()
             val raw = element.text().trim()
             if (raw.isBlank()) return null
+            // jcp.org answers a JSR that doesn't exist with a page saying so, not a 404.
+            if (type == SpecType.JSR && !JSR_TITLE.containsMatchIn(raw)) return null
             cleanTitle(raw, type)
         } catch (e: Exception) {
             logger.debug("Failed to extract title: {}", e.message)
@@ -41,11 +45,19 @@ class SpecLookupService(private val pageFetcher: PageFetcher) {
     /** Strip common prefixes that duplicate the spec identifier */
     private fun cleanTitle(raw: String, type: SpecType): String {
         return when (type) {
-            SpecType.RFC -> raw.removePrefix("RFC ").replace(Regex("^\\d+\\s*-\\s*"), "").trim()
+            SpecType.RFC ->
+                raw.removeSuffix(" | RFC Editor")
+                    .removePrefix("RFC ")
+                    .replace(Regex("^\\d+\\s*[-:]\\s*"), "")
+                    .trim()
             SpecType.JEP -> raw.removePrefix("JEP ").replace(Regex("^\\d+:\\s*"), "").trim()
             SpecType.JSR -> raw.removePrefix("JSR ").replace(Regex("^\\d+:\\s*"), "").trim()
             SpecType.PEP ->
                 raw.removePrefix("PEP ").replace(Regex("^\\d+\\s*\\p{Pd}\\s*"), "").trim()
-        }.replace("TM", "")
+        }.replace("™", "")
+    }
+
+    private companion object {
+        private val JSR_TITLE = Regex("^JSR \\d+:")
     }
 }
