@@ -18,7 +18,7 @@ import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
 /**
- * Looks up RFC, JEP, and JSR specifications by number.
+ * Looks up RFC, JEP, JSR (also asked for as `jcp`) and PEP specifications by number.
  *
  * Acts as a factoid cache-miss handler: runs after the factoid get operation (priority 90) so that
  * known specs are served from the factoid store. On first lookup, fetches the spec title from the
@@ -34,7 +34,7 @@ class SpecsOperation(
     override val addressed: Boolean = true
     override val operationGroup: String = "specs"
 
-    private val compactPattern = Regex("^(rfc|jep|jsr|pep)(\\d+)$", RegexOption.IGNORE_CASE)
+    private val compactPattern = Regex("^(rfc|jep|jsr|jcp|pep)(\\d+)$", RegexOption.IGNORE_CASE)
 
     override fun translate(payload: String, message: Message<*>): SpecRequest? {
         val trimmed = payload.trim()
@@ -78,7 +78,7 @@ class SpecsOperation(
     private fun toRequest(typeToken: String, identifier: Int): SpecRequest? {
         val type =
             try {
-                SpecType.valueOf(typeToken.uppercase())
+                SpecType.valueOf(ALIASES[typeToken.lowercase()] ?: typeToken.uppercase())
             } catch (_: IllegalArgumentException) {
                 return null
             }
@@ -86,6 +86,9 @@ class SpecsOperation(
     }
 
     private companion object {
+        /** Other names a type is asked for by: a JSR is the JCP's, so `jcp 380` is `jsr 380`. */
+        private val ALIASES = mapOf("jcp" to "JSR")
+
         private val matcher =
             CommandPatternMatcher(
                 listOf(
@@ -102,6 +105,11 @@ class SpecsOperation(
                     CommandPattern(
                         name = "jsr",
                         literals = listOf("jsr"),
+                        args = listOf(CommandArgSpec("identifier", PositiveIntArgType)),
+                    ),
+                    CommandPattern(
+                        name = "jcp",
+                        literals = listOf("jcp"),
                         args = listOf(CommandArgSpec("identifier", PositiveIntArgType)),
                     ),
                     CommandPattern(

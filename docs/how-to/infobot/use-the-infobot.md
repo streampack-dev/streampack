@@ -63,10 +63,11 @@ rfc 2616
 jep456
 pep 8
 jsr 330
+jcp 380
 ```
 
 These commands look up external reference material and often seed factoids so later requests are
-faster.
+faster. `jcp` is another name for `jsr`.
 
 ### Calculator, Date, and Weather
 

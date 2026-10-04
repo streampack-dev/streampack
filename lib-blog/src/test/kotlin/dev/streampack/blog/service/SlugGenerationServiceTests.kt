@@ -32,7 +32,24 @@ class SlugGenerationServiceTests {
     @Test
     fun `special characters stripped and replaced`() {
         val result = slugGenerationService.generateSlug("What's New in Spring Boot 4.0?!", feb2026)
-        assertEquals("2026/02/what-s-new-in-spring-boot-4-0", result)
+        assertEquals("2026/02/whats-new-in-spring-boot-4-0", result)
+    }
+
+    @Test
+    fun `an apostrophe joins its word, straight or curly`() {
+        assertEquals("dont-panic", slugGenerationService.slugify("Don't Panic"))
+        assertEquals("dont-panic", slugGenerationService.slugify("Don\u2019t Panic"))
+        assertEquals("its-the-jvms-turn", slugGenerationService.slugify("It\u02BCs the JVM's turn"))
+        // Quotes around a phrase still separate it from its neighbours.
+        assertEquals(
+            "the-quoted-word",
+            slugGenerationService.slugify("the \u2018quoted\u2019 word"),
+        )
+    }
+
+    @Test
+    fun `accented letters lose their accents`() {
+        assertEquals("naive-cafe-jurgen", slugGenerationService.slugify("Naïve Café, Jürgen"))
     }
 
     @Test

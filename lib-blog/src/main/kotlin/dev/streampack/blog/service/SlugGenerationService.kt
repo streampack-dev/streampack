@@ -2,6 +2,7 @@
 package dev.streampack.blog.service
 
 import dev.streampack.blog.repository.SlugRepository
+import java.text.Normalizer
 import java.time.Instant
 import java.time.ZoneOffset
 import org.springframework.stereotype.Service
@@ -43,12 +44,23 @@ class SlugGenerationService(private val slugRepository: SlugRepository) {
         }
     }
 
-    /** Convert a title to a URL-safe slug segment */
+    /**
+     * Convert a title to a URL-safe slug segment. An apostrophe joins its word rather than breaking
+     * it ("don't" is `dont`, not `don-t`), and accented letters lose their accents ("naïve" is
+     * `naive`, not `na-ve`).
+     */
     fun slugify(title: String): String {
-        return title
+        return Normalizer.normalize(title, Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}+"), "") // accents, now separate marks after NFD
+            .replace(APOSTROPHES, "")
             .lowercase()
             .replace(Regex("[^a-z0-9]+"), "-") // non-alphanumeric to hyphens
             .replace(Regex("-+"), "-") // collapse consecutive hyphens
             .trim('-') // remove leading/trailing hyphens
+    }
+
+    private companion object {
+        /** Straight and typographic apostrophes, and the modifier letter some keyboards type. */
+        private val APOSTROPHES = Regex("['\u2018\u2019\u02BC]")
     }
 }

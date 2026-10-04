@@ -85,6 +85,46 @@ class SpecLookupServiceTests {
         assertEquals("This is a Sample PEP", title)
     }
 
+    private fun serve(path: String, html: String) {
+        httpServer.createContext(path) { exchange ->
+            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(html.toByteArray()) }
+        }
+    }
+
+    @Test
+    fun `a JSR that doesn't exist is no title, though jcp org answers 200`() {
+        serve(
+            "/nojsr",
+            "<html><head></head><body><h1>The specified JSR was not found.</h1></body></html>",
+        )
+
+        assertNull(lookupService.lookupUrl("$baseUrl/nojsr", SpecType.JSR))
+    }
+
+    @Test
+    fun `an older JSR's trademark mark is left out of its title`() {
+        serve(
+            "/jsr914",
+            """<html><body><h1>JSR 914: Java<sup><font size="-2">TM</font></sup> Message Service (JMS) API</h1></body></html>""",
+        )
+
+        assertEquals(
+            "Java Message Service (JMS) API",
+            lookupService.lookupUrl("$baseUrl/jsr914", SpecType.JSR),
+        )
+    }
+
+    @Test
+    fun `a title keeps every TM that isn't a trademark mark`() {
+        serve("/rfc7992", rfcHtml(7992, "HTML Format for RFCs"))
+
+        assertEquals(
+            "HTML Format for RFCs",
+            lookupService.lookupUrl("$baseUrl/rfc7992", SpecType.RFC),
+        )
+    }
+
     @Test
     fun `returns null for 404 response`() {
         httpServer.createContext("/missing") { exchange -> exchange.sendResponseHeaders(404, -1) }
@@ -112,10 +152,11 @@ class SpecLookupServiceTests {
     }
 
     companion object {
+        /** The RFC Editor's info page for an RFC, which has a title for every RFC. */
         fun rfcHtml(number: Int, title: String): String =
             """
             <html>
-            <head><title>RFC $number - $title</title></head>
+            <head><title>RFC $number: $title | RFC Editor</title></head>
             <body><h1>$title</h1></body>
             </html>
             """
@@ -130,11 +171,12 @@ class SpecLookupServiceTests {
             """
                 .trimIndent()
 
+        /** A JSR's page on jcp.org: no <title> (script sets it), the JSR in its <h1>. */
         fun jsrHtml(number: Int, title: String): String =
             """
             <html>
-            <head><title>JSR Page</title></head>
-            <body><div class="header1">JSR $number: $title</div></body>
+            <head><script>document.title = 'JSR $number Detail: $title';</script></head>
+            <body><h1>JSR $number: $title</h1><h2>Description</h2></body>
             </html>
             """
                 .trimIndent()
