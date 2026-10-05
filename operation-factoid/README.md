@@ -26,6 +26,8 @@ A factoid's answer is one line: its text, URLs, tags, languages, type and see-al
 
 `FindFactoidCatalogRequest` answers every factoid's selector and text, for `FactoidMatcher` (lib-factoid), which finds the factoids prose mentions (#130).
 
+`DeriveFactoidRequest` (`POST /factoids/derive`) drafts a factoid for a name, for an author to edit and save with `PUT /factoids/{selector}`; nothing is stored (#132). It needs AI: without it (`AI_ENABLED` off, or no key) nothing is derived and the endpoint answers 503. One model call writes text, URLs, tags and see-also, shown real factoids as the bot says them (`streampack.factoid.draft.examples`, default `spring boot, 4gl, maven, openapi`), the tags in use, and the factoids the surrounding writing mentions as see-also candidates. Then nothing it says is trusted: URLs must answer through the guarded fetcher (the first two that do, of up to four), tags are those in use with at most one new, see-also names only existing factoids (meant to be broader ones: karaf to osgi), and the line the bot would say is measured against `streampack.factoid.line-length`, with one retry for a shorter text before the draft comes back marked as not fitting. Signed-in readers only; a name already taken is refused.
+
 ## Example Flows
 
 - Create a factoid:

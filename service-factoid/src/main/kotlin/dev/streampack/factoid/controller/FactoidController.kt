@@ -7,16 +7,20 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.JwtService
+import dev.streampack.factoid.dto.DeriveFactoidHttpRequest
 import dev.streampack.factoid.dto.FactoidAttributeResponse
 import dev.streampack.factoid.dto.FactoidDetailResponse
 import dev.streampack.factoid.dto.FactoidListResponse
 import dev.streampack.factoid.dto.FactoidSetHttpRequest
 import dev.streampack.factoid.dto.FactoidSummaryResponse
 import dev.streampack.factoid.entity.Factoid
+import dev.streampack.factoid.model.DeriveFactoidRequest
 import dev.streampack.factoid.model.FactoidAttributeType
+import dev.streampack.factoid.model.FactoidDraft
 import dev.streampack.factoid.model.FactoidForgetRequest
 import dev.streampack.factoid.model.FactoidQueryRequest
 import dev.streampack.factoid.model.FactoidSetRequest
+import dev.streampack.factoid.operation.DeriveFactoidOperation
 import dev.streampack.factoid.service.FactoidService
 import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
@@ -35,6 +39,7 @@ import org.springframework.messaging.support.MessageBuilder
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -165,6 +170,67 @@ class FactoidController(
                 ResponseEntity.status(if (existed) HttpStatus.OK else HttpStatus.CREATED)
                     .body(detail)
             }
+            else -> failure(result)
+        }
+    }
+
+    @Operation(
+        summary = "Draft a factoid for a name, for its author to edit and save",
+        description =
+            "Writes a draft (text, URLs, tags, see-also) in the knowledge base's style, with the " +
+                "line the bot would say and whether it fits. URLs are checked to answer, tags " +
+                "limited to those in use (one new at most), see-also to existing factoids. Nothing " +
+                "is stored: save with PUT /factoids/{selector}. Needs AI; signed-in readers only.",
+        operationId = "deriveFactoid",
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+        responseCode = "200",
+        description = "The draft",
+        content = [Content(schema = Schema(implementation = FactoidDraft::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "No name, or one too long",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not signed in",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "409",
+        description = "A factoid by that name exists",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "503",
+        description = "AI isn't configured, or the draft couldn't be written",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @PostMapping("/derive", produces = ["application/json"], consumes = ["application/json"])
+    fun derive(
+        @RequestBody request: DeriveFactoidHttpRequest,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user =
+            resolveUser(httpRequest)
+                ?: return problem(HttpStatus.UNAUTHORIZED, "Authentication required")
+        val result =
+            dispatch(
+                DeriveFactoidRequest(request.selector.orEmpty(), request.context.orEmpty()),
+                "derive",
+                user,
+            )
+        return when {
+            result is OperationResult.Success -> ResponseEntity.ok(result.payload)
+            result is OperationResult.Error && result.message.contains("already exists") ->
+                problem(HttpStatus.CONFLICT, result.message)
+            result is OperationResult.Error &&
+                (result.message == DeriveFactoidOperation.AI_UNAVAILABLE ||
+                    result.message.startsWith("The draft couldn't")) ->
+                problem(HttpStatus.SERVICE_UNAVAILABLE, result.message)
             else -> failure(result)
         }
     }
