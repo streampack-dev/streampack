@@ -62,3 +62,5 @@ This reference covers the variables commonly used by `server-streampack`.
 | `DISCORD_PERMISSIONS_VALUE` | Optional | Discord permission integer, default `3072`. |
 | `SLACK_ENABLED` | Optional | Enables Slack adapter. |
 | `CONSOLE_ENABLED` | Optional | Enables console adapter. |
+| `CORS_ORIGINS` | Optional | Comma-separated browser origins trusted for credentialed cross-origin requests; also the origins a cookie-authenticated web console command must come from. |
+| `STREAMPACK_WEBCONSOLE_COMMANDS_PER_MINUTE` | Optional | Web console commands an admin may submit a minute (default `30`). The console's other limits are `STREAMPACK_WEBCONSOLE_*` too: `HEARTBEAT` (`15s`), `MAX_STREAM_AGE` (`1h`), `MAX_STREAMS_PER_USER` (`4`), `STREAM_OPENS_PER_MINUTE` (`20`), `QUEUE_EVENTS` (`100`), `QUEUE_BYTES` (`1048576`), `MAX_EVENT_BYTES` (`131072`), `MAX_LINE` (`4096`), `MAX_BODY` (`32768`). |

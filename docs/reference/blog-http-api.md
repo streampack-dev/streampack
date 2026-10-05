@@ -101,6 +101,66 @@ Successful `GET /posts/{year}/{month}/{slug}` and `GET /posts/{id}` requests are
 not record post access or change temperature buckets. UI clients should call `POST /posts/{id}/access`
 when a post link is opened from client-side navigation.
 
+## Admin Web Console
+
+Streampack's text commands for signed-in administrators, typed in a browser (#115). Commands go in
+as at the stdin console (`aho-corasick`, `foo is bar`, `calc 2+2`: addressed, no prefix); output
+comes back on a server-sent event stream shared by all of that admin's windows. Both endpoints are
+for active `ADMIN` and `SUPER_ADMIN` accounts, checked against the user store on every request,
+and each command runs with the account's authority as it stands when the command runs.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /admin/console` | Submits `{"line": "..."}`; answers `202` with `{"correlationId": "..."}`. |
+| `GET /admin/console/stream` | The admin's console output, as `text/event-stream`. |
+
+**Submitting.** The body is JSON (`415` otherwise), at most `streampack.webconsole.max-body`
+bytes (`413`), holding one non-blank line with no CR, LF or NUL and at most
+`streampack.webconsole.max-line` characters (`400`). The request must carry `X-Web-Console: 1`.
+A request authenticated by the `access_token` cookie must also come from an origin in
+`CORS_ORIGINS` (its `Origin`, or failing that its `Referer`); a request naming any untrusted origin
+is refused (`403`). A bearer-authenticated request without an origin (a server calling the API)
+needs none. A valid cookie wins over a bearer header. Admins may submit
+`streampack.webconsole.commands-per-minute` commands a minute, however many tokens or windows they
+use (`429`).
+
+`202` means the command was accepted, not that it succeeded: its output arrives on the stream,
+possibly before the `202` does. Nothing is retried, and a lost answer doesn't mean the command
+didn't run.
+
+**The stream.** Answered with `Cache-Control: no-store` and `X-Accel-Buffering: no`. Events:
+
+| Event | Data |
+|-------|------|
+| `ready` | `{"username": "..."}`, once the stream is registered. Submit only after it. |
+| `result` | `{"correlationId": "...", "status": "success" \| "error" \| "unhandled", "text": "..."}` |
+| comment `:heartbeat` | Every `streampack.webconsole.heartbeat`. |
+
+A command may produce no results, one, or several, and none marks it finished. `correlationId` is
+the command a result answers, or `null` for output nobody asked for here (a notification sent to
+the console's address, or a `tell` from elsewhere). `text` is plain text, possibly several lines,
+and absent when `unhandled` ("no matching response"); clients show it as text, never markup. Output
+larger than `streampack.webconsole.max-event-bytes` arrives as an `error` saying so, never
+truncated.
+
+An admin may have `streampack.webconsole.max-streams-per-user` streams open and open
+`stream-opens-per-minute` a minute (`429`). A stream closes when its credential expires, the account
+is no longer an active admin (checked at each heartbeat), the client falls more than
+`queue-events` events or `queue-bytes` bytes behind, a write fails, or after `max-stream-age`.
+Reconnecting starts a fresh stream: nothing missed is replayed, so a client should show that there
+may be a gap, and never resubmit commands to fill it.
+
+**Addresses.** An admin's console is `webconsole://web/users/<user id>`: anything sent there (by
+`EgressNotifier`, say) reaches their open streams while they're an admin. It can't be bridged, and
+it's kept out of the public log browser. Its commands are logged, redacted, as other ingress is;
+its output is logged as its outcome only (`[web console: success]`), never its text, so
+log-derived context (Ask's) sees the commands but not their answers. From the console, `tell`
+needs a full address (`tell irc://libera/#java hello`).
+
+**Deployment.** The registry is in memory: one backend instance only. Behind a proxy, don't buffer
+`/admin/console/stream` and allow a read timeout longer than the heartbeat; see
+[Configure a Reverse Proxy](../how-to/deploy/configure-reverse-proxy.md).
+
 ## Generated OpenAPI
 
 The generated OpenAPI document is `docs/openapi.json`. Do not edit it by hand; regenerate it with

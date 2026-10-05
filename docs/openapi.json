@@ -1230,6 +1230,43 @@
         },
         "required" : [ "name" ],
         "type" : "object"
+      },
+      "WebConsoleAccepted" : {
+        "properties" : {
+          "correlationId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "correlationId" ],
+        "type" : "object"
+      },
+      "WebConsoleCommand" : {
+        "description" : "One command line, as at the console: no prefix, no newlines.",
+        "properties" : {
+          "line" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "type" : "object"
+      },
+      "WebConsoleResult" : {
+        "description" : "The data of a `result` event on GET /admin/console/stream.",
+        "properties" : {
+          "correlationId" : {
+            "description" : "The command it answers; null for output nobody asked for here.",
+            "type" : [ "string", "null" ]
+          },
+          "status" : {
+            "enum" : [ "success", "error", "unhandled" ],
+            "type" : "string"
+          },
+          "text" : {
+            "description" : "Plain text, which may span lines; absent when unhandled.",
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "status" ],
+        "type" : "object"
       }
     },
     "securitySchemes" : {
@@ -1427,6 +1464,154 @@
         } ],
         "summary" : "Delete a comment (soft by default, hard with ?hard=true)",
         "tags" : [ "Admin - Comment Management" ]
+      }
+    },
+    "/admin/console" : {
+      "post" : {
+        "description" : "Submits one line, as typed at the stdin console (`aho-corasick`, `foo is bar`, `calc 2+2`), and returns at once with its correlation id: 202 means it was accepted, not that it succeeded. Its output arrives on GET /admin/console/stream as `result` events carrying that id, possibly before this answer does; a command may produce none, one or several. Open the stream first; output with no stream open is dropped. Requires an active admin, a JSON body, and the header `X-Web-Console: 1`; a request authenticated by the access-token cookie must also come from a trusted Origin (or Referer). Not retried automatically: a lost answer doesn't mean the command didn't run.",
+        "operationId" : "command",
+        "parameters" : [ {
+          "in" : "header",
+          "name" : "X-Web-Console",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "1" ],
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WebConsoleCommand"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WebConsoleAccepted"
+                }
+              }
+            },
+            "description" : "Accepted for processing"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No line, or one with newlines or too long"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not signed in"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not an active admin, or the request's source isn't trusted"
+          },
+          "413" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The body is too large"
+          },
+          "415" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "The body isn't JSON"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Too many commands; try again shortly"
+          }
+        },
+        "summary" : "Run a console command",
+        "tags" : [ "Web console" ]
+      }
+    },
+    "/admin/console/stream" : {
+      "get" : {
+        "description" : "A stream of this admin's console output, shared by all their windows. Events: `ready` (once, when the stream is registered: wait for it before submitting), `result` (data: {correlationId, status, text}; status is success, error or unhandled, and text is absent when unhandled; correlationId is null for output nobody asked for here, such as a notification or a tell from elsewhere), and heartbeat comments. Several results may share a correlation id, and none marks a command finished. The stream closes when the credential expires, the account is no longer an admin, the client falls too far behind, or after an hour; reconnect for a fresh stream. Nothing missed while disconnected is replayed. Authenticates by the access-token cookie (as a browser's EventSource sends it) or a bearer token. Single backend instance only. Behind nginx, turn off buffering for this path (the response says `X-Accel-Buffering: no`) and allow a long read timeout.",
+        "operationId" : "stream",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "text/event-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WebConsoleResult"
+                }
+              }
+            },
+            "description" : "The stream (text/event-stream); `result` events carry WebConsoleResult"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not signed in"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not an active admin"
+          },
+          "429" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Too many streams open, or opened too often"
+          }
+        },
+        "summary" : "The console's output, as server-sent events",
+        "tags" : [ "Web console" ]
       }
     },
     "/admin/posts/pending" : {
