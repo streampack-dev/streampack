@@ -15,6 +15,7 @@ import dev.streampack.factoid.model.FactoidAttributeType
 import dev.streampack.factoid.model.FactoidQueryRequest
 import dev.streampack.factoid.service.FactoidService
 import dev.streampack.factoid.service.FactoidTextRenderer
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -24,6 +25,8 @@ class GetFactoidOperation(
     private val factoidService: FactoidService,
     private val factoidTextRenderer: FactoidTextRenderer,
     private val streampackProperties: StreampackProperties,
+    /** How long a factoid's one-line answer may be before parts are left out (#131). */
+    @Value("\${streampack.factoid.line-length:300}") private val lineLength: Int = 300,
 ) : TranslatingOperation<FactoidQueryRequest>(FactoidQueryRequest::class) {
 
     override val priority: Int = 90
@@ -145,15 +148,16 @@ class GetFactoidOperation(
         attributes: List<FactoidAttribute>,
         argument: String,
     ): OperationOutcome {
-        val summary =
-            attributes.summarize(
+        val line =
+            attributes.line(
                 selector,
-                argument,
-                factoidTextRenderer,
-                streampackProperties.maxHops,
-                factoidService,
+                lineLength,
+                argument = argument,
+                textRenderer = factoidTextRenderer,
+                maxHops = streampackProperties.maxHops,
+                factoidService = factoidService,
             )
-        return OperationResult.Success(summary)
+        return OperationResult.Success(line.text)
     }
 
     /** Lists available attribute types and last modification info */
@@ -291,7 +295,68 @@ fun List<FactoidAttribute>.summarize(
     textRenderer: FactoidTextRenderer? = null,
     maxHops: Int = 3,
     factoidService: FactoidService? = null,
-): String {
+): String =
+    summaryParts(selector, argument, textRenderer, maxHops, factoidService)
+        .joinToString(" ") { it.second }
+        .compress()
+
+/**
+ * The factoid as the bot says it on one line (#131): its summary, fitted by dropping whole parts
+ * rather than cutting it off. Text is always said. While the line is longer than [target], type,
+ * languages, tags and see-also are dropped, in that order; URLs only if it would still pass
+ * [limit], where a line is cut off (IRC's). A factoid whose text alone is too long is said with its
+ * text alone.
+ */
+fun List<FactoidAttribute>.line(
+    selector: String,
+    target: Int,
+    limit: Int = FactoidLine.LIMIT,
+    argument: String = "",
+    textRenderer: FactoidTextRenderer? = null,
+    maxHops: Int = 3,
+    factoidService: FactoidService? = null,
+): FactoidLine {
+    val parts =
+        summaryParts(selector, argument, textRenderer, maxHops, factoidService).toMutableList()
+    fun said() = parts.joinToString(" ") { it.second }.compress()
+    val dropped = mutableListOf<FactoidAttributeType>()
+    for (type in FactoidLine.DROP_ORDER) {
+        val allowed = if (type == FactoidAttributeType.URLS) limit else target
+        if (said().length <= allowed) continue
+        if (parts.removeAll { it.first == type }) dropped += type
+    }
+    return FactoidLine(said(), dropped)
+}
+
+/** A factoid's line as said, and the parts left out to fit it. */
+data class FactoidLine(val text: String, val dropped: List<FactoidAttributeType> = emptyList()) {
+    val length: Int
+        get() = text.length
+
+    companion object {
+        /** Where a line is cut off: IRC's limit, the tightest of the protocols. */
+        const val LIMIT = 400
+
+        /** Least wanted first: what goes when a line won't fit. Text never does. */
+        val DROP_ORDER =
+            listOf(
+                FactoidAttributeType.TYPE,
+                FactoidAttributeType.LANGUAGES,
+                FactoidAttributeType.TAGS,
+                FactoidAttributeType.SEEALSO,
+                FactoidAttributeType.URLS,
+            )
+    }
+}
+
+/** The summary's parts, each rendered, in enum ordinal order. */
+private fun List<FactoidAttribute>.summaryParts(
+    selector: String,
+    argument: String,
+    textRenderer: FactoidTextRenderer?,
+    maxHops: Int,
+    factoidService: FactoidService?,
+): List<Pair<FactoidAttributeType, String>> {
     return this.filter { it.attributeType.includeInSummary }
         .sortedBy { it.attributeType.ordinal }
         .filter { !it.attributeValue.isNullOrEmpty() }
@@ -318,10 +383,8 @@ fun List<FactoidAttribute>.summarize(
                     else -> attr.attributeValue
                 }
             val rendered = attr.attributeType.render(selector, value)
-            rendered.ifEmpty { null }
+            rendered.ifEmpty { null }?.let { attr.attributeType to it }
         }
-        .joinToString(" ")
-        .compress()
 }
 
 /** Decorates see-also entries with reference tokens when they are known factoids */
