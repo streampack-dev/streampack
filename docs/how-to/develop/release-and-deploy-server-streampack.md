@@ -84,6 +84,11 @@ git status --short
 ./mvnw clean verify
 ```
 
+`mvnd clean verify` works as well and is much faster (about three minutes against eight), and is what
+`just release` uses when mvnd is installed. Its modules test in parallel against one shared Postgres
+container, a fresh database each; for that container to be reused between modules and builds, set
+`testcontainers.reuse.enable=true` in `~/.testcontainers.properties`.
+
 Update the `-Drevision` line in `.mvn/maven.config`, check the resolved value, and create the release
 commit locally:
 

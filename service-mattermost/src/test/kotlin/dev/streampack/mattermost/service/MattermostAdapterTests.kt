@@ -253,7 +253,9 @@ class MattermostAdapterTests {
     fun `the post-connect hook runs after each successful authentication`() {
         adapter.handleFrame("""{"status":"OK","seq_reply":1}""")
         adapter.handleFrame("""{"status":"OK","seq_reply":2}""")
-        val deadline = System.currentTimeMillis() + 2000
+        // Generous, for a starved machine (a parallel build, #107); it ends as soon as both have
+        // run.
+        val deadline = System.currentTimeMillis() + 30_000
         while (connectedHooks.get() < 2 && System.currentTimeMillis() < deadline) Thread.sleep(10)
         assertEquals(2, connectedHooks.get())
     }
