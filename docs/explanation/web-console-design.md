@@ -12,8 +12,10 @@ Mirrors the consolidated [GitHub issue](https://github.com/streampack-dev/stream
 - **Sanitized failures are opt-in too.** `Provenance.REPORT_FAILURES` (set by the console) turns an
   unexpected exception into a correlated `error` result; other messages fail as before.
 - **No in-flight command cap.** Admission is the per-admin command rate only.
-- **The timeout fall-through (item 4 below) is unchanged**: an interrupted operation still lets the
-  chain continue. It's tracked here, not fixed by the console.
+- **The timeout fall-through (item 4 below) is fixed**: an operation that runs past its timeout
+  ends the chain with an error (`OperationService.TIMED_OUT`), however the interrupt surfaces, as
+  a throttled one does (#116). Interrupting still doesn't roll back what it had already done, and
+  the error says it may have partly run.
 - The child-event header fix (item 3) landed with #99 (`MessageHeaders.forFollowUp`).
 - Code: `service-blog/.../webconsole/` (controller, stream registry, delivery, egress subscriber,
   adapter, access, properties); `lib-core` (`Protocol.WEBCONSOLE`, `LiveAuthorityService`, the two

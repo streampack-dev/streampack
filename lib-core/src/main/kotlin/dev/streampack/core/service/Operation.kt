@@ -66,8 +66,10 @@ interface Operation {
 
     /**
      * Maximum time this operation may spend in [execute] before being interrupted. When an
-     * operation exceeds its timeout, the executing thread is interrupted, the result is discarded,
-     * and the chain continues to the next operation.
+     * operation exceeds its timeout, the executing thread is interrupted and the message is
+     * answered with an error, ending the chain: the operation recognized it ([canHandle]), so no
+     * later operation may reinterpret it. Interrupting doesn't undo anything the operation had
+     * already done.
      */
     val timeout: Duration
         get() = Duration.ofSeconds(30)

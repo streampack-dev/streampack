@@ -13,6 +13,7 @@ import dev.streampack.core.model.Provenance
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
@@ -30,8 +31,9 @@ import org.springframework.stereotype.Service
  * short-circuits and that result is returned to the caller via the egress path.
  *
  * [Declined] results are consumed here (logged with operation context) and the chain continues. An
- * operation that recognizes a message but is throttled ends the chain with [THROTTLED]. If no
- * operation handles the message, [OperationResult.NotHandled] is returned.
+ * operation that recognizes a message but is throttled ends the chain with [THROTTLED]; one that
+ * runs past its timeout ends it with [TIMED_OUT]. If no operation handles the message,
+ * [OperationResult.NotHandled] is returned.
  */
 @Service
 class OperationService(
@@ -279,35 +281,52 @@ class OperationService(
      * execution on the caller's thread preserves transaction context and ThreadLocal state. On
      * timeout the watchdog interrupts the operation thread; blocking I/O and Thread.sleep on
      * virtual threads respond to interruption.
+     *
+     * An operation that times out has recognized the message, so its message ends the chain with
+     * [TIMED_OUT], whatever the interrupt did: an [InterruptedException], an exception the
+     * interrupt caused (an interrupted channel's I/O, say), or the interrupt swallowed and nothing
+     * returned. Passing the message on would let a later operation reinterpret it, as a throttled
+     * one could (#116). An operation that finished just as the watchdog fired keeps its answer.
      */
     private fun executeWithTimeout(op: Operation, message: Message<*>): OperationOutcome? {
         val caller = Thread.currentThread()
+        val timedOut = AtomicBoolean(false)
         val watchdog =
             watchdogScheduler.schedule(
-                { caller.interrupt() },
+                {
+                    timedOut.set(true)
+                    caller.interrupt()
+                },
                 op.timeout.toMillis(),
                 TimeUnit.MILLISECONDS,
             )
-        return try {
-            val result = op.execute(message)
-            watchdog.cancel(false)
-            Thread.interrupted() // clear any interrupt that raced with completion
-            result
-        } catch (e: InterruptedException) {
-            watchdog.cancel(false)
-            Thread.interrupted()
-            logger.warn(
-                "Operation {} timed out after {} for message {}",
-                op::class.simpleName,
-                op.timeout,
-                message.headers.id,
-            )
-            null
-        } catch (e: Exception) {
-            watchdog.cancel(false)
-            Thread.interrupted()
-            throw e
-        }
+        val result =
+            try {
+                op.execute(message)
+            } catch (e: InterruptedException) {
+                watchdog.cancel(false)
+                Thread.interrupted()
+                return timedOut(op, message)
+            } catch (e: Exception) {
+                watchdog.cancel(false)
+                Thread.interrupted()
+                if (timedOut.get()) return timedOut(op, message)
+                throw e
+            }
+        watchdog.cancel(false)
+        Thread.interrupted() // clear any interrupt that raced with completion
+        if (timedOut.get() && (result == null || result is Declined)) return timedOut(op, message)
+        return result
+    }
+
+    private fun timedOut(op: Operation, message: Message<*>): OperationResult {
+        logger.warn(
+            "Operation {} timed out after {} for message {}; ending the chain",
+            op::class.simpleName,
+            op.timeout,
+            message.headers.id,
+        )
+        return OperationResult.Error(TIMED_OUT)
     }
 
     /** Dispatches each child message with an incremented hop count */
@@ -331,6 +350,9 @@ class OperationService(
     companion object {
         /** What a throttled command is answered with. */
         const val THROTTLED = "That command is rate-limited here; try again later."
+
+        /** What a command is answered with when its operation runs past its timeout. */
+        const val TIMED_OUT = "That command took too long and was stopped; it may have partly run."
 
         /** What a live-authority command is answered with when its account isn't active. */
         const val INACTIVE_ACCOUNT = "Your account can't run commands right now."
