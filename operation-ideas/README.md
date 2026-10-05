@@ -68,8 +68,8 @@ The excerpt goes into the body as a fenced block, one line per message, as a cha
 ```
 ````
 
-Actions (`* nick waves`) and channel events (joins, parts, topic changes, which are logged without a
-sender of their own) appear as they are. The fence is longer than any run of backticks in the
+Actions (`* nick waves`) and channel events (joins, parts, topic changes) appear as they are,
+without their sender in front: their text names them already. The fence is longer than any run of backticks in the
 excerpt, so a message containing a fence can't end it.
 
 ### AI summary

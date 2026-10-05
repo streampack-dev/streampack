@@ -561,10 +561,10 @@ class ArticleOperation(
         /**
          * The excerpt as a fenced block, one line per message as a chat client shows it: `<nick>
          * text`, or an action (`* nick waves`) or a channel event (`* pebble joined #java`, logged
-         * without a sender of its own) as it is. Quoted with `>` instead, consecutive lines run
-         * together into one paragraph, and `<nick>` reads as an HTML tag; a fence keeps the lines
-         * and the nicks. It's longer than any run of backticks in the excerpt, so none of them ends
-         * it.
+         * as from its nick, or as from "unknown" before #124) as it is. Quoted with `>` instead,
+         * consecutive lines run together into one paragraph, and `<nick>` reads as an HTML tag; a
+         * fence keeps the lines and the nicks. It's longer than any run of backticks in the
+         * excerpt, so none of them ends it.
          */
         internal fun quoteLog(messages: List<MessageLog>): String {
             val lines = messages.map { msg ->
