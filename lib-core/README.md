@@ -60,6 +60,12 @@ Use `Consumed` for maintenance work such as queueing, buffering, bookkeeping, or
 background processing that should not generate user-visible output. Use `Declined` only when
 another operation should still get a chance to handle the same message.
 
+Fetch addresses chosen by anyone other than an admin (a post's links, a page to discover a feed on)
+with `GuardedFetcher` (`dev.streampack.core.fetch`), not a client of your own: http(s) only, public
+addresses only (checked after DNS and on every redirect), short timeouts, a capped body. Its
+settings are `streampack.fetch.*`; `allow-loopback`/`allow-private` exist for tests and local
+development.
+
 For parser details and the new grammar/help rendering surface, see
 [docs/reference/command-parser.md](/Users/joeo/work/streampack-dev/streampack/docs/reference/command-parser.md).
 

@@ -48,6 +48,8 @@ This reference covers the variables commonly used by `server-streampack`.
 | `RSS_SCHEDULER_INTERVAL` | Optional | How often the feed poller wakes to take a batch of due feeds (default `PT90S`). |
 | `RSS_POLL_BATCH_SIZE` | Optional | Maximum feeds polled per wake-up, oldest due first (default `5`). |
 | `RSS_POLL_MAX_BACKOFF` | Optional | Cap on the exponential backoff a failing feed's next poll is pushed out by (default `P1D`). |
+| `BLOG_MENTIONS_ENABLED` | Optional | Tell the pages a published post links to of the mention, by Webmention or Pingback (default `true`). Never sent while `BLOG_BASE_URL` is localhost or a private address. |
+| `BLOG_AUTOSUBSCRIBE_ENABLED` | Optional | Subscribe the RSS reader to the site feeds of the sites a published post links to, if not already had (default `true`). The hosts never subscribed to are `streampack.rss.autosubscribe.skip-hosts`. |
 | `GITLAB_<PATH>_TOKEN` | Per project | API token for a watched gitlab.com project, with `/` in the path flattened to `_`, e.g. `GITLAB_GROUP_SUBGROUP_PROJECT_TOKEN`. Externalized and enforced at startup like GitHub tokens. |
 | `GITLAB_<HOST>_<PATH>_TOKEN` | Per project | The same, for a project on a self-hosted instance, e.g. `GITLAB_GITLAB_EXAMPLE_COM_GROUP_PROJECT_TOKEN`. |
 | `GITLAB_INSTANCE_<HOST>_TOKEN` | Per instance | Default API token for every project on a registered GitLab instance that has no token of its own. |

@@ -88,6 +88,41 @@ interface PostRepository : JpaRepository<Post, UUID> {
     fun findBySystemCategoryAndSlug(slugPath: String, now: Instant): Post?
 
     /**
+     * Live posts whose outgoing links haven't been handled since they last changed (#112, #128):
+     * published (approved, not deleted, publishedAt past), and `metadata.linksCheckedThrough`
+     * (epoch millis) short of `updatedAt`. Oldest first.
+     *
+     * Not indexable as it stands: it compares two columns of a row, and the epoch of a timestamptz
+     * isn't immutable, so it can't go in an index or a partial index's predicate. At a blog's size
+     * (hundreds to thousands of posts) the scan is a millisecond or so, and Postgres would scan a
+     * table that small anyway. If posts ever run to tens of thousands: keep `links_checked_through`
+     * as a timestamptz column rather than in metadata, add a stored generated column `links_due =
+     * links_checked_through IS NULL OR links_checked_through < updated_at` (immutable, so allowed),
+     * and a partial index on `published_at WHERE links_due` over published posts.
+     */
+    @Query(
+        nativeQuery = true,
+        value =
+            "SELECT * FROM posts WHERE status = 'APPROVED' AND deleted = false AND published_at <= :now " +
+                "AND COALESCE((metadata->>'linksCheckedThrough')::bigint, 0) < " +
+                "FLOOR(EXTRACT(EPOCH FROM updated_at) * 1000)::bigint " +
+                "ORDER BY published_at ASC LIMIT :limit",
+    )
+    fun findOutgoingLinksDue(now: Instant, limit: Int): List<Post>
+
+    /**
+     * Merges [patch] (a JSON object) into a post's metadata, key by key, touching nothing else: not
+     * updatedAt, and not an edit made meanwhile.
+     */
+    @Transactional
+    @Modifying
+    @Query(
+        nativeQuery = true,
+        value = "UPDATE posts SET metadata = metadata || CAST(:patch AS jsonb) WHERE id = :id",
+    )
+    fun mergeMetadata(id: UUID, patch: String): Int
+
+    /**
      * Drafts carrying [tagName] (the article ideas' `_idea`), oldest first, with their authors
      * loaded, so a caller outside a transaction can read them.
      */

@@ -8,6 +8,7 @@ It covers:
 - destination subscriptions
 - feed polling in bounded, spread-out batches with backoff, and new-entry notifications
 - OPML export and import for the registered feed catalog
+- following the sites published posts link to (autosubscribe, #128)
 
 ## Operations
 
@@ -15,6 +16,7 @@ It covers:
 |-----------|---------|---------|
 | `AddFeedOperation` | `feed add <url>` | Registers a feed directly or discovers one from a site URL; requires `ADMIN`. |
 | `FeedManagementOperation` | `feed list`, `feed subscribe ...`, `feed unsubscribe ...`, `feed subscriptions`, `feed remove ...` | Lists feeds, manages subscriptions, and deactivates feeds. |
+| `LinkedSiteSubscriptionOperation` | (typed `LinkedSiteSubscriptionRequest`, from the blog) | Follows the site feed of a site a published post links to; see [Autosubscribe](#autosubscribe). |
 
 ## User Commands
 
@@ -117,6 +119,21 @@ It can handle pages like:
 ```
 
 so slightly broken sites can still be discovered from the page URL rather than requiring a direct feed URL.
+
+Of the feeds a page advertises with `<link rel="alternate">`, the site's own comes before its comments feed (WordPress article pages advertise both).
+
+Every fetch, discovery and polling alike, goes through lib-core's `GuardedFetcher`: http(s) only, to public addresses only (loopback, private, link-local, so the cloud metadata address, multicast and unspecified are refused, after DNS and on every redirect), with short timeouts and a cap on what's read (10 MiB for a feed). Its settings are `streampack.fetch.*`; `allow-loopback` and `allow-private` are for tests and local development.
+
+## Autosubscribe
+
+When a post is published (or a published post edited), the blog's outgoing-links pass offers each site it links to, once per post, with a `LinkedSiteSubscriptionRequest`. For each:
+
+1. A host in `streampack.rss.autosubscribe.skip-hosts`, or a subdomain of one, is skipped without a fetch: code hosts, video, encyclopedias, documentation and specs by default (`github.com`, `youtube.com`, `wikipedia.org`, `openjdk.org`, `docs.oracle.com`, ...), but not `github.io`, where many personal blogs are.
+2. A host we already have a feed on (by the feed's address or its site's) is left alone, without a fetch.
+3. Otherwise the page's site feed is discovered (`FeedDiscoveryService.discoverSiteFeed`): as leniently as `feed add`, but never a comments feed, and a feed found by a feed-like link or a guessed path only when the feed's own site is the linked host.
+4. A feed found is added as `feed add` would add it; one we have already isn't added again.
+
+Each outcome is a log line on the blog side: `Autosubscribe <host> from <post>: added <feed>` / `already have <feed>` / `skipped (...)` / `no feed`. Turn it off with `BLOG_AUTOSUBSCRIBE_ENABLED=false`.
 
 ## Example Flows
 

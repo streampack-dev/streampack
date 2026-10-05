@@ -61,6 +61,11 @@ streampack:
     summary:
       # The system prompt for admins' AI summaries (#102); empty uses the built-in editorial stance.
       system-prompt: ${BLOG_SUMMARY_PROMPT:}
+    outgoing:
+      # A published post's links: mention them by Webmention/Pingback (#112), follow their sites'
+      # feeds (#128).
+      mentions: ${BLOG_MENTIONS_ENABLED:true}
+      autosubscribe: ${BLOG_AUTOSUBSCRIBE_ENABLED:true}
   karma:
     immune-subjects: ${KARMA_IMMUNE_SUBJECTS:nevet}
   weather:
