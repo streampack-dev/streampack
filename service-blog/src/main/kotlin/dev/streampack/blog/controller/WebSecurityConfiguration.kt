@@ -35,7 +35,14 @@ class WebSecurityConfiguration(
         config.allowedOrigins = corsOrigins.split(",").map { it.trim() }
         config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         config.allowedHeaders =
-            listOf("Authorization", "Content-Type", "Accept", "Accept-Version", "Cookie")
+            listOf(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Accept-Version",
+                "Cookie",
+                "X-Web-Console",
+            )
         config.exposedHeaders = listOf("Content-Version", "Accept-Version", "Set-Cookie")
         config.allowCredentials = true
         config.maxAge = 3600L

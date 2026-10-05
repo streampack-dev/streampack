@@ -78,6 +78,12 @@
             <artifactId>operation-factoid</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <!-- EgressNotifier: the web console takes notifications with no principal (#115). -->
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-polling</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

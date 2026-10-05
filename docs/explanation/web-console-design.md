@@ -1,6 +1,25 @@
 # Web console implementation brief — issue #115
 
-Mirrors the consolidated [GitHub issue](https://github.com/streampack-dev/streampack/issues/115). Proposed implementation, not shipped behavior. This replaces the earlier local request/reply-only design review.
+Mirrors the consolidated [GitHub issue](https://github.com/streampack-dev/streampack/issues/115). Built as described, with the differences below; the shipped contract is in [Blog HTTP API: Admin Web Console](../reference/blog-http-api.md#admin-web-console). This replaces the earlier local request/reply-only design review.
+
+## As built
+
+- **Live authority is opt-in per message.** The shared chain refreshes a principal only for
+  messages carrying `Provenance.LIVE_AUTHORITY` (the web console sets it), through
+  `LiveAuthorityService`. Refreshing every principal would turn principals built without a stored
+  user (bridges, tests, synthetic system messages) anonymous; other credential-based transports opt
+  in the same way. An account no longer active is refused before any operation runs.
+- **Sanitized failures are opt-in too.** `Provenance.REPORT_FAILURES` (set by the console) turns an
+  unexpected exception into a correlated `error` result; other messages fail as before.
+- **No in-flight command cap.** Admission is the per-admin command rate only.
+- **The timeout fall-through (item 4 below) is fixed**: an operation that runs past its timeout
+  ends the chain with an error (`OperationService.TIMED_OUT`), however the interrupt surfaces, as
+  a throttled one does (#116). Interrupting still doesn't roll back what it had already done, and
+  the error says it may have partly run.
+- The child-event header fix (item 3) landed with #99 (`MessageHeaders.forFollowUp`).
+- Code: `service-blog/.../webconsole/` (controller, stream registry, delivery, egress subscriber,
+  adapter, access, properties); `lib-core` (`Protocol.WEBCONSOLE`, `LiveAuthorityService`, the two
+  headers, `LoggingEgressSubscriber`); `service-bridge` and `operation-tell` for the guards.
 
 ## Objective and current scope
 

@@ -4,6 +4,7 @@ package dev.streampack.bridge.integration
 import dev.streampack.bridge.service.BridgeService
 import dev.streampack.core.integration.EgressSubscriber
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -25,6 +26,8 @@ class BridgeEgressSubscriber(
 
     override fun matches(provenance: Provenance): Boolean {
         if (provenance.metadata.containsKey(Provenance.BRIDGED)) return false
+        // A web console's output is its admin's alone (#115).
+        if (provenance.protocol == Protocol.WEBCONSOLE) return false
         return bridgeService.hasCopyTargets(provenance.encode())
     }
 
