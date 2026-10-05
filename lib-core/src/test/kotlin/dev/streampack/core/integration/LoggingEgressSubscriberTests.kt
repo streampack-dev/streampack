@@ -86,6 +86,24 @@ class LoggingEgressSubscriberTests {
     }
 
     @Test
+    fun `web console output is logged as its outcome, never its text`() {
+        val prov =
+            Provenance(
+                protocol = Protocol.WEBCONSOLE,
+                serviceId = "web",
+                replyTo = "users/${java.util.UUID.randomUUID()}",
+            )
+        eventGateway.process(messageWith("echo the secret answer", prov))
+
+        val outbound =
+            messageLogRepository
+                .findByProvenanceUriOrderByTimestampDesc(prov.encode(), PageRequest.of(0, 10))
+                .content
+                .filter { it.direction == MessageDirection.OUTBOUND }
+        assertEquals(listOf("[web console: success]"), outbound.map { it.content })
+    }
+
+    @Test
     fun `Error result is logged as outbound`() {
         val prov = uniqueProvenance()
         eventGateway.process(messageWith("fail something broke", prov))

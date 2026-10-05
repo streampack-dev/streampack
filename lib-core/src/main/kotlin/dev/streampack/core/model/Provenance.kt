@@ -54,6 +54,21 @@ data class Provenance(
         const val IS_ACTION = "isAction"
         const val LOOPBACK_KEY = "loopback"
         const val BRIDGED = "streampack_bridged"
+
+        /**
+         * Message header: true when the provenance's principal came from a credential (a web token,
+         * say) and must be re-read from the user store as the message enters the operation chain,
+         * so a role or status change since the credential was issued, or while the message was
+         * queued, is what the operations see (#115).
+         */
+        const val LIVE_AUTHORITY = "streampack_live_authority"
+
+        /**
+         * Message header: true when the sender is waiting on the egress stream for an answer, so a
+         * command that fails unexpectedly is answered with a sanitized error rather than only
+         * logged (#115). Without it, failures keep their existing handling.
+         */
+        const val REPORT_FAILURES = "streampack_report_failures"
         private val DISCORD_SNOWFLAKE = Regex("\\d{15,25}")
 
         /** Decodes a URI-format address string into a Provenance */

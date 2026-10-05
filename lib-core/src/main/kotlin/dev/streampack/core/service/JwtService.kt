@@ -53,15 +53,24 @@ class JwtService(properties: StreampackProperties) {
     }
 
     /** Validates a JWT and extracts the UserPrincipal, returning null if invalid or expired */
-    fun validateToken(token: String): UserPrincipal? {
+    fun validateToken(token: String): UserPrincipal? = validate(token)?.principal
+
+    /**
+     * Validates a JWT, returning who it names and when it expires, or null if it's invalid or
+     * expired. A long-lived connection (the web console's stream, #115) closes at [expiresAt].
+     */
+    fun validate(token: String): ValidatedToken? {
         return try {
             val claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload
 
-            UserPrincipal(
-                id = UUID.fromString(claims.subject),
-                username = claims["username"] as String,
-                displayName = claims["displayName"] as String,
-                role = Role.valueOf(claims["role"] as String),
+            ValidatedToken(
+                UserPrincipal(
+                    id = UUID.fromString(claims.subject),
+                    username = claims["username"] as String,
+                    displayName = claims["displayName"] as String,
+                    role = Role.valueOf(claims["role"] as String),
+                ),
+                claims.expiration.toInstant(),
             )
         } catch (e: Exception) {
             logger.debug("JWT validation failed: {}", e.message)
@@ -69,3 +78,6 @@ class JwtService(properties: StreampackProperties) {
         }
     }
 }
+
+/** A valid token: the principal it names, and when it stops being valid. */
+data class ValidatedToken(val principal: UserPrincipal, val expiresAt: java.time.Instant)

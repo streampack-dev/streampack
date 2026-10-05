@@ -42,6 +42,7 @@ class OperationService(
     private val throttleService: ThrottleService,
     private val operationConfigService: OperationConfigService,
     private val transformerChain: TransformerChainService,
+    private val liveAuthority: LiveAuthorityService,
 ) {
     private val logger = LoggerFactory.getLogger(OperationService::class.java)
     private val sortedOperations = operations.sortedBy { it.priority }
@@ -58,9 +59,54 @@ class OperationService(
         !it.addressed && isGroupEnabled(it, message) && it.canHandle(message)
     }
 
-    /** Receives from the ingress channel and returns the result to the gateway's reply channel */
+    /**
+     * Receives from the ingress channel and returns the result to the gateway's reply channel.
+     *
+     * A message marked [Provenance.LIVE_AUTHORITY] has its principal re-read from the user store
+     * first, and every operation (and egress) sees that, not the principal it arrived with; an
+     * account no longer active is refused. A message marked [Provenance.REPORT_FAILURES] whose
+     * command fails unexpectedly is answered with a sanitized error on egress; any other keeps the
+     * existing handling (the exception propagates to the caller or the error channel).
+     */
     @ServiceActivator(inputChannel = "ingressChannel")
     fun process(message: Message<*>): OperationResult {
+        val entered =
+            withLiveAuthority(message)
+                ?: return refuse(message, OperationResult.Error(INACTIVE_ACCOUNT))
+        if (entered.headers[Provenance.REPORT_FAILURES] != true) return run(entered)
+        return try {
+            run(entered)
+        } catch (e: Exception) {
+            val provenance = entered.headers[Provenance.HEADER] as? Provenance
+            logger.warn(
+                "Command {} (correlation {}) failed unexpectedly",
+                entered.headers.id,
+                provenance?.correlationId,
+                e,
+            )
+            refuse(entered, OperationResult.Error(COMMAND_FAILED))
+        }
+    }
+
+    /** [message] with its principal as the account stands now, or null if it's not active. */
+    private fun withLiveAuthority(message: Message<*>): Message<*>? {
+        if (message.headers[Provenance.LIVE_AUTHORITY] != true) return message
+        val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return message
+        val principal = provenance.user ?: return message
+        val current = liveAuthority.current(principal) ?: return null
+        return MessageBuilder.fromMessage(message)
+            .setHeader(Provenance.HEADER, provenance.copy(user = current))
+            .build()
+    }
+
+    /** Answers [message] with [result] on egress, without running the chain. */
+    private fun refuse(message: Message<*>, result: OperationResult.Error): OperationResult {
+        val hopCount = message.headers[FanOut.HOP_COUNT_HEADER] as? Int ?: 0
+        publishToEgress(result, message, hopCount)
+        return result
+    }
+
+    private fun run(message: Message<*>): OperationResult {
         val hopCount = message.headers[FanOut.HOP_COUNT_HEADER] as? Int ?: 0
         val provenance = message.headers[Provenance.HEADER] as? Provenance
         return when (val outcome = processChain(message)) {
@@ -285,5 +331,12 @@ class OperationService(
     companion object {
         /** What a throttled command is answered with. */
         const val THROTTLED = "That command is rate-limited here; try again later."
+
+        /** What a live-authority command is answered with when its account isn't active. */
+        const val INACTIVE_ACCOUNT = "Your account can't run commands right now."
+
+        /** What a REPORT_FAILURES command is answered with when it fails unexpectedly. */
+        const val COMMAND_FAILED =
+            "That command failed unexpectedly; the details are in the server's log."
     }
 }
