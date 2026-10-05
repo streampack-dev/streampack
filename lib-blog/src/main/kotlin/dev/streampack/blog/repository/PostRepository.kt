@@ -88,6 +88,33 @@ interface PostRepository : JpaRepository<Post, UUID> {
     fun findBySystemCategoryAndSlug(slugPath: String, now: Instant): Post?
 
     /**
+     * Live posts whose outgoing links haven't been handled since they last changed (#112, #128):
+     * published (approved, not deleted, publishedAt past), and `metadata.linksCheckedThrough`
+     * (epoch millis) short of `updatedAt`. Oldest first.
+     */
+    @Query(
+        nativeQuery = true,
+        value =
+            "SELECT * FROM posts WHERE status = 'APPROVED' AND deleted = false AND published_at <= :now " +
+                "AND COALESCE((metadata->>'linksCheckedThrough')::bigint, 0) < " +
+                "FLOOR(EXTRACT(EPOCH FROM updated_at) * 1000)::bigint " +
+                "ORDER BY published_at ASC LIMIT :limit",
+    )
+    fun findOutgoingLinksDue(now: Instant, limit: Int): List<Post>
+
+    /**
+     * Merges [patch] (a JSON object) into a post's metadata, key by key, touching nothing else: not
+     * updatedAt, and not an edit made meanwhile.
+     */
+    @Transactional
+    @Modifying
+    @Query(
+        nativeQuery = true,
+        value = "UPDATE posts SET metadata = metadata || CAST(:patch AS jsonb) WHERE id = :id",
+    )
+    fun mergeMetadata(id: UUID, patch: String): Int
+
+    /**
      * Drafts carrying [tagName] (the article ideas' `_idea`), oldest first, with their authors
      * loaded, so a caller outside a transaction can read them.
      */
