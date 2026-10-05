@@ -27,6 +27,7 @@ import org.kitteh.irc.client.library.event.user.PrivateMessageEvent
 import org.kitteh.irc.client.library.event.user.UserNickChangeEvent
 import org.kitteh.irc.client.library.event.user.UserQuitEvent
 import org.slf4j.LoggerFactory
+import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 
 /**
@@ -271,14 +272,19 @@ class IrcAdapter(
         dispatchLoggingEvent(
             event.channel.name,
             "* ${event.actor.nick} joined ${event.channel.name}",
+            event.actor.nick,
         )
     }
 
     @Handler
     fun onChannelTopic(event: ChannelTopicEvent) {
-        val setter = event.newTopic.setter.map { it.name }.orElse("someone")
+        val setter = event.newTopic.setter.map { it.name }.orElse(null)
         val newTopic = event.newTopic.value.orElse("")
-        dispatchLoggingEvent(event.channel.name, "* $setter changed the topic to: $newTopic")
+        dispatchLoggingEvent(
+            event.channel.name,
+            "* ${setter ?: "someone"} changed the topic to: $newTopic",
+            setter,
+        )
     }
 
     @Handler
@@ -287,22 +293,54 @@ class IrcAdapter(
         dispatchLoggingEvent(
             event.channel.name,
             "* ${event.actor.nick} left ${event.channel.name}$reason",
+            event.actor.nick,
         )
     }
 
     @Handler
     fun onNickChange(event: UserNickChangeEvent) {
-        dispatchLoggingEvent("*", "* ${event.actor.nick} is now known as ${event.newUser.nick}")
+        dispatchLoggingEvent(
+            "*",
+            "* ${event.actor.nick} is now known as ${event.newUser.nick}",
+            event.actor.nick,
+        )
     }
 
     @Handler
     fun onUserQuit(event: UserQuitEvent) {
         val reason = event.message.let { if (it.isNotEmpty()) " ($it)" else "" }
-        dispatchLoggingEvent("*", "* ${event.actor.nick} quit$reason")
+        dispatchLoggingEvent("*", "* ${event.actor.nick} quit$reason", event.actor.nick)
     }
 
     companion object {
         const val ALLOW_OPS_KEY = "irc-allow-ops"
+
+        /**
+         * A channel event as a log-only message. The actor goes in the `nick` header, as a
+         * message's sender does, so the log records who the event was about rather than "unknown";
+         * an event with no actor (a topic with no known setter) has none.
+         */
+        fun loggingEvent(
+            networkName: String,
+            botNick: String,
+            channelName: String,
+            content: String,
+            actor: String?,
+        ): Message<Any> {
+            val provenance =
+                Provenance(
+                    protocol = Protocol.IRC,
+                    serviceId = networkName,
+                    replyTo = channelName,
+                    metadata = mapOf(Provenance.BOT_NICK to botNick),
+                )
+            val builder =
+                MessageBuilder.withPayload(LoggingRequest(content) as Any)
+                    .setHeader(Provenance.HEADER, provenance)
+            if (!actor.isNullOrBlank()) builder.setHeader("nick", actor)
+            return builder.build()
+        }
+
         private const val MAX_IRC_MESSAGE_LENGTH = 400
         private const val MAX_IRC_REPLY_LINES = 4
         private const val TRUNCATION_SUFFIX = " [...more]"
@@ -403,22 +441,17 @@ class IrcAdapter(
         }
     }
 
-    /** Dispatches a metadata event as a LoggingRequest through ingress for logging only */
-    private fun dispatchLoggingEvent(channelName: String, content: String) {
+    /**
+     * Dispatches a metadata event as a LoggingRequest through ingress for logging only, attributed
+     * to [actor] (the nick who joined, left, quit, changed nick or set the topic) when there is one
+     * (#124).
+     */
+    private fun dispatchLoggingEvent(channelName: String, content: String, actor: String?) {
         Thread.startVirtualThread {
             try {
-                val provenance =
-                    Provenance(
-                        protocol = Protocol.IRC,
-                        serviceId = networkName,
-                        replyTo = channelName,
-                        metadata = mapOf(Provenance.BOT_NICK to client.nick),
-                    )
-                val message =
-                    MessageBuilder.withPayload(LoggingRequest(content) as Any)
-                        .setHeader(Provenance.HEADER, provenance)
-                        .build()
-                eventGateway.send(message)
+                eventGateway.send(
+                    loggingEvent(networkName, client.nick, channelName, content, actor)
+                )
             } catch (e: Exception) {
                 logger.error("Error dispatching logging event on {}: {}", networkName, e.message)
             }
