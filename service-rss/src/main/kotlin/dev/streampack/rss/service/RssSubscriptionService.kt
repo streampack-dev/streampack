@@ -8,6 +8,7 @@ import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.entity.RssFeed
 import dev.streampack.rss.entity.RssFeedSubscription
 import dev.streampack.rss.model.AddFeedOutcome
+import dev.streampack.rss.model.DiscoveryResult
 import dev.streampack.rss.model.RemoveFeedOutcome
 import dev.streampack.rss.model.SubscriptionOutcome
 import dev.streampack.rss.repository.RssEntryRepository
@@ -53,6 +54,16 @@ class RssSubscriptionService(
             return AddFeedOutcome.DiscoveryFailed(url)
         }
 
+        return register(result)
+    }
+
+    /**
+     * Registers a feed already discovered: unless it's known by its address, stores it and seeds
+     * its current entries.
+     */
+    @Transactional
+    fun register(result: DiscoveryResult): AddFeedOutcome {
+        // Check for existing feed by the resolved feed URL
         // Check for existing feed by the resolved feed URL
         val existing = feedRepository.findByFeedUrl(result.feedUrl)
         if (existing != null) {
@@ -96,6 +107,24 @@ class RssSubscriptionService(
         logger.info("Added feed \"{}\" with {} entries", feed.title, entries.size)
         return AddFeedOutcome.Added(feed, entries.size)
     }
+
+    /**
+     * A feed we have, active or not, on [host] (`www.` aside): by its own address or its site's.
+     * Feeds are few enough to look through.
+     */
+    fun knownFeedOnHost(host: String): RssFeed? {
+        val wanted = host.lowercase().removePrefix("www.")
+        return feedRepository.findAll().firstOrNull { feed ->
+            listOfNotNull(feed.siteUrl, feed.feedUrl).any { url -> hostOf(url) == wanted }
+        }
+    }
+
+    private fun hostOf(url: String): String? = runCatching {
+        java.net.URI(url.trim()).host
+    }
+        .getOrNull()
+        ?.lowercase()
+        ?.removePrefix("www.")
 
     private fun deduplicateEntries(entries: List<SyndEntry>): List<SyndEntry> {
         val seenGuids = LinkedHashSet<String>()

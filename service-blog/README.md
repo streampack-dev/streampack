@@ -51,3 +51,14 @@ It returns the same `ContentListResponse` shape as the normal post listing, orde
 - `DeriveTagsOperation` is an editor helper for the admin UI; it is not a public chat command.
 - These operations are usually reached through `service-blog` HTTP controllers rather than through
   IRC, Slack, or other text protocols.
+
+## Outgoing Links
+
+Once a post is live (published, or a scheduled post once its time comes) and again after each edit, a background pass in lib-blog (`OutgoingLinksTickListener`, every minute) handles its links off the site, once each:
+
+- **Mentions (#112):** each linked page is told of the mention from the post's public address (`BLOG_BASE_URL/posts/<canonical slug>`): by Webmention when it names an endpoint (a `Link` header, then the first `<link>`/`<a>` with `rel="webmention"`), otherwise by Pingback when it names a server (`X-Pingback`, `<link rel="pingback">`), otherwise not at all. A failure on the way or a 5xx is tried twice more. Not sent while `BLOG_BASE_URL` is localhost or a private address.
+- **Autosubscribe (#128):** each site linked is offered once to the RSS reader, which follows its site feed (see service-rss's README).
+
+What was handled is kept in the post's `metadata`: `mentioned` (links), `feedsChecked` (hosts) and `linksCheckedThrough` (the update handled), whatever came of each, so nothing is sent twice; it's written without touching `updatedAt`. Posts already live when this arrived (migration V51) are a baseline: when one is next due, its links are recorded without anything being sent. Every fetch goes through lib-core's `GuardedFetcher`, so a post's links never reach an internal address.
+
+Visibility is the log, one line per link or site: `Mention <target> from <source>: webmention 202` / `pingback ok` / `no endpoint` / `refused: ...` / `failed: ...`, and `Autosubscribe <host> from <source>: ...`. Settings are `streampack.blog.outgoing.*` (`BLOG_MENTIONS_ENABLED`, `BLOG_AUTOSUBSCRIBE_ENABLED`).
