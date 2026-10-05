@@ -3,9 +3,11 @@ package dev.streampack.ideas.operation
 
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.repository.PostRepository
+import dev.streampack.core.entity.MessageLog
 import dev.streampack.core.entity.ServiceBinding
 import dev.streampack.core.entity.User
 import dev.streampack.core.integration.EventGateway
+import dev.streampack.core.json.JacksonMappers
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
@@ -337,6 +339,48 @@ class ArticleOperationTests {
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("log messages"), "Should mention log messages: $payload")
         assertTrue(payload.contains("content block #1"), "Should be block #1: $payload")
+    }
+
+    @Test
+    fun `logs adds the excerpt as a fenced block, a line per message`() {
+        val channelUri = provenance.encode()
+        messageLogService.logInbound(
+            channelUri,
+            "NeXeN",
+            "go look. i don't have intellij installed",
+        )
+        messageLogService.logInbound(channelUri, "unknown", "* pebble joined #java")
+        messageLogService.logInbound(channelUri, "dreamreal", "* dreamreal nods")
+
+        eventGateway.process(aliceMessage("article Fenced Log Test"))
+        eventGateway.process(aliceMessage("logs 10m"))
+
+        val state =
+            JacksonMappers.standard()
+                .convertValue(
+                    stateService.getState(aliceKey, IdeaSessionState.STATE_KEY),
+                    IdeaSessionState::class.java,
+                )
+        val block = state.contentBlocks.single().lines()
+        assertEquals("```text", block.first())
+        assertEquals("```", block.last())
+        // Not quoted with '>', which runs the lines into one paragraph and reads <nick> as a tag.
+        assertTrue(block.none { it.startsWith(">") }, block.joinToString("\n"))
+        assertTrue("<NeXeN> go look. i don't have intellij installed" in block)
+        // Events and actions as they are, without a sender in front.
+        assertTrue("* pebble joined #java" in block)
+        assertTrue("* dreamreal nods" in block)
+        eventGateway.process(aliceMessage("cancel"))
+    }
+
+    @Test
+    fun `a fence outlasts any run of backticks in the excerpt`() {
+        val quoted =
+            ArticleOperation.quoteLog(
+                listOf(MessageLog(sender = "carol", content = "try ```kotlin fun x()``` there"))
+            )
+
+        assertEquals("````text\n<carol> try ```kotlin fun x()``` there\n````", quoted)
     }
 
     @Test

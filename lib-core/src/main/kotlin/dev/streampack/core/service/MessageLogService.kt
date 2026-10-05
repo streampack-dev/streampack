@@ -42,6 +42,28 @@ class MessageLogService(private val repository: MessageLogRepository) {
             .content
     }
 
+    /**
+     * Returns the latest [limit] messages for a provenance within a time window, in chronological
+     * order: where [findMessages] keeps the oldest when the window holds more than [limit], this
+     * keeps the newest, for "the last hour of the channel" and the like.
+     */
+    fun findLatestMessages(
+        provenanceUri: String,
+        from: Instant,
+        to: Instant,
+        limit: Int,
+    ): List<MessageLog> {
+        return repository
+            .findByProvenanceUriAndTimestampBetweenOrderByTimestampDesc(
+                provenanceUri,
+                from,
+                to,
+                PageRequest.of(0, limit),
+            )
+            .content
+            .reversed()
+    }
+
     /** Returns recent inbound messages from a sender on a given protocol */
     fun findRecentMessagesBySender(
         sender: String,

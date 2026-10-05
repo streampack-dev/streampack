@@ -2,10 +2,7 @@
 package dev.streampack.ideas.operation
 
 import dev.streampack.blog.entity.Post
-import dev.streampack.blog.model.PostStatus
 import dev.streampack.blog.repository.PostRepository
-import dev.streampack.blog.repository.PostTagRepository
-import dev.streampack.blog.repository.TagRepository
 import dev.streampack.core.extensions.compress
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
@@ -22,8 +19,6 @@ import org.springframework.stereotype.Component
 /** Admin operation for browsing, searching, and removing article ideas */
 @Component
 class IdeasBrowseOperation(
-    private val tagRepository: TagRepository,
-    private val postTagRepository: PostTagRepository,
     private val postRepository: PostRepository,
     @Qualifier("egressChannel") private val egressChannel: MessageChannel,
     private val transformerChain: TransformerChainService,
@@ -153,16 +148,11 @@ class IdeasBrowseOperation(
         return OperationResult.Success("Removed idea #$number: \"${idea.title}\".")
     }
 
-    /** Finds all draft posts tagged with _idea that are not deleted */
-    private fun findIdeaPosts(): List<Post> {
-        val tag = tagRepository.findByName("_idea") ?: return emptyList()
-        val postTags = postTagRepository.findByTag(tag.id)
-        val postIds = postTags.map { it.post.id }.toSet()
-        return postRepository
-            .findAllById(postIds)
-            .filter { it.status == PostStatus.DRAFT && !it.deleted }
-            .sortedBy { it.createdAt }
-    }
+    /**
+     * The drafts tagged _idea, oldest first, their authors loaded with them: the list names each
+     * idea's author, and this runs outside any transaction.
+     */
+    private fun findIdeaPosts(): List<Post> = postRepository.findDraftsTaggedWithAuthor("_idea")
 
     private fun sendToEgress(text: String, provenance: Provenance) {
         val raw = OperationResult.Success(text)

@@ -24,6 +24,14 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
         pageable: Pageable,
     ): Page<MessageLog>
 
+    /** Returns messages within a time window, newest first */
+    fun findByProvenanceUriAndTimestampBetweenOrderByTimestampDesc(
+        provenanceUri: String,
+        from: Instant,
+        to: Instant,
+        pageable: Pageable,
+    ): Page<MessageLog>
+
     /**
      * Messages in one provenance whose content contains [pattern] (an ILIKE pattern, its own
      * wildcards escaped with a backslash), newest first. The trigram index on content serves it.

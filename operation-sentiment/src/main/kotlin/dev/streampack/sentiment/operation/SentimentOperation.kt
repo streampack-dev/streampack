@@ -61,7 +61,8 @@ class SentimentOperation(
         val now = Instant.now()
         val windowStart = now.minus(4, ChronoUnit.HOURS)
 
-        val messages = messageLogService.findMessages(payload.targetUri, windowStart, now, 100)
+        val messages =
+            messageLogService.findLatestMessages(payload.targetUri, windowStart, now, 100)
         if (messages.isEmpty()) {
             return OperationResult.Error("No recent messages found for ${payload.targetUri}")
         }

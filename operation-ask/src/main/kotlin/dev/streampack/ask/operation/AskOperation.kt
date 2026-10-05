@@ -66,7 +66,7 @@ class AskOperation(
     private fun assembleContext(provenanceUri: String, botNick: String): String {
         val now = Instant.now()
         val windowStart = now.minus(5, ChronoUnit.MINUTES)
-        val messages = messageLogService.findMessages(provenanceUri, windowStart, now, 10)
+        val messages = messageLogService.findLatestMessages(provenanceUri, windowStart, now, 10)
 
         if (messages.isEmpty()) return ""
 
