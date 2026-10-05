@@ -1,6 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.test
 
+import java.nio.channels.FileChannel
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.sql.DriverManager
 import java.util.UUID
 import org.springframework.boot.EnvironmentPostProcessor
@@ -65,7 +68,14 @@ object SharedTestDatabase {
                 .withReuse(true)
                 // Modules run in parallel (mvnd), each JVM with a pool per cached context.
                 .withCommand("postgres", "-c", "max_connections=1000", "-c", "fsync=off")
-        container.start()
+        // One JVM at a time starts (or finds) it: modules testing in parallel (mvnd) would
+        // otherwise each find none running and each start their own.
+        FileChannel.open(
+                Path.of(System.getProperty("java.io.tmpdir"), "streampack-test-postgres.lock"),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE,
+            )
+            .use { channel -> channel.lock().use { container.start() } }
         val admin = {
             DriverManager.getConnection(container.jdbcUrl, container.username, container.password)
         }
