@@ -11,6 +11,7 @@ import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.MessageLogService
 import java.util.UUID
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -38,10 +39,16 @@ class AskOperationTests {
             val mockProperties = AiProperties(enabled = true)
             return object : AiService(mockChatModel, mockProperties) {
                 override fun prompt(systemInstruction: String, userPrompt: String): String {
+                    lastSystemInstruction = systemInstruction
                     return "JaCoCo excludes inner classes via the excludes configuration element."
                 }
             }
         }
+    }
+
+    companion object {
+        /** The system instruction the mock AI was last given, which carries the context. */
+        @Volatile var lastSystemInstruction: String = ""
     }
 
     @Autowired lateinit var askOperation: AskOperation
@@ -125,6 +132,32 @@ class AskOperationTests {
         val result = askOperation.execute(message("ask what changed in spring boot 4"))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    @Test
+    fun `context is the latest messages when there are more than it takes`() {
+        val channel = "irc://testnet/%23latest"
+        messageLogService.logInbound(channel, "bob", "the oldest remark")
+        (1..10).forEach { messageLogService.logInbound(channel, "carol", "later remark $it") }
+
+        val question =
+            MessageBuilder.withPayload("ask what was said")
+                .setHeader(
+                    Provenance.HEADER,
+                    Provenance(
+                        protocol = Protocol.IRC,
+                        serviceId = "testnet",
+                        user = userPrincipal(),
+                        replyTo = "#latest",
+                    ),
+                )
+                .setHeader(Provenance.ADDRESSED, true)
+                .setHeader(Provenance.BOT_NICK, "nevet")
+                .build()
+        askOperation.execute(question)
+
+        assertTrue(lastSystemInstruction.contains("later remark 10"), lastSystemInstruction)
+        assertFalse(lastSystemInstruction.contains("the oldest remark"), lastSystemInstruction)
     }
 
     @Test
