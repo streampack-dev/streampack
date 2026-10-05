@@ -19,7 +19,7 @@ For repository-facing operator and moderator commands, see:
 | Messaging and channel tools | `tell alice hello`, `bridge provenance` |
 | Games | `hangman`, `21`, `safecracker` |
 | AI and creative tools | `ask ...`, `poem ...`, `be alice` |
-| Idea capture | `article ...`, `content ...`, `done` |
+| Idea capture | `article ...`, `content ...`, `logs ...`, `includeai`, `done`, `cancel` (see [operation-ideas](../../operation-ideas/README.md)) |
 
 ## Protocol Addressing
 

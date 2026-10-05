@@ -2,6 +2,7 @@
 package dev.streampack.ideas.operation
 
 import dev.streampack.ai.service.AiService
+import dev.streampack.core.entity.MessageLog
 import dev.streampack.core.extensions.compress
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.json.JacksonMappers
@@ -185,7 +186,8 @@ class ArticleOperation(
         val from = now.minus(capped)
         val channelUri = provenance.encode()
 
-        val messages = messageLogService.findMessages(channelUri, from, to = now, maxLogMessages)
+        val messages =
+            messageLogService.findLatestMessages(channelUri, from, to = now, maxLogMessages)
 
         if (messages.isEmpty()) {
             return OperationResult.Error(
@@ -193,7 +195,7 @@ class ArticleOperation(
             )
         }
 
-        val formatted = messages.joinToString("\n") { msg -> "> <${msg.sender}> ${msg.content}" }
+        val formatted = quoteLog(messages)
 
         val state = objectMapper.convertValue<IdeaSessionState>(data)
         val updated = state.copy(contentBlocks = state.contentBlocks + formatted, hasLogs = true)
@@ -554,4 +556,32 @@ class ArticleOperation(
         val summary: String? = null,
         val tags: List<String> = emptyList(),
     )
+
+    companion object {
+        /**
+         * The excerpt as a fenced block, one line per message as a chat client shows it: `<nick>
+         * text`, or an action (`* nick waves`) or a channel event (`* pebble joined #java`, logged
+         * without a sender of its own) as it is. Quoted with `>` instead, consecutive lines run
+         * together into one paragraph, and `<nick>` reads as an HTML tag; a fence keeps the lines
+         * and the nicks. It's longer than any run of backticks in the excerpt, so none of them ends
+         * it.
+         */
+        internal fun quoteLog(messages: List<MessageLog>): String {
+            val lines = messages.map { msg ->
+                if (isEvent(msg)) msg.content else "<${msg.sender}> ${msg.content}"
+            }
+            val longest = lines.maxOf { line ->
+                BACKTICKS.findAll(line).maxOfOrNull { it.value.length } ?: 0
+            }
+            val fence = "`".repeat(maxOf(3, longest + 1))
+            return "${fence}text\n${lines.joinToString("\n")}\n$fence"
+        }
+
+        private fun isEvent(msg: MessageLog): Boolean =
+            msg.content.startsWith("* ") &&
+                (msg.sender == UNKNOWN_SENDER || msg.content.startsWith("* ${msg.sender} "))
+
+        private const val UNKNOWN_SENDER = "unknown"
+        private val BACKTICKS = Regex("`+")
+    }
 }

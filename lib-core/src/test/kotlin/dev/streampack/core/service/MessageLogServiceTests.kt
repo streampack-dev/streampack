@@ -89,6 +89,19 @@ class MessageLogServiceTests {
     }
 
     @Test
+    fun `findLatestMessages keeps the newest past the limit, in chronological order`() {
+        val uri = "test://msglog-latest/unique-${System.nanoTime()}"
+        val before = Instant.now().minusSeconds(1)
+        messageLogService.logInbound(uri, "alice", "first")
+        messageLogService.logInbound(uri, "bob", "second")
+        messageLogService.logInbound(uri, "carol", "third")
+        val after = Instant.now().plusSeconds(1)
+
+        val messages = messageLogService.findLatestMessages(uri, before, after, 2)
+        assertEquals(listOf("bob", "carol"), messages.map { it.sender })
+    }
+
+    @Test
     fun `findMessages excludes messages outside the time window`() {
         val uri = "test://msglog-window/unique-${System.nanoTime()}"
         messageLogService.logInbound(uri, "old", "ancient message")
