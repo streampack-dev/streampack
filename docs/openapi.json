@@ -450,6 +450,17 @@
         },
         "type" : "object"
       },
+      "DeriveFactoidHttpRequest" : {
+        "properties" : {
+          "context" : {
+            "type" : [ "string", "null" ]
+          },
+          "selector" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "type" : "object"
+      },
       "DeriveFactoidsHttpRequest" : {
         "properties" : {
           "markdownSource" : {
@@ -633,6 +644,52 @@
           }
         },
         "required" : [ "accessCount", "attributes", "locked", "selector", "updatedAt" ],
+        "type" : "object"
+      },
+      "FactoidDraft" : {
+        "properties" : {
+          "droppedUrls" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "fits" : {
+            "type" : "boolean"
+          },
+          "line" : {
+            "type" : "string"
+          },
+          "lineLength" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "seeAlso" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "selector" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "urls" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "droppedUrls", "fits", "line", "lineLength", "seeAlso", "selector", "tags", "text", "urls" ],
         "type" : "object"
       },
       "FactoidListResponse" : {
@@ -2783,6 +2840,79 @@
             "description" : "OK"
           }
         },
+        "tags" : [ "Factoids" ]
+      }
+    },
+    "/factoids/derive" : {
+      "post" : {
+        "description" : "Writes a draft (text, URLs, tags, see-also) in the knowledge base's style, with the line the bot would say and whether it fits. URLs are checked to answer, tags limited to those in use (one new at most), see-also to existing factoids. Nothing is stored: save with PUT /factoids/{selector}. Needs AI; signed-in readers only.",
+        "operationId" : "deriveFactoid",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeriveFactoidHttpRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FactoidDraft"
+                }
+              }
+            },
+            "description" : "The draft"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No name, or one too long"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not signed in"
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A factoid by that name exists"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "AI isn't configured, or the draft couldn't be written"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Draft a factoid for a name, for its author to edit and save",
         "tags" : [ "Factoids" ]
       }
     },

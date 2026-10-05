@@ -18,6 +18,9 @@ spring:
     port: 3025
 
 streampack:
+  # Tests' HTTP servers are on localhost; production fetches only public addresses.
+  fetch:
+    allow-loopback: true
   security:
     enforce-external-secrets: false
   base-url: http://localhost:8080

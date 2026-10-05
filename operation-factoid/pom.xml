@@ -30,6 +30,11 @@
             <artifactId>lib-factoid</artifactId>
         </dependency>
         <dependency>
+            <!-- Drafting a factoid (#132). -->
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-ai</artifactId>
+        </dependency>
+        <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-testsupport</artifactId>
             <scope>test</scope>
