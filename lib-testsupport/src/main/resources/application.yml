@@ -18,6 +18,9 @@ spring:
     port: 3025
 
 streampack:
+  # Tests' HTTP servers are on localhost; production fetches only public addresses.
+  fetch:
+    allow-loopback: true
   jwt:
     secret: test-jwt-secret-not-for-production-0123456789
   github:

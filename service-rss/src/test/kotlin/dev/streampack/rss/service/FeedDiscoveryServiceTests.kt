@@ -2,7 +2,8 @@
 package dev.streampack.rss.service
 
 import com.sun.net.httpserver.HttpServer
-import dev.streampack.rss.config.RssProperties
+import dev.streampack.core.fetch.FetchProperties
+import dev.streampack.core.fetch.GuardedFetcher
 import java.net.InetSocketAddress
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -24,7 +25,7 @@ class FeedDiscoveryServiceTests {
         httpServer = HttpServer.create(InetSocketAddress(0), 10)
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
-        service = FeedDiscoveryService(RssProperties())
+        service = FeedDiscoveryService(GuardedFetcher(FetchProperties(allowLoopback = true)))
     }
 
     @AfterEach
@@ -282,10 +283,102 @@ class FeedDiscoveryServiceTests {
         assertNull(result)
     }
 
+    private fun serve(path: String, body: String, type: String = "text/html") {
+        httpServer.createContext(path) { exchange ->
+            if (exchange.requestURI.path != path) {
+                exchange.sendResponseHeaders(404, -1)
+                exchange.close()
+                return@createContext
+            }
+            val bytes = body.toByteArray()
+            exchange.responseHeaders.add("Content-Type", type)
+            exchange.sendResponseHeaders(200, bytes.size.toLong())
+            exchange.responseBody.use { it.write(bytes) }
+        }
+    }
+
+    /** A WordPress article page: its comments feed advertised first, then the site's. */
+    private fun wordpressPage() =
+        """<html><head>
+        <link rel="alternate" type="application/rss+xml" title="Blog » Post Comments Feed" href="/2026/01/post/feed/">
+        <link rel="alternate" type="application/rss+xml" title="Blog » Feed" href="/feed/">
+        </head><body>post</body></html>"""
+
+    @Test
+    fun `a page's site feed is chosen over its comments feed`() {
+        serve("/2026/01/post/", wordpressPage())
+        serve(
+            "/2026/01/post/feed/",
+            sampleRss("Comments on: Post", 1, baseUrl),
+            "application/rss+xml",
+        )
+        serve("/feed/", sampleRss("Blog", 2, baseUrl), "application/rss+xml")
+
+        assertEquals("$baseUrl/feed/", service.discover("$baseUrl/2026/01/post/")!!.feedUrl)
+        assertEquals("$baseUrl/feed/", service.discoverSiteFeed("$baseUrl/2026/01/post/")!!.feedUrl)
+    }
+
+    @Test
+    fun `a site feed is never a comments feed`() {
+        serve(
+            "/post",
+            """<html><head><link rel="alternate" type="application/rss+xml" title="Comments Feed" href="/comments/feed/"></head></html>""",
+        )
+        serve("/comments/feed/", sampleRss("Comments for Blog", 1, baseUrl), "application/rss+xml")
+
+        assertNull(service.discoverSiteFeed("$baseUrl/post"))
+        // A reader adding the page by hand still gets the only feed there is.
+        assertEquals("$baseUrl/comments/feed/", service.discover("$baseUrl/post")!!.feedUrl)
+    }
+
+    @Test
+    fun `a guessed feed of another site isn't a site feed`() {
+        serve("/page", "<html><body>no feed links here</body></html>")
+        serve(
+            "/feed.xml",
+            sampleRss("Someone else", 1, "https://elsewhere.example/"),
+            "application/rss+xml",
+        )
+
+        assertNull(service.discoverSiteFeed("$baseUrl/page"))
+        assertNotNull(service.discover("$baseUrl/page"))
+    }
+
+    @Test
+    fun `a guessed feed of the linked site is its site feed`() {
+        serve("/page", "<html><body>no feed links here</body></html>")
+        serve("/feed.xml", sampleRss("This site", 1, "$baseUrl/"), "application/rss+xml")
+
+        assertEquals("$baseUrl/feed.xml", service.discoverSiteFeed("$baseUrl/page")!!.feedUrl)
+    }
+
+    @Test
+    fun `a feed advertised by standard discovery is the site's, wherever it's hosted`() {
+        serve(
+            "/page",
+            """<html><head><link rel="alternate" type="application/rss+xml" href="/hosted.xml"></head></html>""",
+        )
+        serve(
+            "/hosted.xml",
+            sampleRss("Hosted elsewhere", 1, "https://feeds.example/"),
+            "application/rss+xml",
+        )
+
+        assertEquals("$baseUrl/hosted.xml", service.discoverSiteFeed("$baseUrl/page")!!.feedUrl)
+    }
+
+    @Test
+    fun `a private address isn't fetched, even when a page names it`() {
+        val guarded = FeedDiscoveryService(GuardedFetcher(FetchProperties()))
+
+        assertNull(guarded.discover("http://127.0.0.1:${httpServer.address.port}/feed.xml"))
+        assertNull(guarded.discover("http://10.0.0.1/feed.xml"))
+    }
+
     @EnabledIfSystemProperty(named = "live.tests", matches = "true")
     @Test
     fun `live fetch of primate run blog rss`() {
-        val liveService = FeedDiscoveryService(RssProperties())
+        val liveService = FeedDiscoveryService(GuardedFetcher(FetchProperties()))
         val result = liveService.discover("https://primate.run/blog.rss")
         assertNotNull(result, "Discovery should succeed for primate.run/blog.rss")
         assertEquals("https://primate.run/blog.rss", result!!.feedUrl)
@@ -294,7 +387,7 @@ class FeedDiscoveryServiceTests {
     }
 
     companion object {
-        fun sampleRss(title: String, entryCount: Int): String {
+        fun sampleRss(title: String, entryCount: Int, link: String = "http://example.com"): String {
             val items =
                 (1..entryCount).joinToString("\n") { i ->
                     """
@@ -313,7 +406,7 @@ class FeedDiscoveryServiceTests {
                 <rss version="2.0">
                     <channel>
                         <title>$title</title>
-                        <link>http://example.com</link>
+                        <link>$link</link>
                         <description>A test feed</description>
                         $items
                     </channel>
