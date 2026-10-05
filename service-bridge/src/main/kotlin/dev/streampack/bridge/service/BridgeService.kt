@@ -31,6 +31,11 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
         if (normalizedSourceUri == normalizedTargetUri) {
             return CopyResult.Error("Cannot bridge a channel to itself")
         }
+        // A web console is an admin's own; bridging would copy their commands, unredacted, and
+        // their output somewhere else (#115).
+        if (isWebConsole(normalizedSourceUri) || isWebConsole(normalizedTargetUri)) {
+            return CopyResult.Error("A web console can't be bridged")
+        }
 
         val existingPair = findPairContaining(normalizedSourceUri, normalizedTargetUri)
 
@@ -157,6 +162,9 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
     private fun partnerOf(pair: BridgePair, uri: String): String {
         return if (pair.firstUri == uri) pair.secondUri else pair.firstUri
     }
+
+    private fun isWebConsole(uri: String): Boolean =
+        uri.startsWith(dev.streampack.core.model.Protocol.WEBCONSOLE.name.lowercase() + "://")
 
     private fun String.toProvenanceIdentityUri(): String = runCatching {
         Provenance.decode(this).identityEncode()

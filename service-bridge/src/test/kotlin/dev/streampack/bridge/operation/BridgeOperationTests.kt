@@ -65,6 +65,49 @@ class BridgeOperationTests {
             .apply { if (nick != null) setHeader("nick", nick) }
             .build()
 
+    @Autowired lateinit var pairRepository: dev.streampack.bridge.repository.BridgePairRepository
+
+    private val console = "webconsole://web/users/${UUID.randomUUID()}"
+
+    @Test
+    fun `a web console can't be bridged, either way`() {
+        for ((from, to) in listOf(console to "irc://a/%23one", "irc://a/%23one" to console)) {
+            val result = bridgeService.copy(from, to)
+            assertInstanceOf(BridgeService.CopyResult.Error::class.java, result, "$from -> $to")
+        }
+        assertTrue(bridgeService.getCopyTargets(console).isEmpty())
+    }
+
+    @Test
+    fun `a web console's commands and output are never copied, even by a pair made before`() {
+        pairRepository.save(
+            dev.streampack.bridge.entity.BridgePair(
+                firstUri = console,
+                secondUri = "irc://a/%23one",
+                copyFirstToSecond = true,
+            )
+        )
+        val copied = java.util.concurrent.CopyOnWriteArrayList<Provenance>()
+        val watcher =
+            org.springframework.messaging.MessageHandler { message ->
+                (message.headers[Provenance.HEADER] as? Provenance)
+                    ?.takeIf { it.protocol == Protocol.IRC }
+                    ?.let { copied.add(it) }
+            }
+        egressChannel.subscribe(watcher)
+        try {
+            eventGateway.process(
+                MessageBuilder.withPayload("bridge")
+                    .setHeader(Provenance.HEADER, Provenance.decode(console).copy(user = adminUser))
+                    .setHeader(Provenance.ADDRESSED, true)
+                    .build()
+            )
+        } finally {
+            egressChannel.unsubscribe(watcher)
+        }
+        assertTrue(copied.isEmpty(), copied.toString())
+    }
+
     @Test
     fun `bridge help returns command list`() {
         val result = eventGateway.process(addressedMessage("bridge", user = adminUser))

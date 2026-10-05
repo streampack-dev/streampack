@@ -42,6 +42,48 @@ class TellOperationTests {
             .setHeader("nick", nick)
             .build()
 
+    private fun consoleMessage(text: String) =
+        MessageBuilder.withPayload(text)
+            .setHeader(
+                Provenance.HEADER,
+                Provenance(
+                    Protocol.WEBCONSOLE,
+                    "web",
+                    replyTo = "users/${java.util.UUID.randomUUID()}",
+                ),
+            )
+            .setHeader(Provenance.ADDRESSED, true)
+            .build()
+
+    @Test
+    fun `from the web console, a bare name or channel is refused, asking for a full address`() {
+        for (line in listOf("tell blue hi", "tell #java hi")) {
+            val result = tellOperation.execute(consoleMessage(line))
+            assertInstanceOf(OperationResult.Error::class.java, result, line)
+            assertTrue(
+                (result as OperationResult.Error).message.contains("full address"),
+                result.message,
+            )
+        }
+    }
+
+    @Test
+    fun `from the web console, a full address is told, and nothing comes back to the console`() {
+        val result = tellOperation.execute(consoleMessage("tell irc://libera/%23java hello"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val target = (result as OperationResult.Success).provenance!!
+        assertEquals(Protocol.IRC, target.protocol)
+        assertEquals("#java", target.replyTo)
+    }
+
+    @Test
+    fun `a malformed or unknown address is refused clearly, from anywhere`() {
+        for (line in listOf("tell nosuch://x/y hi", "tell irc://[bad/x hi")) {
+            val result = tellOperation.execute(addressedMessage(line))
+            assertInstanceOf(OperationResult.Error::class.java, result, line)
+        }
+    }
+
     @Test
     fun `tell with name resolves to private message on same protocol`() {
         val result = tellOperation.execute(addressedMessage("tell blue go to heck!"))

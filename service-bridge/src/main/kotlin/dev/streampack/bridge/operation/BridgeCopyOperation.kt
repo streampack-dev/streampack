@@ -4,6 +4,7 @@ package dev.streampack.bridge.operation
 import dev.streampack.bridge.service.BridgeService
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.TypedOperation
 import org.springframework.beans.factory.annotation.Qualifier
@@ -31,6 +32,8 @@ class BridgeCopyOperation(
 
         // Skip already-bridged messages to prevent re-copy loops
         if (provenance.metadata.containsKey(Provenance.BRIDGED)) return null
+        // A web console's input is never copied: it runs before redaction (#115).
+        if (provenance.protocol == Protocol.WEBCONSOLE) return null
 
         val targets = bridgeService.getCopyTargets(provenance.encode())
         if (targets.isEmpty()) return null
