@@ -4,6 +4,7 @@ package dev.streampack.core.config
 import java.sql.DriverManager
 import org.springframework.boot.EnvironmentPostProcessor
 import org.springframework.boot.SpringApplication
+import org.springframework.core.Ordered
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.MapPropertySource
 
@@ -14,7 +15,10 @@ import org.springframework.core.env.MapPropertySource
  * Runs before any Spring beans are created. Uses raw JDBC to avoid depending on Spring Data.
  * Gracefully handles missing table (first startup before Flyway runs).
  */
-class OperationConfigEnvironmentPostProcessor : EnvironmentPostProcessor {
+class OperationConfigEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered {
+    // Just before the tests' shared-database one (lib-testsupport), so in tests this one still
+    // sees the jdbc:tc: URL and leaves the database alone.
+    override fun getOrder(): Int = Ordered.LOWEST_PRECEDENCE - 1
 
     override fun postProcessEnvironment(
         environment: ConfigurableEnvironment,
