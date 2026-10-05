@@ -55,6 +55,11 @@ class PostControllerTests {
     @Autowired lateinit var tagRepository: TagRepository
     @Autowired lateinit var postTagRepository: PostTagRepository
     @Autowired lateinit var temperatureService: TemperatureService
+    @Autowired lateinit var factoidRepository: dev.streampack.factoid.repository.FactoidRepository
+
+    @Autowired
+    lateinit var factoidAttributeRepository:
+        dev.streampack.factoid.repository.FactoidAttributeRepository
 
     private lateinit var verifiedUser: User
     private lateinit var verifiedUserToken: String
@@ -361,6 +366,51 @@ class PostControllerTests {
                 status { isUnauthorized() }
                 jsonPath("$.detail") { value("Authentication required") }
             }
+    }
+
+    @Test
+    fun `POST derive-factoids authenticated returns the factoids mentioned and the links to none`() {
+        val factoid =
+            factoidRepository.save(
+                dev.streampack.factoid.entity.Factoid(selector = "flywheelia", updatedBy = "test")
+            )
+        factoidAttributeRepository.save(
+            dev.streampack.factoid.entity.FactoidAttribute(
+                factoid = factoid,
+                attributeType = dev.streampack.factoid.model.FactoidAttributeType.TEXT,
+                attributeValue = "a made-up framework.",
+            )
+        )
+        try {
+            mockMvc
+                .post("/posts/derive-factoids") {
+                    contentType = MediaType.APPLICATION_JSON
+                    header("Authorization", "Bearer $verifiedUserToken")
+                    content =
+                        """{"markdownSource":"Flywheelia is new, unlike [[nosuchfactoidyet]]."}"""
+                }
+                .andExpect {
+                    status { isOk() }
+                    jsonPath("$.mentions[0].selector") { value("flywheelia") }
+                    jsonPath("$.mentions[0].definition") { value("a made-up framework.") }
+                    jsonPath("$.missing[0].selector") { value("nosuchfactoidyet") }
+                }
+        } finally {
+            factoidAttributeRepository.deleteAll(
+                factoidAttributeRepository.findByFactoidSelectorIgnoreCase("flywheelia")
+            )
+            factoidRepository.delete(factoid)
+        }
+    }
+
+    @Test
+    fun `POST derive-factoids unauthenticated returns 401`() {
+        mockMvc
+            .post("/posts/derive-factoids") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"markdownSource":"Gradle."}"""
+            }
+            .andExpect { status { isUnauthorized() } }
     }
 
     // --- PUT /posts/{id} ---

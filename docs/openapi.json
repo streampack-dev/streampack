@@ -450,6 +450,32 @@
         },
         "type" : "object"
       },
+      "DeriveFactoidsHttpRequest" : {
+        "properties" : {
+          "markdownSource" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "type" : "object"
+      },
+      "DeriveFactoidsResponse" : {
+        "properties" : {
+          "mentions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/FactoidMention"
+            },
+            "type" : "array"
+          },
+          "missing" : {
+            "items" : {
+              "$ref" : "#/components/schemas/MissingFactoid"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "mentions", "missing" ],
+        "type" : "object"
+      },
       "DeriveSummaryHttpRequest" : {
         "properties" : {
           "markdownSource" : {
@@ -631,6 +657,28 @@
           }
         },
         "required" : [ "factoids", "page", "totalCount", "totalPages" ],
+        "type" : "object"
+      },
+      "FactoidMention" : {
+        "properties" : {
+          "definition" : {
+            "type" : "string"
+          },
+          "linked" : {
+            "type" : "boolean"
+          },
+          "occurrences" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "selector" : {
+            "type" : "string"
+          },
+          "term" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "definition", "linked", "occurrences", "selector", "term" ],
         "type" : "object"
       },
       "FactoidSetHttpRequest" : {
@@ -932,6 +980,18 @@
           }
         },
         "required" : [ "message" ],
+        "type" : "object"
+      },
+      "MissingFactoid" : {
+        "properties" : {
+          "selector" : {
+            "type" : "string"
+          },
+          "term" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "selector", "term" ],
         "type" : "object"
       },
       "OidcFeatures" : {
@@ -3471,6 +3531,59 @@
           "bearerAuth" : [ ]
         } ],
         "summary" : "Create a new blog post draft",
+        "tags" : [ "Posts" ]
+      }
+    },
+    "/posts/derive-factoids" : {
+      "post" : {
+        "description" : "Returns the factoids the draft's prose mentions (whole words, ignoring case; code and links skipped), each with its definition and whether the draft already links it, and the [[…]] links naming factoids that don't exist. Nothing is stored; no AI. Requires authentication.",
+        "operationId" : "deriveFactoids",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeriveFactoidsHttpRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeriveFactoidsResponse"
+                }
+              }
+            },
+            "description" : "Factoids mentioned, and links to factoids that don't exist"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid input"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Authentication required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Find the factoids an unsaved draft mentions",
         "tags" : [ "Posts" ]
       }
     },

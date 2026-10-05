@@ -114,6 +114,18 @@ class FactoidOperationTests {
         assertSuccess(result, "spring is A Java framework.")
     }
 
+    @Test
+    fun `a factoid too long for one line is said without its tags, not cut off`() {
+        val text = "a framework ".repeat(22).trim()
+        eventGateway.process(msg("longish=$text"))
+        eventGateway.process(msg("longish.url=https://longish.example"))
+        eventGateway.process(msg("longish.tags=one,two,three,four,five"))
+
+        val result = eventGateway.process(msg("longish"))
+
+        assertSuccess(result, "longish is $text. URL: https://longish.example")
+    }
+
     // -- INFO --
 
     @Test
