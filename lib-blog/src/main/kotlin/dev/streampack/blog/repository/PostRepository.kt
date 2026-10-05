@@ -87,6 +87,15 @@ interface PostRepository : JpaRepository<Post, UUID> {
     )
     fun findBySystemCategoryAndSlug(slugPath: String, now: Instant): Post?
 
+    /**
+     * Drafts carrying [tagName] (the article ideas' `_idea`), oldest first, with their authors
+     * loaded, so a caller outside a transaction can read them.
+     */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.DRAFT AND p.deleted = false AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND pt.tag.name = :tagName) ORDER BY p.createdAt ASC"
+    )
+    fun findDraftsTaggedWithAuthor(tagName: String): List<Post>
+
     /** Fetch post with author eagerly loaded to avoid LazyInitializationException in DTO mapping */
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.id = :id AND p.deleted = false")
     fun findActiveByIdWithAuthor(id: UUID): Post?
