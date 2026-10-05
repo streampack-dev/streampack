@@ -7,6 +7,9 @@ import dev.streampack.blog.model.ContentListResponse
 import dev.streampack.blog.model.CreateContentHttpRequest
 import dev.streampack.blog.model.CreateContentRequest
 import dev.streampack.blog.model.CreateContentResponse
+import dev.streampack.blog.model.DeriveFactoidsHttpRequest
+import dev.streampack.blog.model.DeriveFactoidsRequest
+import dev.streampack.blog.model.DeriveFactoidsResponse
 import dev.streampack.blog.model.DeriveSummaryHttpRequest
 import dev.streampack.blog.model.DeriveSummaryRequest
 import dev.streampack.blog.model.DeriveSummaryResponse
@@ -469,6 +472,45 @@ class PostController(
                 markdownSource = request.markdownSource ?: "",
             )
         return dispatch(payload, "posts/derive-summary", user) { result -> mapError(result) }
+    }
+
+    @Operation(
+        summary = "Find the factoids an unsaved draft mentions",
+        description =
+            "Returns the factoids the draft's prose mentions (whole words, ignoring case; code and " +
+                "links skipped), each with its definition and whether the draft already links it, " +
+                "and the [[…]] links naming factoids that don't exist. Nothing is stored; no AI. " +
+                "Requires authentication.",
+        operationId = "deriveFactoids",
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Factoids mentioned, and links to factoids that don't exist",
+        content = [Content(schema = Schema(implementation = DeriveFactoidsResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Authentication required",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid input",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @PostMapping(
+        "/posts/derive-factoids",
+        produces = ["application/json"],
+        consumes = ["application/json"],
+    )
+    fun deriveFactoids(
+        @RequestBody request: DeriveFactoidsHttpRequest,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Authentication required")
+        val payload = DeriveFactoidsRequest(markdownSource = request.markdownSource ?: "")
+        return dispatch(payload, "posts/derive-factoids", user) { result -> mapError(result) }
     }
 
     /** Sends a payload through the event system and maps the result to an HTTP response */

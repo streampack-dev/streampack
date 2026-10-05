@@ -109,6 +109,26 @@ class MarkdownRenderingService(
         java.net.URLEncoder.encode(selector, java.nio.charset.StandardCharsets.UTF_8)
             .replace("+", "%20")
 
+    /**
+     * What of [markdownSource] can mention a factoid (#130): its prose, with code (blocks and
+     * inline) and links (factoid links among them) taken out, and the factoids it links with
+     * `[[…]]`, each as written and as linked.
+     */
+    fun factoidMentionSource(markdownSource: String): FactoidMentionSource {
+        if (markdownSource.isBlank()) return FactoidMentionSource("", emptyList())
+        // Rendered without resolving factoid links, so each is still /factoids/<selector>.
+        val doc = Jsoup.parseBodyFragment(renderer.render(parser.parse(markdownSource)))
+        val links =
+            doc.select("a[href^=$FACTOID_PREFIX]").map { link ->
+                FactoidMentionSource.Link(
+                    term = link.text().trim(),
+                    selector = decodeSelector(link.attr("href").removePrefix(FACTOID_PREFIX)),
+                )
+            }
+        doc.select("pre, code, a").remove()
+        return FactoidMentionSource(doc.body().text(), links.filter { it.selector.isNotEmpty() })
+    }
+
     /** Generate a plain-text excerpt by stripping markup and truncating at word boundary */
     fun excerpt(markdownSource: String, maxLength: Int = 400, maxSentences: Int = 3): String {
         if (markdownSource.isBlank()) return ""
@@ -232,4 +252,9 @@ class MarkdownRenderingService(
     companion object {
         private const val FACTOID_PREFIX = "/factoids/"
     }
+}
+
+/** A draft's prose and its `[[…]]` factoid links, for finding the factoids it mentions (#130). */
+data class FactoidMentionSource(val prose: String, val links: List<Link>) {
+    data class Link(val term: String, val selector: String)
 }
