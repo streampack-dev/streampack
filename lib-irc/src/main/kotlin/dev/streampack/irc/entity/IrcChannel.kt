@@ -19,7 +19,8 @@ import org.hibernate.annotations.UuidGenerator
 @Table(name = "irc_channels")
 data class IrcChannel(
     @Id @UuidGenerator(style = UuidGenerator.Style.VERSION_7) val id: UUID = UUID(0, 0),
-    @ManyToOne(fetch = FetchType.LAZY)
+    // Eager: a channel's address is built from its parent's name, whether or not a session is open.
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "network_id", nullable = false)
     val network: IrcNetwork = IrcNetwork(),
     @Column(nullable = false, length = 200) val name: String = "",
