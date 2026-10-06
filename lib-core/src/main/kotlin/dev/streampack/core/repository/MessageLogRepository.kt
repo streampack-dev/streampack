@@ -10,6 +10,10 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
+/**
+ * The message log. Direct entries are never returned: entity queries are restricted by [MessageLog]
+ * itself, and every native query here says `AND NOT direct`; a new native query must too.
+ */
 interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
     fun findByProvenanceUriOrderByTimestampDesc(
         provenanceUri: String,
@@ -41,6 +45,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             """
             SELECT * FROM message_log
             WHERE provenance_uri = :provenanceUri
+              AND NOT direct
               AND content ILIKE :pattern ESCAPE '\'
             ORDER BY timestamp DESC, id DESC
             """,
@@ -48,6 +53,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             """
             SELECT count(*) FROM message_log
             WHERE provenance_uri = :provenanceUri
+              AND NOT direct
               AND content ILIKE :pattern ESCAPE '\'
             """,
         nativeQuery = true,
@@ -60,6 +66,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             """
             SELECT * FROM message_log
             WHERE provenance_uri = :provenanceUri
+              AND NOT direct
               AND lower(sender) = lower(:sender)
               AND content ILIKE :pattern ESCAPE '\'
             ORDER BY timestamp DESC, id DESC
@@ -68,6 +75,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             """
             SELECT count(*) FROM message_log
             WHERE provenance_uri = :provenanceUri
+              AND NOT direct
               AND lower(sender) = lower(:sender)
               AND content ILIKE :pattern ESCAPE '\'
             """,
@@ -89,6 +97,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             """
             SELECT * FROM message_log
             WHERE provenance_uri = :provenanceUri
+              AND NOT direct
               AND lower(sender) = lower(:sender)
             ORDER BY timestamp DESC, id DESC
             """,
@@ -96,6 +105,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             """
             SELECT count(*) FROM message_log
             WHERE provenance_uri = :provenanceUri
+              AND NOT direct
               AND lower(sender) = lower(:sender)
             """,
         nativeQuery = true,
@@ -109,6 +119,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
         WHERE LOWER(m.sender) = LOWER(:sender)
           AND m.direction = :direction
           AND m.provenanceUri LIKE :protocolPrefix
+          AND m.direct = false
         ORDER BY m.timestamp DESC
         """
     )

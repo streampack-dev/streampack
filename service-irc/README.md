@@ -48,7 +48,8 @@ protocol uses, kept by the channel's provenance, `irc://<network>/%23<channel>`.
   passed on without that prefix. Messages not addressed to it still pass through, unaddressed, for
   the operations that listen to everything (karma, URL titles and the like), and are logged.
 - **In a private message**, everything is addressed to the bot; a signal character or nick prefix
-  is accepted and dropped.
+  is accepted and dropped. Private messages, and the bot's replies to them, are logged marked
+  direct: kept, but never read back out of the log by anything.
 - **Actions** (`/me waves`) are passed on as `* nick waves`.
 - **Channel events** (joins, parts, quits, nick and topic changes) are logged, as from the nick
   they're about, but not passed to any operation.

@@ -18,6 +18,7 @@ class MessageLogServiceTests {
 
     @Autowired lateinit var messageLogService: MessageLogService
     @Autowired lateinit var repository: MessageLogRepository
+    @Autowired lateinit var jdbc: org.springframework.jdbc.core.JdbcTemplate
 
     @Test
     fun `logInbound persists inbound message`() {
@@ -111,5 +112,54 @@ class MessageLogServiceTests {
 
         val messages = messageLogService.findMessages(uri, after, future, 100)
         assertTrue(messages.isEmpty())
+    }
+
+    @Test
+    fun `a direct message is kept, and nothing reads it back`() {
+        val uri = "irc://msglog-direct-${System.nanoTime()}/alice"
+        val before = Instant.now().minusSeconds(1)
+        messageLogService.logInbound(uri, "alice", "my secret plans", direct = true)
+        messageLogService.logOutbound(uri, "nevet", "noted, secretly", direct = true)
+        val after = Instant.now().plusSeconds(1)
+        repository.flush()
+
+        val kept =
+            jdbc.queryForObject(
+                "SELECT count(*) FROM message_log WHERE provenance_uri = ? AND direct",
+                Int::class.java,
+                uri,
+            )
+        assertEquals(2, kept)
+
+        assertTrue(messageLogService.findMessages(uri, before, after, 100).isEmpty())
+        assertTrue(messageLogService.findLatestMessages(uri, before, after, 100).isEmpty())
+        assertEquals(null, messageLogService.findLatestMessage(uri))
+        assertTrue(messageLogService.searchMessages(uri, "secret", null, 0, 10).isEmpty)
+        assertTrue(messageLogService.searchMessages(uri, null, "alice", 0, 10).isEmpty)
+        assertTrue(messageLogService.searchMessages(uri, "secret", "alice", 0, 10).isEmpty)
+        assertTrue(
+            messageLogService.findRecentMessagesBySender("alice", "irc://", 1000).none {
+                it.provenanceUri == uri
+            }
+        )
+        assertTrue(repository.findAll().none { it.provenanceUri == uri })
+        assertTrue(
+            repository.findByProvenanceUriOrderByTimestampDesc(uri, PageRequest.of(0, 10)).isEmpty
+        )
+    }
+
+    @Test
+    fun `the same reads still find what was said in a channel`() {
+        val uri = "irc://msglog-direct-${System.nanoTime()}/%23java"
+        val before = Instant.now().minusSeconds(1)
+        messageLogService.logInbound(uri, "alice", "public plans")
+        val after = Instant.now().plusSeconds(1)
+
+        assertEquals(1, messageLogService.findMessages(uri, before, after, 100).size)
+        assertEquals(
+            1,
+            messageLogService.searchMessages(uri, "plans", "alice", 0, 10).totalElements,
+        )
+        assertEquals("public plans", messageLogService.findLatestMessage(uri)?.content)
     }
 }

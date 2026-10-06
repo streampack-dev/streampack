@@ -59,6 +59,7 @@ class LoggingEgressSubscriberTests {
     @Autowired lateinit var messageLogRepository: MessageLogRepository
     @Autowired lateinit var messageLogService: dev.streampack.core.service.MessageLogService
     @Autowired lateinit var channelControlService: dev.streampack.core.service.ChannelControlService
+    @Autowired lateinit var jdbc: org.springframework.jdbc.core.JdbcTemplate
 
     private fun uniqueProvenance(): Provenance =
         Provenance(
@@ -198,5 +199,40 @@ class LoggingEgressSubscriberTests {
         val public = channelControlService.getOrCreateOptions("slack://work/C0PUBLIC")
         assertEquals(true, public.visible)
         assertEquals(true, public.logged)
+    }
+
+    private fun loggedRows(provenance: Provenance): List<Pair<String, Boolean>> {
+        messageLogRepository.flush()
+        return jdbc.query(
+            "SELECT direction, direct FROM message_log WHERE provenance_uri = ? ORDER BY timestamp",
+            { rs, _ -> rs.getString("direction") to rs.getBoolean("direct") },
+            provenance.encode(),
+        )
+    }
+
+    @Test
+    fun `a private message and its reply are logged marked direct`() {
+        val provenance =
+            Provenance(
+                protocol = Protocol.IRC,
+                serviceId = "pm-${System.nanoTime()}",
+                replyTo = "alice",
+            )
+        eventGateway.process(messageWith("echo between us", provenance))
+
+        assertEquals(listOf("INBOUND" to true, "OUTBOUND" to true), loggedRows(provenance))
+    }
+
+    @Test
+    fun `a channel message and its reply are not marked direct`() {
+        val provenance =
+            Provenance(
+                protocol = Protocol.IRC,
+                serviceId = "ch-${System.nanoTime()}",
+                replyTo = "#java",
+            )
+        eventGateway.process(messageWith("echo for everyone", provenance))
+
+        assertEquals(listOf("INBOUND" to false, "OUTBOUND" to false), loggedRows(provenance))
     }
 }

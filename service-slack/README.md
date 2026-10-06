@@ -51,7 +51,7 @@ public channels only, so in practice every joined channel starts visible and log
 **Settings and Slack ids.** Messages arrive with Slack's channel id (`C0123ABCD`), not its name, so
 their provenance is `slack://<workspace>/C0123ABCD` (and a DM's is the sender's user id). The
 settings above are stored under the `#name`, so they don't match: replies are never muted, every
-channel and DM is logged, and the log browser lists the `#name` entry, which holds no messages,
+channel is logged, and the log browser lists the `#name` entry, which holds no messages,
 while the logged traffic has no entry there. Registering a channel by its id
 (`slack join jvm-news C0123ABCD`) would make the keys match, at the cost of autojoin, which looks
 the channel up by name.
@@ -65,7 +65,8 @@ DMs.
   (`!help`) or a mention of the bot (`@nevet help`). The rest is passed on without that prefix. A
   signal or mention with nothing after it isn't addressed. Messages not addressed to it still pass
   through, unaddressed, for the operations that listen to everything, and are logged.
-- **In a DM**, everything is addressed to the bot and passed on as written.
+- **In a DM**, everything is addressed to the bot and passed on as written. DMs and group DMs are
+  logged marked direct: kept, but never read back out of the log by anything.
 - **Actions** (`/me waves`) are passed on as `* name waves`, unaddressed.
 - **Reactions** to the latest message the bot saw in a channel are passed on, unaddressed, as
   `* name reacted with :emoji:`, at most 5 per message. Reactions to older messages, and in DMs,

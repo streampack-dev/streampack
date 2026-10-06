@@ -82,7 +82,8 @@ registered here.
   (`MattermostIdentityProvider`, `UserResolutionService`), so a reply knows who asked and what they
   may do. Someone without a linked account is anonymous.
 - **Logging:** a channel that was never registered has no settings, and is logged, but isn't listed
-  in the log browser. That includes direct messages, unless they're registered with `join` by id.
+  in the log browser. Direct and group messages are logged marked direct, and nothing ever reads
+  them back out of the log: not the log browser, not search, not the operations that read the log.
 
 ## Replies
 

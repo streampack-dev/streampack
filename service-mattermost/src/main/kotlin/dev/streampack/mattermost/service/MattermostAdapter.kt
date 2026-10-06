@@ -4,6 +4,7 @@ package dev.streampack.mattermost.service
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.ProtocolAdapter
 import dev.streampack.core.service.UserResolutionService
 import dev.streampack.mattermost.model.MattermostChannelRef
@@ -426,7 +427,9 @@ class MattermostAdapter(
                             .asString("")
                             .takeIf { it.isNotBlank() }
                             ?.let { put("teamId", it) }
-                        channelType.takeIf { it.isNotBlank() }?.let { put("channelType", it) }
+                        channelType
+                            .takeIf { it.isNotBlank() }
+                            ?.let { put(DirectConversations.CHANNEL_TYPE, it) }
                     },
             )
 

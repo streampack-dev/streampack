@@ -4,6 +4,7 @@ package dev.streampack.core.integration
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.RedactionRule
 import dev.streampack.core.service.ChannelControlService
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.MessageLogService
 import dev.streampack.core.service.Operation
 import org.springframework.messaging.Message
@@ -13,12 +14,14 @@ import org.springframework.stereotype.Component
 
 /**
  * Captures inbound messages flowing through the ingress channel to the message log, except for
- * channels whose controls say `logged=false`, which are never persisted.
+ * channels whose controls say `logged=false`, which are never persisted. Direct conversations are
+ * logged marked direct, so nothing reads them back.
  */
 @Component
 class IngressLoggingInterceptor(
     private val messageLogService: MessageLogService,
     private val channelControlService: ChannelControlService,
+    private val directConversations: DirectConversations,
     operations: List<Operation>,
 ) : ChannelInterceptor {
 
@@ -33,7 +36,12 @@ class IngressLoggingInterceptor(
                 ?: provenance.user?.username
                 ?: "unknown"
         val content = redact(message.payload.toString(), redactionRules)
-        messageLogService.logInbound(provenance.encode(), sender, content)
+        messageLogService.logInbound(
+            provenance.encode(),
+            sender,
+            content,
+            directConversations.isDirect(provenance),
+        )
         return message
     }
 

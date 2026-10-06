@@ -121,7 +121,8 @@ Every registered channel carries four flags, set with the per-protocol `visible`
 - `automute` (also set by `mute`/`unmute`) holds the bot's replies back; it still reads, runs commands and logs.
 - `autojoin` rejoins the channel whenever its network, workspace or server connects. It's off for a newly registered channel.
 - The flags are created when a channel is registered with `join`. IRC channels, and public Mattermost channels, register visible and logged; private Mattermost channels and direct or group messages joined by id register hidden and unlogged. Opt a private channel in explicitly if its history should be kept.
-- A conversation that was never registered has no flags, and is logged: direct messages, on every protocol, are written to the message log unless registered with `logged=false`. They aren't listed in the log browser, which lists only registered channels.
+- A conversation that was never registered has no flags, and is logged.
+- Direct conversations (IRC private messages, Discord, Slack and Mattermost DMs, and Slack and Mattermost group DMs) are logged marked direct, and nothing reads them back: not the log browser or its search, not `ask`, `sentiment`, `article`'s logs or `be`, for anyone, admins included. `logged=false` on a registered one keeps it out of the log entirely.
 - Connect commands that carry credentials (`irc connect`, `slack connect`, `mattermost connect`) are redacted before they reach the message log, however the command was spaced or cased; a migration redacts copies logged before this rule existed.
 
 ## Mattermost Operations

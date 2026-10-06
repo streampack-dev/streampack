@@ -11,6 +11,7 @@ import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.ChannelControlService
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.ProtocolAdapter
 import dev.streampack.core.service.UserResolutionService
 import java.util.concurrent.ConcurrentHashMap
@@ -253,6 +254,7 @@ class SlackAdapter(
                     metadata =
                         buildMap {
                             put("channelId", channelId)
+                            event.channelType?.let { put(DirectConversations.CHANNEL_TYPE, it) }
                             botUserId?.let { put(Provenance.BOT_NICK, it) }
                         },
                 )
