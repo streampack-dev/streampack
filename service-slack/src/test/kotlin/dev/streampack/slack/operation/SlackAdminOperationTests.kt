@@ -78,23 +78,23 @@ class SlackAdminOperationTests {
     @Test
     fun `slack join after connect returns success`() {
         eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
-        val result = eventGateway.process(slackMessage("slack join jvm-news #java"))
+        val result = eventGateway.process(slackMessage("slack join jvm-news C0JAVA0001"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        assertTrue((result as OperationResult.Success).payload.toString().contains("Joined"))
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Registered"))
     }
 
     @Test
     fun `slack autojoin updates flag`() {
         eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
-        eventGateway.process(slackMessage("slack join jvm-news #java"))
-        val result = eventGateway.process(slackMessage("slack autojoin jvm-news #java true"))
+        eventGateway.process(slackMessage("slack join jvm-news C0JAVA0001"))
+        val result = eventGateway.process(slackMessage("slack autojoin jvm-news C0JAVA0001 true"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("true"))
     }
 
     @Test
     fun `slack join nonexistent workspace returns error`() {
-        val result = eventGateway.process(slackMessage("slack join nonexistent #java"))
+        val result = eventGateway.process(slackMessage("slack join nonexistent C0JAVA0001"))
         assertInstanceOf(OperationResult.Error::class.java, result)
     }
 
@@ -131,8 +131,8 @@ class SlackAdminOperationTests {
     @Test
     fun `slack mute returns success for valid channel`() {
         eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
-        eventGateway.process(slackMessage("slack join jvm-news #java"))
-        val result = eventGateway.process(slackMessage("slack mute jvm-news #java"))
+        eventGateway.process(slackMessage("slack join jvm-news C0JAVA0001"))
+        val result = eventGateway.process(slackMessage("slack mute jvm-news C0JAVA0001"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("Muted"))
     }
@@ -140,8 +140,8 @@ class SlackAdminOperationTests {
     @Test
     fun `slack unmute returns success for valid channel`() {
         eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
-        eventGateway.process(slackMessage("slack join jvm-news #java"))
-        val result = eventGateway.process(slackMessage("slack unmute jvm-news #java"))
+        eventGateway.process(slackMessage("slack join jvm-news C0JAVA0001"))
+        val result = eventGateway.process(slackMessage("slack unmute jvm-news C0JAVA0001"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("Unmuted"))
     }

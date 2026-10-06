@@ -20,9 +20,9 @@ class SlackChannelsOutsideTransactionTests {
         val workspace = "ws-${UUID.randomUUID().toString().take(8)}"
         slackService.connect(workspace, "xoxb-test", "xapp-test")
         try {
-            assertTrue(slackService.join(workspace, "#java").startsWith("Joined"))
-            assertTrue(slackService.join(workspace, "#java").startsWith("Joined"))
-            assertFalse(slackService.setAutojoin(workspace, "#java", true).startsWith("Error"))
+            assertTrue(slackService.join(workspace, "C0JAVA0001").startsWith("Registered"))
+            assertTrue(slackService.join(workspace, "C0JAVA0001").startsWith("Registered"))
+            assertFalse(slackService.setAutojoin(workspace, "C0JAVA0001", true).startsWith("Error"))
         } finally {
             // Outside a transaction nothing rolls back: other tests expect none configured.
             slackService.remove(workspace)

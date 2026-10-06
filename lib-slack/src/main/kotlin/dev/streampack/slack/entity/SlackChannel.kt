@@ -29,7 +29,11 @@ data class SlackChannel(
     @Column(nullable = false) val updatedAt: Instant = Instant.now(),
     @Column(nullable = false) val deleted: Boolean = false,
 ) {
-    /** Builds the provenance URI for this channel */
-    fun provenanceUri(): String =
-        Provenance(Protocol.SLACK, workspace.name, replyTo = name).encode()
+    /**
+     * The channel's provenance URI, by its Slack id, as its messages arrive: null until the id is
+     * known. Channel settings are kept under it.
+     */
+    fun provenanceUri(): String? = channelId?.let {
+        Provenance(Protocol.SLACK, workspace.name, replyTo = it).encode()
+    }
 }

@@ -30,31 +30,24 @@ given as `env://VARIABLE` instead of a value, and is then read from that variabl
 
 ### Channels
 
-A channel is named with its `#`: `slack join jvm-news #java`.
+A channel is named by its name, with or without its `#` (`#java`), or by its Slack id
+(`C0123ABCD`).
 
 | Command | What it does |
 |---------|--------------|
-| `slack join <workspace> <#channel>` | Registers the channel and creates its settings. If the workspace is connected and the channel's Slack id isn't known yet, looks it up by name and stores it. It does not put the bot into the channel (see autojoin). |
-| `slack leave <workspace> <#channel>` | Only checks that the channel is registered and answers "Left"; the bot stays in the Slack channel and the channel stays registered. |
-| `slack autojoin <workspace> <#channel> <true\|false>` | Whether the bot joins the channel (`conversations.join`) each time the workspace connects. Off by default. Works only for a channel whose Slack id was found by `slack join` while connected, and only for public channels; a private channel needs the bot invited in Slack. |
-| `slack mute <workspace> <#channel>` / `slack unmute …` | Sets the channel's mute flag: the bot keeps listening, running what's asked and logging, but its replies are held back. Kept across restarts. See the note below: as the code stands, this doesn't reach the channel's traffic. |
-| `slack automute <workspace> <#channel> <true\|false>` | The same flag as `mute`/`unmute`, as a boolean. |
-| `slack logged <workspace> <#channel> <true\|false>` | Whether what's said in the channel is kept in the message log. On by default. Same caveat. |
-| `slack visible <workspace> <#channel> <true\|false>` | Whether a logged channel is listed in the public log browser (admins see logged channels either way). On by default. Same caveat. |
+| `slack join <workspace> <#channel\|id>` | Connected: finds the channel in Slack, registers it with its id, and puts the bot in it if it's public. A private channel is registered, but the bot has to be invited to it in Slack (`/invite @nevet`) first, or Slack won't show it. Not connected: takes only an id, and registers the channel to be joined on connect. Joining a channel again refreshes its name and id. |
+| `slack leave <workspace> <#channel\|id>` | Takes the bot out of the channel (connected only); the channel stays registered with its settings. |
+| `slack autojoin <workspace> <#channel\|id> <true\|false>` | Whether the bot joins the channel each time the workspace connects. Off by default. Public channels only; for a private one, the invitation is what keeps the bot in. |
+| `slack mute <workspace> <#channel\|id>` / `slack unmute …` | The bot stops (or resumes) replying in the channel. It still listens, runs what's asked and logs; only its replies are held back. Kept across restarts. |
+| `slack automute <workspace> <#channel\|id> <true\|false>` | The same setting as `mute`/`unmute`, as a flag. |
+| `slack logged <workspace> <#channel\|id> <true\|false>` | Whether what's said in the channel, and the bot's replies, are kept in the message log. On by default for a public channel, off for a private one. |
+| `slack visible <workspace> <#channel\|id> <true\|false>` | Whether a logged channel is listed in the public log browser (admins see logged channels either way). On by default for a public channel, off for a private one. |
 
 Channel settings (`autojoin`, `mute`, `logged`, `visible`) are the shared channel options every
-protocol uses, kept by provenance: `slack://<workspace>/%23<channel>`, built from the name as typed.
-A channel that `slack join` finds to be private (or a DM) would start hidden and not logged; but the
-lookup calls `conversations.list` without asking for private channels, which Slack answers with
-public channels only, so in practice every joined channel starts visible and logged.
-
-**Settings and Slack ids.** Messages arrive with Slack's channel id (`C0123ABCD`), not its name, so
-their provenance is `slack://<workspace>/C0123ABCD` (and a DM's is the sender's user id). The
-settings above are stored under the `#name`, so they don't match: replies are never muted, every
-channel is logged, and the log browser lists the `#name` entry, which holds no messages,
-while the logged traffic has no entry there. Registering a channel by its id
-(`slack join jvm-news C0123ABCD`) would make the keys match, at the cost of autojoin, which looks
-the channel up by name.
+protocol uses, kept by the channel's provenance, `slack://<workspace>/<channel-id>`: the address
+its messages arrive with. Every command but `join` needs a channel registered with its id; a
+channel registered before ids were kept answers with an error until it's joined again while
+connected, which finds its id and moves nothing else.
 
 ## Talking to the bot
 
@@ -118,9 +111,10 @@ next start, which replaces them with the variable's value. Set
 
 The app must have Socket Mode on, with an app-level token (`xapp-…`, scope `connections:write`) and
 a bot token (`xoxb-…`). The bot calls `auth.test`, `chat.postMessage`, `users.info`,
-`conversations.list` and `conversations.join`, and listens for `message` and `reaction_added`
-events. In Slack's terms that's roughly the `chat:write`, `users:read`, `channels:read`,
-`channels:join` and `reactions:read` scopes, and `message.channels`, `message.groups`,
+`conversations.list`, `conversations.info`, `conversations.join` and `conversations.leave`, and
+listens for `message` and `reaction_added` events. In Slack's terms that's roughly the
+`chat:write`, `users:read`, `channels:read`, `groups:read` (to find private channels it's been
+invited to), `channels:join`, `channels:manage` (to leave) and `reactions:read` scopes, and `message.channels`, `message.groups`,
 `message.im` and `message.mpim` event subscriptions (with their `*:history` scopes) for the
 conversations it should hear.
 
@@ -134,9 +128,8 @@ slack autojoin jvm-news #java true
 slack status jvm-news
 ```
 
-Then restart once with `SLACK_JVM_NEWS_BOT_TOKEN` and `SLACK_JVM_NEWS_APP_TOKEN` set, as the start
-asks; on that start the bot joins `#java`. To have it in the channel before then, add it in Slack
-(`/invite @nevet`).
+`slack join` puts the bot in `#java` at once; autojoin brings it back after a restart. Then
+restart once with `SLACK_JVM_NEWS_BOT_TOKEN` and `SLACK_JVM_NEWS_APP_TOKEN` set, as the start asks.
 
 ## Inside
 

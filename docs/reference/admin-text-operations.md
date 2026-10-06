@@ -348,14 +348,14 @@ slack connect <name> [<bot-token> <app-token>]
 slack disconnect <name>
 slack remove <name>
 slack autoconnect <name> <true|false>
-slack join <workspace> <#channel>
-slack leave <workspace> <#channel>
-slack autojoin <workspace> <#channel> <true|false>
-slack mute <workspace> <#channel>
-slack unmute <workspace> <#channel>
-slack automute <workspace> <#channel> <true|false>
-slack visible <workspace> <#channel> <true|false>
-slack logged <workspace> <#channel> <true|false>
+slack join <workspace> <#channel|id>
+slack leave <workspace> <#channel|id>
+slack autojoin <workspace> <#channel|id> <true|false>
+slack mute <workspace> <#channel|id>
+slack unmute <workspace> <#channel|id>
+slack automute <workspace> <#channel|id> <true|false>
+slack visible <workspace> <#channel|id> <true|false>
+slack logged <workspace> <#channel|id> <true|false>
 slack signal <name> [character]
 slack status [workspace]
 ```
@@ -363,9 +363,9 @@ slack status [workspace]
 Present only when `SLACK_ENABLED` is true. Notes:
 
 - `connect` with tokens (the `xoxb-` bot token and the `xapp-` app token Socket Mode needs) registers the workspace, or replaces its tokens and reconnects. The tokens are externalized to `SLACK_<NAME>_BOT_TOKEN` and `SLACK_<NAME>_APP_TOKEN`, and startup refuses to run with enforcement on until they're set.
-- `join` registers the channel and, while connected, looks up its Slack id. It does not put the bot into the channel: `autojoin` does, on each connect, for public channels whose id is known; otherwise invite the bot in Slack.
-- `leave` only confirms that the channel is registered; the bot stays in the Slack channel.
-- Known issue: Slack channel flags are stored under the channel's name (`slack://<workspace>/%23<channel>`), while messages arrive under its Slack id, so `mute`, `logged` and `visible` don't reach a channel's traffic yet.
+- A channel is named `#name`, `name` or by its Slack id. Its flags are kept by its id (`slack://<workspace>/<channel-id>`), the address its messages arrive with.
+- `join` while connected finds the channel, registers it, and puts the bot in a public one; a private one needs the bot invited in Slack, and registers hidden and unlogged. While disconnected, `join` takes only an id.
+- `leave` takes the bot out of the channel; the channel stays registered.
 - `status` with Slack on reports only whether workspaces are connected.
 
 See [service-slack](../../service-slack/README.md) for addressing, reactions and the Slack app's setup.

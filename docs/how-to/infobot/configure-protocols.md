@@ -45,7 +45,7 @@ slack join jvm-news #java
 slack autojoin jvm-news #java true
 ```
 
-The tokens move to `SLACK_JVM_NEWS_BOT_TOKEN` and `SLACK_JVM_NEWS_APP_TOKEN`. The bot hears only conversations it's a member of: `autojoin` puts it into public channels on each connect; otherwise invite it in Slack. See [service-slack](../../../service-slack/README.md) for the app's scopes and events, and a known issue with Slack channel settings.
+The tokens move to `SLACK_JVM_NEWS_BOT_TOKEN` and `SLACK_JVM_NEWS_APP_TOKEN`. The bot hears only conversations it's a member of: `slack join` puts it into a public channel, and `autojoin` brings it back on each connect; a private channel needs the bot invited in Slack. See [service-slack](../../../service-slack/README.md) for the app's scopes and events.
 
 ## Mattermost
 
