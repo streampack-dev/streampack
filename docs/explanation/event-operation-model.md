@@ -6,7 +6,7 @@ The normal flow is:
 protocol adapter -> ingress channel -> OperationService -> egress channel -> protocol adapter
 ```
 
-Protocol adapters receive input from IRC, Discord, Slack, HTTP, MCP, or the console. They create a Spring message with a payload and a `Provenance` header, then send it to `EventGateway`.
+Protocol adapters receive input from IRC, Discord, Slack, Mattermost, HTTP, MCP, or the console. They create a Spring message with a payload and a `Provenance` header, then send it to `EventGateway`.
 
 `OperationService` evaluates registered operations in priority order. The first operation to return a terminal `Success` or `Error` result stops the chain. A non-terminal result allows the chain to continue.
 
