@@ -114,7 +114,7 @@ Operational notes:
 
 ## Channel Controls
 
-Every registered channel carries four flags, set with the per-protocol `visible`, `logged`, `automute`, and `autojoin` commands:
+Every registered channel carries four flags, set with the per-protocol `visible`, `logged`, `automute`, and `autojoin` commands (see [The Message Log](../explanation/message-log.md) for the reasoning):
 
 - `logged=false` stops message capture for that channel entirely: neither inbound messages nor the bot's replies are written to the message log. It is not merely a browsing switch.
 - `visible=false` hides a channel's log from anonymous and non-admin browsing; admins still see it.
