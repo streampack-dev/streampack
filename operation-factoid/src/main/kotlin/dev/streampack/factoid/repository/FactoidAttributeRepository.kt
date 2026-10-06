@@ -9,6 +9,10 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface FactoidAttributeRepository : JpaRepository<FactoidAttribute, UUID> {
+    /** Every attribute, each with its factoid loaded, for use outside a transaction. */
+    @Query("SELECT a FROM FactoidAttribute a JOIN FETCH a.factoid")
+    fun findAllWithFactoid(): List<FactoidAttribute>
+
     /** Every attribute of [type], each with its factoid loaded, for use outside a transaction. */
     @Query("SELECT a FROM FactoidAttribute a JOIN FETCH a.factoid WHERE a.attributeType = :type")
     fun findAllOfTypeWithFactoid(@Param("type") type: FactoidAttributeType): List<FactoidAttribute>
