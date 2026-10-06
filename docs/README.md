@@ -24,7 +24,7 @@ For AI prompt customization, see [Configure Generative Prompts](how-to/deploy/co
 
 For what the message log keeps, what channel settings do, and why direct messages are kept but never read back, see [The Message Log](explanation/message-log.md).
 
-For blog/site HTTP integration, including one-time-code sign-in over email or Mattermost, see [Blog HTTP API](reference/blog-http-api.md).
+For blog/site HTTP integration, including one-time-code sign-in over email or Mattermost and the channel log endpoints, see [Blog HTTP API](reference/blog-http-api.md).
 
 For the bundled bot command surface, use:
 
