@@ -90,111 +90,115 @@ class SlackService(
         return "Workspace '$name' autoconnect set to $enabled"
     }
 
-    /** Registers a channel if needed, creates ChannelControlOptions, and resolves channel ID */
-    fun join(workspaceName: String, channelName: String): String {
+    /**
+     * Registers a channel and puts the bot in it. Connected, the channel is found by name (`#java`)
+     * or id and, if public, joined; a private one has to have the bot invited first. Not connected,
+     * only an id is taken: the channel is registered, and joined on connect if autojoin is on.
+     *
+     * Settings are kept by the channel's id, which is how its messages arrive.
+     */
+    fun join(workspaceName: String, channel: String): String {
         val workspace =
             workspaceRepository.findByNameAndDeletedFalse(workspaceName)
                 ?: return "Error: Workspace '$workspaceName' not found"
-        var channel =
-            channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, channelName)
-                ?: channelRepository
-                    .save(SlackChannel(workspace = workspace, name = channelName))
-                    .also {
-                        logger.info("Registered channel '{}' on '{}'", channelName, workspaceName)
-                    }
+        val adapter = connectionManager.ifAvailable?.getAdapter(workspaceName)
+        val registered = findRegistered(workspace, channel)
 
-        /* Resolve the Slack channel when connected, so private channels start hidden */
-        var private = false
-        connectionManager.ifAvailable { cm ->
-            val adapter = cm.getAdapter(workspaceName)
-            if (adapter != null && channel.channelId == null) {
-                val resolved = adapter.resolveChannel(channelName)
-                if (resolved != null) {
-                    private = resolved.isPrivate
-                    channel =
-                        channelRepository.save(
-                            channel.copy(channelId = resolved.id, updatedAt = Instant.now())
-                        )
-                    logger.info(
-                        "Resolved channel ID for '{}' on '{}': {}",
-                        channelName,
-                        workspaceName,
-                        resolved.id,
-                    )
-                }
+        val ref =
+            if (adapter != null) {
+                adapter.resolveChannel(registered?.channelId ?: channel)
+                    ?: return "Error: Channel '$channel' not found on '$workspaceName' " +
+                        "(a private channel needs the bot invited first)"
+            } else {
+                val id =
+                    registered?.channelId
+                        ?: channel.takeIf { SlackConversationRef.looksLikeId(it) }
+                        ?: return "Error: Workspace '$workspaceName' isn't connected: connect it " +
+                            "to join '$channel' by name, or join by channel id"
+                SlackConversationRef(id = id, isPrivate = false)
             }
-        }
-        channelControlService.getOrCreateOptions(channel.provenanceUri(), private = private)
 
-        return "Joined '$channelName' on '$workspaceName'"
+        val name = ref.name?.let { "#$it" } ?: registered?.name ?: channel
+        val saved =
+            channelRepository.save(
+                (registered ?: SlackChannel(workspace = workspace, name = name)).copy(
+                    name = name,
+                    channelId = ref.id,
+                    updatedAt = Instant.now(),
+                )
+            )
+        channelControlService.getOrCreateOptions(saved.provenanceUri()!!, private = ref.isPrivate)
+        logger.info("Registered '{}' ({}) on '{}'", name, ref.id, workspaceName)
+
+        return when {
+            adapter == null ->
+                "Registered '$name' on '$workspaceName'; it's joined on connect when autojoin is on"
+            ref.isPrivate -> "Registered '$name' on '$workspaceName'; invite the bot to it in Slack"
+            adapter.joinChannel(ref.id) -> "Joined '$name' on '$workspaceName'"
+            else -> "Error: Registered '$name' on '$workspaceName', but Slack refused the join"
+        }
     }
 
-    /** Leaves a channel at runtime (entity remains) */
-    fun leave(workspaceName: String, channelName: String): String {
+    /** Takes the bot out of a channel; the channel stays registered, with its settings */
+    fun leave(workspaceName: String, channel: String): String {
         val workspace =
             workspaceRepository.findByNameAndDeletedFalse(workspaceName)
                 ?: return "Error: Workspace '$workspaceName' not found"
-        if (
-            channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, channelName) == null
-        ) {
-            return "Error: Channel '$channelName' not found on '$workspaceName'"
+        val registered =
+            findRegistered(workspace, channel)
+                ?: return channelNotFoundError(workspaceName, channel)
+        val adapter =
+            connectionManager.ifAvailable?.getAdapter(workspaceName)
+                ?: return "Error: Workspace '$workspaceName' isn't connected"
+        val channelId = registered.channelId ?: return noIdError(workspaceName, registered.name)
+        return if (adapter.leaveChannel(channelId)) {
+            "Left '${registered.name}' on '$workspaceName'"
+        } else {
+            "Error: Slack refused to let the bot leave '${registered.name}' on '$workspaceName'"
         }
-        return "Left '$channelName' on '$workspaceName'"
     }
 
     /** Updates the autojoin flag via ChannelControlOptions */
-    fun setAutojoin(workspaceName: String, channelName: String, enabled: Boolean): String {
-        val uri =
-            resolveChannelUri(workspaceName, channelName)
-                ?: return channelNotFoundError(workspaceName, channelName)
-        channelControlService.setFlag(uri, "autojoin", enabled)
-        return "Channel '$channelName' on '$workspaceName' autojoin set to $enabled"
-    }
+    fun setAutojoin(workspaceName: String, channel: String, enabled: Boolean): String =
+        withChannelUri(workspaceName, channel) { uri ->
+            channelControlService.setFlag(uri, "autojoin", enabled)
+            "Channel '$channel' on '$workspaceName' autojoin set to $enabled"
+        }
 
     /** Mutes a channel at runtime via ChannelControlOptions */
-    fun mute(workspaceName: String, channelName: String): String {
-        val uri =
-            resolveChannelUri(workspaceName, channelName)
-                ?: return channelNotFoundError(workspaceName, channelName)
-        channelControlService.setFlag(uri, "automute", true)
-        return "Muted '$channelName' on '$workspaceName'"
-    }
+    fun mute(workspaceName: String, channel: String): String =
+        withChannelUri(workspaceName, channel) { uri ->
+            channelControlService.setFlag(uri, "automute", true)
+            "Muted '$channel' on '$workspaceName'"
+        }
 
     /** Unmutes a channel at runtime via ChannelControlOptions */
-    fun unmute(workspaceName: String, channelName: String): String {
-        val uri =
-            resolveChannelUri(workspaceName, channelName)
-                ?: return channelNotFoundError(workspaceName, channelName)
-        channelControlService.setFlag(uri, "automute", false)
-        return "Unmuted '$channelName' on '$workspaceName'"
-    }
+    fun unmute(workspaceName: String, channel: String): String =
+        withChannelUri(workspaceName, channel) { uri ->
+            channelControlService.setFlag(uri, "automute", false)
+            "Unmuted '$channel' on '$workspaceName'"
+        }
 
     /** Updates the automute flag via ChannelControlOptions */
-    fun setAutomute(workspaceName: String, channelName: String, enabled: Boolean): String {
-        val uri =
-            resolveChannelUri(workspaceName, channelName)
-                ?: return channelNotFoundError(workspaceName, channelName)
-        channelControlService.setFlag(uri, "automute", enabled)
-        return "Channel '$channelName' on '$workspaceName' automute set to $enabled"
-    }
+    fun setAutomute(workspaceName: String, channel: String, enabled: Boolean): String =
+        withChannelUri(workspaceName, channel) { uri ->
+            channelControlService.setFlag(uri, "automute", enabled)
+            "Channel '$channel' on '$workspaceName' automute set to $enabled"
+        }
 
     /** Updates the visible flag via ChannelControlOptions */
-    fun setVisible(workspaceName: String, channelName: String, visible: Boolean): String {
-        val uri =
-            resolveChannelUri(workspaceName, channelName)
-                ?: return channelNotFoundError(workspaceName, channelName)
-        channelControlService.setFlag(uri, "visible", visible)
-        return "Channel '$channelName' on '$workspaceName' visible set to $visible"
-    }
+    fun setVisible(workspaceName: String, channel: String, visible: Boolean): String =
+        withChannelUri(workspaceName, channel) { uri ->
+            channelControlService.setFlag(uri, "visible", visible)
+            "Channel '$channel' on '$workspaceName' visible set to $visible"
+        }
 
     /** Updates the logged flag via ChannelControlOptions */
-    fun setLogged(workspaceName: String, channelName: String, logged: Boolean): String {
-        val uri =
-            resolveChannelUri(workspaceName, channelName)
-                ?: return channelNotFoundError(workspaceName, channelName)
-        channelControlService.setFlag(uri, "logged", logged)
-        return "Channel '$channelName' on '$workspaceName' logged set to $logged"
-    }
+    fun setLogged(workspaceName: String, channel: String, logged: Boolean): String =
+        withChannelUri(workspaceName, channel) { uri ->
+            channelControlService.setFlag(uri, "logged", logged)
+            "Channel '$channel' on '$workspaceName' logged set to $logged"
+        }
 
     /** Soft-deletes a workspace and its channels, disconnecting the runtime adapter if active */
     fun remove(name: String): String {
@@ -247,14 +251,33 @@ class SlackService(
         return workspaces.joinToString("\n") { "  ${it.toSummary()}" }
     }
 
-    /** Resolves a channel to its provenance URI, or null if not found */
-    private fun resolveChannelUri(workspaceName: String, channelName: String): String? {
-        val workspace = workspaceRepository.findByNameAndDeletedFalse(workspaceName) ?: return null
-        val channel =
-            channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, channelName)
-                ?: return null
-        return channel.provenanceUri()
+    /** A registered channel, by id, or by name with or without its `#` */
+    private fun findRegistered(workspace: SlackWorkspace, channel: String): SlackChannel? {
+        val bare = channel.removePrefix("#")
+        return channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, channel)
+            ?: channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, "#$bare")
+            ?: channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, bare)
     }
+
+    /** Runs [action] with a registered channel's provenance URI, or says why there is none */
+    private fun withChannelUri(
+        workspaceName: String,
+        channel: String,
+        action: (String) -> String,
+    ): String {
+        val workspace =
+            workspaceRepository.findByNameAndDeletedFalse(workspaceName)
+                ?: return "Error: Workspace '$workspaceName' not found"
+        val registered =
+            findRegistered(workspace, channel)
+                ?: return channelNotFoundError(workspaceName, channel)
+        val uri = registered.provenanceUri() ?: return noIdError(workspaceName, registered.name)
+        return action(uri)
+    }
+
+    private fun noIdError(workspaceName: String, channelName: String): String =
+        "Error: '$channelName' on '$workspaceName' has no Slack id yet: " +
+            "run 'slack join $workspaceName $channelName' while connected"
 
     private fun channelNotFoundError(workspaceName: String, channelName: String): String =
         "Error: Channel '$channelName' not found on '$workspaceName'"

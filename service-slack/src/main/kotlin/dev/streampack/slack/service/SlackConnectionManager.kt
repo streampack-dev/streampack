@@ -104,7 +104,8 @@ class SlackConnectionManager(
     internal fun joinAutojoinChannels(workspace: SlackWorkspace, adapter: SlackAdapter) {
         for (channel in channelRepository.findByWorkspaceAndDeletedFalse(workspace)) {
             val channelId = channel.channelId ?: continue
-            val options = channelControlService.getOptions(channel.provenanceUri()) ?: continue
+            val uri = channel.provenanceUri() ?: continue
+            val options = channelControlService.getOptions(uri) ?: continue
             if (!options.autojoin || !options.active) continue
             if (adapter.joinChannel(channelId)) {
                 logger.info("Autojoined '{}' on '{}'", channel.name, workspace.name)

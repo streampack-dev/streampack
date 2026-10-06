@@ -89,14 +89,14 @@ class SlackAdminOperation(private val slackService: SlackService) :
 
     private fun handleJoin(args: List<String>): OperationResult {
         if (args.size < 2) {
-            return OperationResult.Error("Usage: slack join <workspace> <#channel>")
+            return OperationResult.Error("Usage: slack join <workspace> <#channel|id>")
         }
         return toResult(slackService.join(args[0], args[1]))
     }
 
     private fun handleLeave(args: List<String>): OperationResult {
         if (args.size < 2) {
-            return OperationResult.Error("Usage: slack leave <workspace> <#channel>")
+            return OperationResult.Error("Usage: slack leave <workspace> <#channel|id>")
         }
         return toResult(slackService.leave(args[0], args[1]))
     }
@@ -104,7 +104,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
     private fun handleAutojoin(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: slack autojoin <workspace> <#channel> <true|false>"
+                "Usage: slack autojoin <workspace> <#channel|id> <true|false>"
             )
         }
         val enabled =
@@ -115,14 +115,14 @@ class SlackAdminOperation(private val slackService: SlackService) :
 
     private fun handleMute(args: List<String>): OperationResult {
         if (args.size < 2) {
-            return OperationResult.Error("Usage: slack mute <workspace> <#channel>")
+            return OperationResult.Error("Usage: slack mute <workspace> <#channel|id>")
         }
         return toResult(slackService.mute(args[0], args[1]))
     }
 
     private fun handleUnmute(args: List<String>): OperationResult {
         if (args.size < 2) {
-            return OperationResult.Error("Usage: slack unmute <workspace> <#channel>")
+            return OperationResult.Error("Usage: slack unmute <workspace> <#channel|id>")
         }
         return toResult(slackService.unmute(args[0], args[1]))
     }
@@ -130,7 +130,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
     private fun handleAutomute(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: slack automute <workspace> <#channel> <true|false>"
+                "Usage: slack automute <workspace> <#channel|id> <true|false>"
             )
         }
         val enabled =
@@ -141,7 +141,9 @@ class SlackAdminOperation(private val slackService: SlackService) :
 
     private fun handleVisible(args: List<String>): OperationResult {
         if (args.size < 3) {
-            return OperationResult.Error("Usage: slack visible <workspace> <#channel> <true|false>")
+            return OperationResult.Error(
+                "Usage: slack visible <workspace> <#channel|id> <true|false>"
+            )
         }
         val enabled =
             args[2].toBooleanStrictOrNull()
@@ -151,7 +153,9 @@ class SlackAdminOperation(private val slackService: SlackService) :
 
     private fun handleLogged(args: List<String>): OperationResult {
         if (args.size < 3) {
-            return OperationResult.Error("Usage: slack logged <workspace> <#channel> <true|false>")
+            return OperationResult.Error(
+                "Usage: slack logged <workspace> <#channel|id> <true|false>"
+            )
         }
         val enabled =
             args[2].toBooleanStrictOrNull()
@@ -186,14 +190,14 @@ class SlackAdminOperation(private val slackService: SlackService) :
         |  slack disconnect <name>
         |  slack remove <name>
         |  slack autoconnect <name> <true|false>
-        |  slack join <workspace> <#channel>
-        |  slack leave <workspace> <#channel>
-        |  slack autojoin <workspace> <#channel> <true|false>
-        |  slack mute <workspace> <#channel>
-        |  slack unmute <workspace> <#channel>
-        |  slack automute <workspace> <#channel> <true|false>
-        |  slack visible <workspace> <#channel> <true|false>
-        |  slack logged <workspace> <#channel> <true|false>
+        |  slack join <workspace> <#channel|id>
+        |  slack leave <workspace> <#channel|id>
+        |  slack autojoin <workspace> <#channel|id> <true|false>
+        |  slack mute <workspace> <#channel|id>
+        |  slack unmute <workspace> <#channel|id>
+        |  slack automute <workspace> <#channel|id> <true|false>
+        |  slack visible <workspace> <#channel|id> <true|false>
+        |  slack logged <workspace> <#channel|id> <true|false>
         |  slack signal <name> [character]
         |  slack status [workspace]
         """

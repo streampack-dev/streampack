@@ -5,6 +5,7 @@ import com.slack.api.bolt.App
 import com.slack.api.bolt.AppConfig
 import com.slack.api.bolt.jakarta_socket_mode.SocketModeApp
 import com.slack.api.methods.MethodsClient
+import com.slack.api.model.ConversationType
 import com.slack.api.model.event.MessageEvent
 import com.slack.api.model.event.ReactionAddedEvent
 import dev.streampack.core.integration.EventGateway
@@ -95,47 +96,69 @@ class SlackAdapter(
     }
 
     /**
-     * Resolves a channel name (e.g., "#general") to its Slack channel ID (e.g., "C0123456789") via
-     * the conversations.list API, along with whether it is private (a private channel, DM, or group
-     * DM). Returns null if the channel is not found.
+     * Finds a channel by name (`#general` or `general`) with conversations.list, or by id
+     * (`C0123456789`) with conversations.info, along with whether it is private (a private channel,
+     * DM, or group DM). Private channels are found only once the bot has been invited. Returns null
+     * if the channel is not found.
      */
-    fun resolveChannel(channelName: String): SlackConversationRef? {
-        val cleanName = channelName.removePrefix("#")
+    fun resolveChannel(channel: String): SlackConversationRef? =
         try {
-            val client = methodsClient()
-            var cursor: String? = null
-            do {
-                val response = client.conversationsList { r ->
-                    r.limit(200)
-                    if (cursor != null) r.cursor(cursor)
-                    r
-                }
-                if (!response.isOk) {
-                    logger.warn(
-                        "conversations.list failed on '{}': {}",
-                        workspaceName,
-                        response.error,
-                    )
-                    return null
-                }
-                for (channel in response.channels) {
-                    if (channel.name == cleanName) {
-                        return SlackConversationRef(
-                            id = channel.id,
-                            isPrivate = channel.isPrivate || channel.isIm || channel.isMpim,
-                        )
-                    }
-                }
-                cursor = response.responseMetadata?.nextCursor
-            } while (!cursor.isNullOrEmpty())
+            if (SlackConversationRef.looksLikeId(channel)) resolveById(channel)
+            else resolveByName(channel.removePrefix("#"))
         } catch (e: Exception) {
             logger.error(
                 "Failed to resolve channel '{}' on '{}': {}",
-                channelName,
+                channel,
                 workspaceName,
                 e.message,
             )
+            null
         }
+
+    private fun resolveById(channelId: String): SlackConversationRef? {
+        val response = methodsClient().conversationsInfo { r -> r.channel(channelId) }
+        if (!response.isOk) {
+            logger.warn(
+                "conversations.info {} on '{}': {}",
+                channelId,
+                workspaceName,
+                response.error,
+            )
+            return null
+        }
+        val channel = response.channel
+        return SlackConversationRef(
+            id = channel.id,
+            isPrivate = channel.isPrivate || channel.isIm || channel.isMpim,
+            name = channel.name,
+        )
+    }
+
+    private fun resolveByName(name: String): SlackConversationRef? {
+        val client = methodsClient()
+        var cursor: String? = null
+        do {
+            val response = client.conversationsList { r ->
+                r.limit(200)
+                r.types(listOf(ConversationType.PUBLIC_CHANNEL, ConversationType.PRIVATE_CHANNEL))
+                if (cursor != null) r.cursor(cursor)
+                r
+            }
+            if (!response.isOk) {
+                logger.warn("conversations.list failed on '{}': {}", workspaceName, response.error)
+                return null
+            }
+            for (channel in response.channels) {
+                if (channel.name == name) {
+                    return SlackConversationRef(
+                        id = channel.id,
+                        isPrivate = channel.isPrivate || channel.isIm || channel.isMpim,
+                        name = channel.name,
+                    )
+                }
+            }
+            cursor = response.responseMetadata?.nextCursor
+        } while (!cursor.isNullOrEmpty())
         return null
     }
 
@@ -154,6 +177,24 @@ class SlackAdapter(
             response.isOk
         } catch (e: Exception) {
             logger.warn("Could not join {} on '{}': {}", channelId, workspaceName, e.message)
+            false
+        }
+
+    /** Leaves a channel by id (`conversations.leave`) */
+    fun leaveChannel(channelId: String): Boolean =
+        try {
+            val response = methodsClient().conversationsLeave { r -> r.channel(channelId) }
+            if (!response.isOk) {
+                logger.warn(
+                    "conversations.leave {} on '{}' failed: {}",
+                    channelId,
+                    workspaceName,
+                    response.error,
+                )
+            }
+            response.isOk
+        } catch (e: Exception) {
+            logger.warn("Could not leave {} on '{}': {}", channelId, workspaceName, e.message)
             false
         }
 
@@ -359,7 +400,14 @@ class SlackAdapter(
 }
 
 /** A Slack conversation resolved by name: its id and whether it is private */
-data class SlackConversationRef(val id: String, val isPrivate: Boolean)
+data class SlackConversationRef(val id: String, val isPrivate: Boolean, val name: String? = null) {
+    companion object {
+        private val CHANNEL_ID = Regex("[CGD][A-Z0-9]{8,}")
+
+        /** Whether [channel] is a Slack conversation id rather than a name */
+        fun looksLikeId(channel: String): Boolean = CHANNEL_ID.matches(channel)
+    }
+}
 
 /** Tracks the last message in a channel for reaction relay filtering */
 internal class LastSlackMessage(

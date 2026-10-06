@@ -177,7 +177,7 @@ class SlackRepositoryTests {
     }
 
     @Test
-    fun `channel provenanceUri encodes correctly`() {
+    fun `channel provenanceUri is by its Slack id, as its messages arrive`() {
         val workspace =
             workspaceRepository.save(
                 SlackWorkspace(
@@ -186,8 +186,13 @@ class SlackRepositoryTests {
                     appToken = SecretRef.literal("xapp-test"),
                 )
             )
-        val channel = channelRepository.save(SlackChannel(workspace = workspace, name = "#java"))
-        val uri = channel.provenanceUri()
-        assertEquals("slack://jvm-news-uri/%23java", uri)
+        val unresolved =
+            channelRepository.save(SlackChannel(workspace = workspace, name = "#kotlin"))
+        assertEquals(null, unresolved.provenanceUri())
+        val channel =
+            channelRepository.save(
+                SlackChannel(workspace = workspace, name = "#java", channelId = "C0JAVA0001")
+            )
+        assertEquals("slack://jvm-news-uri/C0JAVA0001", channel.provenanceUri())
     }
 }

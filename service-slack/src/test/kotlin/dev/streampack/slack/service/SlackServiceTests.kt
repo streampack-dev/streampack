@@ -65,16 +65,17 @@ class SlackServiceTests {
     @Test
     fun `join persists channel entity and creates ChannelControlOptions`() {
         slackService.connect("jvm-news", "xoxb-test", "xapp-test")
-        val result = slackService.join("jvm-news", "#java")
-        assertTrue(result.contains("Joined"))
+        val result = slackService.join("jvm-news", "C0JAVA0001")
+        assertTrue(result.startsWith("Registered"), result)
 
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
-        val channel = channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, "#java")
+        val channel =
+            channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, "C0JAVA0001")
         assertNotNull(channel)
 
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel!!.provenanceUri()
+                channel!!.provenanceUri()!!
             )
         assertNotNull(options)
         assertFalse(options!!.autojoin)
@@ -82,22 +83,23 @@ class SlackServiceTests {
 
     @Test
     fun `join with unknown workspace returns error`() {
-        val result = slackService.join("nonexistent", "#java")
+        val result = slackService.join("nonexistent", "C0JAVA0001")
         assertTrue(result.startsWith("Error:"))
     }
 
     @Test
     fun `setAutojoin updates ChannelControlOptions`() {
         slackService.connect("jvm-news", "xoxb-test", "xapp-test")
-        slackService.join("jvm-news", "#java")
-        val result = slackService.setAutojoin("jvm-news", "#java", true)
+        slackService.join("jvm-news", "C0JAVA0001")
+        val result = slackService.setAutojoin("jvm-news", "C0JAVA0001", true)
         assertTrue(result.contains("true"))
 
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
-        val channel = channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, "#java")!!
+        val channel =
+            channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, "C0JAVA0001")!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()
+                channel.provenanceUri()!!
             )
         assertTrue(options!!.autojoin)
     }
@@ -115,15 +117,16 @@ class SlackServiceTests {
     @Test
     fun `setAutomute updates ChannelControlOptions`() {
         slackService.connect("jvm-news", "xoxb-test", "xapp-test")
-        slackService.join("jvm-news", "#java")
-        val result = slackService.setAutomute("jvm-news", "#java", true)
+        slackService.join("jvm-news", "C0JAVA0001")
+        val result = slackService.setAutomute("jvm-news", "C0JAVA0001", true)
         assertTrue(result.contains("true"))
 
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
-        val channel = channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, "#java")!!
+        val channel =
+            channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, "C0JAVA0001")!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()
+                channel.provenanceUri()!!
             )
         assertTrue(options!!.automute)
     }
@@ -131,15 +134,16 @@ class SlackServiceTests {
     @Test
     fun `setVisible updates ChannelControlOptions`() {
         slackService.connect("jvm-news", "xoxb-test", "xapp-test")
-        slackService.join("jvm-news", "#java")
-        val result = slackService.setVisible("jvm-news", "#java", false)
+        slackService.join("jvm-news", "C0JAVA0001")
+        val result = slackService.setVisible("jvm-news", "C0JAVA0001", false)
         assertTrue(result.contains("false"))
 
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
-        val channel = channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, "#java")!!
+        val channel =
+            channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, "C0JAVA0001")!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()
+                channel.provenanceUri()!!
             )
         assertFalse(options!!.visible)
     }
@@ -147,15 +151,16 @@ class SlackServiceTests {
     @Test
     fun `setLogged updates ChannelControlOptions`() {
         slackService.connect("jvm-news", "xoxb-test", "xapp-test")
-        slackService.join("jvm-news", "#java")
-        val result = slackService.setLogged("jvm-news", "#java", false)
+        slackService.join("jvm-news", "C0JAVA0001")
+        val result = slackService.setLogged("jvm-news", "C0JAVA0001", false)
         assertTrue(result.contains("false"))
 
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
-        val channel = channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, "#java")!!
+        val channel =
+            channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, "C0JAVA0001")!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()
+                channel.provenanceUri()!!
             )
         assertFalse(options!!.logged)
     }
@@ -196,8 +201,8 @@ class SlackServiceTests {
     @Test
     fun `remove soft-deletes workspace and channels`() {
         slackService.connect("jvm-news", "xoxb-test", "xapp-test")
-        slackService.join("jvm-news", "#java")
-        slackService.join("jvm-news", "#kotlin")
+        slackService.join("jvm-news", "C0JAVA0001")
+        slackService.join("jvm-news", "C0KOTLIN01")
 
         val result = slackService.remove("jvm-news")
         assertTrue(result.contains("removed"))

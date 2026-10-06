@@ -12,5 +12,10 @@ interface SlackChannelRepository : JpaRepository<SlackChannel, UUID> {
         name: String,
     ): SlackChannel?
 
+    fun findByWorkspaceAndChannelIdAndDeletedFalse(
+        workspace: SlackWorkspace,
+        channelId: String,
+    ): SlackChannel?
+
     fun findByWorkspaceAndDeletedFalse(workspace: SlackWorkspace): List<SlackChannel>
 }

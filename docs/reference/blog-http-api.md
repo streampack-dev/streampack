@@ -101,6 +101,64 @@ Successful `GET /posts/{year}/{month}/{slug}` and `GET /posts/{id}` requests are
 not record post access or change temperature buckets. UI clients should call `POST /posts/{id}/access`
 when a post link is opened from client-side navigation.
 
+## Channel Logs
+
+The public log browser reads these. Each takes the caller's credentials if there are any (the
+`access_token` cookie, else a bearer token) and answers anonymous callers too; what a caller sees
+depends on who they are.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /logs/provenances` | Lists the channels the caller may browse, most recently active first. |
+| `GET /logs?provenance=<uri>&day=YYYY-MM-DD` | One UTC day of a channel's log, oldest first. `day` defaults to today. |
+| `GET /logs/search?provenance=<uri>&q=<text>&sender=<nick>&page=0&size=50` | Searches one channel's log, newest first. |
+
+**Which channels.** A channel is browsable when it's registered (with a protocol's `join`), active,
+and `logged`; anonymous callers and ordinary users also need it `visible`, while `ADMIN` and
+`SUPER_ADMIN` see hidden ones too. Only channels are listed: IRC targets starting with `#`, and
+Discord, Slack and Mattermost channels. A `provenance` that isn't browsable for the caller, whether
+it doesn't exist or is hidden from them, is a `404` on the day view and the search alike, so
+neither can reveal that a hidden channel exists.
+
+Direct conversations (private messages, DMs, group DMs) are never returned, to anyone; see
+[The Message Log](../explanation/message-log.md).
+
+**`provenance`** is the channel's provenance URI exactly as `/logs/provenances` gives it
+(`irc://libera/%23java`), URL-encoded as a query parameter (`irc%3A%2F%2Flibera%2F%2523java`).
+
+`GET /logs/provenances` answers `LogProvenanceListResponse`:
+
+```json
+{
+  "provenances": [
+    {
+      "provenanceUri": "irc://libera/%23java",
+      "protocol": "irc",
+      "serviceId": "libera",
+      "replyTo": "#java",
+      "latestTimestamp": "2026-10-06T14:02:11Z",
+      "latestSender": "alice",
+      "latestContentPreview": "the latest line, flattened to one line and cut at 140 characters"
+    }
+  ]
+}
+```
+
+The `latest*` fields are `null` for a channel with nothing logged yet.
+
+`GET /logs` answers `LogDayResponse`: `provenanceUri`, `day`, and `entries`, each with `timestamp`,
+`sender`, `content` and `direction` (`INBOUND` for what was said, `OUTBOUND` for the bot's
+replies). A day returns at most 5000 entries, the earliest. A `day` that isn't `YYYY-MM-DD` is a
+`400`.
+
+`GET /logs/search` needs `q`, `sender`, or both: `q` matches text anywhere in a line, ignoring case,
+as written (`%` and `_` are literal), and is 3 to 200 characters; `sender` is a nick as logged,
+ignoring case, up to 255 characters, and alone lists everything that person said in the channel.
+`size` is 1 to 100. It answers `LogSearchResponse`: `provenanceUri`, `query`, `sender`, `page`,
+`size`, `totalCount`, `totalPages`, and `hits`, each an entry as above plus its UTC `day`, so a
+client can link to the day view. Searches are limited to 30 a minute for each signed-in caller, and
+60 a minute shared by all anonymous callers (`429` past that). A bad parameter is a `400`.
+
 ## Admin Web Console
 
 Streampack's text commands for signed-in administrators, typed in a browser (#115). Commands go in
