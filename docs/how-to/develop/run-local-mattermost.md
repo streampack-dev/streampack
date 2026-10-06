@@ -74,7 +74,7 @@ mattermost autoconnect local true
 mattermost status
 ```
 
-`status` reports `Server 'local': connected` once the socket has authenticated. If Streampack itself ever runs inside `docker compose`, use `http://mattermost:8065` as the base URL instead of `localhost`.
+`status` lists `local: connected` once the socket has authenticated (`mattermost status local` says `Server 'local': connected`). If Streampack itself ever runs inside `docker compose`, use `http://mattermost:8065` as the base URL instead of `localhost`.
 
 ## 4. Exercise it
 

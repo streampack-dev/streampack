@@ -17,12 +17,24 @@ import org.springframework.stereotype.Service
 class MessageLogService(private val repository: MessageLogRepository) {
     private val logger = LoggerFactory.getLogger(MessageLogService::class.java)
 
-    fun logInbound(provenanceUri: String, sender: String, content: String) {
-        log(provenanceUri, MessageDirection.INBOUND, sender, content)
+    /** Logs a message received. A [direct] one is kept, but nothing here ever returns it. */
+    fun logInbound(
+        provenanceUri: String,
+        sender: String,
+        content: String,
+        direct: Boolean = false,
+    ) {
+        log(provenanceUri, MessageDirection.INBOUND, sender, content, direct)
     }
 
-    fun logOutbound(provenanceUri: String, sender: String, content: String) {
-        log(provenanceUri, MessageDirection.OUTBOUND, sender, content)
+    /** Logs a message sent. A [direct] one is kept, but nothing here ever returns it. */
+    fun logOutbound(
+        provenanceUri: String,
+        sender: String,
+        content: String,
+        direct: Boolean = false,
+    ) {
+        log(provenanceUri, MessageDirection.OUTBOUND, sender, content, direct)
     }
 
     /** Returns messages for a provenance within a time window, in chronological order */
@@ -117,6 +129,7 @@ class MessageLogService(private val repository: MessageLogRepository) {
         direction: MessageDirection,
         sender: String,
         content: String,
+        direct: Boolean,
     ) {
         try {
             repository.save(
@@ -125,6 +138,7 @@ class MessageLogService(private val repository: MessageLogRepository) {
                     direction = direction,
                     sender = sender,
                     content = content,
+                    direct = direct,
                 )
             )
         } catch (e: Exception) {

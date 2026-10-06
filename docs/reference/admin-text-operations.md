@@ -118,7 +118,11 @@ Every registered channel carries four flags, set with the per-protocol `visible`
 
 - `logged=false` stops message capture for that channel entirely: neither inbound messages nor the bot's replies are written to the message log. It is not merely a browsing switch.
 - `visible=false` hides a channel's log from anonymous and non-admin browsing; admins still see it.
-- Private channels, direct messages, and group messages register with `visible=false` and `logged=false`. Public channels register visible and logged. Opt a private channel in explicitly if its history should be kept.
+- `automute` (also set by `mute`/`unmute`) holds the bot's replies back; it still reads, runs commands and logs.
+- `autojoin` rejoins the channel whenever its network, workspace or server connects. It's off for a newly registered channel.
+- The flags are created when a channel is registered with `join`. IRC channels, and public Mattermost channels, register visible and logged; private Mattermost channels and direct or group messages joined by id register hidden and unlogged. Opt a private channel in explicitly if its history should be kept.
+- A conversation that was never registered has no flags, and is logged.
+- Direct conversations (IRC private messages, Discord, Slack and Mattermost DMs, and Slack and Mattermost group DMs) are logged marked direct, and nothing reads them back: not the log browser or its search, not `ask`, `sentiment`, `article`'s logs or `be`, for anyone, admins included. `logged=false` on a registered one keeps it out of the log entirely.
 - Connect commands that carry credentials (`irc connect`, `slack connect`, `mattermost connect`) are redacted before they reach the message log, however the command was spaced or cased; a migration redacts copies logged before this rule existed.
 
 ## Mattermost Operations
@@ -148,9 +152,9 @@ Operational notes:
 - `connect` with a URL and token registers the server; the token is externalized to `MATTERMOST_<NAME>_TOKEN` once that variable exists, and startup refuses to run with enforcement on until it does. Token values are never printed.
 - `autojoin` channels are joined through the API on every connect and reconnect (public channels; private ones need an admin to add the account).
 - `channels` lists channels visible to the account across its teams; `join` accepts a channel id or a name and reports an ambiguous name rather than guessing. Names repeat across teams, so a name registered on two teams must be addressed by id afterwards.
-- `join` on a public channel adds the account to it on Mattermost; `leave` removes the account, so the server stops sending that channel's posts. Private channels must be joined by an admin on Mattermost; `join` registers them hidden and unlogged.
+- `join` on a public channel adds the account to it on Mattermost; `leave` removes the account, so the server stops sending that channel's posts, and retires the channel's record (its flags are kept for a later `join`). Private channels must be joined by an admin on Mattermost; `join` registers them hidden and unlogged. Every command but `join` needs a registered channel.
 - `signal` takes effect on the live connection immediately.
-- A dropped socket is retried with doubling delays (from `MATTERMOST_RECONNECT_DELAY`, capped at five minutes) until it reconnects or the server is disconnected; `status` shows `reconnecting` meanwhile. An unreachable server at startup does not stop the application.
+- A dropped socket is retried with doubling delays (from `MATTERMOST_RECONNECT_DELAY`, capped at five minutes) until it reconnects or the server is disconnected; `status` with no name shows `reconnecting` meanwhile; `status <name>` says `not connected`. An unreachable server at startup does not stop the application.
 
 ## Forge Instances and `on <host>`
 
@@ -322,7 +326,18 @@ irc signal <name> [character]
 irc status [network]
 ```
 
-Use these to manage runtime IRC networks, channels, logging, visibility, and signaling behavior.
+Present only when `IRC_ENABLED` is true. Notes:
+
+- `connect` with details registers the network (or updates it, or restores a removed one) and connects; `connect <name>` alone connects with the stored details. SASL credentials are moved to `IRC_<NAME>_SASL_ACCOUNT` and `IRC_<NAME>_SASL_PASSWORD` at the next start, and startup refuses to run with enforcement on until they're set.
+- `remove` soft-deletes the network and its channels; `disconnect` keeps them registered.
+- `autoconnect` and `autojoin` are off for a new network or channel: a channel joined once isn't rejoined after a restart until `autojoin` is on.
+- Channels are named with their `#`. `irc join` registers a channel visible and logged.
+- `mute`/`unmute` and `automute` set the same stored flag: replies are held back, and the channel is still read, answered internally and logged.
+- `allow-ops false` (the default) makes the bot take operator status off itself when it's given it.
+- `signal` sets one network's signal character; with no character, the network goes back to the default `!`.
+- `status` shows each connected network's joined channels.
+
+See [service-irc](../../service-irc/README.md) for addressing, reply wrapping and the send queue.
 
 ## Slack Administration
 
@@ -344,6 +359,16 @@ slack logged <workspace> <#channel> <true|false>
 slack signal <name> [character]
 slack status [workspace]
 ```
+
+Present only when `SLACK_ENABLED` is true. Notes:
+
+- `connect` with tokens (the `xoxb-` bot token and the `xapp-` app token Socket Mode needs) registers the workspace, or replaces its tokens and reconnects. The tokens are externalized to `SLACK_<NAME>_BOT_TOKEN` and `SLACK_<NAME>_APP_TOKEN`, and startup refuses to run with enforcement on until they're set.
+- `join` registers the channel and, while connected, looks up its Slack id. It does not put the bot into the channel: `autojoin` does, on each connect, for public channels whose id is known; otherwise invite the bot in Slack.
+- `leave` only confirms that the channel is registered; the bot stays in the Slack channel.
+- Known issue: Slack channel flags are stored under the channel's name (`slack://<workspace>/%23<channel>`), while messages arrive under its Slack id, so `mute`, `logged` and `visible` don't reach a channel's traffic yet.
+- `status` with Slack on reports only whether workspaces are connected.
+
+See [service-slack](../../service-slack/README.md) for addressing, reactions and the Slack app's setup.
 
 ## Command-Discovery Notes
 

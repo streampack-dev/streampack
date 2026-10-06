@@ -40,6 +40,7 @@ Optional integrations:
 | `IRC_ENABLED` | Enables IRC adapter. |
 | `DISCORD_ENABLED` | Enables Discord adapter. |
 | `SLACK_ENABLED` | Enables Slack adapter. |
+| `MATTERMOST_ENABLED` | Enables Mattermost adapter. |
 | `AI_ENABLED` | Enables AI-backed features. |
 | `STREAMPACK_GENERATIVE_PROMPT_DIR` | Filesystem directory for external generative prompt overrides. |
 | `ANTHROPIC_API_KEY` | Anthropic API key. |

@@ -5,12 +5,13 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.ChannelControlService
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.MessageLogService
 import org.springframework.stereotype.Component
 
 /**
  * Captures outbound operation results to the protocol-agnostic message log, except for channels
- * whose controls say `logged=false`.
+ * whose controls say `logged=false`. Replies in direct conversations are logged marked direct.
  *
  * Web console output (#115) is logged as its outcome only, never its text: an admin's console can
  * show what nothing else should keep (and outbound text has no redaction, as ingress has), so the
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component
 class LoggingEgressSubscriber(
     private val messageLogService: MessageLogService,
     private val channelControlService: ChannelControlService,
+    private val directConversations: DirectConversations,
 ) : EgressSubscriber() {
 
     /** Matches all protocols; the per-channel `logged` flag is checked at delivery */
@@ -29,6 +31,7 @@ class LoggingEgressSubscriber(
     override fun deliver(result: OperationResult, provenance: Provenance) {
         if (!channelControlService.isLogged(provenance)) return
         val sender = provenance.metadata[Provenance.BOT_NICK] as? String ?: "bot"
+        val direct = directConversations.isDirect(provenance)
         if (provenance.protocol == Protocol.WEBCONSOLE) {
             val outcome =
                 when (result) {
@@ -36,7 +39,12 @@ class LoggingEgressSubscriber(
                     is OperationResult.Error -> "error"
                     is OperationResult.NotHandled -> return
                 }
-            messageLogService.logOutbound(provenance.encode(), sender, "[web console: $outcome]")
+            messageLogService.logOutbound(
+                provenance.encode(),
+                sender,
+                "[web console: $outcome]",
+                direct,
+            )
             return
         }
         when (result) {
@@ -45,12 +53,14 @@ class LoggingEgressSubscriber(
                     provenance.encode(),
                     sender,
                     result.payload.toString(),
+                    direct,
                 )
             is OperationResult.Error ->
                 messageLogService.logOutbound(
                     provenance.encode(),
                     sender,
                     "Error: ${result.message}",
+                    direct,
                 )
             is OperationResult.NotHandled -> {}
         }

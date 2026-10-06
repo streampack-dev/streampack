@@ -2,7 +2,7 @@
 
 Streampack is an event-driven application platform. Its core idea is that protocols are interchangeable, but behavior should be shared.
 
-An operation such as a factoid lookup, a karma update, a GitHub subscription command, or a blog content action should mean the same thing whether it comes from IRC, Discord, Slack, HTTP, MCP, or the console. Protocol adapters normalize input into messages with provenance, the operation pipeline handles behavior, and the egress side sends results back to the appropriate protocol.
+An operation such as a factoid lookup, a karma update, a GitHub subscription command, or a blog content action should mean the same thing whether it comes from IRC, Discord, Slack, Mattermost, HTTP, MCP, or the console. Protocol adapters normalize input into messages with provenance, the operation pipeline handles behavior, and the egress side sends results back to the appropriate protocol.
 
 ## Platform Core
 
@@ -26,7 +26,7 @@ It currently includes:
 - the Bytecode News-style blog/site API
 - RSS/Atom feeds and sitemap support
 - email OTP and OIDC authentication
-- IRC, Discord, Slack, console, and bridge services
+- IRC, Discord, Slack, Mattermost, console, and bridge services
 - factoids, karma, calculator, weather, dictionary, GitHub, RSS, MCP, and other included capabilities
 - reusable generative infrastructure for AI-backed prompts and prompt overrides
 

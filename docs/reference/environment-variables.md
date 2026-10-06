@@ -57,12 +57,20 @@ This reference covers the variables commonly used by `server-streampack`.
 | `AI_ENABLED` | Optional | Enables AI-backed features. |
 | `BLOG_SUMMARY_PROMPT` | Optional | System prompt for admins' AI-derived post summaries. Empty uses the built-in stance: lead with the substance, never tease or bury the lede. |
 | `IRC_ENABLED` | Optional | Enables IRC adapter. |
+| `IRC_IDENTITY` | Optional | The bot's identity, as its CTCP `VERSION` answer (default `Nevet IRC Bridge`). |
+| `IRC_ADAPTIVE_SEND_DELAY_ENABLED` | Optional | Spaces outgoing IRC messages adaptively, growing the gap under a backlog (default `true`). |
+| `IRC_MIN_SEND_DELAY_MS`, `IRC_MAX_SEND_DELAY_MS` | Optional | Bounds of the adaptive gap (defaults `120` and `1000`). |
+| `IRC_SEND_DELAY_RAMP_UP_FACTOR`, `IRC_SEND_DELAY_RAMP_DOWN_FACTOR` | Optional | How fast the adaptive gap grows and shrinks (defaults `1.1` and `0.9`). |
+| `IRC_SEND_DELAY_MS` | Optional | Fixed gap between messages when adaptive sending is off (default `900`). |
+| `IRC_<NAME>_SASL_ACCOUNT`, `IRC_<NAME>_SASL_PASSWORD` | Per network | SASL credentials for the IRC network registered as `<name>`, e.g. `IRC_LIBERA_SASL_PASSWORD`. `irc connect` stores literals; with enforcement on, startup fails until the variables are set (values are never printed), after which the literals are rewritten to `env://` references. |
 | `DISCORD_ENABLED` | Optional | Enables Discord adapter. |
 | `DISCORD_APPLICATION_ID` | Optional | Discord application id. |
 | `DISCORD_PUBLIC_KEY` | Optional | Discord public key. |
 | `DISCORD_BOT_TOKEN` | Optional | Discord bot token. |
 | `DISCORD_PERMISSIONS_VALUE` | Optional | Discord permission integer, default `3072`. |
 | `SLACK_ENABLED` | Optional | Enables Slack adapter. |
+| `SLACK_SIGNAL` | Optional | Signal that addresses the bot in Slack channels (default `!`); overridable per workspace with `slack signal`. |
+| `SLACK_<NAME>_BOT_TOKEN`, `SLACK_<NAME>_APP_TOKEN` | Per workspace | Bot (`xoxb-`) and app (`xapp-`) tokens for the Slack workspace registered as `<name>`, e.g. `SLACK_JVM_NEWS_BOT_TOKEN`. Externalized and enforced at startup like Mattermost tokens. |
 | `CONSOLE_ENABLED` | Optional | Enables console adapter. |
 | `CORS_ORIGINS` | Optional | Comma-separated browser origins trusted for credentialed cross-origin requests; also the origins a cookie-authenticated web console command must come from. |
 | `STREAMPACK_WEBCONSOLE_COMMANDS_PER_MINUTE` | Optional | Web console commands an admin may submit a minute (default `30`). The console's other limits are `STREAMPACK_WEBCONSOLE_*` too: `HEARTBEAT` (`15s`), `MAX_STREAM_AGE` (`1h`), `MAX_STREAMS_PER_USER` (`4`), `STREAM_OPENS_PER_MINUTE` (`20`), `QUEUE_EVENTS` (`100`), `QUEUE_BYTES` (`1048576`), `MAX_EVENT_BYTES` (`131072`), `MAX_LINE` (`4096`), `MAX_BODY` (`32768`). |
