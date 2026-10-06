@@ -37,4 +37,5 @@ For module-local command details and implementation notes, see:
 - [service-rss/README.md](../../service-rss/README.md)
 - [service-irc/README.md](../../service-irc/README.md)
 - [service-slack/README.md](../../service-slack/README.md)
+- [service-mattermost/README.md](../../service-mattermost/README.md)
 - [service-bridge/README.md](../../service-bridge/README.md)
