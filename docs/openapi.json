@@ -692,6 +692,36 @@
         "required" : [ "droppedUrls", "fits", "line", "lineLength", "seeAlso", "selector", "tags", "text", "urls" ],
         "type" : "object"
       },
+      "FactoidGraphReport" : {
+        "properties" : {
+          "linesThatDontFit" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LineThatDoesntFit"
+            },
+            "type" : "array"
+          },
+          "mentionsNotLinked" : {
+            "items" : {
+              "$ref" : "#/components/schemas/UnlinkedMentions"
+            },
+            "type" : "array"
+          },
+          "parentsNotLinked" : {
+            "items" : {
+              "$ref" : "#/components/schemas/UnlinkedMentions"
+            },
+            "type" : "array"
+          },
+          "seeAlsoToNothing" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SeeAlsoToNothing"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "linesThatDontFit", "mentionsNotLinked", "parentsNotLinked", "seeAlsoToNothing" ],
+        "type" : "object"
+      },
       "FactoidListResponse" : {
         "properties" : {
           "factoids" : {
@@ -878,6 +908,32 @@
           }
         },
         "required" : [ "bottom", "limit", "top" ],
+        "type" : "object"
+      },
+      "LineThatDoesntFit" : {
+        "properties" : {
+          "cutOff" : {
+            "type" : "boolean"
+          },
+          "dropped" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "length" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "saidLength" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "selector" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "cutOff", "dropped", "length", "saidLength", "selector" ],
         "type" : "object"
       },
       "LogDayResponse" : {
@@ -1239,6 +1295,21 @@
         "required" : [ "feeds" ],
         "type" : "object"
       },
+      "SeeAlsoToNothing" : {
+        "properties" : {
+          "missing" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "selector" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "missing", "selector" ],
+        "type" : "object"
+      },
       "SuggestTagsHttpRequest" : {
         "properties" : {
           "existingTags" : {
@@ -1305,6 +1376,21 @@
           }
         },
         "required" : [ "aggregate", "categories", "factoidTags", "tags" ],
+        "type" : "object"
+      },
+      "UnlinkedMentions" : {
+        "properties" : {
+          "mentions" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "selector" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "mentions", "selector" ],
         "type" : "object"
       },
       "UserPrincipal" : {
@@ -1729,6 +1815,49 @@
         },
         "summary" : "The console's output, as server-sent events",
         "tags" : [ "Web console" ]
+      }
+    },
+    "/admin/factoids/report" : {
+      "get" : {
+        "description" : "Advisory, never edits (#133): factoids naming a parent that lists them without linking back; other factoids a factoid names without linking; see-also to factoids that don't exist; factoids whose one-line answer leaves parts out, or is cut off even so.",
+        "operationId" : "factoidGraphReport",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FactoidGraphReport"
+                }
+              }
+            },
+            "description" : "The report"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Where the factoid graph could be better",
+        "tags" : [ "Admin - Factoids" ]
       }
     },
     "/admin/posts/pending" : {
