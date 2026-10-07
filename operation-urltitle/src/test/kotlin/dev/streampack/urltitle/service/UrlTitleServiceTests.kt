@@ -4,11 +4,13 @@ package dev.streampack.urltitle.service
 import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
@@ -120,6 +122,112 @@ class UrlTitleServiceTests {
         val filtered = urls.filter { !service.isIgnoredHost(it) }
         assertEquals(1, filtered.size)
         assertEquals("https://bytecode.news", filtered[0])
+    }
+
+    // -- path and wildcard entries --
+
+    @Test
+    fun `path entry covers its own segment and below, not siblings`() {
+        service.addIgnoredHost("repopack.com/project")
+        assertTrue(service.isIgnoredHost("https://repopack.com/project/primate/tasks/153"))
+        assertTrue(service.isIgnoredHost("https://repopack.com/project"))
+        assertTrue(service.isIgnoredHost("https://www.repopack.com/project/x?y=z"))
+        assertFalse(service.isIgnoredHost("https://repopack.com/projects/primate"))
+        assertFalse(service.isIgnoredHost("https://repopack.com/blog/some-post"))
+        assertFalse(service.isIgnoredHost("https://repopack.com/"))
+        assertFalse(service.isIgnoredHost("https://docs.repopack.com/project/x"))
+    }
+
+    @Test
+    fun `path entry matching ignores case`() {
+        service.addIgnoredHost("repopack.com/project")
+        assertTrue(service.isIgnoredHost("https://Repopack.com/Project/Primate"))
+    }
+
+    @Test
+    fun `wildcard entry covers subdomains and the bare host`() {
+        service.addIgnoredHost("*.repopack.com")
+        assertTrue(service.isIgnoredHost("https://docs.repopack.com/guide"))
+        assertTrue(service.isIgnoredHost("https://a.b.repopack.com/"))
+        assertTrue(service.isIgnoredHost("https://repopack.com/anything"))
+        assertTrue(service.isIgnoredHost("https://www.repopack.com/anything"))
+        assertFalse(service.isIgnoredHost("https://notrepopack.com/"))
+        assertFalse(service.isIgnoredHost("https://repopack.com.evil.example/"))
+    }
+
+    @Test
+    fun `wildcard entry with a path`() {
+        service.addIgnoredHost("*.repopack.com/project")
+        assertTrue(service.isIgnoredHost("https://docs.repopack.com/project/1"))
+        assertFalse(service.isIgnoredHost("https://docs.repopack.com/blog/1"))
+    }
+
+    @Test
+    fun `entries are normalized on add and delete`() {
+        assertEquals(
+            "repopack.com/project",
+            service.addIgnoredHost("  HTTPS://WWW.Repopack.com/Project/  "),
+        )
+        assertEquals("repopack.com/project", service.deleteIgnoredHost("repopack.com/project/"))
+        assertFalse(service.isIgnoredHost("https://repopack.com/project/1"))
+        assertEquals(null, service.deleteIgnoredHost("repopack.com/project"))
+    }
+
+    @Test
+    fun `normalizeEntry handles each entry form`() {
+        assertEquals("example.com", UrlTitleService.normalizeEntry("Example.COM"))
+        assertEquals("example.com", UrlTitleService.normalizeEntry("http://www.example.com/"))
+        assertEquals("*.example.com", UrlTitleService.normalizeEntry("*.Example.com"))
+        assertEquals("example.com/a/b", UrlTitleService.normalizeEntry("example.com/a/b//"))
+        assertEquals("example.com/a", UrlTitleService.normalizeEntry("example.com/a?x=1#frag"))
+    }
+
+    @Test
+    fun `normalizeEntry rejects malformed entries`() {
+        for (bad in listOf("", "*", "*.com", "exa mple.com", "foo_bar!.com", "a.*.com")) {
+            assertThrows(IllegalArgumentException::class.java) {
+                UrlTitleService.normalizeEntry(bad)
+            }
+        }
+    }
+
+    // -- sign-in and bot-check titles --
+
+    @ParameterizedTest
+    @ValueSource(
+        strings =
+            [
+                "Repopack · Sign in",
+                "Sign in · GitHub",
+                "Sign in",
+                "SIGN IN",
+                "Just a moment...",
+                "Just a moment…",
+                "Attention Required! | Cloudflare",
+                "Example - Login required",
+                "Access Denied",
+                "Forbidden — nginx",
+                "Are you a robot?",
+                "Log in | Some App",
+            ]
+    )
+    fun `sign-in and bot-check titles are suppressed`(title: String) {
+        assertTrue(service.isSuppressedTitle(title), "expected suppression of '$title'")
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings =
+            [
+                "Signing in with passkeys, explained",
+                "How to sign in to GitHub with SSO",
+                "Login-free tools · Blog",
+                "Coroutines | Kotlin",
+                "Forbidden Planet (1956) | IMDb fan page | Reviews",
+            ]
+    )
+    fun `ordinary titles are not suppressed`(title: String) {
+        assertFalse(service.isSuppressedTitle(title), "unexpected suppression of '$title'")
     }
 
     companion object {

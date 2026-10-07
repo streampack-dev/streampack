@@ -24,11 +24,15 @@ class UrlTitleService(
 
     private val urlPattern = Regex("https?://\\S+")
 
+    private val suppressedTitles: Set<String> by lazy {
+        properties.suppressedTitles.map { normalizeTitle(it) }.toSet()
+    }
+
     /** Seeds default ignored hosts from configuration on startup */
     @Transactional
     override fun afterPropertiesSet() {
-        properties.defaultIgnoredHosts.forEach { hostName ->
-            val normalized = normalizeHost(hostName)
+        properties.defaultIgnoredHosts.forEach { entry ->
+            val normalized = normalizeEntry(entry)
             if (ignoredHostRepository.findByHostNameIgnoreCase(normalized) == null) {
                 ignoredHostRepository.save(IgnoredHost(hostName = normalized))
             }
@@ -62,33 +66,56 @@ class UrlTitleService(
             .toList()
     }
 
-    /** Checks whether a URL's host is in the ignored list */
+    /**
+     * Checks whether a URL is covered by an ignore-list entry: a host, a `*.` subdomain wildcard,
+     * or either of those with a path prefix. The list is a few dozen rows at most, so it's matched
+     * in memory rather than with pattern queries.
+     */
     @Transactional(readOnly = true)
     fun isIgnoredHost(url: String): Boolean {
-        val host =
+        val uri =
             try {
-                normalizeHost(URI(url).host ?: return false)
+                URI(url)
             } catch (_: Exception) {
                 return false
             }
-        return ignoredHostRepository.findByHostNameIgnoreCase(host) != null
+        val host = normalizeHost(uri.host ?: return false)
+        val path = (uri.path ?: "").lowercase()
+        return ignoredHostRepository.findAll().any { entryMatches(it.hostName, host, path) }
     }
 
+    /**
+     * True when a fetched title belongs to a sign-in or bot-check page rather than the linked
+     * content. Such a title is the whole title, or the first or last part around a site-name
+     * separator ("Repopack · Sign in", "Sign in · GitHub"), so a real title that merely mentions
+     * signing in still gets through.
+     */
+    fun isSuppressedTitle(title: String): Boolean {
+        if (suppressedTitles.isEmpty()) return false
+        val whole = normalizeTitle(title)
+        if (whole in suppressedTitles) return true
+        val parts = whole.split(titleSeparator).map { it.trim() }.filter { it.isNotEmpty() }
+        if (parts.size < 2) return false
+        return parts.first() in suppressedTitles || parts.last() in suppressedTitles
+    }
+
+    /** Adds an entry and returns its normalized form, which is what `url ignore list` shows */
     @Transactional
-    fun addIgnoredHost(hostName: String) {
-        val normalized = normalizeHost(hostName)
+    fun addIgnoredHost(entry: String): String {
+        val normalized = normalizeEntry(entry)
         if (ignoredHostRepository.findByHostNameIgnoreCase(normalized) == null) {
             ignoredHostRepository.save(IgnoredHost(hostName = normalized))
         }
+        return normalized
     }
 
+    /** Removes an entry and returns its normalized form, or null if it wasn't in the list */
     @Transactional
-    fun deleteIgnoredHost(hostName: String) {
-        val normalized = normalizeHost(hostName)
-        val existing = ignoredHostRepository.findByHostNameIgnoreCase(normalized)
-        if (existing != null) {
-            ignoredHostRepository.delete(existing)
-        }
+    fun deleteIgnoredHost(entry: String): String? {
+        val normalized = normalizeEntry(entry)
+        val existing = ignoredHostRepository.findByHostNameIgnoreCase(normalized) ?: return null
+        ignoredHostRepository.delete(existing)
+        return normalized
     }
 
     @Transactional(readOnly = true)
@@ -97,8 +124,76 @@ class UrlTitleService(
     }
 
     companion object {
+        // The width of ignored_hosts.host_name; a host plus a path prefix fits comfortably.
+        private const val MAX_ENTRY_LENGTH = 255
+
+        private val schemePattern = Regex("^[a-z][a-z0-9+.-]*://")
+        private val hostPattern = Regex("^(\\*\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)*$")
+
+        // Separators sites put between the page and site name. A hyphen counts only with spaces
+        // around it, so "Log-in help" stays one phrase.
+        private val titleSeparator = Regex("\\s+-\\s+|[·|—–]")
+
         /** Strips www. prefix and lowercases for consistent ignore-list matching */
         fun normalizeHost(host: String): String = host.lowercase().removePrefix("www.")
+
+        /**
+         * Normalizes an ignore-list entry: lower-cased, with no scheme, `www.`, query, fragment or
+         * trailing slash. The path is lower-cased too and URLs are matched ignoring case, because
+         * an ignore list is better off over-matching `/Project` than missing it.
+         */
+        fun normalizeEntry(entry: String): String {
+            val value =
+                entry
+                    .trim()
+                    .lowercase()
+                    .replace(schemePattern, "")
+                    .substringBefore('#')
+                    .substringBefore('?')
+                    .trimEnd('/')
+            val host = normalizeHost(value.substringBefore('/'))
+            val path = if ('/' in value) "/" + value.substringAfter('/').trim('/') else ""
+            require(hostPattern.matches(host)) {
+                "'$entry' is not a host, *.host, or host/path entry"
+            }
+            // "*.com" would silence every .com link; a wildcard needs a real domain under it.
+            require(!host.startsWith("*.") || '.' in host.removePrefix("*.")) {
+                "'$entry' is too broad; use *.example.com rather than *.com"
+            }
+            require(path.none { it.isWhitespace() }) { "'$entry' contains whitespace" }
+            val normalized = host + path
+            require(normalized.length <= MAX_ENTRY_LENGTH) {
+                "'$entry' is longer than $MAX_ENTRY_LENGTH characters"
+            }
+            return normalized
+        }
+
+        /**
+         * Whether a stored entry covers a URL's normalized host and lower-cased path.
+         *
+         * `*.host` covers the bare host as well as its subdomains: whoever writes it means
+         * "anything on that site", and `www.` is already folded into the bare host, so excluding it
+         * would only surprise. Path prefixes match whole segments: `/project` covers `/project` and
+         * `/project/x`, not `/projects`.
+         */
+        fun entryMatches(entry: String, host: String, path: String): Boolean {
+            val entryHost = entry.substringBefore('/')
+            val hostMatches =
+                if (entryHost.startsWith("*.")) {
+                    val base = entryHost.removePrefix("*.")
+                    host == base || host.endsWith(".$base")
+                } else {
+                    host == entryHost
+                }
+            if (!hostMatches) return false
+            if ('/' !in entry) return true
+            val prefix = "/" + entry.substringAfter('/')
+            return path == prefix || path.startsWith("$prefix/")
+        }
+
+        /** Lower-cases, folds the ellipsis character, and collapses whitespace for comparison */
+        fun normalizeTitle(title: String): String =
+            title.lowercase().replace("…", "...").compress().trim()
 
         fun tokenize(text: String): Set<String> {
             return text.lowercase().split("\\W+".toRegex()).filter { it.isNotEmpty() }.toSet()

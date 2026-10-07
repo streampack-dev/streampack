@@ -5,12 +5,16 @@ import dev.streampack.core.extensions.compress
 import dev.streampack.core.extensions.joinToStringWithAnd
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Role
 import dev.streampack.core.service.TypedOperation
 import dev.streampack.urltitle.service.UrlTitleService
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
-/** Admin commands for managing the URL title ignored-hosts list */
+/**
+ * Commands for the URL title ignore list. Anyone may list it; adding and deleting entries need
+ * ADMIN, since an entry silences titles for everyone in every channel.
+ */
 @Component
 class ManageIgnoredHostsOperation(private val urlTitleService: UrlTitleService) :
     TypedOperation<String>(String::class) {
@@ -37,24 +41,40 @@ class ManageIgnoredHostsOperation(private val urlTitleService: UrlTitleService) 
                     OperationResult.Success("Ignored hosts include: $hosts")
                 }
                 "add" -> {
-                    if (commands.size < 2) {
-                        return OperationResult.Error("Usage: url ignore add <hostname>")
+                    requireRole(message, Role.ADMIN)?.let {
+                        return it
                     }
-                    urlTitleService.addIgnoredHost(commands[1])
-                    OperationResult.Success("Added ${commands[1]} to ignored hosts.")
+                    if (commands.size < 2) {
+                        return OperationResult.Error(
+                            "Usage: url ignore add <host | *.host | host/path>"
+                        )
+                    }
+                    val entry = urlTitleService.addIgnoredHost(commands[1])
+                    OperationResult.Success("Added $entry to ignored hosts.")
                 }
                 "delete" -> {
-                    if (commands.size < 2) {
-                        return OperationResult.Error("Usage: url ignore delete <hostname>")
+                    requireRole(message, Role.ADMIN)?.let {
+                        return it
                     }
-                    urlTitleService.deleteIgnoredHost(commands[1])
-                    OperationResult.Success("Removed ${commands[1]} from ignored hosts.")
+                    if (commands.size < 2) {
+                        return OperationResult.Error(
+                            "Usage: url ignore delete <host | *.host | host/path>"
+                        )
+                    }
+                    val entry =
+                        urlTitleService.deleteIgnoredHost(commands[1])
+                            ?: return OperationResult.Error(
+                                "${commands[1]} is not in the ignored hosts."
+                            )
+                    OperationResult.Success("Removed $entry from ignored hosts.")
                 }
                 else ->
                     OperationResult.Error(
                         "Unknown subcommand: ${commands[0]}. Use list, add, or delete."
                     )
             }
+        } catch (e: IllegalArgumentException) {
+            OperationResult.Error(e.message ?: "Invalid ignore-list entry")
         } catch (e: Exception) {
             logger.warn("Error handling ignored hosts command: {}", e.message)
             OperationResult.Error("Failed to process command: ${e.message}")

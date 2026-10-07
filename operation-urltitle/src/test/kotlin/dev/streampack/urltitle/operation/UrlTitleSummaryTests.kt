@@ -139,6 +139,26 @@ class UrlTitleSummaryTests {
     }
 
     @Test
+    fun `sign-in wall title is not emitted`() {
+        testFetcher.setTitle("https://repopack.com/project/primate/tasks/153", "Repopack · Sign in")
+        val result = eventGateway.process(message("https://repopack.com/project/primate/tasks/153"))
+        assertTrue(result !is OperationResult.Success, "Sign-in title should be dropped: $result")
+    }
+
+    @Test
+    fun `sign-in wall title is dropped while other titles still report`() {
+        testFetcher.setTitle("https://abc.example.com/page1", "Totally Unrelated Title")
+        testFetcher.setTitle("https://xyz.example.com/page2", "Just a moment...")
+        val result =
+            eventGateway.process(
+                message("see https://abc.example.com/page1 and https://xyz.example.com/page2")
+            )
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertEquals("Totally Unrelated Title", payload)
+    }
+
+    @Test
     fun `invalid tls certificate returns derived title warning`() {
         val url = "https://badcert.example.com/deeply-interesting-article"
         testFetcher.setInvalidCertificate(url)
