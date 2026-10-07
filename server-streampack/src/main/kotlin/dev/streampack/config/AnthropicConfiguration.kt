@@ -32,7 +32,18 @@ class AnthropicConfiguration {
                 .apiKey(properties.apiKey)
                 .model(properties.model)
                 .maxTokens(properties.maxTokens)
+                .timeout(properties.timeout)
+                .maxRetries(properties.maxRetries)
                 .build()
+
+        logger.info(
+            "Anthropic chat model: {}, at most {} tokens, {} timeout, {} retr{}",
+            properties.model,
+            properties.maxTokens,
+            properties.timeout,
+            properties.maxRetries,
+            if (properties.maxRetries == 1) "y" else "ies",
+        )
 
         return AnthropicChatModel.builder().options(options).build()
     }
