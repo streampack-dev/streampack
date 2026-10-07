@@ -1,6 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.config
 
+import com.anthropic.models.messages.OutputConfig
+import com.anthropic.models.messages.ThinkingConfigAdaptive
 import dev.streampack.ai.config.AiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.ai.anthropic.AnthropicChatModel
@@ -34,19 +36,44 @@ class AnthropicConfiguration {
                 .maxTokens(properties.maxTokens)
                 .timeout(properties.timeout)
                 .maxRetries(properties.maxRetries)
-                .let { if (properties.thinking) it.thinkingAdaptive() else it.thinkingDisabled() }
+                // Nothing about thinking unless it's asked for: some models refuse "disabled"
+                .let {
+                    if (properties.thinking)
+                        it.thinkingAdaptive(ThinkingConfigAdaptive.Display.OMITTED)
+                    else it
+                }
+                .let { builder -> effort(properties.effort)?.let { builder.effort(it) } ?: builder }
                 .build()
 
         logger.info(
-            "Anthropic chat model: {}, at most {} tokens, {} timeout, {} retr{}, thinking {}",
+            "Anthropic chat model: {}, at most {} tokens, {} timeout, {} retr{}, thinking {}, effort {}",
             properties.model,
             properties.maxTokens,
             properties.timeout,
             properties.maxRetries,
             if (properties.maxRetries == 1) "y" else "ies",
-            if (properties.thinking) "on" else "off",
+            if (properties.thinking) "on" else "not asked for",
+            effort(properties.effort)?.toString()?.lowercase() ?: "the model's default",
         )
 
         return AnthropicChatModel.builder().options(options).build()
+    }
+
+    /** [value] as an effort level, or null: unset, or not one (which is logged, not fatal). */
+    private fun effort(value: String?): OutputConfig.Effort? {
+        val name = value?.trim()?.lowercase()?.takeIf { it.isNotEmpty() } ?: return null
+        if (name !in EFFORTS) {
+            logger.error(
+                "streampack.ai.effort '{}' isn't one of {}; using the model's default",
+                value,
+                EFFORTS,
+            )
+            return null
+        }
+        return OutputConfig.Effort.of(name)
+    }
+
+    companion object {
+        private val EFFORTS = listOf("low", "medium", "high", "xhigh", "max")
     }
 }

@@ -36,8 +36,9 @@ class AnthropicConfigurationTests {
         // Bounded, so a stalled call ends (the client's own default is ten minutes a try)
         assertEquals(java.time.Duration.ofSeconds(60), options.timeout)
         assertEquals(1, options.maxRetries)
-        // Off unless asked for: it spends the token budget on what nobody sees
-        assertEquals(true, options.thinking?.isDisabled())
+        // Nothing about thinking unless asked: Opus 5.5 refuses "disabled"
+        assertNull(options.thinking)
+        assertNull(options.outputConfig?.effort()?.orElse(null))
     }
 
     @Test
@@ -72,5 +73,27 @@ class AnthropicConfigurationTests {
                 assertInstanceOf(AnthropicChatModel::class.java, model).defaultOptions,
             )
         assertEquals(true, options.thinking?.isAdaptive())
+    }
+
+    private fun optionsFor(properties: AiProperties): AnthropicChatOptions =
+        assertInstanceOf(
+            AnthropicChatOptions::class.java,
+            assertInstanceOf(
+                    AnthropicChatModel::class.java,
+                    configuration.anthropicChatModel(properties),
+                )
+                .defaultOptions,
+        )
+
+    @Test
+    fun `an effort is sent when set, and a mistyped one is ignored`() {
+        val low = optionsFor(AiProperties(enabled = true, apiKey = "sk-ant-test", effort = "LOW"))
+        assertEquals(
+            com.anthropic.models.messages.OutputConfig.Effort.LOW,
+            low.outputConfig?.effort()?.orElse(null),
+        )
+        val typo =
+            optionsFor(AiProperties(enabled = true, apiKey = "sk-ant-test", effort = "lowest"))
+        assertNull(typo.outputConfig?.effort()?.orElse(null))
     }
 }
