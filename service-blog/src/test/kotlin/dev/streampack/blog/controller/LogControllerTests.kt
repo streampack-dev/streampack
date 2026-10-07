@@ -5,6 +5,7 @@ import dev.streampack.core.entity.ChannelControlOptions
 import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.ChannelControlOptionsRepository
+import dev.streampack.core.repository.MessageLogRepository
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.MessageLogService
@@ -32,6 +33,7 @@ class LogControllerTests {
     @Autowired lateinit var jwtService: JwtService
     @Autowired lateinit var optionsRepository: ChannelControlOptionsRepository
     @Autowired lateinit var messageLogService: MessageLogService
+    @Autowired lateinit var messageLogRepository: MessageLogRepository
     @Autowired lateinit var throttleService: ThrottleService
 
     private lateinit var adminToken: String
@@ -149,6 +151,48 @@ class LogControllerTests {
                 jsonPath("$.provenanceUri") { value(hiddenProv) }
                 jsonPath("$.entries") { isArray() }
             }
+    }
+
+    @Test
+    fun `a line hidden by moderation is gone from the day and search, for admins too`() {
+        messageLogService.logInbound(visibleProv, "troll", "an abusive remark")
+        val today = Instant.now().toString().substring(0, 10)
+        val line =
+            messageLogRepository
+                .findWindowForModeration(
+                    visibleProv,
+                    Instant.now().minusSeconds(60),
+                    Instant.now().plusSeconds(1),
+                    100,
+                )
+                .single { it.content == "an abusive remark" }
+        messageLogRepository.setHiddenForModeration(listOf(line.id), true)
+
+        for (token in listOf(null, userToken, adminToken)) {
+            mockMvc
+                .get("/logs?provenance=$visibleProv&day=$today") {
+                    if (token != null) header("Authorization", "Bearer $token")
+                }
+                .andExpect {
+                    status { isOk() }
+                    jsonPath("$.entries[*].content") {
+                        value(org.hamcrest.Matchers.contains("Visible hello"))
+                    }
+                }
+            search(visibleProv, "abusive", token = token).andExpect {
+                status { isOk() }
+                jsonPath("$.totalCount") { value(0) }
+            }
+            search(visibleProv, null, token = token, sender = "troll").andExpect {
+                status { isOk() }
+                jsonPath("$.totalCount") { value(0) }
+            }
+        }
+        mockMvc.get("/logs/provenances").andExpect {
+            jsonPath("$.provenances[*].latestSender") {
+                value(org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem("troll")))
+            }
+        }
     }
 
     // -- Search (#101) --

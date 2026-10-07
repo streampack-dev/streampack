@@ -46,6 +46,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
             "automute" -> handleAutomute(tokens.drop(1))
             "visible" -> handleVisible(tokens.drop(1))
             "logged" -> handleLogged(tokens.drop(1))
+            "moderated" -> handleModerated(tokens.drop(1))
             "allow-ops" -> handleAllowOps(tokens.drop(1))
             "signal" -> handleSignal(tokens.drop(1))
             "status" -> handleStatus(tokens.drop(1))
@@ -186,6 +187,19 @@ class IrcAdminOperation(private val ircService: IrcService) :
         else OperationResult.Success(result)
     }
 
+    private fun handleModerated(args: List<String>): OperationResult {
+        if (args.size < 3) {
+            return OperationResult.Error("Usage: irc moderated <network> <#channel> <true|false>")
+        }
+        val enabled =
+            args[2].toBooleanStrictOrNull()
+                ?: return OperationResult.Error("Invalid boolean: '${args[2]}'")
+        val result = ircService.setModerated(args[0], args[1], enabled)
+        return if (result.startsWith("Error:"))
+            OperationResult.Error(result.removePrefix("Error: "))
+        else OperationResult.Success(result)
+    }
+
     private fun handleAllowOps(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error("Usage: irc allow-ops <network> <#channel> <true|false>")
@@ -232,6 +246,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
         |  irc automute <network> <#channel> <true|false>
         |  irc visible <network> <#channel> <true|false>
         |  irc logged <network> <#channel> <true|false>
+        |  irc moderated <network> <#channel> <true|false>
         |  irc allow-ops <network> <#channel> <true|false>
         |  irc signal <name> [character]
         |  irc status [network]

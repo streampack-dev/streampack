@@ -38,6 +38,8 @@ id) has settings that silently apply to nothing.
   said is still logged.
 - `autojoin` decides whether the bot rejoins the channel when its network, workspace or server
   connects.
+- `moderated` decides whether a logged channel is watched for abuse (see [Moderation](#moderation)).
+  On by default.
 
 Settings are created when a channel is registered with `join`. A conversation that was never
 registered has none, and is logged by default; it isn't listed in the log browser, which lists only
@@ -66,3 +68,68 @@ The rule is held in two places so that a new feature can't step around it:
 
 A registered direct conversation with `logged=false` is kept out of the log entirely, as any other
 channel would be.
+
+## Hidden lines
+
+An admin can hide a line (see [Moderation](#moderation)). A hidden line is kept, flagged `hidden`,
+and left out of every read exactly as a direct one is: the log browser and its search, `ask`,
+`sentiment`, `article` and `be`, for everyone. `MessageLog`'s restriction and the `AND NOT hidden`
+in each native query hold that rule beside the direct one. The one way back to a hidden line is the
+moderation queries at the end of `MessageLogRepository`, which the admin moderation endpoints use
+to show it, marked, so it can be judged and unhidden. Those queries still never read a direct line.
+
+## Moderation
+
+Abuse in a channel is behaviour, not vocabulary: someone hostile to *people*, again and again, not
+someone swearing at a broken build. One message can't show that; a pattern over time can. So
+moderation (`operation-moderation`, #150) has three parts, and a person makes every decision.
+
+**Signals, on every message.** As each message in a public channel reaches the ingress channel,
+it's scored, with no model involved, per person per channel:
+
+| Signal | Adds | When |
+|--------|------|------|
+| Profanity | 0.5 | Swearing aimed at no one: at code, at oneself |
+| Insult | 1 | A word for a person ("idiot") aimed at no one in particular |
+| Aimed hostility | 8 | Swearing or an insult within three words of "you", or in a line naming someone else (`@name`, or the nick of anyone seen in the channel in the last hour) |
+| Slur | 10 | Any one, from a short list; spelling games (`f4ggot`) are folded first |
+| Threat | 10 | "I'll / I'm going to" a violent verb aimed at "you", "him", "her", "them" or someone named; "kill yourself", "kys" |
+| Personal details | 3, or 8 with someone named | An email address, phone number or street address posted |
+| Blocked link | 6 | A link to a host in `streampack.moderation.blocked-hosts` |
+| Repetition | 1 per earlier copy | The same line again within the hour (case, spacing and punctuation aside) |
+| Flood | 1 | Each line past six in ten seconds |
+
+A score halves every half hour with nothing new. A line that takes it to 10 marks the person for
+the next review; one aimed insult doesn't, two in a short while do, a slur or threat does alone. The
+weights, threshold, timings and word lists are `streampack.moderation.*` settings. Scores live in
+memory, are never shown to anyone, and a restart forgets them: they point the review somewhere,
+and nothing else.
+
+**Review, hourly.** Once an hour a `TickListener` takes the people marked since the last review.
+For each, it reads that channel's last hour or so through `MessageLogService` (so never a direct or
+hidden line), takes their most recent lines (20 at most) with three lines either side, and asks the
+moderation model (`AI_MODERATION_MODEL`, through `AiService.moderation()`) whether that person is
+being hostile or abusive toward others, or just frustrated or joking: a short verdict, a reason, and
+the line numbers that show it. The transcript is the only thing sent, with the person's lines
+marked. Usually nobody is marked, so there's no call at all. With AI off, or when the model doesn't
+answer, the report is recorded from the signals alone, without a verdict. The model's thinking is
+never asked for.
+
+**Reports, and an admin decides.** Each review records a report: who (as the log names them, with
+the protocol and service, and their account when known), where, the signals, the verdict, and the
+ids of the lines read, the ones that raised signals and the ones the model cited. Nothing is hidden,
+removed or banned automatically. From a report an admin can:
+
+- **hide** lines: kept, flagged, and gone from public view (see [Hidden lines](#hidden-lines)), and
+  **unhide** them again;
+- **purge** lines that must not be kept (anything illegal): deleted for good, after confirming;
+- **dismiss** the report as not abuse.
+
+Each action is recorded with who did it and when, and a closed report stays readable. Bans stay with
+each channel's own operators; the bot doesn't kick or ban. The admin endpoints are under
+`/admin/moderation` (see [Blog HTTP API](../reference/blog-http-api.md#admin-moderation)), for
+PUDL's Moderation window.
+
+Direct conversations are never scored and never reviewed. A channel that isn't logged has nothing to
+review, and a logged one can opt out with `moderated=false`.
+

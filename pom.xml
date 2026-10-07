@@ -77,6 +77,7 @@
         <module>operation-ideas</module>
         <module>operation-karma</module>
         <module>operation-markov</module>
+        <module>operation-moderation</module>
         <module>operation-poetry</module>
         <module>operation-safecracker</module>
         <module>operation-sentiment</module>
@@ -97,6 +98,7 @@
         <module>service-mail</module>
         <module>service-mattermost</module>
         <module>service-mcp</module>
+        <module>service-moderation</module>
         <module>service-rss</module>
         <module>service-slack</module>
     </modules>
@@ -432,6 +434,16 @@
             <dependency>
                 <groupId>dev.streampack</groupId>
                 <artifactId>operation-sentiment</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.streampack</groupId>
+                <artifactId>operation-moderation</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.streampack</groupId>
+                <artifactId>service-moderation</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

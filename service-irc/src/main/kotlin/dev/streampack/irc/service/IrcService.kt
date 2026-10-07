@@ -185,6 +185,15 @@ class IrcService(
         return "Channel '$channelName' on '$networkName' logged set to $logged"
     }
 
+    /** Updates the moderated flag (abuse detection, #150) via ChannelControlOptions */
+    fun setModerated(networkName: String, channelName: String, moderated: Boolean): String {
+        val uri =
+            resolveChannelUri(networkName, channelName)
+                ?: return channelNotFoundError(networkName, channelName)
+        channelControlService.setFlag(uri, "moderated", moderated)
+        return "Channel '$channelName' on '$networkName' moderated set to $moderated"
+    }
+
     /** Configures whether the bot is allowed to hold ops in a channel */
     fun setAllowOps(networkName: String, channelName: String, enabled: Boolean): String {
         val uri =

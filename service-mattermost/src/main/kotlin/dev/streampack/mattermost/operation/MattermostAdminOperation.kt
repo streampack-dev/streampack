@@ -48,6 +48,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
             "automute" -> handleAutomute(tokens.drop(1))
             "visible" -> handleVisible(tokens.drop(1))
             "logged" -> handleLogged(tokens.drop(1))
+            "moderated" -> handleModerated(tokens.drop(1))
             "signal" -> handleSignal(tokens.drop(1))
             "status" -> handleStatus(tokens.drop(1))
             else ->
@@ -166,6 +167,18 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
         return toResult(mattermostService.setLogged(args[0], args[1], enabled))
     }
 
+    private fun handleModerated(args: List<String>): OperationResult {
+        if (args.size < 3) {
+            return OperationResult.Error(
+                "Usage: mattermost moderated <server> <channel-id-or-name> <true|false>"
+            )
+        }
+        val enabled =
+            args[2].toBooleanStrictOrNull()
+                ?: return OperationResult.Error("Invalid boolean: '${args[2]}'")
+        return toResult(mattermostService.setModerated(args[0], args[1], enabled))
+    }
+
     private fun handleSignal(args: List<String>): OperationResult {
         if (args.isEmpty()) {
             return OperationResult.Error(
@@ -198,6 +211,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
         |  mattermost automute <server> <channel-id-or-name> <true|false>
         |  mattermost visible <server> <channel-id-or-name> <true|false>
         |  mattermost logged <server> <channel-id-or-name> <true|false>
+        |  mattermost moderated <server> <channel-id-or-name> <true|false>
         |  mattermost signal <name> [character]
         |  mattermost status [server]
         """

@@ -9,7 +9,10 @@ import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.UuidGenerator
 
-/** Protocol-agnostic channel governance flags, keyed by provenance URI */
+/**
+ * Protocol-agnostic channel governance flags, keyed by provenance URI. [moderated] lets a logged
+ * channel opt out of abuse detection (#150); a channel that isn't logged has nothing to review.
+ */
 @Entity
 @Table(name = "channel_control_options")
 data class ChannelControlOptions(
@@ -20,6 +23,7 @@ data class ChannelControlOptions(
     @Column(nullable = false) val visible: Boolean = true,
     @Column(nullable = false) val logged: Boolean = true,
     @Column(nullable = false) val active: Boolean = true,
+    @Column(nullable = false) val moderated: Boolean = true,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     @Column(nullable = false) val updatedAt: Instant = Instant.now(),
     @Column(nullable = false) val deleted: Boolean = false,

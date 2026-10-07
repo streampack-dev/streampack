@@ -162,4 +162,63 @@ class MessageLogServiceTests {
         )
         assertEquals("public plans", messageLogService.findLatestMessage(uri)?.content)
     }
+
+    @Test
+    fun `a hidden line is gone from every read but the moderation queries`() {
+        val uri = "irc://msglog-hidden-${System.nanoTime()}/%23java"
+        val before = Instant.now().minusSeconds(1)
+        messageLogService.logInbound(uri, "alice", "a fine line")
+        messageLogService.logInbound(uri, "troll", "an abusive line")
+        messageLogService.logInbound(uri, "troll", "a direct line", direct = true)
+        val after = Instant.now().plusSeconds(1)
+        repository.flush()
+        val all = repository.findWindowForModeration(uri, before, after, 100)
+        assertEquals(2, all.size, "moderation reads never include a direct line")
+        val abusive = all.single { it.content == "an abusive line" }
+        val direct =
+            jdbc.queryForObject(
+                "SELECT id FROM message_log WHERE provenance_uri = ? AND direct",
+                java.util.UUID::class.java,
+                uri,
+            )!!
+
+        assertEquals(1, repository.setHiddenForModeration(listOf(abusive.id, direct), true))
+
+        assertEquals(
+            listOf("a fine line"),
+            messageLogService.findMessages(uri, before, after, 100).map { it.content },
+        )
+        assertEquals(1, messageLogService.findLatestMessages(uri, before, after, 100).size)
+        assertEquals("a fine line", messageLogService.findLatestMessage(uri)?.content)
+        assertTrue(messageLogService.searchMessages(uri, "abusive", null, 0, 10).isEmpty)
+        assertTrue(messageLogService.searchMessages(uri, null, "troll", 0, 10).isEmpty)
+        assertTrue(messageLogService.searchMessages(uri, "line", "troll", 0, 10).isEmpty)
+        assertTrue(
+            messageLogService.findRecentMessagesBySender("troll", "irc://", 1000).none {
+                it.provenanceUri == uri
+            }
+        )
+        assertTrue(repository.findAll().none { it.provenanceUri == uri && it.sender == "troll" })
+
+        val forModeration = repository.findWindowForModeration(uri, before, after, 100)
+        assertEquals(listOf(false, true), forModeration.map { it.hidden })
+        assertEquals(
+            listOf("an abusive line"),
+            repository.findForModeration(listOf(abusive.id, direct)).map { it.content },
+        )
+
+        assertEquals(1, repository.setHiddenForModeration(listOf(abusive.id), false))
+        assertEquals(2, messageLogService.findMessages(uri, before, after, 100).size)
+
+        assertEquals(1, repository.purgeForModeration(listOf(abusive.id, direct)))
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM message_log WHERE provenance_uri = ? AND direct",
+                Int::class.java,
+                uri,
+            ),
+            "a purge never touches a direct line",
+        )
+    }
 }

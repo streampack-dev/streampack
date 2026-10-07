@@ -1119,6 +1119,157 @@
         "required" : [ "selector", "term" ],
         "type" : "object"
       },
+      "ModerationActionResult" : {
+        "properties" : {
+          "action" : {
+            "$ref" : "#/components/schemas/ModerationActionView"
+          },
+          "changed" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "action", "changed" ],
+        "type" : "object"
+      },
+      "ModerationActionView" : {
+        "properties" : {
+          "actedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "action" : {
+            "enum" : [ "HIDE", "UNHIDE", "PURGE", "DISMISS" ],
+            "type" : "string"
+          },
+          "actor" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "lineIds" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "reportId" : {
+            "format" : "uuid",
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "actedAt", "action", "actor", "id", "lineIds" ],
+        "type" : "object"
+      },
+      "ModerationDismissRequest" : {
+        "properties" : {
+          "note" : {
+            "description" : "Why, for the record",
+            "type" : [ "string", "null" ]
+          }
+        },
+        "type" : "object"
+      },
+      "ModerationLine" : {
+        "properties" : {
+          "cited" : {
+            "type" : "boolean"
+          },
+          "content" : {
+            "type" : "string"
+          },
+          "day" : {
+            "type" : "string"
+          },
+          "direction" : {
+            "enum" : [ "INBOUND", "OUTBOUND" ],
+            "type" : "string"
+          },
+          "flagged" : {
+            "type" : "boolean"
+          },
+          "hidden" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sender" : {
+            "type" : "string"
+          },
+          "timestamp" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "cited", "content", "day", "direction", "flagged", "hidden", "id", "sender", "timestamp" ],
+        "type" : "object"
+      },
+      "ModerationLinesRequest" : {
+        "properties" : {
+          "lineIds" : {
+            "description" : "Message log line ids, at most 500",
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "note" : {
+            "description" : "Why, for the record",
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "lineIds" ],
+        "type" : "object"
+      },
+      "ModerationLogDay" : {
+        "properties" : {
+          "day" : {
+            "type" : "string"
+          },
+          "lines" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ModerationLine"
+            },
+            "type" : "array"
+          },
+          "provenanceUri" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "day", "lines", "provenanceUri" ],
+        "type" : "object"
+      },
+      "ModerationPurgeRequest" : {
+        "properties" : {
+          "confirm" : {
+            "description" : "Must be true: the admin confirmed that this can't be undone",
+            "type" : "boolean"
+          },
+          "lineIds" : {
+            "description" : "Message log line ids, at most 500",
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "note" : {
+            "description" : "Why, for the record",
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "lineIds" ],
+        "type" : "object"
+      },
       "OidcFeatures" : {
         "properties" : {
           "github" : {
@@ -1195,6 +1346,136 @@
             "type" : "string"
           }
         },
+        "type" : "object"
+      },
+      "ReportDetail" : {
+        "properties" : {
+          "actions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ModerationActionView"
+            },
+            "type" : "array"
+          },
+          "lines" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ModerationLine"
+            },
+            "type" : "array"
+          },
+          "purgedLineIds" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "report" : {
+            "$ref" : "#/components/schemas/ReportSummary"
+          }
+        },
+        "required" : [ "actions", "lines", "purgedLineIds", "report" ],
+        "type" : "object"
+      },
+      "ReportListResponse" : {
+        "properties" : {
+          "openCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "reports" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ReportSummary"
+            },
+            "type" : "array"
+          },
+          "size" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "openCount", "page", "reports", "size", "totalCount", "totalPages" ],
+        "type" : "object"
+      },
+      "ReportSummary" : {
+        "properties" : {
+          "actedAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "actedBy" : {
+            "type" : [ "string", "null" ]
+          },
+          "channel" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "provenanceUri" : {
+            "type" : "string"
+          },
+          "score" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "sender" : {
+            "type" : "string"
+          },
+          "serviceId" : {
+            "type" : [ "string", "null" ]
+          },
+          "signals" : {
+            "additionalProperties" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "type" : "object"
+          },
+          "status" : {
+            "enum" : [ "OPEN", "DISMISSED", "ACTIONED" ],
+            "type" : "string"
+          },
+          "userId" : {
+            "format" : "uuid",
+            "type" : [ "string", "null" ]
+          },
+          "verdict" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/VerdictView"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "windowEnd" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "windowStart" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "channel", "createdAt", "id", "protocol", "provenanceUri", "score", "sender", "signals", "status", "windowEnd", "windowStart" ],
         "type" : "object"
       },
       "RoleUpdateRequest" : {
@@ -1421,6 +1702,21 @@
           }
         },
         "required" : [ "displayName", "id", "username" ],
+        "type" : "object"
+      },
+      "VerdictView" : {
+        "properties" : {
+          "abusive" : {
+            "type" : "boolean"
+          },
+          "model" : {
+            "type" : [ "string", "null" ]
+          },
+          "reason" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "abusive" ],
         "type" : "object"
       },
       "VersionInfo" : {
@@ -1868,6 +2164,668 @@
         } ],
         "summary" : "Where the factoid graph could be better",
         "tags" : [ "Admin - Factoids" ]
+      }
+    },
+    "/admin/moderation/lines/hide" : {
+      "post" : {
+        "description" : "Hides lines found in a log day rather than a report: kept, and out of public view.",
+        "operationId" : "hideModerationLines",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ModerationLinesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ModerationActionResult"
+                }
+              }
+            },
+            "description" : "The action, as recorded"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No lines, too many, or lines that don't exist"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Hide log lines",
+        "tags" : [ "Admin - Moderation" ]
+      }
+    },
+    "/admin/moderation/lines/unhide" : {
+      "post" : {
+        "description" : "Puts hidden lines back in public view.",
+        "operationId" : "unhideModerationLines",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ModerationLinesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ModerationActionResult"
+                }
+              }
+            },
+            "description" : "The action, as recorded"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No lines, too many, or lines that don't exist"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Unhide log lines",
+        "tags" : [ "Admin - Moderation" ]
+      }
+    },
+    "/admin/moderation/logs" : {
+      "get" : {
+        "description" : "One UTC day of a channel's log as an admin reviews it: every line with its id, hidden ones included and marked `hidden`, oldest first, at most 5000. Direct conversations are never returned. `day` defaults to today.",
+        "operationId" : "getModerationLogDay",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "provenance",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "day",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ModerationLogDay"
+                }
+              }
+            },
+            "description" : "The day's lines"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A day that isn't YYYY-MM-DD"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "A day of a channel's log, hidden lines included",
+        "tags" : [ "Admin - Moderation" ]
+      }
+    },
+    "/admin/moderation/reports" : {
+      "get" : {
+        "description" : "Reports from the hourly review, open ones first and newest first within each; or only those in `status`. `openCount` is how many are open in all, for a launcher badge.",
+        "operationId" : "listModerationReports",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 25,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReportListResponse"
+                }
+              }
+            },
+            "description" : "A page of reports"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A bad status, page or size"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "List abuse reports",
+        "tags" : [ "Admin - Moderation" ]
+      }
+    },
+    "/admin/moderation/reports/{id}" : {
+      "get" : {
+        "description" : "The report, the lines the review read (the person's and those around them, oldest first, hidden ones included and marked `hidden`; `flagged` raised a signal, `cited` the model pointed at), the ids of excerpt lines since purged, and every action taken on it.",
+        "operationId" : "getModerationReport",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReportDetail"
+                }
+              }
+            },
+            "description" : "The report"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such report"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "One abuse report with its excerpt",
+        "tags" : [ "Admin - Moderation" ]
+      }
+    },
+    "/admin/moderation/reports/{id}/dismiss" : {
+      "post" : {
+        "description" : "Closes an open report as not abuse. The report stays readable.",
+        "operationId" : "dismissModerationReport",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ModerationDismissRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ModerationActionResult"
+                }
+              }
+            },
+            "description" : "The action, as recorded"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The report isn't open"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such report"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Dismiss a report",
+        "tags" : [ "Admin - Moderation" ]
+      }
+    },
+    "/admin/moderation/reports/{id}/hide" : {
+      "post" : {
+        "description" : "Takes lines of the report's excerpt out of the public log browser, its search and everything else that reads the log. They're kept, and an admin can unhide them. Marks the report actioned.",
+        "operationId" : "hideModerationReportLines",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ModerationLinesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ModerationActionResult"
+                }
+              }
+            },
+            "description" : "The action, as recorded"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No lines, too many, or lines not in the report's excerpt"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such report"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Hide lines of a report",
+        "tags" : [ "Admin - Moderation" ]
+      }
+    },
+    "/admin/moderation/reports/{id}/purge" : {
+      "post" : {
+        "description" : "Deletes lines of the report's excerpt for good, for what must not be kept. It can't be undone, so `confirm` must be true. The ids stay on the report and the action. Marks the report actioned.",
+        "operationId" : "purgeModerationReportLines",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ModerationPurgeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ModerationActionResult"
+                }
+              }
+            },
+            "description" : "The action, as recorded"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not confirmed, no lines, too many, or lines not in the report's excerpt"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such report"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Purge lines of a report",
+        "tags" : [ "Admin - Moderation" ]
+      }
+    },
+    "/admin/moderation/reports/{id}/unhide" : {
+      "post" : {
+        "description" : "Puts hidden lines of the report's excerpt back. The report's status stays.",
+        "operationId" : "unhideModerationReportLines",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ModerationLinesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ModerationActionResult"
+                }
+              }
+            },
+            "description" : "The action, as recorded"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No lines, too many, or lines not in the report's excerpt"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such report"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Unhide lines of a report",
+        "tags" : [ "Admin - Moderation" ]
       }
     },
     "/admin/posts/pending" : {
