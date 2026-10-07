@@ -41,6 +41,10 @@ class UrlTitleOperation(
                     }
 
                     val title = result.title ?: return@mapNotNull null
+                    if (urlTitleService.isSuppressedTitle(title)) {
+                        logger.info("url: {}, suppressed sign-in/bot-check title: {}", url, title)
+                        return@mapNotNull null
+                    }
                     val similarity = urlTitleService.calculateJaccardSimilarity(url, title)
                     logger.info("url: {}, title: {}, similarity: {}", url, title, similarity)
                     if (similarity >= properties.similarityThreshold) null else url to title

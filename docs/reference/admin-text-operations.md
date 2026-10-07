@@ -112,6 +112,27 @@ Operational notes:
   - `GET /admin/rss/opml`
   - `POST /admin/rss/opml/import`
 
+## URL Title Ignore List
+
+`ADMIN`:
+
+```text
+url ignore add <host | *.host | host/path>
+url ignore delete <host | *.host | host/path>
+```
+
+Readable without admin:
+
+```text
+url ignore list
+```
+
+Operational notes:
+
+- `repopack.com/project` covers that path and below on whole segments (not `/projects`); `*.repopack.com` covers the bare host and every subdomain.
+- Entries are normalized on add and delete (lower-cased, no scheme, `www.` or trailing slash).
+- Sign-in and bot-check titles ("Repopack · Sign in", "Just a moment...") are never emitted, independent of this list; the phrases are configured by `streampack.urltitle.suppressed-titles`. See `operation-urltitle/README.md`.
+
 ## Channel Controls
 
 Every registered channel carries four flags, set with the per-protocol `visible`, `logged`, `automute`, and `autojoin` commands (see [The Message Log](../explanation/message-log.md) for the reasoning):
