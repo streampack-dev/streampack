@@ -855,9 +855,7 @@
       },
       "JsonRpcRequest" : {
         "properties" : {
-          "id" : {
-            "type" : "null"
-          },
+          "id" : { },
           "jsonrpc" : {
             "type" : [ "string", "null" ]
           },
