@@ -34,15 +34,17 @@ class AnthropicConfiguration {
                 .maxTokens(properties.maxTokens)
                 .timeout(properties.timeout)
                 .maxRetries(properties.maxRetries)
+                .let { if (properties.thinking) it.thinkingAdaptive() else it.thinkingDisabled() }
                 .build()
 
         logger.info(
-            "Anthropic chat model: {}, at most {} tokens, {} timeout, {} retr{}",
+            "Anthropic chat model: {}, at most {} tokens, {} timeout, {} retr{}, thinking {}",
             properties.model,
             properties.maxTokens,
             properties.timeout,
             properties.maxRetries,
             if (properties.maxRetries == 1) "y" else "ies",
+            if (properties.thinking) "on" else "off",
         )
 
         return AnthropicChatModel.builder().options(options).build()

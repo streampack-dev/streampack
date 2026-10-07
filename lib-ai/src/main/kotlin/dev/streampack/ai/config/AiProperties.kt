@@ -10,6 +10,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * [timeout] bounds each call to the model, and [maxRetries] how often a failed one is tried again,
  * so a call that stalls ends with a logged failure rather than holding its thread (the Anthropic
  * client's own default is ten minutes a try, and a blocked call doesn't answer an interrupt).
+ *
+ * [thinking] lets the model reason before it answers. Off by default: the bot's answers are short,
+ * and thinking spends the [maxTokens] budget and time on what nobody sees.
  */
 @ConfigurationProperties(prefix = "streampack.ai")
 data class AiProperties(
@@ -19,4 +22,5 @@ data class AiProperties(
     val maxTokens: Int = 1024,
     val timeout: Duration = Duration.ofSeconds(60),
     val maxRetries: Int = 1,
+    val thinking: Boolean = false,
 )

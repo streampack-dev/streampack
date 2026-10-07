@@ -59,6 +59,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `STREAMPACK_AI_MAX_TOKENS` | Optional | The most tokens an answer may have (default `1024`). |
 | `STREAMPACK_AI_TIMEOUT` | Optional | How long one call to the model may take before it fails and is logged, a duration such as `60s` (default `60s`). |
 | `STREAMPACK_AI_MAX_RETRIES` | Optional | How often a failed call is tried again (default `1`). |
+| `STREAMPACK_AI_THINKING` | Optional | Let the model reason before answering (default `false`). Off, short answers are quicker and the token budget goes to the answer. |
 | `BLOG_SUMMARY_PROMPT` | Optional | System prompt for admins' AI-derived post summaries. Empty uses the built-in stance: lead with the substance, never tease or bury the lede. |
 | `IRC_ENABLED` | Optional | Enables IRC adapter. |
 | `IRC_IDENTITY` | Optional | The bot's identity, as its CTCP `VERSION` answer (default `Nevet IRC Bridge`). |
