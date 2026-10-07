@@ -11,8 +11,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * so a call that stalls ends with a logged failure rather than holding its thread (the Anthropic
  * client's own default is ten minutes a try, and a blocked call doesn't answer an interrupt).
  *
- * [thinking] lets the model reason before it answers. Off by default: the bot's answers are short,
- * and thinking spends the [maxTokens] budget and time on what nobody sees.
+ * [thinking] asks the model to reason before it answers (adaptive thinking, its text omitted). Off
+ * by default, which sends nothing about thinking at all: not every model accepts having it turned
+ * off (Opus 5.5 refuses `thinking.type.disabled`), and some think on their own.
+ *
+ * [effort] (low, medium, high, xhigh, max) sets how much effort a model that supports it spends,
+ * thinking included: `low` is the least thinking such a model allows. Sent only when set, as not
+ * every model takes it.
  */
 @ConfigurationProperties(prefix = "streampack.ai")
 data class AiProperties(
@@ -23,4 +28,5 @@ data class AiProperties(
     val timeout: Duration = Duration.ofSeconds(60),
     val maxRetries: Int = 1,
     val thinking: Boolean = false,
+    val effort: String? = null,
 )
