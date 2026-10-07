@@ -26,6 +26,7 @@ class OneTimeCodeService(
     private val random = SecureRandom()
     private val maxActiveCodes = properties.otp.maxActiveCodes
     private val expirationMinutes = properties.otp.expirationMinutes
+    private val maxFailedAttempts = properties.otp.maxFailedAttempts
 
     /** Generates a 6-digit code for an email address, enforcing the active code limit */
     @Transactional
@@ -58,17 +59,33 @@ class OneTimeCodeService(
     fun consumeCode(email: String, code: String): Boolean =
         consumeCode(CodeChannel.EMAIL, email, code)
 
-    /** Validates and consumes a code for [recipient] on [channel] */
+    /**
+     * Validates and consumes a code for [recipient] on [channel]. A miss is counted; the miss that
+     * reaches the limit expires every active code for the recipient and clears the count, so the
+     * next code requested starts fresh.
+     */
     @Transactional
     fun consumeCode(channel: CodeChannel, recipient: String, code: String): Boolean {
         val key = normalize(channel, recipient)
         val now = Instant.now()
         oneTimeCodeRepository.deleteStaleFor(channel, key, now)
-        val consumed = oneTimeCodeRepository.consumeValidCode(channel, key, code, now) > 0
-        if (!consumed) {
-            oneTimeCodeRepository.deleteStaleFor(channel, key, now)
+        if (oneTimeCodeRepository.consumeValidCode(channel, key, code, now) > 0) {
+            oneTimeCodeRepository.clearFailures(channel.name, key)
+            return true
         }
-        return consumed
+        oneTimeCodeRepository.recordFailure(channel.name, key, now, staleBefore(now))
+        val failures = oneTimeCodeRepository.countFailures(channel.name, key) ?: 0
+        if (failures >= maxFailedAttempts) {
+            oneTimeCodeRepository.deleteByChannelAndRecipient(channel, key)
+            oneTimeCodeRepository.clearFailures(channel.name, key)
+            logger.info(
+                "Expired active codes for {} recipient {} after {} wrong guesses",
+                channel,
+                key,
+                failures,
+            )
+        }
+        return false
     }
 
     /** Removes every code for a recipient, used when an account is erased */
@@ -80,11 +97,15 @@ class OneTimeCodeService(
     @Transactional
     fun cleanupStaleCodes(now: Instant = Instant.now()): Int {
         val deleted = oneTimeCodeRepository.deleteStale(now)
+        oneTimeCodeRepository.deleteStaleFailures(staleBefore(now))
         if (deleted > 0) {
             logger.debug("Deleted {} stale OTP rows", deleted)
         }
         return deleted
     }
+
+    /** A miss older than a code's lifetime can't have been aimed at a code that is still live. */
+    private fun staleBefore(now: Instant): Instant = now.minusSeconds(expirationMinutes * 60L)
 
     private fun normalize(channel: CodeChannel, recipient: String): String =
         if (channel == CodeChannel.EMAIL) recipient.trim().lowercase() else recipient.trim()

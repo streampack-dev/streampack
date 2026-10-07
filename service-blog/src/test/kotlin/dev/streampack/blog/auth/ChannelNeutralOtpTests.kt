@@ -14,6 +14,7 @@ import dev.streampack.core.model.ResolvedRecipient
 import dev.streampack.core.repository.ServiceBindingRepository
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.CodeDelivery
+import dev.streampack.core.service.ThrottleService
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
 import java.util.concurrent.CopyOnWriteArrayList
@@ -82,6 +83,7 @@ class ChannelNeutralOtpTests {
     @Autowired lateinit var fake: FakeChatDelivery
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var bindingRepository: ServiceBindingRepository
+    @Autowired lateinit var throttleService: ThrottleService
 
     private fun message(payload: Any) =
         MessageBuilder.withPayload(payload)
@@ -91,7 +93,11 @@ class ChannelNeutralOtpTests {
             )
             .build()
 
-    @BeforeEach fun clear() = fake.delivered.clear()
+    @BeforeEach
+    fun clear() {
+        fake.delivered.clear()
+        throttleService.clear()
+    }
 
     @Test
     fun `a known chat user gets a code, verifies it, and an account is created without an email`() {

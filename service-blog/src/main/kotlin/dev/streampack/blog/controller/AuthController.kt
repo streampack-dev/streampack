@@ -8,6 +8,7 @@ import dev.streampack.blog.model.LoginResponse
 import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.model.OtpRequest
 import dev.streampack.blog.model.OtpVerifyRequest
+import dev.streampack.blog.operation.OtpVerifyOperation
 import dev.streampack.blog.service.CookieService
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.EditProfileRequest
@@ -82,6 +83,11 @@ class AuthController(
         description = "Invalid or expired code",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
+    @ApiResponse(
+        responseCode = "429",
+        description = "Too many attempts for this identity; try again shortly",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PostMapping("/otp/verify", produces = ["application/json"], consumes = ["application/json"])
     fun verifyOtp(
         @RequestBody request: OtpVerifyRequest,
@@ -89,7 +95,13 @@ class AuthController(
     ): ResponseEntity<*> {
         val entity =
             dispatch(request, "auth/otp/verify") { result ->
-                mapError(result, HttpStatus.UNAUTHORIZED)
+                mapError(result) { message ->
+                    if (message == OtpVerifyOperation.TOO_MANY_ATTEMPTS) {
+                        HttpStatus.TOO_MANY_REQUESTS
+                    } else {
+                        HttpStatus.UNAUTHORIZED
+                    }
+                }
             }
         if (entity.statusCode == HttpStatus.OK && entity.body is LoginResponse) {
             val loginResponse = entity.body as LoginResponse

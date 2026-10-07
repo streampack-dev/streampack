@@ -49,4 +49,52 @@ interface OneTimeCodeRepository : JpaRepository<OneTimeCode, UUID> {
             "AND c.code = :code AND c.usedAt IS NULL AND c.expiresAt > :now"
     )
     fun consumeValidCode(channel: CodeChannel, recipient: String, code: String, now: Instant): Int
+
+    /**
+     * Counts one wrong guess for a recipient. A count whose last miss is older than [staleBefore]
+     * starts over, so old typos don't count against a later sign-in. Native, since the failure rows
+     * have no entity of their own; [channel] is the enum's name.
+     */
+    @Modifying
+    @Query(
+        value =
+            """
+            INSERT INTO one_time_code_failures (channel, recipient, failures, last_failure_at)
+            VALUES (:channel, :recipient, 1, :now)
+            ON CONFLICT (channel, recipient) DO UPDATE SET
+              failures = CASE
+                WHEN one_time_code_failures.last_failure_at < :staleBefore THEN 1
+                ELSE one_time_code_failures.failures + 1
+              END,
+              last_failure_at = :now
+            """,
+        nativeQuery = true,
+    )
+    fun recordFailure(channel: String, recipient: String, now: Instant, staleBefore: Instant): Int
+
+    /** The wrong guesses counted for a recipient, or null when there are none */
+    @Query(
+        value =
+            "SELECT failures FROM one_time_code_failures " +
+                "WHERE channel = :channel AND recipient = :recipient",
+        nativeQuery = true,
+    )
+    fun countFailures(channel: String, recipient: String): Int?
+
+    /** Clears a recipient's wrong-guess count */
+    @Modifying
+    @Query(
+        value =
+            "DELETE FROM one_time_code_failures WHERE channel = :channel AND recipient = :recipient",
+        nativeQuery = true,
+    )
+    fun clearFailures(channel: String, recipient: String): Int
+
+    /** Removes wrong-guess counts whose last miss is older than [staleBefore] */
+    @Modifying
+    @Query(
+        value = "DELETE FROM one_time_code_failures WHERE last_failure_at < :staleBefore",
+        nativeQuery = true,
+    )
+    fun deleteStaleFailures(staleBefore: Instant): Int
 }

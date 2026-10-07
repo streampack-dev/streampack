@@ -40,6 +40,9 @@ streampack:
   base-url: ${BASE_URL:http://localhost:8080}
   jwt:
     secret: ${JWT_SECRET:}
+  otp:
+    # Wrong sign-in codes a recipient may present before all its active codes are expired (#144).
+    max-failed-attempts: ${OTP_MAX_FAILED_ATTEMPTS:5}
   console:
     enabled: ${CONSOLE_ENABLED:false}
   mail:

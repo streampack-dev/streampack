@@ -10,12 +10,14 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.repository.OneTimeCodeRepository
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.core.service.ThrottleService
 import dev.streampack.core.service.UserRegistrationService
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -30,6 +32,7 @@ class OtpVerifyOperationTests {
     @Autowired lateinit var oneTimeCodeRepository: OneTimeCodeRepository
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var userRegistrationService: UserRegistrationService
+    @Autowired lateinit var throttleService: ThrottleService
 
     private val provenance =
         Provenance(
@@ -95,6 +98,25 @@ class OtpVerifyOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val response = (result as OperationResult.Success).payload as LoginResponse
         assertEquals("existing", response.principal.username)
+    }
+
+    @BeforeEach
+    fun clearThrottle() {
+        throttleService.clear()
+    }
+
+    @Test
+    fun `a locked-out recipient gets the same error as a wrong code`() {
+        seedCode("locked@example.com", "123456")
+        repeat(5) {
+            val miss = eventGateway.process(verifyMessage("locked@example.com", "999999"))
+            assertEquals("Invalid or expired code", (miss as OperationResult.Error).message)
+        }
+
+        val result = eventGateway.process(verifyMessage("locked@example.com", "123456"))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Invalid or expired code", (result as OperationResult.Error).message)
     }
 
     @Test
