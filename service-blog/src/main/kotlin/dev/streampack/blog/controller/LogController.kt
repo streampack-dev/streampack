@@ -1,12 +1,14 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.controller
 
+import dev.streampack.blog.model.LogChannelResponse
 import dev.streampack.blog.model.LogDayResponse
 import dev.streampack.blog.model.LogEntry
 import dev.streampack.blog.model.LogProvenanceListResponse
 import dev.streampack.blog.model.LogProvenanceSummary
 import dev.streampack.blog.model.LogSearchHit
 import dev.streampack.blog.model.LogSearchResponse
+import dev.streampack.blog.service.LogChannelPaths
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
@@ -30,6 +32,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -42,6 +45,7 @@ class LogController(
     private val channelOptionsRepository: ChannelControlOptionsRepository,
     private val messageLogService: MessageLogService,
     private val throttleService: ThrottleService,
+    private val channelPaths: LogChannelPaths,
     jwtService: JwtService,
 ) : UserAwareController(jwtService) {
 
@@ -71,11 +75,46 @@ class LogController(
                         latestTimestamp = latest?.timestamp,
                         latestSender = latest?.sender,
                         latestContentPreview = latest?.content?.replace("\n", " ")?.take(140),
+                        path = channelPaths.path(provenanceUri, visible),
                     )
                 }
                 .sortedByDescending { it.latestTimestamp ?: java.time.Instant.EPOCH }
 
         return ResponseEntity.ok(LogProvenanceListResponse(items))
+    }
+
+    @Operation(
+        summary = "Find a channel by its readable address",
+        description =
+            "The channel `/logs/{protocol}/{service}/{name}` names, among those the caller may " +
+                "browse: `irc/libera/primate`. An IRC name is matched as written, then with `#`, " +
+                "then with `##`; other protocols' channels by their names, or their ids. Its " +
+                "`provenanceUri` is what the day view and search take. Any other name is a 404, " +
+                "as a hidden channel is, so an address can't reveal one.",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "The channel",
+        content = [Content(schema = Schema(implementation = LogChannelResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "No such channel, or not one the caller may browse",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @GetMapping("/channels/{protocol}/{service}/{name}", produces = ["application/json"])
+    fun channel(
+        @PathVariable protocol: String,
+        @PathVariable service: String,
+        @PathVariable name: String,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val visible = authorizedChannelProvenances(resolveUser(httpRequest))
+        val uri =
+            channelPaths.resolve(protocol, service, name, visible)
+                ?: return notFound("Log channel not found")
+        val path = channelPaths.path(uri, visible) ?: return notFound("Log channel not found")
+        return ResponseEntity.ok(LogChannelResponse(uri, path))
     }
 
     @Operation(summary = "Get one day of logs for a provenance")

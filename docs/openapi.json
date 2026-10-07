@@ -936,6 +936,18 @@
         "required" : [ "cutOff", "dropped", "length", "saidLength", "selector" ],
         "type" : "object"
       },
+      "LogChannelResponse" : {
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "provenanceUri" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "path", "provenanceUri" ],
+        "type" : "object"
+      },
       "LogDayResponse" : {
         "properties" : {
           "day" : {
@@ -996,6 +1008,9 @@
           },
           "latestTimestamp" : {
             "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "path" : {
             "type" : [ "string", "null" ]
           },
           "protocol" : {
@@ -3487,6 +3502,58 @@
           }
         },
         "summary" : "Get one day of logs for a provenance",
+        "tags" : [ "Logs" ]
+      }
+    },
+    "/logs/channels/{protocol}/{service}/{name}" : {
+      "get" : {
+        "description" : "The channel `/logs/{protocol}/{service}/{name}` names, among those the caller may browse: `irc/libera/primate`. An IRC name is matched as written, then with `#`, then with `##`; other protocols' channels by their names, or their ids. Its `provenanceUri` is what the day view and search take. Any other name is a 404, as a hidden channel is, so an address can't reveal one.",
+        "operationId" : "channel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "protocol",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "service",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LogChannelResponse"
+                }
+              }
+            },
+            "description" : "The channel"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such channel, or not one the caller may browse"
+          }
+        },
+        "summary" : "Find a channel by its readable address",
         "tags" : [ "Logs" ]
       }
     },
