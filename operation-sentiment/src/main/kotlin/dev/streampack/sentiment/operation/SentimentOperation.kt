@@ -12,6 +12,7 @@ import dev.streampack.core.parser.CommandMatchResult
 import dev.streampack.core.parser.CommandPattern
 import dev.streampack.core.parser.CommandPatternMatcher
 import dev.streampack.core.parser.StringArgType
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.MessageLogService
 import dev.streampack.core.service.TranslatingOperation
 import dev.streampack.sentiment.model.SentimentRequest
@@ -25,14 +26,16 @@ import org.springframework.stereotype.Component
  * Analyzes the sentiment of recent conversation for a target channel or user. Admin-only operation
  * that pulls message logs, formats them as a transcript, and sends them to an LLM for scoring.
  *
- * When the target differs from the source channel, the response is sent via DM to avoid leaking
- * cross-channel sentiment publicly.
+ * With no target, it's the channel it was asked in. When the target differs from the source
+ * channel, the response is sent via DM to avoid leaking cross-channel sentiment publicly. A direct
+ * conversation is never a target: its lines are logged but never read.
  */
 @Component
 @ConditionalOnProperty(prefix = "streampack.ai", name = ["enabled"], havingValue = "true")
 class SentimentOperation(
     private val aiService: AiService,
     private val messageLogService: MessageLogService,
+    private val directConversations: DirectConversations,
 ) : TranslatingOperation<SentimentRequest>(SentimentRequest::class) {
 
     override val priority: Int = 40
@@ -40,15 +43,12 @@ class SentimentOperation(
     override val operationGroup: String = "sentiment"
 
     override fun translate(payload: String, message: Message<*>): SentimentRequest? {
-        val target =
-            when (val parsed = matcher.match(payload)) {
-                is CommandMatchResult.Match -> parsed.captures["target"] as? String
-                else -> null
-            } ?: return null
-
+        val parsed = matcher.match(payload) as? CommandMatchResult.Match ?: return null
         val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return null
-        val targetUri = resolveTarget(target, provenance)
-        return SentimentRequest(targetUri)
+        // No target: the channel it was asked in
+        val target =
+            parsed.captures["target"] as? String ?: return SentimentRequest(provenance.encode())
+        return SentimentRequest(resolveTarget(target, provenance))
     }
 
     override fun handle(payload: SentimentRequest, message: Message<*>): OperationOutcome {
@@ -56,6 +56,12 @@ class SentimentOperation(
             return it
         }
         val provenance = message.headers[Provenance.HEADER] as? Provenance
+        val target = runCatching { Provenance.decode(payload.targetUri) }.getOrNull()
+        if (target != null && directConversations.isDirect(target)) {
+            return OperationResult.Error(
+                "Sentiment is for channels: say which, as sentiment #channel"
+            )
+        }
 
         val botNick = message.headers[Provenance.BOT_NICK] as? String ?: "bot"
         val now = Instant.now()
@@ -177,7 +183,8 @@ class SentimentOperation(
                         name = "sentiment",
                         literals = listOf("sentiment"),
                         args = listOf(CommandArgSpec("target", StringArgType)),
-                    )
+                    ),
+                    CommandPattern(name = "sentiment-here", literals = listOf("sentiment")),
                 )
             )
     }

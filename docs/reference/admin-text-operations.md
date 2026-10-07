@@ -289,14 +289,14 @@ suggest <http(s)://url>
 ideas
 ideas search <term>
 ideas remove #<n>
-sentiment <target>
+sentiment [target]
 ```
 
 Notes:
 
 - `suggest` fetches the source URL, runs the AI pipeline when configured, and creates a draft idea.
 - `ideas ...` manages draft ideas tagged `_idea`.
-- `sentiment` analyzes recent conversation logs and may respond privately if the target differs from the requesting channel.
+- `sentiment` analyzes recent conversation logs: the channel it's asked in, or `[target]` (`#channel` on the same network, or a provenance URI). It responds privately if the target differs from the requesting channel. In a direct conversation it asks for a channel, as direct lines are never read.
 
 ## Game Moderation
 

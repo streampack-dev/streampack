@@ -6,7 +6,7 @@
 
 | Operation | Command / payload | Purpose |
 |-----------|-------------------|---------|
-| `SentimentOperation` | `sentiment <target>` or `SentimentRequest` | Analyzes recent message logs for a channel/user target and returns a compact sentiment summary. |
+| `SentimentOperation` | `sentiment [target]` or `SentimentRequest` | Analyzes recent message logs for the current channel, or a channel target, and returns a compact sentiment summary. |
 
 ## Behavior
 
@@ -19,6 +19,8 @@ The operation is addressed and uses operation group `sentiment`.
 ## Example Flows
 
 - Analyze the current channel:
+  `sentiment`
+- Analyze another channel on the same network:
   `sentiment #java`
 - Analyze another provenance URI as an admin:
   `sentiment irc://libera/%23java`
