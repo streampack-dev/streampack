@@ -33,6 +33,12 @@ Mail:
 | `MAIL_STARTTLS` | Enables STARTTLS. |
 | `MAIL_FROM` | Sender address for OTP and notification mail. |
 
+Sign-in:
+
+| Variable | Purpose |
+|----------|---------|
+| `OTP_MAX_FAILED_ATTEMPTS` | Wrong one-time codes a recipient may present before all of its active codes are expired. Defaults to `5`. |
+
 Optional integrations:
 
 | Variable | Purpose |

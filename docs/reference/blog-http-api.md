@@ -35,8 +35,8 @@ exists on the named connected server for Mattermost. Unknown servers and usernam
 `202` with nothing sent.
 
 `POST /auth/otp/verify` answers `200` with a `LoginResponse` (`token`, `refreshToken`,
-`principal`) and sets the session cookies, or `401` when the code is wrong, expired, or was
-issued for a different channel. Codes are scoped to the channel and recipient they were issued
+`principal`) and sets the session cookies, `401` when the code is wrong, expired, or was
+issued for a different channel, or `429` when the identity has been tried too often (see below). Codes are scoped to the channel and recipient they were issued
 for, so an email code cannot verify a Mattermost identity and vice versa.
 
 Accounts are created on first sign-in. An email sign-in converges on the account owning that
@@ -47,6 +47,25 @@ profile endpoints, at which point email sign-in also works for them.
 
 Codes expire after a short window and each recipient may hold only a few active codes at a time;
 further requests are accepted but not delivered until an older code expires or is used.
+
+The limits, with their defaults:
+
+| Limit | Default | Setting |
+|-------|---------|---------|
+| Code lifetime | 10 minutes | `streampack.otp.expiration-minutes` |
+| Active codes per recipient | 3 | `streampack.otp.max-active-codes` |
+| Wrong codes before lockout | 5 | `streampack.otp.max-failed-attempts` (`OTP_MAX_FAILED_ATTEMPTS`) |
+| Verify attempts per identity | 10 at once, then 1 a minute | fixed |
+
+Wrong codes are counted per channel and recipient. The wrong code that reaches the limit expires
+every active code the recipient holds, and the count starts over; the user asks for a new code,
+which works as usual. A count also starts over once no wrong code has been presented for a code's
+lifetime. A wrong code, an expired code and a locked-out recipient all answer the same `401` with
+the same message, so a caller can't tell them apart.
+
+Verify attempts are also throttled per identity as presented (channel, server and address, case
+ignored), whether or not the identity exists. Past the limit, `POST /auth/otp/verify` answers
+`429` until the bucket refills.
 
 ## Public Post Lists
 

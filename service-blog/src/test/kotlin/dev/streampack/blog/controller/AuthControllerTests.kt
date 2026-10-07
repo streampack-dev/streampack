@@ -13,6 +13,7 @@ import dev.streampack.core.repository.RefreshTokenRepository
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.RefreshTokenService
+import dev.streampack.core.service.ThrottleService
 import dev.streampack.core.service.UserRegistrationService
 import dev.streampack.test.ResetDatabaseBeforeEach
 import jakarta.servlet.http.Cookie
@@ -43,6 +44,7 @@ class AuthControllerTests {
 
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var userRegistrationService: UserRegistrationService
+    @Autowired lateinit var throttleService: ThrottleService
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var oneTimeCodeRepository: OneTimeCodeRepository
     @Autowired lateinit var jwtService: JwtService
@@ -55,6 +57,7 @@ class AuthControllerTests {
     @BeforeEach
     fun setUp() {
         greenMail.reset()
+        throttleService.clear()
         val principal =
             userRegistrationService.register(
                 username = "testuser",
@@ -195,6 +198,52 @@ class AuthControllerTests {
                 content = """{"email":"test@example.com","code":"123456"}"""
             }
             .andExpect { status { isUnauthorized() } }
+    }
+
+    private fun verify(code: String, email: String = "test@example.com") =
+        mockMvc.post("/auth/otp/verify") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"email":"$email","code":"$code"}"""
+        }
+
+    @Test
+    fun `after five wrong codes the right one answers like a wrong one`() {
+        seedCode("test@example.com", "123456")
+        repeat(5) { verify("999999").andExpect { status { isUnauthorized() } } }
+
+        verify("123456").andExpect {
+            status { isUnauthorized() }
+            jsonPath("$.detail") { value("Invalid or expired code") }
+        }
+    }
+
+    @Test
+    fun `a fresh code after lockout signs in`() {
+        seedCode("test@example.com", "123456")
+        repeat(5) { verify("999999") }
+        seedCode("test@example.com", "246810")
+
+        verify("246810").andExpect { status { isOk() } }
+    }
+
+    @Test
+    fun `a correct code before the limit still signs in`() {
+        seedCode("test@example.com", "123456")
+        repeat(4) { verify("999999").andExpect { status { isUnauthorized() } } }
+
+        verify("123456").andExpect { status { isOk() } }
+    }
+
+    @Test
+    fun `too many verify attempts for one identity answer 429`() {
+        repeat(10) { verify("999999", "Hammered@example.com") }
+
+        verify("999999", "hammered@example.com").andExpect {
+            status { isTooManyRequests() }
+            jsonPath("$.detail") { value("Too many attempts; try again shortly.") }
+        }
+        /* Another identity has its own bucket */
+        verify("999999", "other@example.com").andExpect { status { isUnauthorized() } }
     }
 
     /* ── Logout ─────────────────────────────────────────── */

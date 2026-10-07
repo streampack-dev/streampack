@@ -22,7 +22,15 @@ data class StreampackProperties(
 
     data class MailProperties(val from: String = "noreply@bytecode.news")
 
-    data class OtpProperties(val maxActiveCodes: Int = 3, val expirationMinutes: Long = 10)
+    /**
+     * [maxFailedAttempts] is how many wrong codes a recipient may present before every active code
+     * it holds is expired and it has to ask for a new one.
+     */
+    data class OtpProperties(
+        val maxActiveCodes: Int = 3,
+        val expirationMinutes: Long = 10,
+        val maxFailedAttempts: Int = 5,
+    )
 
     data class RefreshTokenProperties(val days: Long = 30)
 
