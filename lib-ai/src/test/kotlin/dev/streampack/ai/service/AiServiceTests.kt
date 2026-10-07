@@ -39,4 +39,33 @@ class AiServiceTests {
         }
         assertNull(ai.prompt("be brief", "anything"))
     }
+
+    private fun thinking(text: String) =
+        Generation(
+            AssistantMessage.builder().content(text).properties(mapOf("signature" to "sig")).build()
+        )
+
+    private fun text(text: String) = Generation(AssistantMessage(text))
+
+    @Test
+    fun `the answer is the text after the model's thinking, not the thinking`() {
+        val ai = service { ChatResponse(listOf(thinking(""), text("Cheap, mostly."))) }
+        assertEquals("Cheap, mostly.", ai.prompt("be brief", "the price of tea?"))
+
+        val shown = service { ChatResponse(listOf(thinking("Let me consider..."), text("Cheap."))) }
+        assertEquals("Cheap.", shown.prompt("be brief", "the price of tea?"))
+    }
+
+    @Test
+    fun `an answer in several text blocks is joined`() {
+        val ai = service { ChatResponse(listOf(text("Cheap,"), thinking(""), text("mostly."))) }
+        assertEquals("Cheap,\nmostly.", ai.prompt("be brief", "the price of tea?"))
+    }
+
+    @Test
+    fun `thinking with no answer is no answer, not an empty one`() {
+        val ai = service { ChatResponse(listOf(thinking("long reasoning..."), text(""))) }
+        assertNull(ai.prompt("be brief", "the price of tea?"))
+        assertNull(service { ChatResponse(emptyList()) }.prompt("be brief", "anything"))
+    }
 }

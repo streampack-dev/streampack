@@ -36,6 +36,8 @@ class AnthropicConfigurationTests {
         // Bounded, so a stalled call ends (the client's own default is ten minutes a try)
         assertEquals(java.time.Duration.ofSeconds(60), options.timeout)
         assertEquals(1, options.maxRetries)
+        // Off unless asked for: it spends the token budget on what nobody sees
+        assertEquals(true, options.thinking?.isDisabled())
     }
 
     @Test
@@ -56,5 +58,19 @@ class AnthropicConfigurationTests {
             )
         assertEquals(java.time.Duration.ofSeconds(20), options.timeout)
         assertEquals(0, options.maxRetries)
+    }
+
+    @Test
+    fun `thinking is adaptive when asked for`() {
+        val model =
+            configuration.anthropicChatModel(
+                AiProperties(enabled = true, apiKey = "sk-ant-test", thinking = true)
+            )
+        val options =
+            assertInstanceOf(
+                AnthropicChatOptions::class.java,
+                assertInstanceOf(AnthropicChatModel::class.java, model).defaultOptions,
+            )
+        assertEquals(true, options.thinking?.isAdaptive())
     }
 }
