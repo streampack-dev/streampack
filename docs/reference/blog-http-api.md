@@ -110,6 +110,7 @@ depends on who they are.
 | Endpoint | Purpose |
 |----------|---------|
 | `GET /logs/provenances` | Lists the channels the caller may browse, most recently active first. |
+| `GET /logs/channels/{protocol}/{service}/{name}` | Finds a channel by its readable address: `irc/libera/primate`. |
 | `GET /logs?provenance=<uri>&day=YYYY-MM-DD` | One UTC day of a channel's log, oldest first. `day` defaults to today. |
 | `GET /logs/search?provenance=<uri>&q=<text>&sender=<nick>&page=0&size=50` | Searches one channel's log, newest first. |
 
@@ -122,6 +123,20 @@ neither can reveal that a hidden channel exists.
 
 Direct conversations (private messages, DMs, group DMs) are never returned, to anyone; see
 [The Message Log](../explanation/message-log.md).
+
+**Readable addresses.** Each channel in `/logs/provenances` has a `path`, such as `irc/libera/primate`,
+for front ends to put in their own addresses (`/logs/irc/libera/primate`), and
+`GET /logs/channels/{protocol}/{service}/{name}` turns one back into the channel: it answers
+`{ "provenanceUri": "irc://libera/%23primate", "path": "irc/libera/primate" }`, and the
+`provenanceUri` is what the day view and search take.
+- An IRC name is matched as written, then with `#`, then with `##` (Libera has `##` channels), so
+  `primate` is `#primate` when there is one. The path for `##primate` beside a `#primate` names its
+  hashes: `irc/libera/%23%23primate`.
+- Slack, Mattermost and Discord channels go by their names (`mattermost/work/town-square`), or by
+  their ids where a name isn't known or two channels share it (every Mattermost team has a
+  `town-square`).
+- Only channels the caller may browse are matched. Any other name is a `404`, as a hidden channel
+  is, so an address can't reveal one.
 
 **`provenance`** is the channel's provenance URI exactly as `/logs/provenances` gives it
 (`irc://libera/%23java`), URL-encoded as a query parameter (`irc%3A%2F%2Flibera%2F%2523java`).
@@ -138,7 +153,8 @@ Direct conversations (private messages, DMs, group DMs) are never returned, to a
       "replyTo": "#java",
       "latestTimestamp": "2026-10-06T14:02:11Z",
       "latestSender": "alice",
-      "latestContentPreview": "the latest line, flattened to one line and cut at 140 characters"
+      "latestContentPreview": "the latest line, flattened to one line and cut at 140 characters",
+      "path": "irc/libera/java"
     }
   ]
 }

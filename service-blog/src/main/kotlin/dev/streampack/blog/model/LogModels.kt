@@ -12,7 +12,12 @@ data class LogProvenanceSummary(
     val latestTimestamp: Instant?,
     val latestSender: String?,
     val latestContentPreview: String?,
+    /** The channel's readable address, `irc/libera/primate`, for `/logs/{path}` (#147) */
+    val path: String? = null,
 )
+
+/** A channel found by its readable address: its provenance, and its path as the API writes it */
+data class LogChannelResponse(val provenanceUri: String, val path: String)
 
 data class LogProvenanceListResponse(val provenances: List<LogProvenanceSummary>)
 

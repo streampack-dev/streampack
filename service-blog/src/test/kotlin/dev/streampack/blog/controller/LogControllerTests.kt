@@ -272,4 +272,49 @@ class LogControllerTests {
         search(visibleProv, null, sender = "  ").andExpect { status { isBadRequest() } }
         search(visibleProv, null, sender = "x".repeat(256)).andExpect { status { isBadRequest() } }
     }
+
+    @Test
+    fun `each listed channel carries its readable path`() {
+        mockMvc.get("/logs/provenances").andExpect {
+            status { isOk() }
+            jsonPath("$.provenances[*].path") {
+                value(org.hamcrest.Matchers.hasItem("irc/libera/visible"))
+            }
+        }
+    }
+
+    @Test
+    fun `a channel is found by its readable address`() {
+        for (name in listOf("visible", "%23visible")) {
+            // As a browser sends it: %23 stays %23, not encoded again
+            mockMvc.get(java.net.URI.create("/logs/channels/irc/libera/$name")).andExpect {
+                status { isOk() }
+                jsonPath("$.provenanceUri") { value(visibleProv) }
+                jsonPath("$.path") { value("irc/libera/visible") }
+            }
+        }
+    }
+
+    @Test
+    fun `a hidden channel's address is not found, except by an admin`() {
+        mockMvc
+            .get("/logs/channels/irc/libera/hidden") {
+                header("Authorization", "Bearer $userToken")
+            }
+            .andExpect { status { isNotFound() } }
+        mockMvc
+            .get("/logs/channels/irc/libera/hidden") {
+                header("Authorization", "Bearer $adminToken")
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.provenanceUri") { value(hiddenProv) }
+            }
+    }
+
+    @Test
+    fun `an address that names no channel is not found, nor a private conversation`() {
+        mockMvc.get("/logs/channels/irc/libera/nowhere").andExpect { status { isNotFound() } }
+        mockMvc.get("/logs/channels/irc/libera/alice").andExpect { status { isNotFound() } }
+    }
 }
