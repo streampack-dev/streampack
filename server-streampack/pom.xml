@@ -191,16 +191,20 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <!--
-          OpenAPI generation compatibility:
-          springdoc/swagger-core currently derives Kotlin required/nullability metadata
-          via Jackson 2 Kotlin module paths. Keep this test-scoped bridge so
-          docs/openapi.json generation retains required fields while runtime code
-          continues to use Jackson 3 (tools.jackson.*).
+          Jackson 2's Kotlin module, at runtime. Spring AI 2's Anthropic client
+          (com.anthropic:anthropic-java-core) needs it: test scope here would win over
+          that transitive runtime dependency and leave it out of the jar, and the
+          AI-enabled server then fails to start (NoClassDefFoundError,
+          com/fasterxml/jackson/module/kotlin/ExtensionsKt).
+
+          It also serves OpenAPI generation, its first use: springdoc/swagger-core
+          derives Kotlin required/nullability metadata through Jackson 2's Kotlin
+          module. Application code still uses Jackson 3 (tools.jackson.*).
         -->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
-            <scope>test</scope>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 
