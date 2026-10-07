@@ -18,15 +18,21 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * [effort] (low, medium, high, xhigh, max) sets how much effort a model that supports it spends,
  * thinking included: `low` is the least thinking such a model allows. Sent only when set, as not
  * every model takes it.
+ *
+ * [moderationModel] is a cheaper model for high-volume or background work, such as abuse detection,
+ * reached through [dev.streampack.ai.service.AiService.moderation]. It shares the timeout, retries
+ * and token limit; [thinking] and [effort] belong to [model] alone, since the cheaper model may not
+ * take them (Haiku 4.5 refuses an effort).
  */
 @ConfigurationProperties(prefix = "streampack.ai")
 data class AiProperties(
     val enabled: Boolean = false,
     val apiKey: String = "",
-    val model: String = "claude-sonnet-4-5-20250929",
+    val model: String = "claude-opus-5-5",
     val maxTokens: Int = 1024,
     val timeout: Duration = Duration.ofSeconds(60),
     val maxRetries: Int = 1,
     val thinking: Boolean = false,
     val effort: String? = null,
+    val moderationModel: String = "claude-haiku-4-5-20251001",
 )

@@ -4,11 +4,13 @@ package dev.streampack.ai.service
 import dev.streampack.ai.config.AiProperties
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.springframework.ai.chat.messages.AssistantMessage
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.model.Generation
+import org.springframework.ai.chat.prompt.ChatOptions
 import org.springframework.ai.chat.prompt.Prompt
 
 class AiServiceTests {
@@ -67,5 +69,66 @@ class AiServiceTests {
         val ai = service { ChatResponse(listOf(thinking("long reasoning..."), text(""))) }
         assertNull(ai.prompt("be brief", "the price of tea?"))
         assertNull(service { ChatResponse(emptyList()) }.prompt("be brief", "anything"))
+    }
+
+    @Test
+    fun `the defaults are Opus for general use and Haiku for moderation`() {
+        val defaults = AiProperties()
+        assertEquals("claude-opus-5-5", defaults.model)
+        assertEquals("claude-haiku-4-5-20251001", defaults.moderationModel)
+        assertEquals(1024, defaults.maxTokens)
+        assertEquals(false, defaults.thinking)
+        assertNull(defaults.effort)
+    }
+
+    /** A chat model whose defaults are [defaults], keeping each prompt it's sent */
+    private class RecordingChatModel(private val defaults: ChatOptions) : ChatModel {
+        val prompts = mutableListOf<Prompt>()
+
+        override fun getOptions(): ChatOptions = defaults
+
+        override fun call(prompt: Prompt): ChatResponse {
+            prompts += prompt
+            return ChatResponse(listOf(Generation(AssistantMessage("ok"))))
+        }
+    }
+
+    private val defaults = ChatOptions.builder().model("claude-opus-5-5").maxTokens(777).build()
+
+    @Test
+    fun `a prompt leaves the model to the chat model's defaults`() {
+        val chatModel = RecordingChatModel(defaults)
+        AiService(chatModel, AiProperties(enabled = true)).prompt("be brief", "hello")
+        assertNull(chatModel.prompts.single().options)
+    }
+
+    @Test
+    fun `a moderation prompt asks for the moderation model, keeping the other settings`() {
+        val chatModel = RecordingChatModel(defaults)
+        val ai = AiService(chatModel, AiProperties(enabled = true, moderationModel = "cheap-model"))
+        assertEquals("ok", ai.moderation().prompt("be brief", "hello"))
+        // Spring AI sends a prompt's options instead of the defaults, so they must be whole
+        val options = chatModel.prompts.single().options!!
+        assertEquals("cheap-model", options.model)
+        assertEquals(777, options.maxTokens)
+    }
+
+    @Test
+    fun `a moderation prompt uses the provider's options for the model when it has them`() {
+        val chatModel = RecordingChatModel(defaults)
+        val provided = ChatOptions.builder().model("cheap-model").build()
+        val asked = mutableListOf<String>()
+        val ai =
+            AiService(
+                chatModel,
+                AiProperties(enabled = true, moderationModel = "cheap-model"),
+                { model ->
+                    asked += model
+                    provided
+                },
+            )
+        ai.moderation().promptWithFormat("be brief", "hello", "as JSON")
+        assertEquals(listOf("cheap-model"), asked)
+        assertSame(provided, chatModel.prompts.single().options)
     }
 }

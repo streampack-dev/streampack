@@ -11,9 +11,35 @@ import org.springframework.ai.chat.model.Generation
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.converter.BeanOutputConverter
 
-/** Thin wrapper around Spring AI ChatModel for prompt-based text generation */
-open class AiService(private val chatModel: ChatModel, private val properties: AiProperties) {
+/**
+ * Thin wrapper around Spring AI ChatModel for prompt-based text generation.
+ *
+ * Prompts go to the chat model's default model; [moderation] gives the same service on the cheaper
+ * moderation model. [model] is the model this one asks for, or null for the chat model's default.
+ */
+open class AiService(
+    private val chatModel: ChatModel,
+    private val properties: AiProperties,
+    private val modelOptions: AiModelOptions = AiModelOptions.sameSettings(chatModel),
+    private val model: String? = null,
+) {
     private val logger = LoggerFactory.getLogger(AiService::class.java)
+
+    /**
+     * This service on the moderation model (`streampack.ai.moderation-model`): for high-volume or
+     * background work that doesn't need the default model, such as abuse detection.
+     */
+    open fun moderation(): AiService =
+        AiService(chatModel, properties, modelOptions, properties.moderationModel)
+
+    /** The prompt for these messages, carrying the options for [model] when it's set */
+    private fun promptFor(systemInstruction: String, userPrompt: String): Prompt {
+        val messages = listOf(SystemMessage(systemInstruction), UserMessage(userPrompt))
+        return model?.let { Prompt(messages, modelOptions.forModel(it)) } ?: Prompt(messages)
+    }
+
+    /** How the log names this service's model: the default's goes unnamed, as it always has */
+    private val logName = model?.let { " ($it)" } ?: ""
 
     /**
      * Sends a system instruction and user prompt to the model, returns the response text, or null
@@ -25,20 +51,19 @@ open class AiService(private val chatModel: ChatModel, private val properties: A
         val started = System.nanoTime()
         fun elapsed() = (System.nanoTime() - started) / 1_000_000
         return try {
-            val response =
-                chatModel.call(
-                    Prompt(listOf(SystemMessage(systemInstruction), UserMessage(userPrompt)))
-                )
+            val response = chatModel.call(promptFor(systemInstruction, userPrompt))
             val answer = answerText(response)
             if (answer == null) {
                 logger.warn(
-                    "AI prompt answered in {} ms with no text: {}",
+                    "AI prompt{} answered in {} ms with no text: {}",
+                    logName,
                     elapsed(),
                     describe(response),
                 )
             } else {
                 logger.info(
-                    "AI prompt answered in {} ms ({} characters asked, {} answered)",
+                    "AI prompt{} answered in {} ms ({} characters asked, {} answered)",
+                    logName,
                     elapsed(),
                     systemInstruction.length + userPrompt.length,
                     answer.length,
@@ -46,11 +71,12 @@ open class AiService(private val chatModel: ChatModel, private val properties: A
             }
             answer
         } catch (e: Exception) {
-            logger.error("AI prompt failed after {} ms", elapsed(), e)
+            logger.error("AI prompt{} failed after {} ms", logName, elapsed(), e)
             null
         } catch (e: LinkageError) {
             logger.error(
-                "AI prompt failed after {} ms: a class is missing or doesn't match",
+                "AI prompt{} failed after {} ms: a class is missing or doesn't match",
+                logName,
                 elapsed(),
                 e,
             )

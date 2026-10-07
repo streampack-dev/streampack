@@ -55,12 +55,13 @@ This reference covers the variables commonly used by `server-streampack`.
 | `GITLAB_INSTANCE_<HOST>_TOKEN` | Per instance | Default API token for every project on a registered GitLab instance that has no token of its own. |
 | `ANTHROPIC_API_KEY` | Optional | Anthropic API key. |
 | `AI_ENABLED` | Optional | Enables AI-backed features. |
-| `STREAMPACK_AI_MODEL` | Optional | The Anthropic model for AI features (default `claude-sonnet-4-5-20250929`; set it, e.g. `claude-opus-5-5`). |
-| `STREAMPACK_AI_MAX_TOKENS` | Optional | The most tokens an answer may have (default `1024`). |
-| `STREAMPACK_AI_TIMEOUT` | Optional | How long one call to the model may take before it fails and is logged, a duration such as `60s` (default `60s`). |
-| `STREAMPACK_AI_MAX_RETRIES` | Optional | How often a failed call is tried again (default `1`). |
-| `STREAMPACK_AI_THINKING` | Optional | Ask the model to reason before answering (adaptive thinking; default `false`). Off sends nothing about thinking, as some models (Opus 5.5) refuse having it disabled. |
-| `STREAMPACK_AI_EFFORT` | Optional | How much effort a model that supports it spends, thinking included: `low`, `medium`, `high`, `xhigh` or `max`. Unset, the model's default. For Opus 5.5, `low` is the least thinking it allows. |
+| `AI_MODEL` | Optional | The Anthropic model for AI features: ask, summaries, derived factoids, poetry (default `claude-opus-5-5`). |
+| `AI_MODERATION_MODEL` | Optional | A cheaper model for high-volume or background work, such as abuse detection (default `claude-haiku-4-5-20251001`). It shares the timeout, retries and token limit, but not `AI_THINKING` or `AI_EFFORT`, which apply to `AI_MODEL` only (Haiku 4.5 refuses an effort). |
+| `AI_MAX_TOKENS` | Optional | The most tokens an answer may have (default `1024`). |
+| `AI_TIMEOUT` | Optional | How long one call to the model may take before it fails and is logged, a duration such as `60s` (default `60s`). |
+| `AI_MAX_RETRIES` | Optional | How often a failed call is tried again (default `1`). |
+| `AI_THINKING` | Optional | Ask the model to reason before answering (adaptive thinking; default `false`). Off sends nothing about thinking, as some models (Opus 5.5) refuse having it disabled. |
+| `AI_EFFORT` | Optional | How much effort a model that supports it spends, thinking included: `low`, `medium`, `high`, `xhigh` or `max`. Unset, the model's default. For Opus 5.5, `low` is the least thinking it allows. |
 | `BLOG_SUMMARY_PROMPT` | Optional | System prompt for admins' AI-derived post summaries. Empty uses the built-in stance: lead with the substance, never tease or bury the lede. |
 | `IRC_ENABLED` | Optional | Enables IRC adapter. |
 | `IRC_IDENTITY` | Optional | The bot's identity, as its CTCP `VERSION` answer (default `Nevet IRC Bridge`). |
@@ -80,3 +81,5 @@ This reference covers the variables commonly used by `server-streampack`.
 | `CONSOLE_ENABLED` | Optional | Enables console adapter. |
 | `CORS_ORIGINS` | Optional | Comma-separated browser origins trusted for credentialed cross-origin requests; also the origins a cookie-authenticated web console command must come from. |
 | `STREAMPACK_WEBCONSOLE_COMMANDS_PER_MINUTE` | Optional | Web console commands an admin may submit a minute (default `30`). The console's other limits are `STREAMPACK_WEBCONSOLE_*` too: `HEARTBEAT` (`15s`), `MAX_STREAM_AGE` (`1h`), `MAX_STREAMS_PER_USER` (`4`), `STREAM_OPENS_PER_MINUTE` (`20`), `QUEUE_EVENTS` (`100`), `QUEUE_BYTES` (`1048576`), `MAX_EVENT_BYTES` (`131072`), `MAX_LINE` (`4096`), `MAX_BODY` (`32768`). |
+
+Each `AI_*` setting is also read as `STREAMPACK_AI_*` (e.g. `STREAMPACK_AI_MODEL`, `STREAMPACK_AI_MODERATION_MODEL`), the property's own name in the environment; where both are set, the `STREAMPACK_AI_*` one wins.
