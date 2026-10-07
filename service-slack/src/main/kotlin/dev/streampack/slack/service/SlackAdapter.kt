@@ -305,7 +305,7 @@ class SlackAdapter(
             val addressedText = if (isDm) payload else extractAddressedText(payload)
             val isAddressed = isDm || addressedText != null
 
-            dispatch(addressedText ?: payload, provenance, isAddressed, nick, isAction)
+            dispatch(addressedText ?: payload, provenance, isAddressed, nick, isAction, slackUserId)
 
             // Track last message for reaction relay filtering (guild channels only)
             if (!isDm) {
@@ -384,6 +384,7 @@ class SlackAdapter(
         addressed: Boolean,
         nick: String? = null,
         isAction: Boolean = false,
+        senderId: String? = null,
     ) {
         val builder =
             MessageBuilder.withPayload(payload as Any)
@@ -391,6 +392,8 @@ class SlackAdapter(
                 .setHeader(Provenance.ADDRESSED, addressed)
         if (nick != null) builder.setHeader("nick", nick)
         if (isAction) builder.setHeader(Provenance.IS_ACTION, true)
+        // The user id is how a private notice reaches them (#148)
+        if (senderId != null) builder.setHeader(Provenance.SENDER_ID, senderId)
         eventGateway.send(builder.build())
     }
 

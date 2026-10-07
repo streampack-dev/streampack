@@ -7,6 +7,8 @@ import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.MessageLogService
 import dev.streampack.core.service.Operation
+import dev.streampack.core.service.SecretNotices
+import dev.streampack.core.service.SecretScrubber
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.ChannelInterceptor
@@ -16,6 +18,15 @@ import org.springframework.stereotype.Component
  * Captures inbound messages flowing through the ingress channel to the message log, except for
  * channels whose controls say `logged=false`, which are never persisted. Direct conversations are
  * logged marked direct, so nothing reads them back.
+ *
+ * What's written is redacted twice: the operations' [RedactionRule]s take the secret arguments out
+ * of commands that carry them, then the [SecretScrubber] takes out anything shaped like a
+ * credential, wherever it appears (#148). The scrubbed text is only what's logged; the message
+ * itself goes on to the operations unchanged.
+ *
+ * When a secret is scrubbed from a channel, its sender is told privately, through [SecretNotices].
+ * Not from a direct conversation: nobody else saw it there, so there's nothing to revoke in a
+ * hurry, and the row is scrubbed all the same.
  */
 @Component
 class IngressLoggingInterceptor(
@@ -23,6 +34,8 @@ class IngressLoggingInterceptor(
     private val channelControlService: ChannelControlService,
     private val directConversations: DirectConversations,
     operations: List<Operation>,
+    private val secretScrubber: SecretScrubber,
+    private val secretNotices: SecretNotices,
 ) : ChannelInterceptor {
 
     private val redactionRules: List<RedactionRule> = operations.flatMap { it.redactionRules }
@@ -35,13 +48,13 @@ class IngressLoggingInterceptor(
                 ?: provenance.user?.displayName
                 ?: provenance.user?.username
                 ?: "unknown"
-        val content = redact(message.payload.toString(), redactionRules)
-        messageLogService.logInbound(
-            provenance.encode(),
-            sender,
-            content,
-            directConversations.isDirect(provenance),
-        )
+        val scrub = secretScrubber.scrub(redact(message.payload.toString(), redactionRules))
+        val direct = directConversations.isDirect(provenance)
+        messageLogService.logInbound(provenance.encode(), sender, scrub.text, direct)
+        val senderId = message.headers[Provenance.SENDER_ID] as? String
+        if (scrub.scrubbed && !direct && senderId != null) {
+            secretNotices.notify(provenance, senderId, scrub.kinds)
+        }
         return message
     }
 
