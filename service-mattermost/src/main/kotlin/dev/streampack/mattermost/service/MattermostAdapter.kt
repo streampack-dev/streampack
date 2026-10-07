@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.http.client.JdkClientHttpRequestFactory
 import org.springframework.integration.support.MessageBuilder
 import org.springframework.web.client.RestClient
 import tools.jackson.databind.JsonNode
@@ -54,8 +55,19 @@ class MattermostAdapter(
     private val logger = LoggerFactory.getLogger(MattermostAdapter::class.java)
     private val mapper: JsonMapper = JsonMapper.builder().findAndAddModules().build()
     private val normalizedBaseUrl = baseUrl.trimEnd('/')
+    // Timeouts, so a server that stops answering fails a call rather than holding it forever; and
+    // HTTP/1.1, as Mattermost speaks it, with no attempt at a plaintext HTTP/2 upgrade.
     private val restClient =
         restClientBuilder
+            .requestFactory(
+                JdkClientHttpRequestFactory(
+                        HttpClient.newBuilder()
+                            .version(HttpClient.Version.HTTP_1_1)
+                            .connectTimeout(Duration.ofSeconds(10))
+                            .build()
+                    )
+                    .apply { setReadTimeout(Duration.ofSeconds(30)) }
+            )
             .baseUrl(normalizedBaseUrl)
             .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer $token")
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

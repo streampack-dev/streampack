@@ -289,7 +289,8 @@ class IrcAdapter(
 
     @Handler
     fun onUserPart(event: ChannelPartEvent) {
-        val reason = event.message.let { if (it.isNotEmpty()) " ($it)" else "" }
+        val message: String = event.message
+        val reason = if (message.isNotEmpty()) " ($message)" else ""
         dispatchLoggingEvent(
             event.channel.name,
             "* ${event.actor.nick} left ${event.channel.name}$reason",
@@ -308,7 +309,8 @@ class IrcAdapter(
 
     @Handler
     fun onUserQuit(event: UserQuitEvent) {
-        val reason = event.message.let { if (it.isNotEmpty()) " ($it)" else "" }
+        val message: String = event.message
+        val reason = if (message.isNotEmpty()) " ($message)" else ""
         dispatchLoggingEvent("*", "* ${event.actor.nick} quit$reason", event.actor.nick)
     }
 

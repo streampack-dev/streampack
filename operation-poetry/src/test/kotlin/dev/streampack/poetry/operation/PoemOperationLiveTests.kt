@@ -13,7 +13,6 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.slf4j.LoggerFactory
 import org.springframework.ai.anthropic.AnthropicChatModel
 import org.springframework.ai.anthropic.AnthropicChatOptions
-import org.springframework.ai.anthropic.api.AnthropicApi
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
@@ -36,14 +35,13 @@ class PoemOperationLiveTests {
         @Bean
         @Primary
         fun aiService(properties: AiProperties): AiService {
-            val api = AnthropicApi.builder().apiKey(properties.apiKey).build()
             val options =
                 AnthropicChatOptions.builder()
+                    .apiKey(properties.apiKey)
                     .model(properties.model)
                     .maxTokens(properties.maxTokens)
                     .build()
-            val chatModel =
-                AnthropicChatModel.builder().anthropicApi(api).defaultOptions(options).build()
+            val chatModel = AnthropicChatModel.builder().options(options).build()
             return AiService(chatModel, properties)
         }
     }
