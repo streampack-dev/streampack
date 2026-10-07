@@ -114,15 +114,42 @@ class SentimentOperationTests {
     }
 
     @Test
-    fun `bare sentiment command is not handled`() {
-        val result = sentimentOperation.execute(message("sentiment"))
-        assertNull(result, "Bare 'sentiment' should not be handled")
+    fun `bare sentiment command analyzes the channel it was asked in`() {
+        val result = sentimentOperation.execute(message("!sentiment"))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val success = result as OperationResult.Success
+        assertTrue(success.payload.toString().contains(testChannel), "${success.payload}")
+        assertNull(success.provenance, "answered in the channel, not by DM")
     }
 
     @Test
-    fun `sentiment with only whitespace after command is not handled`() {
+    fun `sentiment with only whitespace after command is the current channel too`() {
         val result = sentimentOperation.execute(message("sentiment   "))
-        assertNull(result, "Sentiment with blank target should not be handled")
+        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    @Test
+    fun `bare sentiment in a direct conversation asks for a channel`() {
+        val dm =
+            MessageBuilder.withPayload("sentiment")
+                .setHeader(
+                    Provenance.HEADER,
+                    Provenance(
+                        protocol = Protocol.IRC,
+                        serviceId = "testnet",
+                        user = adminPrincipal(),
+                        replyTo = "adminnick",
+                    ),
+                )
+                .setHeader(Provenance.ADDRESSED, true)
+                .setHeader("nick", "adminnick")
+                .build()
+
+        val result = sentimentOperation.execute(dm)
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertTrue((result as OperationResult.Error).message.contains("sentiment #channel"))
     }
 
     @Test
