@@ -48,8 +48,11 @@ class ModerationScores(private val properties: ModerationProperties) {
         val markedAt: Instant,
         val firstSignalAt: Instant,
         val signals: Map<Signal, Int>,
-        /** The lines that raised a signal, as said, so a review can mark them in the log. */
-        val signalLines: Set<String>,
+        /**
+         * The lines that raised a signal, as said, with what each added, so a review can find them
+         * in the log and send the worst first.
+         */
+        val signalLines: Map<String, Double>,
     )
 
     private class Tally(var speaker: Speaker) {
@@ -60,7 +63,7 @@ class ModerationScores(private val properties: ModerationProperties) {
         var firstSignalAt: Instant? = null
         var peak = 0.0
         val signals = linkedMapOf<Signal, Int>()
-        val signalLines = linkedSetOf<String>()
+        val signalLines = linkedMapOf<String, Double>()
     }
 
     /** Scores one line [speaker] said at [now]. */
@@ -98,13 +101,30 @@ class ModerationScores(private val properties: ModerationProperties) {
             if (signals.isNotEmpty()) {
                 if (tally.firstSignalAt == null) tally.firstSignalAt = now
                 signals.keys.forEach { tally.signals.merge(it, 1, Int::plus) }
-                if (tally.signalLines.size < MAX_SIGNAL_LINES) tally.signalLines += content
+                keepSignalLine(tally, content, signals.values.sum())
             }
             tally.peak = maxOf(tally.peak, tally.score)
             if (signals.isNotEmpty() && tally.score >= properties.threshold) {
                 if (tally.markedAt == null) tally.markedAt = now
             }
             return Scored(signals, tally.score, tally.markedAt != null)
+        }
+    }
+
+    /**
+     * Remembers [content] as a line that added [weight]. When the list is full, the weakest line
+     * makes way for a stronger one: a slur after a hundred flood lines is still the line to show.
+     */
+    private fun keepSignalLine(tally: Tally, content: String, weight: Double) {
+        val lines = tally.signalLines
+        if (content in lines || lines.size < MAX_SIGNAL_LINES) {
+            lines.merge(content, weight, ::maxOf)
+            return
+        }
+        val weakest = lines.minBy { it.value }
+        if (weakest.value < weight) {
+            lines.remove(weakest.key)
+            lines[content] = weight
         }
     }
 
@@ -137,7 +157,7 @@ class ModerationScores(private val properties: ModerationProperties) {
                             markedAt = marked,
                             firstSignalAt = tally.firstSignalAt ?: marked,
                             signals = tally.signals.toMap(),
-                            signalLines = tally.signalLines.toSet(),
+                            signalLines = tally.signalLines.toMap(),
                         )
                 }
                 if (marked != null || tally.firstSignalAt?.let { expired(it, now) } == true) {

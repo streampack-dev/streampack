@@ -65,4 +65,17 @@ class ModerationScoresTests {
         assertTrue("bob you idiot" in taken.single().signalLines)
         assertTrue(scores.takeForReview(t0.plusSeconds(180)).isEmpty(), "taken once")
     }
+
+    @Test
+    fun `a strong line is kept over weak ones, however many came first`() {
+        scores.record(speaker("bob"), "hi", t0)
+        // Hundreds of flood lines fill the list of signal lines
+        repeat(300) { scores.record(speaker("alice"), "flood $it", t0.plusMillis(it * 10L)) }
+        scores.record(speaker("alice"), "bob shut up you moron", t0.plusSeconds(5))
+
+        val lines = scores.takeForReview(t0.plusSeconds(10)).single().signalLines
+        val insult = lines["bob shut up you moron"]
+        assertTrue(insult != null && insult >= properties.weights.aimedHostility, "$insult")
+        assertEquals(insult, lines.values.max())
+    }
 }

@@ -156,10 +156,12 @@ and nothing else.
 
 **Review, hourly.** Once an hour a `TickListener` takes the people marked since the last review.
 For each, it reads that channel's last hour or so through `MessageLogService` (so never a direct or
-hidden line), takes their most recent lines (20 at most) with three lines either side, and asks the
+hidden line), takes up to 20 of their lines with three lines either side, and asks the
 moderation model (`AI_MODERATION_MODEL`, through `AiService.moderation()`) whether that person is
 being hostile or abusive toward others, or just frustrated or joking: a short verdict, a reason, and
-the line numbers that show it. The transcript is the only thing sent, with the person's lines
+the line numbers that show it. The lines that raised signals are taken first, the strongest first,
+and the rest are their most recent, so a person who keeps talking after the trouble can't push it
+out of what the model reads. The transcript is the only thing sent, with the person's lines
 marked. Usually nobody is marked, so there's no call at all. With AI off, or when the model doesn't
 answer, the report is recorded from the signals alone, without a verdict. The model's thinking is
 never asked for.
