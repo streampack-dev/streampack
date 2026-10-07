@@ -43,10 +43,12 @@ every message passes through it, and a few dozen precompiled patterns cost micro
   OpenAI-style `sk-` keys, AWS (`AKIA`/`ASIA`), Google (`AIza`), Stripe (`sk_live_`, `rk_live_`),
   npm (`npm_`), Discord bot tokens and webhook URLs;
 - private key blocks (`-----BEGIN … PRIVATE KEY-----`), JWTs, and the `user:password` part of a URL;
-- `password=`, `token:`, `api_key=`, `secret=` and similar assignments, and `Bearer` tokens, only
-  when the value looks random: long enough, more than one kind of character, and high enough in
-  Shannon entropy. The word "password" in a sentence, `password=hunter2`, or `token: ${TOKEN}` are
-  left alone.
+- `password=`, `token:`, `api_key=`, `secret=` and similar assignments, including a key with a
+  prefix (`ANTHROPIC_KEY=`, `openai.key:`), and `Bearer` tokens, only when the value looks random:
+  long enough, more than one kind of character, and high enough in Shannon entropy. The word
+  "password" in a sentence, `password=changeme`, a bare `key=userName`, or `token: ${TOKEN}` are
+  left alone;
+- `hunter2`, anywhere, in any case, which becomes `*******`: all anyone sees is stars.
 
 A deployment can add shapes of its own without a release, under
 `streampack.secret-scrubbing.extra-patterns` (each a `kind`, a `pattern`, and optionally the

@@ -3668,6 +3668,16 @@
               }
             },
             "description" : "Invalid or expired code"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Too many attempts for this identity; try again shortly"
           }
         },
         "summary" : "Verify a one-time sign-in code",

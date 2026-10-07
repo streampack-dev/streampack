@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component
  * about it ("what looked like a GitHub token"), so it carries its own article. Only [group] of a
  * match is replaced, so `password=` and a URL's scheme and host stay readable around the marker.
  * [accept] sees that group's text and can decline it: the generic assignments use it to scrub only
- * values that look random.
+ * values that look random. [marker] replaces the usual `[REDACTED:kind]`, for the one secret that
+ * has its own (`hunter2`).
  */
 class SecretPattern(
     val kind: String,
@@ -20,6 +21,7 @@ class SecretPattern(
     val regex: Regex,
     val group: Int = 0,
     val accept: (String) -> Boolean = { true },
+    val marker: String = "${SecretScrubber.MARKER_PREFIX}$kind]",
 )
 
 /** What a scrub did: the text to keep, and the kinds removed from it, in order, once each */
@@ -87,6 +89,9 @@ class SecretScrubber(properties: SecretScrubbingProperties = SecretScrubbingProp
                     "api[_-]?key",
                     "access[_-]?key",
                     "private[_-]?key",
+                    // STRIPE_KEY, openai.key: a key with a prefix (#164). A bare `key=` is chat
+                    // about maps and config as often as not, so it needs one
+                    "(?<=[_.\\-])key",
                 )
                 .joinToString("|")
 
@@ -243,6 +248,13 @@ class SecretScrubber(properties: SecretScrubbingProperties = SecretScrubbingProp
                     accept = { looksRandom(it, minLength = 20) },
                 ),
                 SecretPattern(
+                    "hunter2",
+                    "a password",
+                    // All I see is ******* (bash.org #244321): always a password, wherever it is
+                    Regex("(?i)(?<![A-Za-z0-9])hunter2(?![A-Za-z0-9])"),
+                    marker = HUNTER2_MARKER,
+                ),
+                SecretPattern(
                     "secret",
                     "a password or secret",
                     // DB_PASSWORD=…, "api_key": "…", token: … — the key may carry a prefix
@@ -270,13 +282,15 @@ class SecretScrubber(properties: SecretScrubbingProperties = SecretScrubbingProp
                         if (pattern !in found) found += pattern
                         val start = secret.range.first - match.range.first
                         val end = secret.range.last + 1 - match.range.first
-                        match.value.replaceRange(start, end, "$MARKER_PREFIX${pattern.kind}]")
+                        match.value.replaceRange(start, end, pattern.marker)
                     }
             }
             return ScrubResult(current, found)
         }
 
         const val MARKER_PREFIX = "[REDACTED:"
+
+        private const val HUNTER2_MARKER = "*******"
     }
 }
 

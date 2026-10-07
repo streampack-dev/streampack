@@ -34,7 +34,10 @@ class SecretScrubberTests {
             [
                 "the password is in the vault",
                 "what's your password?",
-                "password: hunter2",
+                "CACHE_KEY=users",
+                "key=userName",
+                "key: primaryKeyColumn",
+                "the hunter2s are a band, apparently",
                 "set password=changemeplease",
                 "token: \${GITHUB_TOKEN}",
                 "api_key=<your-key-here>",
@@ -67,6 +70,42 @@ class SecretScrubberTests {
             scrubber.scrub("{\"api_key\": \"$value\"}").text,
         )
         assertEquals("token: [REDACTED:secret] ok", scrubber.scrub("token: $value ok").text)
+    }
+
+    @Test
+    fun `a key with a prefix is an assignment like any other`() {
+        val value = "R8kLm2Qz7XvN4pT9wYb6HcJ3d_F5gS1aE0uKo"
+        assertEquals("ANTHROPIC_KEY=[REDACTED:secret]", scrubber.scrub("ANTHROPIC_KEY=$value").text)
+        assertEquals(
+            "STRIPE_KEY: \"[REDACTED:secret]\"",
+            scrubber.scrub("STRIPE_KEY: \"Xk9mQ2vL7pR4wZ8n\"").text,
+        )
+        assertEquals("openai.key=[REDACTED:secret]", scrubber.scrub("openai.key=$value").text)
+        assertEquals("X-API-KEY=[REDACTED:secret]", scrubber.scrub("X-API-KEY=$value").text)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings =
+            [
+                "hunter2",
+                "password: hunter2",
+                "my-password-is-hunter2",
+                "you can go HUNTER2 my Hunter2-ing hunter2",
+            ]
+    )
+    fun `hunter2 is always a password`(text: String) {
+        val result = scrubber.scrub(text)
+        assertFalse(result.text.contains("hunter2", ignoreCase = true))
+        assertTrue(result.text.contains("*******"))
+        assertEquals(listOf("hunter2"), result.kinds.map { it.kind })
+        assertEquals("a password", result.kinds.single().description)
+    }
+
+    @Test
+    fun `all anyone sees is stars`() {
+        assertEquals("password: *******", scrubber.scrub("password: hunter2").text)
+        assertEquals("*******", scrubber.scrub(scrubber.scrub("hunter2").text).text)
     }
 
     @Test
