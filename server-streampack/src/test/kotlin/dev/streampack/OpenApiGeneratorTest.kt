@@ -62,6 +62,20 @@ class OpenApiGeneratorTest {
             }
         }
 
+        // Required means non-null and no default (DefaultedPropertiesAreOptional): a defaulted
+        // field may be left out of a request, as OtpRequest's channel may by older clients.
+        fun required(schema: String): List<String> =
+            root.at("/components/schemas/$schema/required").values().map { it.asText() }
+        check("channel" !in required("OtpRequest")) {
+            "OtpRequest.channel has a default, so isn't required: ${required("OtpRequest")}"
+        }
+        check("markdownSource" in required("CreateCommentHttpRequest")) {
+            "CreateCommentHttpRequest.markdownSource has no default: ${required("CreateCommentHttpRequest")}"
+        }
+        check(required("LogEntry").containsAll(listOf("timestamp", "sender", "content"))) {
+            "LogEntry's non-null fields are always sent: ${required("LogEntry")}"
+        }
+
         // A page is a post's ContentDetail, typed like getPostBySlug, so clients get it typed
         // (#90).
         val page = root.at("/paths/~1pages~1{slug}/get")

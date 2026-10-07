@@ -33,7 +33,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "codeChannels", "otp", "otpFrom" ],
+        "required" : [ "otp", "otpFrom" ],
         "type" : "object"
       },
       "CategorySummary" : {
@@ -67,7 +67,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "channel", "servers" ],
+        "required" : [ "channel" ],
         "type" : "object"
       },
       "CommentDetail" : {
@@ -222,7 +222,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "commentCount", "createdAt", "id", "renderedHtml", "slug", "sortOrder", "status", "tags", "title", "updatedAt" ],
+        "required" : [ "authorDisplayName", "createdAt", "id", "renderedHtml", "slug", "status", "title", "updatedAt" ],
         "type" : "object"
       },
       "ContentListResponse" : {
@@ -305,7 +305,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "commentCount", "id", "slug", "sortOrder", "tags", "title" ],
+        "required" : [ "authorDisplayName", "id", "slug", "title" ],
         "type" : "object"
       },
       "CreateCategoryRequest" : {
@@ -393,7 +393,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "formLoadedAt", "markdownSource", "title" ],
         "type" : "object"
       },
       "CreateContentResponse" : {
@@ -439,7 +438,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "createdAt", "id", "slug", "status", "tags", "title" ],
+        "required" : [ "authorDisplayName", "createdAt", "id", "slug", "status", "title" ],
         "type" : "object"
       },
       "DeleteAccountRequest" : {
@@ -689,7 +688,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "droppedUrls", "fits", "line", "lineLength", "seeAlso", "selector", "tags", "text", "urls" ],
+        "required" : [ "fits", "line", "lineLength", "seeAlso", "selector", "tags", "text", "urls" ],
         "type" : "object"
       },
       "FactoidGraphReport" : {
@@ -1148,7 +1147,6 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "channel" ],
         "type" : "object"
       },
       "OtpVerifyRequest" : {
@@ -1170,7 +1168,6 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "channel", "code" ],
         "type" : "object"
       },
       "ProblemDetail" : {
@@ -1388,7 +1385,7 @@
             "type" : "object"
           }
         },
-        "required" : [ "aggregate", "categories", "factoidTags", "tags" ],
+        "required" : [ "aggregate", "categories", "tags" ],
         "type" : "object"
       },
       "UnlinkedMentions" : {
@@ -1423,7 +1420,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "displayName", "id", "role", "username" ],
+        "required" : [ "displayName", "id", "username" ],
         "type" : "object"
       },
       "VersionInfo" : {
