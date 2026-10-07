@@ -135,10 +135,11 @@ Operational notes:
 
 ## Channel Controls
 
-Every registered channel carries four flags, set with the per-protocol `visible`, `logged`, `automute`, and `autojoin` commands (see [The Message Log](../explanation/message-log.md) for the reasoning):
+Every registered channel carries five flags, set with the per-protocol `visible`, `logged`, `moderated`, `automute`, and `autojoin` commands (see [The Message Log](../explanation/message-log.md) for the reasoning):
 
 - `logged=false` stops message capture for that channel entirely: neither inbound messages nor the bot's replies are written to the message log. It is not merely a browsing switch.
 - `visible=false` hides a channel's log from anonymous and non-admin browsing; admins still see it.
+- `moderated=false` takes a logged channel out of abuse detection: its messages aren't scored and it's never reviewed. On by default; a channel with `logged=false` isn't moderated either, as there's nothing to review. Moderation only reports to admins (the Moderation window over `/admin/moderation`); it never hides, purges or bans anything itself. See [The Message Log](../explanation/message-log.md#moderation).
 - `automute` (also set by `mute`/`unmute`) holds the bot's replies back; it still reads, runs commands and logs.
 - `autojoin` rejoins the channel whenever its network, workspace or server connects. It's off for a newly registered channel.
 - The flags are created when a channel is registered with `join`. IRC channels, and public Mattermost channels, register visible and logged; private Mattermost channels and direct or group messages joined by id register hidden and unlogged. Opt a private channel in explicitly if its history should be kept.
@@ -165,6 +166,7 @@ mattermost unmute <server> <channel-id-or-name>
 mattermost automute <server> <channel-id-or-name> <true|false>
 mattermost visible <server> <channel-id-or-name> <true|false>
 mattermost logged <server> <channel-id-or-name> <true|false>
+mattermost moderated <server> <channel-id-or-name> <true|false>
 mattermost signal <name> [character]
 mattermost status [server]
 ```
@@ -343,6 +345,7 @@ irc unmute <network> <#channel>
 irc automute <network> <#channel> <true|false>
 irc visible <network> <#channel> <true|false>
 irc logged <network> <#channel> <true|false>
+irc moderated <network> <#channel> <true|false>
 irc allow-ops <network> <#channel> <true|false>
 irc signal <name> [character]
 irc status [network]
@@ -378,6 +381,7 @@ slack unmute <workspace> <#channel|id>
 slack automute <workspace> <#channel|id> <true|false>
 slack visible <workspace> <#channel|id> <true|false>
 slack logged <workspace> <#channel|id> <true|false>
+slack moderated <workspace> <#channel|id> <true|false>
 slack signal <name> [character]
 slack status [workspace]
 ```

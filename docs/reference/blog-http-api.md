@@ -140,7 +140,8 @@ Discord, Slack and Mattermost channels. A `provenance` that isn't browsable for 
 it doesn't exist or is hidden from them, is a `404` on the day view and the search alike, so
 neither can reveal that a hidden channel exists.
 
-Direct conversations (private messages, DMs, group DMs) are never returned, to anyone; see
+Direct conversations (private messages, DMs, group DMs) are never returned, to anyone, and neither
+are lines an admin has hidden (see [Admin Moderation](#admin-moderation)); see
 [The Message Log](../explanation/message-log.md).
 
 **Readable addresses.** Each channel in `/logs/provenances` has a `path`, such as `irc/libera/primate`,
@@ -253,6 +254,67 @@ needs a full address (`tell irc://libera/#java hello`).
 **Deployment.** The registry is in memory: one backend instance only. Behind a proxy, don't buffer
 `/admin/console/stream` and allow a read timeout longer than the heartbeat; see
 [Configure a Reverse Proxy](../how-to/deploy/configure-reverse-proxy.md).
+
+## Admin Moderation
+
+Abuse reports from the hourly review, and what admins do with them (#150), for PUDL's Moderation
+window. Every endpoint is for `ADMIN` and `SUPER_ADMIN` (the `access_token` cookie, else a bearer
+token): `401` signed out, `403` for anyone else. Nothing is hidden, purged or dismissed except by a
+request here, and each is recorded with who made it and when. See
+[The Message Log](../explanation/message-log.md#moderation) for how reports come about.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /admin/moderation/reports?status=&page=0&size=25` | Reports, open first, newest first within each; `status` (`open`, `dismissed`, `actioned`) narrows to one. `size` is 1 to 100. |
+| `GET /admin/moderation/reports/{id}` | One report with its excerpt and its actions. |
+| `POST /admin/moderation/reports/{id}/hide` | Hides lines of the report's excerpt: `{"lineIds": [...], "note": "..."}`. Marks the report `ACTIONED`. |
+| `POST /admin/moderation/reports/{id}/unhide` | Puts hidden lines of the excerpt back. The report's status stays. |
+| `POST /admin/moderation/reports/{id}/purge` | Deletes lines of the excerpt for good: `{"lineIds": [...], "confirm": true, "note": "..."}`. Without `"confirm": true` it's a `400`. Marks the report `ACTIONED`. |
+| `POST /admin/moderation/reports/{id}/dismiss` | Closes an open report as not abuse; the body (`{"note": "..."}`) is optional. A report that isn't open is a `400`. |
+| `GET /admin/moderation/logs?provenance=<uri>&day=YYYY-MM-DD` | One UTC day of a channel's log with every line's id, hidden lines included and marked; `day` defaults to today. |
+| `POST /admin/moderation/lines/hide` | Hides lines found in a log day rather than a report: `{"lineIds": [...], "note": "..."}`. |
+| `POST /admin/moderation/lines/unhide` | Puts them back. |
+
+`lineIds` are message log line ids, 1 to 500 of them. Lines acted on from a report must be in its
+excerpt (`400` otherwise), and an unknown report is a `404`. `note` is optional everywhere. Direct
+conversations are never read or changed by any of these.
+
+`GET /admin/moderation/reports` answers `ReportListResponse`:
+
+```json
+{
+  "page": 0, "size": 25, "totalCount": 3, "totalPages": 1, "openCount": 2,
+  "reports": [
+    {
+      "id": "0199...", "provenanceUri": "irc://libera/%23java", "protocol": "irc",
+      "serviceId": "libera", "channel": "#java", "sender": "troll", "userId": null,
+      "score": 15.8, "signals": { "AIMED_HOSTILITY": 2 },
+      "verdict": { "abusive": true, "reason": "Insults bob repeatedly.", "model": "claude-haiku-4-5-20251001" },
+      "status": "OPEN", "windowStart": "2026-10-07T14:01:09Z", "windowEnd": "2026-10-07T14:06:40Z",
+      "createdAt": "2026-10-07T15:00:00Z", "actedBy": null, "actedAt": null
+    }
+  ]
+}
+```
+
+`signals` counts the lines that raised each signal: `PROFANITY`, `INSULT`, `AIMED_HOSTILITY`,
+`SLUR`, `THREAT`, `PERSONAL_DETAILS`, `BLOCKED_LINK`, `REPETITION`, `FLOOD`. `verdict` is `null`
+when AI was off or the model didn't answer. `channel` is the provenance's channel name or id.
+`actedBy` and `actedAt` are the admin who last hid, purged or dismissed, and when.
+
+`GET /admin/moderation/reports/{id}` answers `ReportDetail`: `report` (as above), `lines`, the lines
+the review read, oldest first, each `{id, timestamp, day, sender, content, direction, hidden,
+flagged, cited}` (`flagged`: the person's line raised a signal; `cited`: the model pointed at it;
+`day`: its UTC day, for a link to the log day), `purgedLineIds` (excerpt lines since purged), and
+`actions`, oldest first, each `{id, reportId, action, lineIds, note, actor, actedAt}` with `action`
+one of `HIDE`, `UNHIDE`, `PURGE`, `DISMISS`.
+
+Each `POST` answers `ModerationActionResult`: `action` (as recorded) and `changed`, how many lines it
+changed (lines already hidden, or already gone, aren't counted).
+
+`GET /admin/moderation/logs` answers `ModerationLogDay`: `provenanceUri`, `day`, and `lines` as in
+a report, with `flagged` and `cited` false. Hidden lines never appear in `GET /logs` or
+`GET /logs/search`, for anyone, admins included; this is where an admin finds them.
 
 ## Generated OpenAPI
 

@@ -87,6 +87,18 @@ class ChannelControlServiceTests {
     }
 
     @Test
+    fun `a logged channel is moderated unless it opts out`() {
+        val uri = "irc://libera/%23moderated"
+        assertTrue(channelControlService.isModerated(uri), "no controls: logged, so moderated")
+        assertTrue(channelControlService.getOrCreateOptions(uri).moderated)
+        channelControlService.setFlag(uri, "moderated", false)
+        assertFalse(channelControlService.isModerated(uri))
+        channelControlService.setFlag(uri, "moderated", true)
+        channelControlService.setFlag(uri, "logged", false)
+        assertFalse(channelControlService.isModerated(uri), "nothing logged, nothing to review")
+    }
+
+    @Test
     fun `setFlag rejects unknown flag name`() {
         assertThrows(IllegalArgumentException::class.java) {
             channelControlService.setFlag("irc://libera/%23java", "bogus", true)

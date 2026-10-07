@@ -248,6 +248,18 @@ class MattermostService(
         return "Channel '$channelQuery' on '$serverName' logged set to $logged"
     }
 
+    /** Updates the moderated flag (abuse detection, #150) via ChannelControlOptions */
+    fun setModerated(serverName: String, channelQuery: String, moderated: Boolean): String {
+        val uri =
+            try {
+                resolveChannelUri(serverName, channelQuery)
+            } catch (e: AmbiguousChannelException) {
+                return "Error: ${e.message}"
+            } ?: return channelNotFoundError(serverName, channelQuery)
+        channelControlService.setFlag(uri, "moderated", moderated)
+        return "Channel '$channelQuery' on '$serverName' moderated set to $moderated"
+    }
+
     fun remove(name: String): String {
         val server =
             serverRepository.findByNameAndDeletedFalse(name)

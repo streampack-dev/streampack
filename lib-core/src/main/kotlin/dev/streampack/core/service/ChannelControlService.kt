@@ -51,6 +51,24 @@ class ChannelControlService(private val repository: ChannelControlOptionsReposit
         return options.logged
     }
 
+    /**
+     * Whether abuse detection watches [provenance] (#150): a logged channel whose `moderated` flag
+     * is on. A channel with no controls is logged, so it's moderated too.
+     */
+    fun isModerated(provenance: Provenance): Boolean {
+        val options =
+            repository.findByProvenanceUriAndDeletedFalse(provenance.encode())
+                ?: repository.findByProvenanceUriAndDeletedFalse(provenance.identityEncode())
+                ?: return true
+        return options.logged && options.moderated
+    }
+
+    /** As [isModerated], for a provenance URI as the message log keeps it. */
+    fun isModerated(provenanceUri: String): Boolean {
+        val options = repository.findByProvenanceUriAndDeletedFalse(provenanceUri) ?: return true
+        return options.logged && options.moderated
+    }
+
     /** Updates a single flag on the options for the given provenance URI */
     fun setFlag(provenanceUri: String, flag: String, value: Boolean): ChannelControlOptions {
         val options = getOrCreateOptions(provenanceUri)
@@ -61,6 +79,7 @@ class ChannelControlService(private val repository: ChannelControlOptionsReposit
                 "visible" -> options.copy(visible = value, updatedAt = Instant.now())
                 "logged" -> options.copy(logged = value, updatedAt = Instant.now())
                 "active" -> options.copy(active = value, updatedAt = Instant.now())
+                "moderated" -> options.copy(moderated = value, updatedAt = Instant.now())
                 else -> throw IllegalArgumentException("Unknown channel control flag: $flag")
             }
         return repository.save(updated)

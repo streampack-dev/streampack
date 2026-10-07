@@ -88,6 +88,14 @@
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
+            <artifactId>operation-moderation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>service-moderation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
             <artifactId>operation-ask</artifactId>
         </dependency>
         <dependency>

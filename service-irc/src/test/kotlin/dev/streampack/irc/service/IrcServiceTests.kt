@@ -163,6 +163,22 @@ class IrcServiceTests {
     }
 
     @Test
+    fun `setModerated updates ChannelControlOptions`() {
+        ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
+        ircService.join("libera", "#java")
+        val result = ircService.setModerated("libera", "#java", false)
+        assertTrue(result.contains("moderated set to false"))
+
+        val network = networkRepository.findByNameAndDeletedFalse("libera")!!
+        val channel = channelRepository.findByNetworkAndNameAndDeletedFalse(network, "#java")!!
+        val options =
+            channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
+                channel.provenanceUri()
+            )
+        assertFalse(options!!.moderated)
+    }
+
+    @Test
     fun `setSignal updates network signal character`() {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
         val result = ircService.setSignal("libera", "~")

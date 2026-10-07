@@ -200,6 +200,13 @@ class SlackService(
             "Channel '$channel' on '$workspaceName' logged set to $logged"
         }
 
+    /** Updates the moderated flag (abuse detection, #150) via ChannelControlOptions */
+    fun setModerated(workspaceName: String, channel: String, moderated: Boolean): String =
+        withChannelUri(workspaceName, channel) { uri ->
+            channelControlService.setFlag(uri, "moderated", moderated)
+            "Channel '$channel' on '$workspaceName' moderated set to $moderated"
+        }
+
     /** Soft-deletes a workspace and its channels, disconnecting the runtime adapter if active */
     fun remove(name: String): String {
         val workspace =

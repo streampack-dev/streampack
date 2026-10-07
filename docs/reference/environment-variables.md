@@ -62,6 +62,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `AI_MAX_RETRIES` | Optional | How often a failed call is tried again (default `1`). |
 | `AI_THINKING` | Optional | Ask the model to reason before answering (adaptive thinking; default `false`). Off sends nothing about thinking, as some models (Opus 5.5) refuse having it disabled. |
 | `AI_EFFORT` | Optional | How much effort a model that supports it spends, thinking included: `low`, `medium`, `high`, `xhigh` or `max`. Unset, the model's default. For Opus 5.5, `low` is the least thinking it allows. |
+| `STREAMPACK_MODERATION_ENABLED` | Optional | Abuse detection (#150): score public channel messages and run the hourly review (default `true`). It never hides, removes or bans anything; admins act on its reports. The other settings are `STREAMPACK_MODERATION_*` too: `THRESHOLD` (`10`), `HALF_LIFE` (`30m`), `WINDOW` (`1h`), `REVIEW_INTERVAL` (`1h`), `REVIEW_LINES` (`20`), `CONTEXT_LINES` (`3`), `BLOCKED_HOSTS` (comma-separated, none by default), and the word lists `PROFANITY`, `INSULTS` and `SLURS`, which replace the built-in ones. See [The Message Log](../explanation/message-log.md#moderation). |
 | `BLOG_SUMMARY_PROMPT` | Optional | System prompt for admins' AI-derived post summaries. Empty uses the built-in stance: lead with the substance, never tease or bury the lede. |
 | `IRC_ENABLED` | Optional | Enables IRC adapter. |
 | `IRC_IDENTITY` | Optional | The bot's identity, as its CTCP `VERSION` answer (default `Nevet IRC Bridge`). |

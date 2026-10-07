@@ -47,6 +47,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
             "automute" -> handleAutomute(tokens.drop(1))
             "visible" -> handleVisible(tokens.drop(1))
             "logged" -> handleLogged(tokens.drop(1))
+            "moderated" -> handleModerated(tokens.drop(1))
             "signal" -> handleSignal(tokens.drop(1))
             "status" -> handleStatus(tokens.drop(1))
             else ->
@@ -163,6 +164,18 @@ class SlackAdminOperation(private val slackService: SlackService) :
         return toResult(slackService.setLogged(args[0], args[1], enabled))
     }
 
+    private fun handleModerated(args: List<String>): OperationResult {
+        if (args.size < 3) {
+            return OperationResult.Error(
+                "Usage: slack moderated <workspace> <#channel|id> <true|false>"
+            )
+        }
+        val enabled =
+            args[2].toBooleanStrictOrNull()
+                ?: return OperationResult.Error("Invalid boolean: '${args[2]}'")
+        return toResult(slackService.setModerated(args[0], args[1], enabled))
+    }
+
     private fun handleSignal(args: List<String>): OperationResult {
         if (args.isEmpty()) {
             return OperationResult.Error(
@@ -198,6 +211,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
         |  slack automute <workspace> <#channel|id> <true|false>
         |  slack visible <workspace> <#channel|id> <true|false>
         |  slack logged <workspace> <#channel|id> <true|false>
+        |  slack moderated <workspace> <#channel|id> <true|false>
         |  slack signal <name> [character]
         |  slack status [workspace]
         """
