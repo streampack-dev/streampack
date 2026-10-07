@@ -77,7 +77,7 @@ class ModerationReviewService(
         val windowStart = from.minus(properties.window)
         val log =
             messageLogService.findLatestMessages(uri, windowStart, now.plusSeconds(1), LOG_LIMIT)
-        val excerpt = excerpt(log, speaker.sender, from)
+        val excerpt = excerpt(log, speaker.sender, from, candidate.signalLines)
         val flagged = excerpt.filter {
             isTheirs(it, speaker.sender) && it.content in candidate.signalLines
         }
@@ -124,16 +124,31 @@ class ModerationReviewService(
     }
 
     /**
-     * Their most recent lines since [from] (at most [ModerationProperties.reviewLines]), each with
-     * [ModerationProperties.contextLines] lines either side, in order.
+     * Their lines since [from], at most [ModerationProperties.reviewLines] of them, each with
+     * [ModerationProperties.contextLines] lines either side, in order. The lines that raised
+     * signals are chosen first, the strongest first, and the rest is filled with their most recent:
+     * someone who keeps talking after the trouble would otherwise push it out, and the model would
+     * judge the chatter instead.
      */
-    private fun excerpt(log: List<MessageLog>, sender: String, from: Instant): List<MessageLog> {
-        val theirs =
-            log.indices
-                .filter { isTheirs(log[it], sender) && log[it].timestamp >= from }
-                .takeLast(properties.reviewLines)
+    private fun excerpt(
+        log: List<MessageLog>,
+        sender: String,
+        from: Instant,
+        signalLines: Map<String, Double>,
+    ): List<MessageLog> {
+        val theirs = log.indices.filter { isTheirs(log[it], sender) && log[it].timestamp >= from }
+        val signalled =
+            theirs
+                .filter { log[it].content in signalLines }
+                .sortedWith(
+                    compareByDescending<Int> { signalLines.getValue(log[it].content) }
+                        .thenByDescending { it }
+                )
+                .take(properties.reviewLines)
+        val recent =
+            theirs.filterNot { it in signalled }.takeLast(properties.reviewLines - signalled.size)
         val around = sortedSetOf<Int>()
-        theirs.forEach { i ->
+        (signalled + recent).forEach { i ->
             val first = maxOf(0, i - properties.contextLines)
             val last = minOf(log.lastIndex, i + properties.contextLines)
             (first..last).forEach { around += it }

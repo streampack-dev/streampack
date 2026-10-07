@@ -177,6 +177,27 @@ class ModerationReviewServiceTests {
     }
 
     @Test
+    fun `the lines that raised signals are sent even when the person kept talking`() {
+        say("bob", "morning")
+        say("troll", "bob: fuck you and the horse you rode in on")
+        say("troll", "bob: you're full of shit")
+        // More of their own lines afterwards than the review takes
+        repeat(properties.reviewLines + 5) { say("troll", "anyway, chatter line $it") }
+
+        val report = review.review().single()
+
+        val prompt = ai.calls.single().prompt
+        assertTrue("fuck you and the horse you rode in on" in prompt, prompt)
+        assertTrue("you're full of shit" in prompt, prompt)
+        assertTrue("morning" in prompt, "context before the trouble")
+        assertTrue("chatter line ${properties.reviewLines + 4}" in prompt, "the latest line too")
+        // Said this fast, the chatter floods: those lines are flagged too, but rank below the
+        // insults, which are what's sent first
+        assertTrue(report.flaggedLineIds.size >= 2)
+        assertTrue(report.flaggedLineIds.all { it in report.excerptLineIds })
+    }
+
+    @Test
     fun `the lines the model cites are kept`() {
         say("troll", "you're an idiot, bob")
         say("bob", "what")
