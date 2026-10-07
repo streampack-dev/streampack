@@ -92,6 +92,15 @@ streampack:
   ai:
     enabled: ${AI_ENABLED:false}
     api-key: ${ANTHROPIC_API_KEY:}
+    # Short names for the deployment's .env; STREAMPACK_AI_* still win, as the environment
+    # outranks this file. The defaults match AiProperties'.
+    model: ${AI_MODEL:claude-opus-5-5}
+    moderation-model: ${AI_MODERATION_MODEL:claude-haiku-4-5-20251001}
+    max-tokens: ${AI_MAX_TOKENS:1024}
+    timeout: ${AI_TIMEOUT:60s}
+    max-retries: ${AI_MAX_RETRIES:1}
+    thinking: ${AI_THINKING:false}
+    effort: ${AI_EFFORT:}
   rss:
     poll-interval: ${RSS_POLL_INTERVAL:PT1H}
     scheduler-interval: ${RSS_SCHEDULER_INTERVAL:PT90S}
