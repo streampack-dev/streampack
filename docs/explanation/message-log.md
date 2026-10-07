@@ -18,11 +18,60 @@ Three things change what's written:
   `mattermost connect`, `github add`, and the like) has its secret arguments replaced with
   `[REDACTED]` before it's written. Each operation declares its own rules, matched the way the
   command parser reads the command.
+- **Scrubbing.** Anything shaped like a credential, wherever it appears in a message, is replaced
+  with `[REDACTED:<kind>]`, both in what people say and in what the bot says back. See
+  [Secrets are scrubbed](#secrets-are-scrubbed).
 - **The web console.** A browser's console commands are logged, redacted, like any other ingress,
   but their output is logged as its outcome only (`[web console: success]`): an admin's console can
-  show what nothing else should keep, and outbound text has no redaction.
+  show what nothing else should keep, and outbound text has no redaction rules, only the scrubbing.
 - **`logged=false`.** A channel whose settings say it isn't logged has nothing written at all,
   inbound or outbound.
+
+## Secrets are scrubbed
+
+People paste secrets into chat: API keys, tokens, private keys. Redaction rules only cover the
+commands that are meant to carry them, so everything that's logged, inbound and outbound, also
+passes through `SecretScrubber` (in `lib-core`), which replaces anything shaped like a credential
+with `[REDACTED:<kind>]` before it's written. The message itself still reaches the operations as it
+was sent; only the record changes.
+
+Detection is by shape, the way gitleaks and GitHub's secret scanning work, never by asking a model:
+every message passes through it, and a few dozen precompiled patterns cost microseconds. It finds:
+
+- tokens with a vendor's prefix: GitHub (`ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`),
+  GitLab (`glpat-`), Slack (`xoxb-`, `xoxp-`, `xapp-`, and webhook URLs), Anthropic (`sk-ant-`),
+  OpenAI-style `sk-` keys, AWS (`AKIA`/`ASIA`), Google (`AIza`), Stripe (`sk_live_`, `rk_live_`),
+  npm (`npm_`), Discord bot tokens and webhook URLs;
+- private key blocks (`-----BEGIN … PRIVATE KEY-----`), JWTs, and the `user:password` part of a URL;
+- `password=`, `token:`, `api_key=`, `secret=` and similar assignments, and `Bearer` tokens, only
+  when the value looks random: long enough, more than one kind of character, and high enough in
+  Shannon entropy. The word "password" in a sentence, `password=hunter2`, or `token: ${TOKEN}` are
+  left alone.
+
+A deployment can add shapes of its own without a release, under
+`streampack.secret-scrubbing.extra-patterns` (each a `kind`, a `pattern`, and optionally the
+`description` used when telling the sender).
+
+### Telling the sender
+
+When a message in a channel is scrubbed, the bot tells whoever sent it, privately: "I've removed what
+looked like a GitHub token from the log of #java. If it was real, revoke it now: it was visible in
+the channel." Scrubbing protects the record, not the moment; everyone in the channel saw it, which is
+why the note says *revoke*. It never goes to the channel, which would only draw attention to what was
+pasted, and it's sent at most once per person per five minutes
+(`streampack.secret-scrubbing.notice-interval`), so a pasted file is one note, not one per line.
+
+Each protocol module supplies a `SenderNotifier` that reaches the sender directly: an IRC private
+message to their nick, a Discord DM, a Slack DM, a Mattermost direct channel. Adapters put the
+sender's protocol identity on each message (the `streampack_sender_id` header) for it. A protocol with
+no notifier, and events with no sender (joins, topic changes), are scrubbed but nobody is told.
+
+Direct conversations are scrubbed, since they're kept, but the sender isn't told: nobody else saw
+what they sent, so there's nothing to revoke in a hurry. The bot's own replies are scrubbed without a
+note too; whoever sent the original was told when it came in.
+
+The log written before scrubbing existed was cleaned once by migration V62, with the same built-in
+patterns, direct rows included.
 
 ## Channel settings
 

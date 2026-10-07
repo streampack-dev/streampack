@@ -374,12 +374,15 @@ class MattermostAdapter(
         provenance: Provenance,
         addressed: Boolean,
         nick: String? = null,
+        senderId: String? = null,
     ) {
         val builder =
             MessageBuilder.withPayload(payload as Any)
                 .setHeader(Provenance.HEADER, provenance)
                 .setHeader(Provenance.ADDRESSED, addressed)
         if (nick != null) builder.setHeader("nick", nick)
+        // The user id is how a private notice reaches them (#148)
+        if (!senderId.isNullOrBlank()) builder.setHeader(Provenance.SENDER_ID, senderId)
         eventGateway.send(builder.build())
     }
 
@@ -448,7 +451,7 @@ class MattermostAdapter(
         val addressedText = extractAddressedText(message)
         val addressed = channelType == "D" || addressedText != null
         val nick = data.path("sender_name").asString("").ifBlank { null }
-        dispatch(addressedText ?: message, provenance, addressed, nick)
+        dispatch(addressedText ?: message, provenance, addressed, nick, post.userId)
         /* Remembered only once dispatch succeeded, so a redelivery after a failure is processed */
         markSeen(post.id)
     }

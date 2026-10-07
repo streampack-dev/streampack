@@ -56,6 +56,15 @@ data class Provenance(
         const val BRIDGED = "streampack_bridged"
 
         /**
+         * Message header: the protocol's own name for who sent the message (a nick on IRC, a user
+         * id on Slack, Discord and Mattermost), which a
+         * [dev.streampack.core.service.SenderNotifier] uses to reach them privately (#148).
+         * Adapters set it on what people say, not on events such as joins, so nothing is ever sent
+         * about those.
+         */
+        const val SENDER_ID = "streampack_sender_id"
+
+        /**
          * Message header: true when the provenance's principal came from a credential (a web token,
          * say) and must be re-read from the user store as the message enters the operation chain,
          * so a role or status change since the credential was issued, or while the message was

@@ -7,6 +7,7 @@ import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.MessageLogService
+import dev.streampack.core.service.SecretScrubber
 import org.springframework.stereotype.Component
 
 /**
@@ -14,15 +15,21 @@ import org.springframework.stereotype.Component
  * whose controls say `logged=false`. Replies in direct conversations are logged marked direct.
  *
  * Web console output (#115) is logged as its outcome only, never its text: an admin's console can
- * show what nothing else should keep (and outbound text has no redaction, as ingress has), so the
- * log says that a result went out, and what kind, but not what it said. Log-derived context (Ask's
- * recent-conversation context, say) sees the commands, redacted as ever, but not their answers.
+ * show what nothing else should keep (and outbound text has no redaction rules, as ingress has,
+ * only the credential scrub below), so the log says that a result went out, and what kind, but not
+ * what it said. Log-derived context (Ask's recent-conversation context, say) sees the commands,
+ * redacted as ever, but not their answers.
+ *
+ * Everything else is scrubbed of credentials as ingress is (#148): the bot can echo a secret back,
+ * in a factoid, a quote or a bridged line. Nobody is told about these; whoever sent the original
+ * was told when it came in.
  */
 @Component
 class LoggingEgressSubscriber(
     private val messageLogService: MessageLogService,
     private val channelControlService: ChannelControlService,
     private val directConversations: DirectConversations,
+    private val secretScrubber: SecretScrubber,
 ) : EgressSubscriber() {
 
     /** Matches all protocols; the per-channel `logged` flag is checked at delivery */
@@ -52,14 +59,14 @@ class LoggingEgressSubscriber(
                 messageLogService.logOutbound(
                     provenance.encode(),
                     sender,
-                    result.payload.toString(),
+                    secretScrubber.scrub(result.payload.toString()).text,
                     direct,
                 )
             is OperationResult.Error ->
                 messageLogService.logOutbound(
                     provenance.encode(),
                     sender,
-                    "Error: ${result.message}",
+                    secretScrubber.scrub("Error: ${result.message}").text,
                     direct,
                 )
             is OperationResult.NotHandled -> {}

@@ -142,7 +142,14 @@ class DiscordAdapter(
             val displayText = event.message.contentDisplay
             val addressedText = extractAddressedText(rawText, event)
             val isAddressed = addressedText != null
-            dispatch(addressedText ?: rawText, provenance, isAddressed, nick, displayText)
+            dispatch(
+                addressedText ?: rawText,
+                provenance,
+                isAddressed,
+                nick,
+                displayText,
+                senderId = event.author.id,
+            )
 
             // Track last message for reaction relay filtering
             lastMessageByChannel[event.channel.id] = LastMessage(event.messageId, AtomicInteger(0))
@@ -158,7 +165,14 @@ class DiscordAdapter(
                 )
             // DMs are always addressed
             val displayText = event.message.contentDisplay
-            dispatch(rawText, provenance, addressed = true, event.author.effectiveName, displayText)
+            dispatch(
+                rawText,
+                provenance,
+                addressed = true,
+                event.author.effectiveName,
+                displayText,
+                senderId = event.author.id,
+            )
         }
     }
 
@@ -234,6 +248,7 @@ class DiscordAdapter(
         nick: String? = null,
         displayText: String? = null,
         isAction: Boolean = false,
+        senderId: String? = null,
     ) {
         val builder =
             MessageBuilder.withPayload(payload as Any)
@@ -241,6 +256,8 @@ class DiscordAdapter(
                 .setHeader(Provenance.ADDRESSED, addressed)
         if (nick != null) builder.setHeader("nick", nick)
         if (displayText != null) builder.setHeader("displayText", displayText)
+        // The author's id is how a private notice reaches them (#148)
+        if (senderId != null) builder.setHeader(Provenance.SENDER_ID, senderId)
         if (isAction) builder.setHeader(Provenance.IS_ACTION, true)
         eventGateway.send(builder.build())
     }
