@@ -33,5 +33,28 @@ class AnthropicConfigurationTests {
         val options = assertInstanceOf(AnthropicChatOptions::class.java, anthropic.defaultOptions)
         assertEquals("claude-sonnet-4-5-20250929", options.model)
         assertEquals(777, options.maxTokens)
+        // Bounded, so a stalled call ends (the client's own default is ten minutes a try)
+        assertEquals(java.time.Duration.ofSeconds(60), options.timeout)
+        assertEquals(1, options.maxRetries)
+    }
+
+    @Test
+    fun `the timeout and retries are the configured ones`() {
+        val model =
+            configuration.anthropicChatModel(
+                AiProperties(
+                    enabled = true,
+                    apiKey = "sk-ant-test",
+                    timeout = java.time.Duration.ofSeconds(20),
+                    maxRetries = 0,
+                )
+            )
+        val options =
+            assertInstanceOf(
+                AnthropicChatOptions::class.java,
+                assertInstanceOf(AnthropicChatModel::class.java, model).defaultOptions,
+            )
+        assertEquals(java.time.Duration.ofSeconds(20), options.timeout)
+        assertEquals(0, options.maxRetries)
     }
 }

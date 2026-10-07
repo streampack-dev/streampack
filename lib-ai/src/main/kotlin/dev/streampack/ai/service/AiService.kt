@@ -12,12 +12,33 @@ import org.springframework.ai.converter.BeanOutputConverter
 open class AiService(private val chatModel: ChatModel, private val properties: AiProperties) {
     private val logger = LoggerFactory.getLogger(AiService::class.java)
 
-    /** Sends a system instruction and user prompt to the model, returns the response text */
+    /**
+     * Sends a system instruction and user prompt to the model, returns the response text, or null
+     * if it failed. Every call is logged with how long it took, and a failure with its stack trace:
+     * including a missing or mismatched class (a [LinkageError]), which is a deployment problem and
+     * would otherwise pass every `catch (Exception)` above it unseen.
+     */
     open fun prompt(systemInstruction: String, userPrompt: String): String? {
+        val started = System.nanoTime()
+        fun elapsed() = (System.nanoTime() - started) / 1_000_000
         return try {
-            chatModel.call(SystemMessage(systemInstruction), UserMessage(userPrompt))
+            chatModel.call(SystemMessage(systemInstruction), UserMessage(userPrompt)).also {
+                logger.info(
+                    "AI prompt answered in {} ms ({} characters asked, {} answered)",
+                    elapsed(),
+                    systemInstruction.length + userPrompt.length,
+                    it?.length ?: 0,
+                )
+            }
         } catch (e: Exception) {
-            logger.error("AI prompt failed: {}", e.message)
+            logger.error("AI prompt failed after {} ms", elapsed(), e)
+            null
+        } catch (e: LinkageError) {
+            logger.error(
+                "AI prompt failed after {} ms: a class is missing or doesn't match",
+                elapsed(),
+                e,
+            )
             null
         }
     }
