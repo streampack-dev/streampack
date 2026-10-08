@@ -43,6 +43,36 @@ class ModerationScoresTests {
     }
 
     @Test
+    fun `commands to the bot are not repetition or flood`() {
+        val commands =
+            (1..8).map {
+                scores.record(
+                    speaker("alice"),
+                    "sentiment",
+                    t0.plusMillis(it * 100L),
+                    addressed = true,
+                )
+            }
+        assertTrue(commands.all { it.signals.isEmpty() }, "${commands.map { it.signals }}")
+        // Nor do they make a later ordinary line look repeated
+        val said = scores.record(speaker("alice"), "sentiment", t0.plusSeconds(30))
+        assertTrue(said.signals.isEmpty(), "${said.signals}")
+    }
+
+    @Test
+    fun `a command still counts for what it says`() {
+        scores.record(speaker("bob"), "hi", t0)
+        val aimed =
+            scores.record(
+                speaker("alice"),
+                "tell bob you moron",
+                t0.plusSeconds(1),
+                addressed = true,
+            )
+        assertEquals(properties.weights.aimedHostility, aimed.signals[Signal.AIMED_HOSTILITY])
+    }
+
+    @Test
     fun `a flood counts`() {
         val lines =
             (1..8).map { scores.record(speaker("alice"), "line $it", t0.plusMillis(it * 100L)) }
