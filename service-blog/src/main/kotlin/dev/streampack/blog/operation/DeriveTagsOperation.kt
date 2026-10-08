@@ -11,6 +11,7 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.service.TypedOperation
+import dev.streampack.taxonomy.TagNames
 import dev.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import dev.streampack.taxonomy.model.TaxonomySnapshot
 import org.springframework.beans.factory.ObjectProvider
@@ -90,7 +91,8 @@ class DeriveTagsOperation(
             aiResponse.raw?.length ?: 0,
         )
 
-        val structuredTags = aiResponse.value?.tags?.mapNotNull(::normalizeTag).orEmpty()
+        val structuredTags =
+            aiResponse.value?.tags?.mapNotNull(::normalizeTag)?.distinct().orEmpty()
         val rawResponse = aiResponse.raw
         if (structuredTags.isEmpty() && rawResponse.isNullOrBlank()) {
             logger.warn("DeriveTagsOperation: AI returned empty structured and raw response")
@@ -201,12 +203,9 @@ class DeriveTagsOperation(
         return null
     }
 
-    private fun normalizeTag(raw: String): String? {
-        val cleaned = raw.trim().lowercase().removePrefix("#")
-        if (cleaned.isBlank()) return null
-        if (cleaned.startsWith("_")) return null
-        return cleaned
-    }
+    /** A suggested tag as [TagNames] shapes it; null if empty or a system tag. */
+    private fun normalizeTag(raw: String): String? =
+        TagNames.normalize(raw)?.takeUnless(TagNames::isSystem)
 
     private fun filterSignificantTags(
         tags: List<String>,
@@ -217,7 +216,9 @@ class DeriveTagsOperation(
     ): List<String> {
         val titleLower = title.lowercase()
         val bodyLower = markdown.lowercase()
-        val known = knownTags.map { it.lowercase() }.toSet()
+        // Known tags as stored (`self-hosted`) compare in the shape candidates have (`self
+        // hosted`).
+        val known = knownTags.mapNotNull(TagNames::normalize).toSet()
         val existing = existingTags.mapNotNull(::normalizeTag).toSet()
 
         val scored =

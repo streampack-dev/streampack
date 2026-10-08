@@ -7,6 +7,7 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.TypedOperation
+import dev.streampack.taxonomy.TagNames
 import dev.streampack.taxonomy.model.FindBlogCategoryTaxonomyRequest
 import dev.streampack.taxonomy.model.FindBlogTagTaxonomyRequest
 import dev.streampack.taxonomy.model.FindFactoidTagTaxonomyRequest
@@ -69,8 +70,9 @@ class FindTaxonomySnapshotOperation(private val eventGateway: EventGateway) :
         val counts = mutableMapOf<String, Long>()
         for (list in lists) {
             for (entry in list) {
-                val key = entry.name.trim().lowercase()
-                if (key.isBlank() || key.startsWith("_")) continue
+                // As stored, not normalized: the Atlas matches these keys to stored tags.
+                val key = TagNames.stored(entry.name) ?: continue
+                if (TagNames.isSystem(key)) continue
                 counts[key] = (counts[key] ?: 0L) + entry.count
             }
         }

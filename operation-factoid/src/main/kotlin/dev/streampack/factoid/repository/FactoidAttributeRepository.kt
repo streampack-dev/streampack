@@ -39,7 +39,13 @@ interface FactoidAttributeRepository : JpaRepository<FactoidAttribute, UUID> {
     )
     fun searchForTerm(@Param("term") term: String): List<String>
 
-    /** Finds factoid selectors that have an exact tag match within comma-delimited TAGS values */
+    /**
+     * Finds factoid selectors that have an exact tag match within comma-delimited TAGS values.
+     *
+     * This SQL, like [findTagCounts], reads stored tags as `TRIM(LOWER(...))`: it can't call
+     * `TagNames.normalize`, so it matches stored tags as they are (`TagNames.stored`). New tags are
+     * normalized when written (`FactoidService.save`); tags stored earlier are left as they were.
+     */
     @Query(
         """
         SELECT DISTINCT f.selector FROM factoids f

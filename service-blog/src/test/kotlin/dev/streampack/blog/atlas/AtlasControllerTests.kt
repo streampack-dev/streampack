@@ -141,7 +141,7 @@ class AtlasControllerTests {
         teach("hotspot=a JVM")
         teach("hotspot.tags=java,jvm")
         teach("rpg=report program generator")
-        teach("rpg.tags=cobol-ish")
+        teach("rpg.tags=cobol-ish") // written as `cobol ish` (#140)
     }
 
     private fun atlas(): String =
@@ -227,7 +227,7 @@ class AtlasControllerTests {
         // rpg's only tag is used alone: Uncharted, and last.
         val regions: List<Map<String, Any>> = JsonPath.read(body, "$.regions")
         assertThat(regions.last()["name"]).isEqualTo("Uncharted")
-        assertThat(placeOf(body, "cobol-ish")["region"]).isEqualTo(0)
+        assertThat(placeOf(body, "cobol ish")["region"]).isEqualTo(0)
     }
 
     @Test

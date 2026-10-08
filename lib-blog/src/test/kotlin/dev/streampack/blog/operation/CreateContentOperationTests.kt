@@ -278,6 +278,22 @@ class CreateContentOperationTests {
     }
 
     @Test
+    fun `create normalizes tag names`() {
+        val request =
+            CreateContentRequest(
+                "Odd Tags",
+                "Content.",
+                tags = listOf("#C#", "Load-Testing", "  Spring_Boot ", "load testing", "#", "java"),
+            )
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertEquals(listOf("c#", "load testing", "spring boot", "java"), response.tags)
+        assertNotNull(tagRepository.findByName("load testing"))
+        assertNull(tagRepository.findByName("load-testing"))
+    }
+
+    @Test
     fun `create with categoryIds creates associations`() {
         val category = categoryRepository.save(Category(name = "JVM", slug = "jvm"))
         val request =

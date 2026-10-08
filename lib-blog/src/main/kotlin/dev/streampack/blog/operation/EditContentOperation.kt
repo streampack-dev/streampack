@@ -15,6 +15,7 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.service.TypedOperation
+import dev.streampack.taxonomy.TagNames
 import java.util.*
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
@@ -131,16 +132,12 @@ class EditContentOperation(
     private fun replaceTags(post: Post, tagNames: List<String>): List<String> {
         postTagRepository.deleteByPost(post.id)
         val resolved =
-            tagNames
-                .map { it.trim().lowercase() }
-                .filter { it.isNotBlank() }
-                .distinct()
-                .map { name ->
-                    tagRepository.findByName(name)
-                        ?: tagRepository.save(
-                            Tag(name = name, slug = slugGenerationService.slugify(name))
-                        )
-                }
+            TagNames.normalizeAll(tagNames).map { name ->
+                tagRepository.findByName(name)
+                    ?: tagRepository.save(
+                        Tag(name = name, slug = slugGenerationService.slugify(name))
+                    )
+            }
         resolved.forEach { tag -> postTagRepository.save(PostTag(post = post, tag = tag)) }
         return resolved.map { it.name }
     }

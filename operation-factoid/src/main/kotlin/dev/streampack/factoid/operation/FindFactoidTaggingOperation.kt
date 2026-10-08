@@ -9,6 +9,7 @@ import dev.streampack.factoid.model.FactoidTagEntry
 import dev.streampack.factoid.model.FactoidTagging
 import dev.streampack.factoid.model.FindFactoidTaggingRequest
 import dev.streampack.factoid.repository.FactoidAttributeRepository
+import dev.streampack.taxonomy.TagNames
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -38,14 +39,11 @@ class FindFactoidTaggingOperation(private val attributeRepository: FactoidAttrib
 
     companion object {
         /**
-         * A `tags` attribute's tags: split on commas, trimmed, lowercased, no blanks or `_` tags.
+         * A `tags` attribute's tags as stored ([TagNames.splitStored]): split on commas, trimmed,
+         * lowercased, no blanks or system tags. Not [TagNames.normalize]: the Atlas keys places by
+         * these and counts them with the factoid tag SQL, which reads stored tags the same way.
          */
         fun tagsOf(value: String?): List<String> =
-            value
-                .orEmpty()
-                .split(',')
-                .map { it.trim().lowercase() }
-                .filter { it.isNotEmpty() && !it.startsWith("_") }
-                .distinct()
+            TagNames.splitStored(value).filterNot(TagNames::isSystem).distinct()
     }
 }

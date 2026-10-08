@@ -5,6 +5,7 @@ import dev.streampack.ai.config.AiProperties
 import dev.streampack.ai.service.AiService
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.repository.PostRepository
+import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.core.entity.User
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
@@ -42,6 +43,7 @@ class SuggestArticleOperationTests {
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
+    @Autowired lateinit var postTagRepository: PostTagRepository
     @Autowired lateinit var recordingAiService: RecordingAiService
 
     private val promptDir: Path = Path.of("/tmp/streampack-ideas-prompt-tests")
@@ -114,6 +116,30 @@ class SuggestArticleOperationTests {
         assertTrue(markdown.contains("Source: https://good.example/article"))
         assertTrue(markdown.contains("Generated from !suggest"))
         assertTrue(created.status.name == "DRAFT")
+    }
+
+    @Test
+    fun `a suggested draft is tagged _idea and ideas finds it`() {
+        recordingAiService.rawResponse =
+            """{"title":"Idea Title","summary":"AI summary body.","tags":["#Load-Testing","_sneaky","Kotlin","kotlin"]}"""
+        val admin = adminUser.toUserPrincipal()
+
+        val result = eventGateway.process(messageFor(admin, "suggest https://good.example/article"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+
+        val created = postRepository.findAll().single()
+        // `_idea` survives; the AI's tags are normalized, and the AI can't add a system tag.
+        assertEquals(
+            listOf("_idea", "kotlin", "load testing"),
+            postTagRepository.findNamesByPost(created.id).sorted(),
+        )
+
+        val removed = eventGateway.process(messageFor(admin, "ideas remove #1"))
+        assertInstanceOf(OperationResult.Success::class.java, removed)
+        assertTrue(
+            ((removed as OperationResult.Success).payload as String).contains("Idea Title"),
+            "ideas should list the suggested draft",
+        )
     }
 
     @Test
