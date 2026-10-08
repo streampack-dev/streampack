@@ -8,6 +8,7 @@ import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.TypedOperation
+import dev.streampack.taxonomy.TagNames
 import dev.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import dev.streampack.taxonomy.model.TaxonomySnapshot
 import org.springframework.messaging.Message
@@ -88,7 +89,11 @@ class SuggestTagsHeuristicOperation(private val eventGateway: EventGateway) :
                 hashtags = hashtags,
             )
 
-        return OperationResult.Success(SuggestTagsResponse(selected))
+        // Candidates come from raw text too (`load-testing`): suggest each in the shape it's stored
+        // in.
+        return OperationResult.Success(
+            SuggestTagsResponse(selected.mapNotNull(::normalizeTag).distinct())
+        )
     }
 
     private fun findKnownTags(provenance: Provenance?): Set<String> {
@@ -187,15 +192,14 @@ class SuggestTagsHeuristicOperation(private val eventGateway: EventGateway) :
         return Regex("""(?<![a-z0-9])$escaped(?![a-z0-9])""").containsMatchIn(text)
     }
 
-    private fun normalizeTag(raw: String): String? {
-        val cleaned = raw.trim().lowercase().removePrefix("#")
-        if (cleaned.isBlank()) return null
-        if (cleaned.startsWith("_")) return null
-        if (cleaned.length < 2) return null
-        return cleaned
-    }
+    /** [raw] as [TagNames] shapes it, unless it's a system tag or shorter than two characters. */
+    private fun normalizeTag(raw: String): String? =
+        TagNames.normalize(raw)?.takeIf { !TagNames.isSystem(it) && it.length >= MIN_LENGTH }
 
     companion object {
+        /** The shortest tag the heuristic suggests. */
+        private const val MIN_LENGTH = 2
+
         private val STOPWORDS =
             setOf(
                 "the",

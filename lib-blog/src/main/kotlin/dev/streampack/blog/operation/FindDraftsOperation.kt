@@ -8,8 +8,10 @@ import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.SlugRepository
+import dev.streampack.blog.service.PostTagVisibility
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.service.TypedOperation
 import org.springframework.data.domain.PageRequest
@@ -49,7 +51,12 @@ class FindDraftsOperation(
                     excerpt = post.excerpt,
                     authorDisplayName = post.author?.displayName ?: "Anonymous",
                     publishedAt = post.publishedAt,
-                    tags = postTagRepository.findNamesByPost(post.id),
+                    tags =
+                        PostTagVisibility.forViewer(
+                            postTagRepository.findNamesByPost(post.id),
+                            post,
+                            (message.headers[Provenance.HEADER] as? Provenance)?.user,
+                        ),
                     categories = postCategoryRepository.findNamesByPost(post.id),
                 )
             }

@@ -26,6 +26,8 @@ For what the message log keeps, what channel settings do, and why direct message
 
 For how the Atlas (the map of the site's tags) is laid out, and why it holds still, see [The Atlas](explanation/atlas.md).
 
+For how tag names are normalized, what system tags such as `_idea` are, and who sees them, see [Tag Names](reference/tags.md).
+
 For blog/site HTTP integration, including one-time-code sign-in over email or Mattermost and the channel log endpoints, see [Blog HTTP API](reference/blog-http-api.md).
 
 For the bundled bot command surface, use:

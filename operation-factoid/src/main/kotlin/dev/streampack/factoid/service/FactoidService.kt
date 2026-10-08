@@ -6,6 +6,7 @@ import dev.streampack.factoid.entity.FactoidAttribute
 import dev.streampack.factoid.model.FactoidAttributeType
 import dev.streampack.factoid.repository.FactoidAttributeRepository
 import dev.streampack.factoid.repository.FactoidRepository
+import dev.streampack.taxonomy.TagNames
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -51,6 +52,11 @@ class FactoidService(
         updatedBy: String?,
     ): SaveResult {
         val normalized = selector.lowercase()
+        // Tags are written in one shape (#140): normalized and de-duplicated. Stored lists are not
+        // rewritten; they take this shape when next saved.
+        val stored =
+            if (type == FactoidAttributeType.TAGS) TagNames.joinNormalized(value.split(','))
+            else value
         val now = Instant.now()
         val existingFactoid = factoidRepository.findBySelectorIgnoreCase(normalized)
 
@@ -83,7 +89,7 @@ class FactoidService(
         if (existingAttribute != null) {
             factoidAttributeRepository.save(
                 existingAttribute.copy(
-                    attributeValue = value,
+                    attributeValue = stored,
                     updatedBy = updatedBy,
                     updatedAt = now,
                 )
@@ -93,7 +99,7 @@ class FactoidService(
                 FactoidAttribute(
                     factoid = factoid,
                     attributeType = type,
-                    attributeValue = value,
+                    attributeValue = stored,
                     updatedBy = updatedBy,
                     createdAt = now,
                     updatedAt = now,
@@ -266,11 +272,7 @@ class FactoidService(
         return stripped.replace(Regex("\\s+"), " ").take(220)
     }
 
-    private fun parseTags(value: String?): List<String> {
-        if (value.isNullOrBlank()) return emptyList()
-        return value
-            .split(",")
-            .map { it.trim().lowercase() }
-            .filter { it.isNotBlank() && !it.startsWith("_") }
-    }
+    /** A stored tag list as read back (see [TagNames.stored]), without system tags. */
+    private fun parseTags(value: String?): List<String> =
+        TagNames.splitStored(value).filterNot(TagNames::isSystem)
 }

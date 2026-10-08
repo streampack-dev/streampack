@@ -4,12 +4,16 @@ package dev.streampack.blog.controller
 import dev.streampack.blog.entity.Category
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.entity.PostCategory
+import dev.streampack.blog.entity.PostTag
 import dev.streampack.blog.entity.Slug
+import dev.streampack.blog.entity.Tag
 import dev.streampack.blog.model.PostStatus
 import dev.streampack.blog.repository.CategoryRepository
 import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
+import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.SlugRepository
+import dev.streampack.blog.repository.TagRepository
 import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
@@ -42,6 +46,8 @@ class SsrControllerTests {
     @Autowired lateinit var slugRepository: SlugRepository
     @Autowired lateinit var categoryRepository: CategoryRepository
     @Autowired lateinit var postCategoryRepository: PostCategoryRepository
+    @Autowired lateinit var tagRepository: TagRepository
+    @Autowired lateinit var postTagRepository: PostTagRepository
 
     private lateinit var author: User
     private lateinit var publishedPost: Post
@@ -131,6 +137,31 @@ class SsrControllerTests {
             }
         val refreshed = postRepository.findById(publishedPost.id).orElseThrow()
         assertEquals(0, refreshed.accessCount)
+    }
+
+    @Test
+    fun `a published post that was an idea shows no _idea, in SSR or JSON`() {
+        listOf("_idea", "java").forEach { name ->
+            val tag = tagRepository.save(Tag(name = name, slug = "ssr-$name"))
+            postTagRepository.save(PostTag(post = publishedPost, tag = tag))
+        }
+
+        mockMvc
+            .get("/ssr/posts/$slugPath") { accept = MediaType.TEXT_HTML }
+            .andExpect {
+                status { isOk() }
+                content { string(org.hamcrest.Matchers.containsString("Tags: java")) }
+                content {
+                    string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("_idea")))
+                }
+            }
+        mockMvc
+            .get("/posts/$slugPath") { accept = MediaType.APPLICATION_JSON }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.tags.length()") { value(1) }
+                jsonPath("$.tags[0]") { value("java") }
+            }
     }
 
     @Test

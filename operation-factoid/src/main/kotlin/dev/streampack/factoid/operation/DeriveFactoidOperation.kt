@@ -17,6 +17,7 @@ import dev.streampack.factoid.model.FactoidDraft
 import dev.streampack.factoid.model.FactoidMatcher
 import dev.streampack.factoid.repository.FactoidAttributeRepository
 import dev.streampack.factoid.repository.FactoidRepository
+import dev.streampack.taxonomy.TagNames
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.Message
@@ -165,13 +166,11 @@ class DeriveFactoidOperation(
 
     /** Two or three tags, those in use first, with at most one new one. */
     private fun tags(proposed: List<String>, known: List<String>): List<String> {
-        val normalized =
-            proposed
-                .map { it.trim().lowercase().removePrefix("#").replace('_', ' ') }
-                .filter { it.isNotBlank() }
-                .distinct()
-        val existing = normalized.filter { it in known }
-        val fresh = normalized.filter { it !in known }.take(1)
+        val normalized = TagNames.normalizeAll(proposed).filterNot(TagNames::isSystem)
+        // Known tags as stored (`self-hosted`) compare in the shape proposals have (`self hosted`).
+        val inUse = known.mapNotNull(TagNames::normalize).toSet()
+        val existing = normalized.filter { it in inUse }
+        val fresh = normalized.filter { it !in inUse }.take(1)
         return (existing + fresh).take(MAX_TAGS)
     }
 

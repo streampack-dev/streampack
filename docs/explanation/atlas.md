@@ -49,7 +49,9 @@ out) can drift from what's biggest now. Both are what a relayout is for.
 The Atlas counts what the public site shows. Posts count when they are approved, due, not deleted
 and not in a hidden (`_`) category, the same rules as `GET /taxonomy` and `GET /posts?tag=`.
 Factoids count by their `tags` attribute, split on commas, as the taxonomy counts them. Tags are
-lowercased, and tags starting with `_` are never placed. A place's counts *are* the taxonomy's, so
+read as stored, trimmed and lowercased, and tags starting with `_` are never placed. New tags are
+normalized when written (`load-testing` is stored as `load testing`); tags stored before that are
+left alone, so their places don't move. See [Tag Names](../reference/tags.md). A place's counts *are* the taxonomy's, so
 the two never disagree.
 
 ## What the server draws and what the front end does

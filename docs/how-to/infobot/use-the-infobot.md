@@ -43,7 +43,9 @@ Common patterns:
 - `selector is value` or `selector=value`
   Create or update a factoid.
 - `selector.attribute=value`
-  Set an attribute such as `tags`.
+  Set an attribute such as `tags`. Tags are comma-separated and stored normalized: lowercased,
+  a leading `#` dropped, `-` and `_` as spaces, repeats removed (`#Java, load-testing` is stored
+  as `java,load testing`). See [Tag Names](../../reference/tags.md).
 - `factoid set selector.attribute value`
   Explicit setter form for selectors or values that are awkward in shorthand.
 - `factoid unset selector.attribute`

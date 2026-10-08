@@ -77,6 +77,10 @@ ignored), whether or not the identity exists. Past the limit, `POST /auth/otp/ve
 | `GET /posts/search?q=spring&page=0&size=20` | Searches published posts. |
 | `GET /posts/popular?page=0&size=3` | Lists published posts ordered by decayed access temperature. |
 
+A post's `tags` never include system tags (those starting with `_`, such as `_idea`), and
+`GET /posts?tag=` with a system tag lists nothing. Tags sent when a post is created or edited are
+normalized (`#C#` is `c#`, `load-testing` is `load testing`). See [Tag Names](tags.md).
+
 `GET /posts/popular` defaults to `size=3` so homepage sections can request a compact
 "popular posts" widget without specifying pagination. Larger callers may pass an explicit `size`.
 

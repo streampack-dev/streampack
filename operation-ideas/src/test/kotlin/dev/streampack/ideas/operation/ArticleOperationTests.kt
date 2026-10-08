@@ -3,6 +3,7 @@ package dev.streampack.ideas.operation
 
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.repository.PostRepository
+import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.core.entity.MessageLog
 import dev.streampack.core.entity.ServiceBinding
 import dev.streampack.core.entity.User
@@ -45,6 +46,7 @@ class ArticleOperationTests {
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var serviceBindingRepository: ServiceBindingRepository
     @Autowired lateinit var postRepository: PostRepository
+    @Autowired lateinit var postTagRepository: PostTagRepository
 
     private val alicePrincipal =
         UserPrincipal(
@@ -488,6 +490,24 @@ class ArticleOperationTests {
         val savedPost =
             awaitPostWithTitle(ideaTitle) ?: fail("Expected post to be created for idea $ideaTitle")
         assertFalse(savedPost.markdownSource.contains("## AI Draft Summary (Generated)"))
+    }
+
+    @Test
+    fun `an idea captured on IRC is a draft tagged _idea that ideas finds`() {
+        val nick = "ideaNick-${UUID.randomUUID().toString().take(8)}"
+        val ideaTitle = "Tagged Idea ${UUID.randomUUID().toString().take(8)}"
+        eventGateway.process(ircMessage("""article "$ideaTitle"""", nick))
+        eventGateway.process(ircMessage("content Body text for idea.", nick))
+        assertInstanceOf(
+            OperationResult.Success::class.java,
+            eventGateway.process(ircMessage("done", nick)),
+        )
+
+        val savedPost =
+            awaitPostWithTitle(ideaTitle) ?: fail("Expected post to be created for idea $ideaTitle")
+        assertEquals(listOf("_idea"), postTagRepository.findNamesByPost(savedPost.id))
+        // What `ideas` lists by.
+        assertTrue(postRepository.findDraftsTaggedWithAuthor("_idea").any { it.id == savedPost.id })
     }
 
     @Test

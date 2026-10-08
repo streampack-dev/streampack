@@ -34,6 +34,37 @@ class FactoidServiceTests {
     }
 
     @Test
+    fun `tags are normalized and de-duplicated on write`() {
+        factoidService.save(
+            "tagged",
+            FactoidAttributeType.TAGS,
+            "Java, #C#, load-testing,Spring_Boot, java, ,_IDEA",
+            "testuser",
+        )
+
+        val attrs = factoidService.findBySelector("tagged")
+        assertEquals("java,c#,load testing,spring boot,_idea", attrs.single().attributeValue)
+    }
+
+    @Test
+    fun `clean tags are stored as given`() {
+        factoidService.save("clean", FactoidAttributeType.TAGS, "spring boot,java,c#,jvm", "u")
+        assertEquals(
+            "spring boot,java,c#,jvm",
+            factoidService.findBySelector("clean").single().attributeValue,
+        )
+    }
+
+    @Test
+    fun `other attributes are not reshaped`() {
+        factoidService.save("untouched", FactoidAttributeType.TEXT, "Load-Testing, #C#", "u")
+        assertEquals(
+            "Load-Testing, #C#",
+            factoidService.findBySelector("untouched").single().attributeValue,
+        )
+    }
+
+    @Test
     fun `update existing attribute performs upsert`() {
         factoidService.save("kotlin", FactoidAttributeType.TEXT, "A JVM language", "user1")
         factoidService.save("kotlin", FactoidAttributeType.TEXT, "A modern JVM language", "user2")

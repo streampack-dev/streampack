@@ -18,6 +18,7 @@ import dev.streampack.core.service.TypedOperation
 import dev.streampack.generative.service.GenerativePromptService
 import dev.streampack.ideas.service.FetchOutcome
 import dev.streampack.ideas.service.SuggestedContentFetcher
+import dev.streampack.taxonomy.TagNames
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
@@ -93,7 +94,8 @@ class SuggestArticleOperation(
         val draftTitle = aiDraft?.title?.ifBlank { null } ?: fetched.title.take(180)
         val summary = aiDraft?.summary?.ifBlank { null } ?: fallbackSummary(fetched.extractedText)
         val tags =
-            (listOf("_idea") + (aiDraft?.tags ?: emptyList())).mapNotNull(::normalizeTag).distinct()
+            // The AI's tags are normalized as parsed and never system tags; `_idea` is added here.
+            (listOf(IDEA_TAG) + (aiDraft?.tags ?: emptyList())).distinct()
 
         val markdown = buildString {
             append(summary.trim())
@@ -209,7 +211,7 @@ class SuggestArticleOperation(
                                 "SuggestArticleOperation: structured AI response missing summary; using fallback"
                             )
                         }
-            val parsedTags = structured.tags.mapNotNull(::normalizeTag).take(5)
+            val parsedTags = structured.tags.mapNotNull(::normalizeTag).distinct().take(5)
             logger.info(
                 "SuggestArticleOperation: structured AI success title='{}' tags={}",
                 parsedTitle.take(120),
@@ -258,6 +260,7 @@ class SuggestArticleOperation(
                     .takeIf { it.isArray }
                     ?.mapNotNull { child -> normalizeTag(child.asString("")) }
                     .orEmpty()
+                    .distinct()
                     .take(5)
             logger.info(
                 "SuggestArticleOperation: JSON fallback succeeded title='{}' tags={}",
@@ -285,12 +288,9 @@ class SuggestArticleOperation(
         }
     }
 
-    private fun normalizeTag(raw: String): String? {
-        val cleaned = raw.trim().lowercase().removePrefix("#")
-        if (cleaned.isBlank()) return null
-        if (cleaned.startsWith("_")) return null
-        return cleaned
-    }
+    /** An AI-proposed tag as [TagNames] shapes it; null if empty or a system tag. */
+    private fun normalizeTag(raw: String): String? =
+        TagNames.normalize(raw)?.takeUnless(TagNames::isSystem)
 
     private data class AiDraft(val title: String, val summary: String, val tags: List<String>)
 
@@ -303,6 +303,9 @@ class SuggestArticleOperation(
     )
 
     private companion object {
+        /** The system tag every idea draft carries, and `ideas` finds them by. */
+        const val IDEA_TAG = "_idea"
+
         private val matcher =
             CommandPatternMatcher(
                 listOf(

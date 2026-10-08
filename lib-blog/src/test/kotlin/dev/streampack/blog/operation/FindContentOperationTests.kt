@@ -836,4 +836,57 @@ class FindContentOperationTests {
         assertEquals(1, response.posts.size)
         assertEquals("Published Post", response.posts[0].title)
     }
+
+    private fun tagAll(post: Post, vararg names: String) = names.forEach { name ->
+        val tag =
+            tagRepository.findByName(name)
+                ?: tagRepository.save(Tag(name = name, slug = "slug-$name"))
+        postTagRepository.save(PostTag(post = post, tag = tag))
+    }
+
+    private fun detailOf(request: FindContentRequest, user: User? = null): ContentDetail =
+        (eventGateway.process(findMessage(request, user)) as OperationResult.Success).payload
+            as ContentDetail
+
+    @Test
+    fun `a published post that was an idea shows no system tags, to anyone`() {
+        tagAll(publishedPost, "_idea", "java")
+        val bySlug = FindContentRequest.FindBySlug("2026/02/published-post")
+
+        assertEquals(listOf("java"), detailOf(bySlug).tags)
+        assertEquals(listOf("java"), detailOf(bySlug, otherUser).tags)
+        assertEquals(listOf("java"), detailOf(bySlug, admin).tags)
+        assertEquals(listOf("java"), detailOf(FindContentRequest.FindById(publishedPost.id)).tags)
+
+        val listed =
+            (eventGateway.process(findMessage(FindContentRequest.FindPublished(0, 20)))
+                    as OperationResult.Success)
+                .payload as ContentListResponse
+        assertEquals(listOf("java"), listed.posts.single { it.id == publishedPost.id }.tags)
+    }
+
+    @Test
+    fun `admins see system tags on drafts and scheduled posts, authors don't`() {
+        tagAll(draftPost, "_idea", "java")
+        tagAll(scheduledPost, "_idea")
+
+        val draft = FindContentRequest.FindById(draftPost.id)
+        assertEquals(listOf("_idea", "java"), detailOf(draft, admin).tags)
+        assertEquals(listOf("_idea", "java"), detailOf(draft, superAdmin).tags)
+        assertEquals(listOf("java"), detailOf(draft, author).tags)
+        assertEquals(
+            listOf("_idea"),
+            detailOf(FindContentRequest.FindById(scheduledPost.id), admin).tags,
+        )
+    }
+
+    @Test
+    fun `nothing is listed under a system tag`() {
+        tagAll(publishedPost, "_idea")
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindByTag("_idea")))
+        val listed = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(0, listed.posts.size)
+        assertEquals(0L, listed.totalCount)
+    }
 }

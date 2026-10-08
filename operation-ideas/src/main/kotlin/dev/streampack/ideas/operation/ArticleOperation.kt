@@ -17,6 +17,7 @@ import dev.streampack.core.service.TypedOperation
 import dev.streampack.ideas.model.IdeaSessionState
 import dev.streampack.ideas.service.IdeaAuthorResolver
 import dev.streampack.ideas.service.IdeaTimerService
+import dev.streampack.taxonomy.TagNames
 import dev.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import dev.streampack.taxonomy.model.TaxonomySnapshot
 import java.time.Duration
@@ -363,12 +364,7 @@ class ArticleOperation(
         val structured = aiResponse.value
         if (structured != null) {
             val summary = structured.summary?.trim().orEmpty().ifBlank { null }
-            val tags =
-                structured.tags
-                    .mapNotNull { raw -> raw.trim().lowercase().ifBlank { null } }
-                    .map { it.removePrefix("#") }
-                    .filter { !it.startsWith("_") }
-                    .distinct()
+            val tags = structured.tags.mapNotNull(::normalizeTag).distinct()
             if (summary == null && tags.isEmpty()) {
                 logger.info("ArticleOperation: includeai structured response empty")
                 return AiDraftResult(
@@ -410,9 +406,7 @@ class ArticleOperation(
                 node
                     .path("tags")
                     .takeIf { it.isArray }
-                    ?.mapNotNull { child -> child.asString("").trim().lowercase().ifBlank { null } }
-                    ?.map { it.removePrefix("#") }
-                    ?.filter { !it.startsWith("_") }
+                    ?.mapNotNull { child -> normalizeTag(child.asString("")) }
                     ?.distinct()
                     .orEmpty()
 
@@ -465,6 +459,10 @@ class ArticleOperation(
         }
         return null
     }
+
+    /** An AI-proposed tag as [TagNames] shapes it; null if empty or a system tag. */
+    private fun normalizeTag(raw: String): String? =
+        TagNames.normalize(raw)?.takeUnless(TagNames::isSystem)
 
     private fun findTaxonomySnapshot(sourceProvenance: String): TaxonomySnapshot? {
         val decoded = runCatching { Provenance.decode(sourceProvenance) }.getOrNull()
