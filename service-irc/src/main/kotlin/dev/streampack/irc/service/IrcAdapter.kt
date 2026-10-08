@@ -3,6 +3,7 @@ package dev.streampack.irc.service
 
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.LoggingRequest
+import dev.streampack.core.model.MessageKind
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.ChannelControlService
@@ -275,6 +276,7 @@ class IrcAdapter(
             event.channel.name,
             "* ${event.actor.nick} joined ${event.channel.name}",
             event.actor.nick,
+            MessageKind.JOIN,
         )
     }
 
@@ -286,6 +288,7 @@ class IrcAdapter(
             event.channel.name,
             "* ${setter ?: "someone"} changed the topic to: $newTopic",
             setter,
+            MessageKind.TOPIC,
         )
     }
 
@@ -297,27 +300,47 @@ class IrcAdapter(
             event.channel.name,
             "* ${event.actor.nick} left ${event.channel.name}$reason",
             event.actor.nick,
+            MessageKind.PART,
         )
     }
 
+    /**
+     * A nick change is logged in each channel the bot shares with the person (#174). IRC ties it to
+     * no channel; Kitteh's user snapshot lists the channels they're in.
+     */
     @Handler
     fun onNickChange(event: UserNickChangeEvent) {
-        dispatchLoggingEvent(
-            "*",
-            "* ${event.actor.nick} is now known as ${event.newUser.nick}",
-            event.actor.nick,
-        )
+        val content = "* ${event.actor.nick} is now known as ${event.newUser.nick}"
+        for (channel in sharedChannels(event.actor.channels, event.newUser.channels)) {
+            dispatchLoggingEvent(channel, content, event.actor.nick, MessageKind.NICK)
+        }
     }
 
+    /**
+     * A quit is logged in each channel the bot shared with the person (#174). Kitteh fires the
+     * event before it stops tracking them, and the actor is a snapshot taken then, so its channels
+     * are the ones they were in.
+     */
     @Handler
     fun onUserQuit(event: UserQuitEvent) {
         val message: String = event.message
         val reason = if (message.isNotEmpty()) " ($message)" else ""
-        dispatchLoggingEvent("*", "* ${event.actor.nick} quit$reason", event.actor.nick)
+        val content = "* ${event.actor.nick} quit$reason"
+        for (channel in sharedChannels(event.actor.channels)) {
+            dispatchLoggingEvent(channel, content, event.actor.nick, MessageKind.QUIT)
+        }
     }
 
     companion object {
         const val ALLOW_OPS_KEY = "irc-allow-ops"
+
+        /**
+         * The channels a quit or nick change is logged in: every channel the user was seen in, once
+         * each, in a stable order. Never the pseudo-channel `*`, and nothing when they shared no
+         * channel with the bot.
+         */
+        fun sharedChannels(vararg channelSets: Collection<String>): List<String> =
+            channelSets.flatMap { it }.filter { it.isNotBlank() && it != "*" }.distinct().sorted()
 
         /**
          * A channel event as a log-only message. The actor goes in the `nick` header, as a
@@ -330,6 +353,7 @@ class IrcAdapter(
             channelName: String,
             content: String,
             actor: String?,
+            kind: MessageKind = MessageKind.MESSAGE,
         ): Message<Any> {
             val provenance =
                 Provenance(
@@ -339,7 +363,7 @@ class IrcAdapter(
                     metadata = mapOf(Provenance.BOT_NICK to botNick),
                 )
             val builder =
-                MessageBuilder.withPayload(LoggingRequest(content) as Any)
+                MessageBuilder.withPayload(LoggingRequest(content, kind) as Any)
                     .setHeader(Provenance.HEADER, provenance)
             if (!actor.isNullOrBlank()) builder.setHeader("nick", actor)
             return builder.build()
@@ -450,11 +474,16 @@ class IrcAdapter(
      * to [actor] (the nick who joined, left, quit, changed nick or set the topic) when there is one
      * (#124).
      */
-    private fun dispatchLoggingEvent(channelName: String, content: String, actor: String?) {
+    private fun dispatchLoggingEvent(
+        channelName: String,
+        content: String,
+        actor: String?,
+        kind: MessageKind,
+    ) {
         Thread.startVirtualThread {
             try {
                 eventGateway.send(
-                    loggingEvent(networkName, client.nick, channelName, content, actor)
+                    loggingEvent(networkName, client.nick, channelName, content, actor, kind)
                 )
             } catch (e: Exception) {
                 logger.error("Error dispatching logging event on {}: {}", networkName, e.message)

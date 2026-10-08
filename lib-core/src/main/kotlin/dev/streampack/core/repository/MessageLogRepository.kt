@@ -3,6 +3,7 @@ package dev.streampack.core.repository
 
 import dev.streampack.core.entity.MessageLog
 import dev.streampack.core.model.MessageDirection
+import dev.streampack.core.model.MessageKind
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.domain.Page
@@ -15,8 +16,9 @@ import org.springframework.transaction.annotation.Transactional
 /**
  * The message log. Direct and hidden entries are never returned: entity queries are restricted by
  * [MessageLog] itself, and every native query here says `AND NOT direct AND NOT hidden`; a new
- * native query must too. The moderation queries at the end are the one exception for hidden lines:
- * an admin reviewing a report has to see what was hidden. They still never touch a direct one.
+ * native query must too. The searches take the [MessageKind]s to include, by name (#174). The
+ * moderation queries at the end are the one exception for hidden lines: an admin reviewing a report
+ * has to see what was hidden. They still never touch a direct one.
  */
 interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
     fun findByProvenanceUriOrderByTimestampDesc(
@@ -24,9 +26,10 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
         pageable: Pageable,
     ): Page<MessageLog>
 
-    /** Returns messages within a time window in chronological order */
-    fun findByProvenanceUriAndTimestampBetweenOrderByTimestampAsc(
+    /** Returns lines of the given [kinds] within a time window in chronological order */
+    fun findByProvenanceUriAndKindInAndTimestampBetweenOrderByTimestampAsc(
         provenanceUri: String,
+        kinds: Collection<MessageKind>,
         from: Instant,
         to: Instant,
         pageable: Pageable,
@@ -51,6 +54,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             WHERE provenance_uri = :provenanceUri
               AND NOT direct
               AND NOT hidden
+              AND kind IN (:kinds)
               AND content ILIKE :pattern ESCAPE '\'
             ORDER BY timestamp DESC, id DESC
             """,
@@ -60,11 +64,17 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             WHERE provenance_uri = :provenanceUri
               AND NOT direct
               AND NOT hidden
+              AND kind IN (:kinds)
               AND content ILIKE :pattern ESCAPE '\'
             """,
         nativeQuery = true,
     )
-    fun searchContent(provenanceUri: String, pattern: String, pageable: Pageable): Page<MessageLog>
+    fun searchContent(
+        provenanceUri: String,
+        pattern: String,
+        kinds: Collection<String>,
+        pageable: Pageable,
+    ): Page<MessageLog>
 
     /** As [searchContent], only the lines [sender] wrote (the nick as logged, ignoring case). */
     @Query(
@@ -74,6 +84,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             WHERE provenance_uri = :provenanceUri
               AND NOT direct
               AND NOT hidden
+              AND kind IN (:kinds)
               AND lower(sender) = lower(:sender)
               AND content ILIKE :pattern ESCAPE '\'
             ORDER BY timestamp DESC, id DESC
@@ -84,6 +95,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             WHERE provenance_uri = :provenanceUri
               AND NOT direct
               AND NOT hidden
+              AND kind IN (:kinds)
               AND lower(sender) = lower(:sender)
               AND content ILIKE :pattern ESCAPE '\'
             """,
@@ -93,6 +105,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
         provenanceUri: String,
         sender: String,
         pattern: String,
+        kinds: Collection<String>,
         pageable: Pageable,
     ): Page<MessageLog>
 
@@ -107,6 +120,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             WHERE provenance_uri = :provenanceUri
               AND NOT direct
               AND NOT hidden
+              AND kind IN (:kinds)
               AND lower(sender) = lower(:sender)
             ORDER BY timestamp DESC, id DESC
             """,
@@ -116,11 +130,17 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
             WHERE provenance_uri = :provenanceUri
               AND NOT direct
               AND NOT hidden
+              AND kind IN (:kinds)
               AND lower(sender) = lower(:sender)
             """,
         nativeQuery = true,
     )
-    fun findBySender(provenanceUri: String, sender: String, pageable: Pageable): Page<MessageLog>
+    fun findBySender(
+        provenanceUri: String,
+        sender: String,
+        kinds: Collection<String>,
+        pageable: Pageable,
+    ): Page<MessageLog>
 
     /** Returns recent messages by a sender on a given protocol, case-insensitive */
     @Query(

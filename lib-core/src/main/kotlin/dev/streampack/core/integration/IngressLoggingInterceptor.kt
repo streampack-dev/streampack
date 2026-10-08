@@ -1,6 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.integration
 
+import dev.streampack.core.model.LoggingRequest
+import dev.streampack.core.model.MessageKind
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.RedactionRule
 import dev.streampack.core.service.ChannelControlService
@@ -17,7 +19,8 @@ import org.springframework.stereotype.Component
 /**
  * Captures inbound messages flowing through the ingress channel to the message log, except for
  * channels whose controls say `logged=false`, which are never persisted. Direct conversations are
- * logged marked direct, so nothing reads them back.
+ * logged marked direct, so nothing reads them back. A [LoggingRequest] is logged with its kind (a
+ * join, a quit...); anything else is a message.
  *
  * What's written is redacted twice: the operations' [RedactionRule]s take the secret arguments out
  * of commands that carry them, then the [SecretScrubber] takes out anything shaped like a
@@ -50,7 +53,8 @@ class IngressLoggingInterceptor(
                 ?: "unknown"
         val scrub = secretScrubber.scrub(redact(message.payload.toString(), redactionRules))
         val direct = directConversations.isDirect(provenance)
-        messageLogService.logInbound(provenance.encode(), sender, scrub.text, direct)
+        val kind = (message.payload as? LoggingRequest)?.kind ?: MessageKind.MESSAGE
+        messageLogService.logInbound(provenance.encode(), sender, scrub.text, direct, kind)
         val senderId = message.headers[Provenance.SENDER_ID] as? String
         if (scrub.scrubbed && !direct && senderId != null) {
             secretNotices.notify(provenance, senderId, scrub.kinds)

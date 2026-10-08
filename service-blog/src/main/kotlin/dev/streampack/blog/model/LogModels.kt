@@ -2,6 +2,7 @@
 package dev.streampack.blog.model
 
 import dev.streampack.core.model.MessageDirection
+import dev.streampack.core.model.MessageKind
 import java.time.Instant
 
 data class LogProvenanceSummary(
@@ -26,6 +27,8 @@ data class LogEntry(
     val sender: String,
     val content: String,
     val direction: MessageDirection,
+    /** What the line is: something said, or a join, part, quit, nick change or topic (#174) */
+    val kind: MessageKind = MessageKind.MESSAGE,
 )
 
 data class LogDayResponse(val provenanceUri: String, val day: String, val entries: List<LogEntry>)
@@ -37,6 +40,8 @@ data class LogSearchHit(
     val sender: String,
     val content: String,
     val direction: MessageDirection,
+    /** What the line is: something said, or a join, part, quit, nick change or topic (#174) */
+    val kind: MessageKind = MessageKind.MESSAGE,
 )
 
 /** One page of a channel's search results, newest first. */

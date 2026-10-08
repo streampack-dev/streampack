@@ -2,6 +2,7 @@
 package dev.streampack.core.entity
 
 import dev.streampack.core.model.MessageDirection
+import dev.streampack.core.model.MessageKind
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -22,6 +23,9 @@ import org.hibernate.annotations.UuidGenerator
  * A [hidden] entry is one an admin has taken out of public view (#150). It's kept, and left out of
  * every read the same way a direct one is; only the moderation queries, which name it explicitly,
  * read it back, and they still never read a direct one.
+ *
+ * Its [kind] says whether it's something said or a channel event: a join, part, quit, nick change
+ * or topic (#174).
  */
 @Entity
 @SQLRestriction("direct = false AND hidden = false")
@@ -37,4 +41,7 @@ data class MessageLog(
     @Column(nullable = false) val timestamp: Instant = Instant.now(),
     @Column(nullable = false) val direct: Boolean = false,
     @Column(nullable = false) val hidden: Boolean = false,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    val kind: MessageKind = MessageKind.MESSAGE,
 )

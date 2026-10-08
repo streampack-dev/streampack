@@ -27,6 +27,38 @@ Three things change what's written:
 - **`logged=false`.** A channel whose settings say it isn't logged has nothing written at all,
   inbound or outbound.
 
+## Each line has a kind
+
+Most lines are something said (`MESSAGE`, `/me` actions included). The rest are channel events an
+adapter logs through a `LoggingRequest`, with its kind (#174):
+
+| Kind | Logged as |
+|------|-----------|
+| `JOIN` | `* ada joined #java` |
+| `PART` | `* ada left #java (reason)` |
+| `QUIT` | `* ada quit (reason)` |
+| `NICK` | `* ada is now known as ada_` |
+| `TOPIC` | `* ada changed the topic to: …` |
+
+Only IRC logs events today: Slack and Mattermost skip their join and system posts, and Discord
+logs messages and nothing else. An event is attributed to the nick it's about.
+
+A quit or nick change isn't tied to any channel on IRC, so it's logged once in each channel the bot
+shares with the person, from the channels Kitteh's snapshot of them lists (it's taken before Kitteh
+forgets them, so a quit still knows where they were). Before #174 these went under the
+pseudo-channel `*`, which counts as direct; those old rows stay there, never shown.
+
+Readers can leave events out: the log browser's day view and search take `events=none` (or
+`kinds=`), see [Blog HTTP API](../reference/blog-http-api.md#channel-logs). The operations that read
+the log (`ask`, `sentiment`, `article`, `be`) still see every kind.
+
+Lines logged before kinds existed were classified once by migration V70, from their text. Joins,
+parts and topics count only when the whole line is the event's exact format, names its own channel,
+and comes from the nick it names (or `unknown`, as events were before #124); quits and nick changes
+only under `*`, where nothing but events was ever logged. Anything else, a `* ada quit` someone
+typed with `/me` in a channel included, stays a `MESSAGE`. The one line it can't tell apart is a
+`/me joined #java` typed word for word in `#java`, which reads as a join.
+
 ## Secrets are scrubbed
 
 People paste secrets into chat: API keys, tokens, private keys. Redaction rules only cover the

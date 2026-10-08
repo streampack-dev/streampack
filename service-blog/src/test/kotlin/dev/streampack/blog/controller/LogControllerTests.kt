@@ -3,6 +3,7 @@ package dev.streampack.blog.controller
 
 import dev.streampack.core.entity.ChannelControlOptions
 import dev.streampack.core.entity.User
+import dev.streampack.core.model.MessageKind
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.ChannelControlOptionsRepository
 import dev.streampack.core.repository.MessageLogRepository
@@ -360,5 +361,197 @@ class LogControllerTests {
     fun `an address that names no channel is not found, nor a private conversation`() {
         mockMvc.get("/logs/channels/irc/libera/nowhere").andExpect { status { isNotFound() } }
         mockMvc.get("/logs/channels/irc/libera/alice").andExpect { status { isNotFound() } }
+    }
+
+    // -- Kinds and events (#174) --
+
+    private fun logEvents() {
+        messageLogService.logInbound(
+            visibleProv,
+            "ada",
+            "* ada joined #visible",
+            kind = MessageKind.JOIN,
+        )
+        messageLogService.logInbound(visibleProv, "ada", "ada visible remark")
+        messageLogService.logInbound(
+            visibleProv,
+            "ada",
+            "* ada quit (visible exit)",
+            kind = MessageKind.QUIT,
+        )
+        messageLogService.logInbound(visibleProv, "ada", "a direct visible line", direct = true)
+        messageLogService.logInbound(
+            visibleProv,
+            "ada",
+            "* ada quit (direct visible)",
+            direct = true,
+            kind = MessageKind.QUIT,
+        )
+    }
+
+    private fun day(vararg params: Pair<String, String>) =
+        mockMvc.get("/logs") {
+            param("provenance", visibleProv)
+            param("day", Instant.now().toString().substring(0, 10))
+            params.forEach { (k, v) -> param(k, v) }
+        }
+
+    @Test
+    fun `each day line carries its kind, and every kind by default`() {
+        logEvents()
+        for (call in listOf(day(), day("events" to "all"), day("events" to "ALL"))) {
+            call.andExpect {
+                status { isOk() }
+                jsonPath("$.entries[*].content") {
+                    value(
+                        org.hamcrest.Matchers.contains(
+                            "Visible hello",
+                            "* ada joined #visible",
+                            "ada visible remark",
+                            "* ada quit (visible exit)",
+                        )
+                    )
+                }
+                jsonPath("$.entries[*].kind") {
+                    value(org.hamcrest.Matchers.contains("MESSAGE", "JOIN", "MESSAGE", "QUIT"))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `events=none leaves only what was said, and kinds picks kinds`() {
+        logEvents()
+        day("events" to "none").andExpect {
+            status { isOk() }
+            jsonPath("$.entries[*].content") {
+                value(org.hamcrest.Matchers.contains("Visible hello", "ada visible remark"))
+            }
+        }
+        day("kinds" to "quit, Join").andExpect {
+            status { isOk() }
+            jsonPath("$.entries[*].kind") { value(org.hamcrest.Matchers.contains("JOIN", "QUIT")) }
+        }
+        day("events" to "none", "kinds" to "QUIT").andExpect {
+            status { isOk() }
+            jsonPath("$.entries.length()") { value(0) }
+        }
+        day("events" to "some").andExpect { status { isBadRequest() } }
+        day("kinds" to "JOIN,WAVE").andExpect { status { isBadRequest() } }
+    }
+
+    @Test
+    fun `search carries kinds and takes the same filters`() {
+        logEvents()
+        search(visibleProv, "visible").andExpect {
+            status { isOk() }
+            jsonPath("$.totalCount") { value(4) }
+            jsonPath("$.hits[*].kind") {
+                value(org.hamcrest.Matchers.contains("QUIT", "MESSAGE", "JOIN", "MESSAGE"))
+            }
+        }
+        mockMvc
+            .get("/logs/search") {
+                param("provenance", visibleProv)
+                param("sender", "ada")
+                param("events", "none")
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.totalCount") { value(1) }
+                jsonPath("$.hits[0].content") { value("ada visible remark") }
+                jsonPath("$.hits[0].kind") { value("MESSAGE") }
+            }
+        mockMvc
+            .get("/logs/search") {
+                param("provenance", visibleProv)
+                param("q", "quit")
+                param("kinds", "QUIT")
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.totalCount") { value(1) }
+                jsonPath("$.hits[0].content") { value("* ada quit (visible exit)") }
+            }
+        mockMvc
+            .get("/logs/search") {
+                param("provenance", visibleProv)
+                param("q", "visible")
+                param("events", "maybe")
+            }
+            .andExpect { status { isBadRequest() } }
+    }
+
+    @Test
+    fun `direct and hidden lines stay out under every events and kinds filter`() {
+        logEvents()
+        val join =
+            messageLogRepository
+                .findWindowForModeration(
+                    visibleProv,
+                    Instant.now().minusSeconds(60),
+                    Instant.now().plusSeconds(1),
+                    100,
+                )
+                .single { it.kind == MessageKind.JOIN }
+        messageLogRepository.setHiddenForModeration(listOf(join.id), true)
+
+        val filters =
+            listOf(
+                emptyList(),
+                listOf("events" to "all"),
+                listOf("events" to "none"),
+                listOf("kinds" to "QUIT"),
+                listOf("kinds" to "JOIN"),
+                listOf("kinds" to "MESSAGE,JOIN,PART,QUIT,NICK,TOPIC"),
+            )
+        for (filter in filters) {
+            for (token in listOf(null, adminToken)) {
+                mockMvc
+                    .get("/logs") {
+                        param("provenance", visibleProv)
+                        param("day", Instant.now().toString().substring(0, 10))
+                        filter.forEach { (k, v) -> param(k, v) }
+                        if (token != null) header("Authorization", "Bearer $token")
+                    }
+                    .andExpect {
+                        status { isOk() }
+                        jsonPath("$.entries[*].content") {
+                            value(
+                                org.hamcrest.Matchers.everyItem(
+                                    org.hamcrest.Matchers.not(
+                                        org.hamcrest.Matchers.anyOf(
+                                            org.hamcrest.Matchers.containsString("direct"),
+                                            org.hamcrest.Matchers.containsString("joined"),
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                    }
+                mockMvc
+                    .get("/logs/search") {
+                        param("provenance", visibleProv)
+                        param("sender", "ada")
+                        filter.forEach { (k, v) -> param(k, v) }
+                        if (token != null) header("Authorization", "Bearer $token")
+                    }
+                    .andExpect {
+                        status { isOk() }
+                        jsonPath("$.hits[*].content") {
+                            value(
+                                org.hamcrest.Matchers.everyItem(
+                                    org.hamcrest.Matchers.not(
+                                        org.hamcrest.Matchers.anyOf(
+                                            org.hamcrest.Matchers.containsString("direct"),
+                                            org.hamcrest.Matchers.containsString("joined"),
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                    }
+            }
+        }
     }
 }
