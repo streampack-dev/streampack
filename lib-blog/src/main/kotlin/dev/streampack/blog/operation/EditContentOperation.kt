@@ -14,9 +14,7 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.service.TypedOperation
-import dev.streampack.taxonomy.TagNames
-import dev.streampack.taxonomy.entity.Tag
-import dev.streampack.taxonomy.repository.TagRepository
+import dev.streampack.taxonomy.TagVocabulary
 import java.util.*
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
@@ -31,7 +29,7 @@ class EditContentOperation(
     private val commentRepository: CommentRepository,
     private val markdownRenderingService: MarkdownRenderingService,
     private val slugGenerationService: SlugGenerationService,
-    private val tagRepository: TagRepository,
+    private val tagVocabulary: TagVocabulary,
     private val postTagRepository: PostTagRepository,
     private val categoryRepository: CategoryRepository,
     private val postCategoryRepository: PostCategoryRepository,
@@ -132,13 +130,8 @@ class EditContentOperation(
     /** Removes existing tag associations and creates new ones from the request */
     private fun replaceTags(post: Post, tagNames: List<String>): List<String> {
         postTagRepository.deleteByPost(post.id)
-        val resolved =
-            TagNames.normalizeAll(tagNames).map { name ->
-                tagRepository.findByName(name)
-                    ?: tagRepository.save(
-                        Tag(name = name, slug = slugGenerationService.generateTagSlug(name))
-                    )
-            }
+        // Through the vocabulary (#140): aliases, the stoplist, and new tags created and queued.
+        val resolved = tagVocabulary.acceptTags(tagNames, TAG_SOURCE)
         resolved.forEach { tag -> postTagRepository.save(PostTag(post = post, tag = tag)) }
         return resolved.map { it.name }
     }
@@ -154,5 +147,10 @@ class EditContentOperation(
             postCategoryRepository.save(PostCategory(post = post, category = category))
         }
         return resolved.map { it.name }
+    }
+
+    private companion object {
+        /** What a post's tags are written by, for the review queue. */
+        const val TAG_SOURCE = "post"
     }
 }

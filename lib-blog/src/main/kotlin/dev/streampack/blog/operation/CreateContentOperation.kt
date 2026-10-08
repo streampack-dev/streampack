@@ -22,9 +22,7 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.TypedOperation
-import dev.streampack.taxonomy.TagNames
-import dev.streampack.taxonomy.entity.Tag
-import dev.streampack.taxonomy.repository.TagRepository
+import dev.streampack.taxonomy.TagVocabulary
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -36,7 +34,7 @@ class CreateContentOperation(
     private val userRepository: UserRepository,
     private val markdownRenderingService: MarkdownRenderingService,
     private val slugGenerationService: SlugGenerationService,
-    private val tagRepository: TagRepository,
+    private val tagVocabulary: TagVocabulary,
     private val postTagRepository: PostTagRepository,
     private val categoryRepository: CategoryRepository,
     private val postCategoryRepository: PostCategoryRepository,
@@ -132,13 +130,8 @@ class CreateContentOperation(
 
     /** Resolves or creates tags by name and associates them with the post */
     private fun assignTags(post: Post, tagNames: List<String>): List<String> {
-        val resolved =
-            TagNames.normalizeAll(tagNames).map { name ->
-                tagRepository.findByName(name)
-                    ?: tagRepository.save(
-                        Tag(name = name, slug = slugGenerationService.generateTagSlug(name))
-                    )
-            }
+        // Through the vocabulary (#140): aliases, the stoplist, and new tags created and queued.
+        val resolved = tagVocabulary.acceptTags(tagNames, TAG_SOURCE)
         resolved.forEach { tag -> postTagRepository.save(PostTag(post = post, tag = tag)) }
         return resolved.map { it.name }
     }
@@ -148,5 +141,10 @@ class CreateContentOperation(
         return categoryIds.distinct().mapNotNull { id ->
             categoryRepository.findById(id).orElse(null)?.takeIf { !it.deleted }
         }
+    }
+
+    private companion object {
+        /** What a post's tags are written by, for the review queue. */
+        const val TAG_SOURCE = "post"
     }
 }

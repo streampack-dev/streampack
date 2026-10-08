@@ -5,13 +5,11 @@ import dev.streampack.blog.entity.Category
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.entity.PostCategory
 import dev.streampack.blog.entity.PostTag
-import dev.streampack.taxonomy.entity.Tag
 import dev.streampack.blog.model.PostStatus
 import dev.streampack.blog.repository.CategoryRepository
 import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
-import dev.streampack.taxonomy.repository.TagRepository
 import dev.streampack.core.entity.User
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
@@ -19,8 +17,10 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.taxonomy.entity.Tag
 import dev.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import dev.streampack.taxonomy.model.TaxonomySnapshot
+import dev.streampack.taxonomy.repository.TagRepository
 import dev.streampack.test.TestChannelConfiguration
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals

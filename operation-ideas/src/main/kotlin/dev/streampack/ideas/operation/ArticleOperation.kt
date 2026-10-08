@@ -17,6 +17,7 @@ import dev.streampack.core.service.TypedOperation
 import dev.streampack.ideas.model.IdeaSessionState
 import dev.streampack.ideas.service.IdeaAuthorResolver
 import dev.streampack.ideas.service.IdeaTimerService
+import dev.streampack.taxonomy.TagCanonicalizer
 import dev.streampack.taxonomy.TagNames
 import dev.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import dev.streampack.taxonomy.model.TaxonomySnapshot
@@ -38,6 +39,7 @@ class ArticleOperation(
     private val messageLogService: MessageLogService,
     private val ideaAuthorResolver: IdeaAuthorResolver,
     private val aiServiceProvider: ObjectProvider<AiService>,
+    private val tagCanonicalizer: TagCanonicalizer,
     @Value("\${streampack.ideas.max-log-duration:60}") private val maxLogDurationMinutes: Long = 60,
     @Value("\${streampack.ideas.max-log-messages:100}") private val maxLogMessages: Int = 100,
 ) : TypedOperation<String>(String::class) {
@@ -460,9 +462,12 @@ class ArticleOperation(
         return null
     }
 
-    /** An AI-proposed tag as [TagNames] shapes it; null if empty or a system tag. */
+    /**
+     * An AI-proposed tag in canonical form (#140: an alias is its tag); null if empty, stoplisted
+     * or a system tag.
+     */
     private fun normalizeTag(raw: String): String? =
-        TagNames.normalize(raw)?.takeUnless(TagNames::isSystem)
+        tagCanonicalizer.canonical(raw)?.takeUnless(TagNames::isSystem)
 
     private fun findTaxonomySnapshot(sourceProvenance: String): TaxonomySnapshot? {
         val decoded = runCatching { Provenance.decode(sourceProvenance) }.getOrNull()
