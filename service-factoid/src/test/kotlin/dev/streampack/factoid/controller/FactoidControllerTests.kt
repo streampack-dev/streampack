@@ -138,6 +138,7 @@ class FactoidControllerTests {
             status { isOk() }
             jsonPath("$.accessCount") { value(0) }
             jsonPath("$.lastAccessedAt") { doesNotExist() }
+            jsonPath("$.createdAt") { isNotEmpty() }
         }
         // Second request sees the first request's increment
         mockMvc.get("/factoids/spring").andExpect {
@@ -165,6 +166,7 @@ class FactoidControllerTests {
             jsonPath("$.factoids[0].lastAccessedAt") { doesNotExist() }
             jsonPath("$.factoids[0].text") { isNotEmpty() }
             jsonPath("$.factoids[0].tags") { isArray() }
+            jsonPath("$.factoids[0].createdAt") { isNotEmpty() }
         }
     }
 

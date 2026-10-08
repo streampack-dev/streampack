@@ -624,6 +624,10 @@
             },
             "type" : "array"
           },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
           "lastAccessedAt" : {
             "format" : "date-time",
             "type" : [ "string", "null" ]
@@ -788,6 +792,10 @@
           "accessCount" : {
             "format" : "int64",
             "type" : "integer"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
           },
           "lastAccessedAt" : {
             "format" : "date-time",

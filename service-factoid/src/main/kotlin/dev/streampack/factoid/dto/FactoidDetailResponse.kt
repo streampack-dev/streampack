@@ -11,6 +11,11 @@ data class FactoidDetailResponse(
     val updatedAt: Instant,
     val lastAccessedAt: Instant?,
     val accessCount: Long,
+    /**
+     * When the factoid was first set. Always filled in; optional in the spec only so clients built
+     * before it keep reading (the Atlas tells new from changed by it, ui-pudl#184).
+     */
+    val createdAt: Instant? = null,
     val attributes: List<FactoidAttributeResponse>,
 )
 
