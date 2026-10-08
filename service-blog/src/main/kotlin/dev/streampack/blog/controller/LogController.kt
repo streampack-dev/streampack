@@ -9,6 +9,7 @@ import dev.streampack.blog.model.LogProvenanceSummary
 import dev.streampack.blog.model.LogSearchHit
 import dev.streampack.blog.model.LogSearchResponse
 import dev.streampack.blog.service.LogChannelPaths
+import dev.streampack.core.model.MessageKind
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
@@ -20,6 +21,7 @@ import dev.streampack.core.service.MessageLogService
 import dev.streampack.core.service.ThrottleService
 import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -117,11 +119,21 @@ class LogController(
         return ResponseEntity.ok(LogChannelResponse(uri, path))
     }
 
-    @Operation(summary = "Get one day of logs for a provenance")
+    @Operation(
+        summary = "Get one day of logs for a provenance",
+        description =
+            "Every line of one UTC day, oldest first, each with its `kind`: `MESSAGE`, `JOIN`, " +
+                "`PART`, `QUIT`, `NICK` or `TOPIC`. $EVENTS_DESCRIPTION",
+    )
     @ApiResponse(
         responseCode = "200",
         description = "Log entries for day",
         content = [Content(schema = Schema(implementation = LogDayResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "A bad day, or an unknown `events` or `kinds` value",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
     @ApiResponse(
         responseCode = "404",
@@ -132,6 +144,8 @@ class LogController(
     fun getDayLogs(
         @RequestParam provenance: String,
         @RequestParam(required = false) day: String?,
+        @Parameter(description = EVENTS_PARAM) @RequestParam(required = false) events: String?,
+        @Parameter(description = KINDS_PARAM) @RequestParam(required = false) kinds: String?,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
@@ -150,15 +164,21 @@ class LogController(
                     }
             }
 
+        val selected =
+            selectKinds(events, kinds).getOrElse {
+                return badRequest(it.message ?: "Unknown events or kinds")
+            }
+
         val start = targetDay.atStartOfDay().toInstant(ZoneOffset.UTC)
         val end = targetDay.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
         val entries =
-            messageLogService.findMessages(provenance, start, end, 5000).map {
+            messageLogService.findMessages(provenance, start, end, 5000, selected).map {
                 LogEntry(
                     timestamp = it.timestamp,
                     sender = it.sender,
                     content = it.content,
                     direction = it.direction,
+                    kind = it.kind,
                 )
             }
         return ResponseEntity.ok(LogDayResponse(provenance, targetDay.toString(), entries))
@@ -172,7 +192,8 @@ class LogController(
                 "`sender` alone lists everything that person said there. Only a channel the " +
                 "caller may browse is searched; any other is a 404, as for the day logs, so a " +
                 "search can't reveal that a hidden channel exists. `q` is matched as written, " +
-                "between $MIN_QUERY and $MAX_QUERY characters.",
+                "between $MIN_QUERY and $MAX_QUERY characters. Each hit carries its `kind`. " +
+                EVENTS_DESCRIPTION,
     )
     @ApiResponse(
         responseCode = "200",
@@ -181,7 +202,9 @@ class LogController(
     )
     @ApiResponse(
         responseCode = "400",
-        description = "Neither a query nor a sender, a short or long query, or a bad page or size",
+        description =
+            "Neither a query nor a sender, a short or long query, a bad page or size, or an " +
+                "unknown `events` or `kinds` value",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
     @ApiResponse(
@@ -201,6 +224,8 @@ class LogController(
         @RequestParam(required = false) sender: String?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "50") size: Int,
+        @Parameter(description = EVENTS_PARAM) @RequestParam(required = false) events: String?,
+        @Parameter(description = KINDS_PARAM) @RequestParam(required = false) kinds: String?,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
@@ -218,9 +243,13 @@ class LogController(
             return badRequest("A sender is at most $MAX_SENDER characters.")
         if (page < 0) return badRequest("The page can't be negative.")
         if (size < 1 || size > MAX_SIZE) return badRequest("The size is 1 to $MAX_SIZE.")
+        val selected =
+            selectKinds(events, kinds).getOrElse {
+                return badRequest(it.message ?: "Unknown events or kinds")
+            }
         if (!searchAllowed(user)) return tooManyRequests("Too many searches; try again shortly.")
 
-        val found = messageLogService.searchMessages(provenance, query, nick, page, size)
+        val found = messageLogService.searchMessages(provenance, query, nick, page, size, selected)
         val hits =
             found.content.map {
                 LogSearchHit(
@@ -229,6 +258,7 @@ class LogController(
                     sender = it.sender,
                     content = it.content,
                     direction = it.direction,
+                    kind = it.kind,
                 )
             }
         return ResponseEntity.ok(
@@ -299,6 +329,48 @@ class LogController(
     }
 
     companion object {
+        private const val EVENTS_PARAM =
+            "`all` (the default) for every line, `none` for what was said only, without joins, " +
+                "parts, quits, nick changes and topics"
+        private const val KINDS_PARAM =
+            "Only these kinds, comma-separated: `MESSAGE`, `JOIN`, `PART`, `QUIT`, `NICK`, " +
+                "`TOPIC` (any case). With `events`, a line must pass both."
+        private const val EVENTS_DESCRIPTION =
+            "`events=none` leaves out channel events (joins, parts, quits, nick changes and " +
+                "topics); `kinds` picks the kinds to include. Without either, every line is " +
+                "returned."
+
+        /**
+         * The kinds `events` and `kinds` select (#174): every kind when neither is given; with
+         * both, those both allow. An unknown value of either is a failure, for a 400.
+         */
+        fun selectKinds(events: String?, kinds: String?): Result<Set<MessageKind>> {
+            val byEvents =
+                when (events?.trim()?.lowercase()) {
+                    null,
+                    "",
+                    "all" -> MessageKind.entries.toSet()
+                    "none" -> setOf(MessageKind.MESSAGE)
+                    else ->
+                        return Result.failure(
+                            IllegalArgumentException("events is all or none, not '$events'.")
+                        )
+                }
+            val names = kinds?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }
+            if (names.isNullOrEmpty()) return Result.success(byEvents)
+            val byKinds = names.map { name ->
+                MessageKind.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }
+                    ?: return Result.failure(
+                        IllegalArgumentException(
+                            "Unknown kind '$name'; the kinds are " +
+                                MessageKind.entries.joinToString(", ") +
+                                "."
+                        )
+                    )
+            }
+            return Result.success(byEvents intersect byKinds.toSet())
+        }
+
         /** A search's shortest query: a trigram, the least the index can serve. */
         const val MIN_QUERY = 3
         const val MAX_QUERY = 200

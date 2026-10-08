@@ -130,8 +130,8 @@ depends on who they are.
 |----------|---------|
 | `GET /logs/provenances` | Lists the channels the caller may browse, most recently active first. |
 | `GET /logs/channels/{protocol}/{service}/{name}` | Finds a channel by its readable address: `irc/libera/primate`. |
-| `GET /logs?provenance=<uri>&day=YYYY-MM-DD` | One UTC day of a channel's log, oldest first. `day` defaults to today. |
-| `GET /logs/search?provenance=<uri>&q=<text>&sender=<nick>&page=0&size=50` | Searches one channel's log, newest first. |
+| `GET /logs?provenance=<uri>&day=YYYY-MM-DD&events=all` | One UTC day of a channel's log, oldest first. `day` defaults to today. |
+| `GET /logs/search?provenance=<uri>&q=<text>&sender=<nick>&page=0&size=50&events=all` | Searches one channel's log, newest first. |
 
 **Which channels.** A channel is browsable when it's registered (with a protocol's `join`), active,
 and `logged`; anonymous callers and ordinary users also need it `visible`, while `ADMIN` and
@@ -183,16 +183,29 @@ for front ends to put in their own addresses (`/logs/irc/libera/primate`), and
 The `latest*` fields are `null` for a channel with nothing logged yet.
 
 `GET /logs` answers `LogDayResponse`: `provenanceUri`, `day`, and `entries`, each with `timestamp`,
-`sender`, `content` and `direction` (`INBOUND` for what was said, `OUTBOUND` for the bot's
-replies). A day returns at most 5000 entries, the earliest. A `day` that isn't `YYYY-MM-DD` is a
-`400`.
+`sender`, `content`, `direction` (`INBOUND` for what was said, `OUTBOUND` for the bot's
+replies) and `kind`. A day returns at most 5000 entries, the earliest. A `day` that isn't
+`YYYY-MM-DD` is a `400`.
+
+**Kinds and events.** Each line's `kind` is `MESSAGE` for something said (`/me` actions too), or a
+channel event: `JOIN`, `PART`, `QUIT`, `NICK` or `TOPIC` (see
+[The Message Log](../explanation/message-log.md#each-line-has-a-kind)). The day view and search take:
+
+- `events=all` (the default): every line, as before;
+- `events=none`: what was said only, without the events;
+- `kinds=JOIN,PART`: only these kinds, comma-separated, any case. With `events` as well, a line has
+  to pass both.
+
+An `events` other than `all` or `none`, or an unknown kind, is a `400`. Direct and hidden lines stay
+out under every filter.
 
 `GET /logs/search` needs `q`, `sender`, or both: `q` matches text anywhere in a line, ignoring case,
 as written (`%` and `_` are literal), and is 3 to 200 characters; `sender` is a nick as logged,
 ignoring case, up to 255 characters, and alone lists everything that person said in the channel.
 `size` is 1 to 100. It answers `LogSearchResponse`: `provenanceUri`, `query`, `sender`, `page`,
-`size`, `totalCount`, `totalPages`, and `hits`, each an entry as above plus its UTC `day`, so a
-client can link to the day view. Searches are limited to 30 a minute for each signed-in caller, and
+`size`, `totalCount`, `totalPages`, and `hits`, each an entry as above (with its `kind`) plus its
+UTC `day`, so a client can link to the day view. `events` and `kinds` narrow it as they do the day
+view; `totalCount` counts only what they let through. Searches are limited to 30 a minute for each signed-in caller, and
 60 a minute shared by all anonymous callers (`429` past that). A bad parameter is a `400`.
 
 ## Admin Web Console
