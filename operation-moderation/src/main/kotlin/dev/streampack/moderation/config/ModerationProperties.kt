@@ -30,6 +30,12 @@ data class ModerationProperties(
     val reviewLines: Int = 20,
     /** How many lines before and after each of theirs a review shows, for context. */
     val contextLines: Int = 3,
+    /**
+     * A flagged line that added at least this is a strong one, which the admin windows pre-check
+     * for hiding (#169): an aimed insult (8), personal details (3), a slur or threat (10) are; a
+     * repeat, a flood line or swearing at no one aren't.
+     */
+    val strongLineWeight: Double = 3.0,
     val weights: Weights = Weights(),
     /** More lines than this in [floodWindow] is a flood. */
     val floodLines: Int = 6,

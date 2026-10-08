@@ -1204,9 +1204,22 @@
           "sender" : {
             "type" : "string"
           },
+          "signals" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : [ "array", "null" ]
+          },
+          "strong" : {
+            "type" : [ "boolean", "null" ]
+          },
           "timestamp" : {
             "format" : "date-time",
             "type" : "string"
+          },
+          "weight" : {
+            "format" : "double",
+            "type" : [ "number", "null" ]
           }
         },
         "required" : [ "cited", "content", "day", "direction", "flagged", "hidden", "id", "sender", "timestamp" ],

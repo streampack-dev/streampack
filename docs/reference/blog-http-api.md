@@ -304,8 +304,11 @@ when AI was off or the model didn't answer. `channel` is the provenance's channe
 
 `GET /admin/moderation/reports/{id}` answers `ReportDetail`: `report` (as above), `lines`, the lines
 the review read, oldest first, each `{id, timestamp, day, sender, content, direction, hidden,
-flagged, cited}` (`flagged`: the person's line raised a signal; `cited`: the model pointed at it;
-`day`: its UTC day, for a link to the log day), `purgedLineIds` (excerpt lines since purged), and
+flagged, cited, signals, weight, strong}` (`flagged`: the person's line raised a signal; `cited`:
+the model pointed at it; `day`: its UTC day, for a link to the log day; `signals`, `weight` and
+`strong`: for a flagged line, the signals it raised, what it added, and whether that reaches
+`strong-line-weight` so it's worth pre-checking for hiding (#169), all null for other lines and for
+reports filed before they were kept), `purgedLineIds` (excerpt lines since purged), and
 `actions`, oldest first, each `{id, reportId, action, lineIds, note, actor, actedAt}` with `action`
 one of `HIDE`, `UNHIDE`, `PURGE`, `DISMISS`.
 

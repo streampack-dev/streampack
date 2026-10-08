@@ -91,6 +91,13 @@ class AdminModerationControllerTests {
                     excerptLineIds = lines.map { it.id.toString() },
                     flaggedLineIds = listOf(lines[1].id.toString(), lines[3].id.toString()),
                     citedLineIds = listOf(lines[3].id.toString()),
+                    lineWeights =
+                        mapOf(lines[1].id.toString() to 8.0, lines[3].id.toString() to 1.0),
+                    lineSignals =
+                        mapOf(
+                            lines[1].id.toString() to listOf("AIMED_HOSTILITY"),
+                            lines[3].id.toString() to listOf("REPETITION"),
+                        ),
                     windowStart = lines.first().timestamp,
                     windowEnd = lines.last().timestamp,
                 )
@@ -184,6 +191,12 @@ class AdminModerationControllerTests {
                 jsonPath("$.lines[1].flagged") { value(true) }
                 jsonPath("$.lines[3].cited") { value(true) }
                 jsonPath("$.lines[1].hidden") { value(false) }
+                jsonPath("$.lines[1].signals[0]") { value("AIMED_HOSTILITY") }
+                jsonPath("$.lines[1].weight") { value(8.0) }
+                jsonPath("$.lines[1].strong") { value(true) }
+                jsonPath("$.lines[3].signals[0]") { value("REPETITION") }
+                jsonPath("$.lines[3].strong") { value(false) }
+                jsonPath("$.lines[0].strong") { doesNotExist() }
                 jsonPath("$.purgedLineIds.length()") { value(0) }
             }
         mockMvc

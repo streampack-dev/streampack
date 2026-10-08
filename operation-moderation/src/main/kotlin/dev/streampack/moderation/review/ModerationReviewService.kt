@@ -106,6 +106,19 @@ class ModerationReviewService(
                     excerptLineIds = excerpt.map { it.id.toString() },
                     flaggedLineIds = flagged.map { it.id.toString() },
                     citedLineIds = cited.map { it.id.toString() },
+                    lineWeights =
+                        flagged.associate {
+                            it.id.toString() to candidate.signalLines.getValue(it.content).weight
+                        },
+                    lineSignals =
+                        flagged.associate { line ->
+                            line.id.toString() to
+                                candidate.signalLines
+                                    .getValue(line.content)
+                                    .signals
+                                    .map { it.name }
+                                    .sorted()
+                        },
                     windowStart = excerpt.firstOrNull()?.timestamp ?: from,
                     windowEnd = excerpt.lastOrNull()?.timestamp ?: now,
                     createdAt = now,
@@ -134,14 +147,14 @@ class ModerationReviewService(
         log: List<MessageLog>,
         sender: String,
         from: Instant,
-        signalLines: Map<String, Double>,
+        signalLines: Map<String, ModerationScores.SignalLine>,
     ): List<MessageLog> {
         val theirs = log.indices.filter { isTheirs(log[it], sender) && log[it].timestamp >= from }
         val signalled =
             theirs
                 .filter { log[it].content in signalLines }
                 .sortedWith(
-                    compareByDescending<Int> { signalLines.getValue(log[it].content) }
+                    compareByDescending<Int> { signalLines.getValue(log[it].content).weight }
                         .thenByDescending { it }
                 )
                 .take(properties.reviewLines)
