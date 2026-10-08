@@ -13,6 +13,11 @@
     <packaging>pom</packaging>
     <description>Aggregates JaCoCo coverage from all modules</description>
 
+    <properties>
+        <!-- A build-time report, not an artifact: a release's deploy leaves it out of Nexus. -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>dev.streampack</groupId>
