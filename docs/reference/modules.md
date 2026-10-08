@@ -13,7 +13,7 @@
 | `lib-polling` | Shared polling infrastructure |
 | `service-gitlab` | Optional GitLab project watching on `lib-forge`: instances, projects, subscriptions, polling, webhooks; active only with `streampack.gitlab.enabled=true` |
 | `lib-forge` | Shared code for watching code forges (GitHub, GitLab): instance and project contracts, client contract, event model, formatting, `on <host>` parsing, polling and subscription templates, webhook receiver. No tables; each forge module owns its own persistence |
-| `lib-taxonomy` | Taxonomy/category support |
+| `lib-taxonomy` | Taxonomy/category support; tag names (`TagNames`), the `tags` table, and the tag vocabulary: aliases, stoplist, review queue and AI near-miss (`TagVocabulary`, `TagCuration`) |
 | `lib-web` | Shared web support |
 | `operation-*` | Operation modules that add behavior to the operation pipeline |
 | `service-*` | Service modules for HTTP, protocols, and integrations |
