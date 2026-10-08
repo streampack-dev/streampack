@@ -48,6 +48,38 @@ interface PostTagRepository : JpaRepository<PostTag, UUID> {
      * is the number of posts its listing shows.
      */
     fun findTagCounts(now: Instant): List<NameCountProjection>
+
+    @Query(
+        """
+        SELECT pt.post.id AS postId, pt.post.title AS title, pt.post.publishedAt AS publishedAt,
+          LOWER(pt.tag.name) AS tag,
+          (SELECT MIN(s.path) FROM Slug s WHERE s.post = pt.post AND s.canonical = true) AS slug
+        FROM PostTag pt
+        WHERE pt.tag.deleted = false
+          AND pt.post.deleted = false
+          AND pt.post.status = dev.streampack.blog.model.PostStatus.APPROVED
+          AND pt.post.publishedAt <= :now
+          AND NOT EXISTS (
+            SELECT pc FROM PostCategory pc
+            WHERE pc.post = pt.post AND pc.category.name LIKE '\_%' ESCAPE '\'
+          )
+          AND SUBSTRING(LOWER(pt.tag.name), 1, 1) <> '_'
+        """
+    )
+    /**
+     * Each published post's tags, a row per post and tag, counted by the same rules as
+     * [findTagCounts]: what the Atlas ties tags by and pins at each place (ui-pudl#184).
+     */
+    fun findPublishedTagging(now: Instant): List<PostTaggingProjection>
+}
+
+/** A published post and one of its tags. */
+interface PostTaggingProjection {
+    val postId: UUID
+    val title: String
+    val publishedAt: Instant
+    val tag: String
+    val slug: String?
 }
 
 interface NameCountProjection {
