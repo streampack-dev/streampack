@@ -422,6 +422,7 @@ class FactoidController(
             updatedAt = factoid.updatedAt,
             lastAccessedAt = factoid.lastAccessedAt,
             accessCount = factoid.accessCount,
+            createdAt = factoid.createdAt,
             attributes = attributeResponses,
         )
     }
@@ -436,6 +437,7 @@ class FactoidController(
             updatedAt = updatedAt,
             lastAccessedAt = lastAccessedAt,
             accessCount = accessCount,
+            createdAt = createdAt,
             text = summaries[selector]?.text,
             tags = summaries[selector]?.tags ?: emptyList(),
         )
