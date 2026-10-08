@@ -980,6 +980,10 @@
             "enum" : [ "INBOUND", "OUTBOUND" ],
             "type" : "string"
           },
+          "kind" : {
+            "enum" : [ "MESSAGE", "JOIN", "PART", "QUIT", "NICK", "TOPIC" ],
+            "type" : "string"
+          },
           "sender" : {
             "type" : "string"
           },
@@ -988,7 +992,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "content", "direction", "sender", "timestamp" ],
+        "required" : [ "content", "direction", "kind", "sender", "timestamp" ],
         "type" : "object"
       },
       "LogProvenanceListResponse" : {
@@ -1046,6 +1050,10 @@
             "enum" : [ "INBOUND", "OUTBOUND" ],
             "type" : "string"
           },
+          "kind" : {
+            "enum" : [ "MESSAGE", "JOIN", "PART", "QUIT", "NICK", "TOPIC" ],
+            "type" : "string"
+          },
           "sender" : {
             "type" : "string"
           },
@@ -1054,7 +1062,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "content", "day", "direction", "sender", "timestamp" ],
+        "required" : [ "content", "day", "direction", "kind", "sender", "timestamp" ],
         "type" : "object"
       },
       "LogSearchResponse" : {
@@ -4447,6 +4455,7 @@
     },
     "/logs" : {
       "get" : {
+        "description" : "Every line of one UTC day, oldest first, each with its `kind`: `MESSAGE`, `JOIN`, `PART`, `QUIT`, `NICK` or `TOPIC`. `events=none` leaves out channel events (joins, parts, quits, nick changes and topics); `kinds` picks the kinds to include. Without either, every line is returned.",
         "operationId" : "getDayLogs",
         "parameters" : [ {
           "in" : "query",
@@ -4462,6 +4471,22 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "description" : "`all` (the default) for every line, `none` for what was said only, without joins, parts, quits, nick changes and topics",
+          "in" : "query",
+          "name" : "events",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Only these kinds, comma-separated: `MESSAGE`, `JOIN`, `PART`, `QUIT`, `NICK`, `TOPIC` (any case). With `events`, a line must pass both.",
+          "in" : "query",
+          "name" : "kinds",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -4473,6 +4498,16 @@
               }
             },
             "description" : "Log entries for day"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A bad day, or an unknown `events` or `kinds` value"
           },
           "404" : {
             "content" : {
@@ -4562,7 +4597,7 @@
     },
     "/logs/search" : {
       "get" : {
-        "description" : "Lines in one channel whose text contains `q`, ignoring case, and written by `sender` (a nick, ignoring case), newest first. Give `q`, `sender`, or both: `sender` alone lists everything that person said there. Only a channel the caller may browse is searched; any other is a 404, as for the day logs, so a search can't reveal that a hidden channel exists. `q` is matched as written, between 3 and 200 characters.",
+        "description" : "Lines in one channel whose text contains `q`, ignoring case, and written by `sender` (a nick, ignoring case), newest first. Give `q`, `sender`, or both: `sender` alone lists everything that person said there. Only a channel the caller may browse is searched; any other is a 404, as for the day logs, so a search can't reveal that a hidden channel exists. `q` is matched as written, between 3 and 200 characters. Each hit carries its `kind`. `events=none` leaves out channel events (joins, parts, quits, nick changes and topics); `kinds` picks the kinds to include. Without either, every line is returned.",
         "operationId" : "search",
         "parameters" : [ {
           "in" : "query",
@@ -4603,6 +4638,22 @@
             "format" : "int32",
             "type" : "integer"
           }
+        }, {
+          "description" : "`all` (the default) for every line, `none` for what was said only, without joins, parts, quits, nick changes and topics",
+          "in" : "query",
+          "name" : "events",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Only these kinds, comma-separated: `MESSAGE`, `JOIN`, `PART`, `QUIT`, `NICK`, `TOPIC` (any case). With `events`, a line must pass both.",
+          "in" : "query",
+          "name" : "kinds",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -4623,7 +4674,7 @@
                 }
               }
             },
-            "description" : "Neither a query nor a sender, a short or long query, or a bad page or size"
+            "description" : "Neither a query nor a sender, a short or long query, a bad page or size, or an unknown `events` or `kinds` value"
           },
           "404" : {
             "content" : {

@@ -28,7 +28,7 @@ data class LogEntry(
     val content: String,
     val direction: MessageDirection,
     /** What the line is: something said, or a join, part, quit, nick change or topic (#174) */
-    val kind: MessageKind = MessageKind.MESSAGE,
+    val kind: MessageKind,
 )
 
 data class LogDayResponse(val provenanceUri: String, val day: String, val entries: List<LogEntry>)
@@ -41,7 +41,7 @@ data class LogSearchHit(
     val content: String,
     val direction: MessageDirection,
     /** What the line is: something said, or a join, part, quit, nick change or topic (#174) */
-    val kind: MessageKind = MessageKind.MESSAGE,
+    val kind: MessageKind,
 )
 
 /** One page of a channel's search results, newest first. */
