@@ -8,6 +8,7 @@ import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.TypedOperation
+import dev.streampack.taxonomy.TagCanonicalizer
 import dev.streampack.taxonomy.TagNames
 import dev.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import dev.streampack.taxonomy.model.TaxonomySnapshot
@@ -20,8 +21,10 @@ import org.springframework.stereotype.Component
  * taxonomy tags.
  */
 @Component
-class SuggestTagsHeuristicOperation(private val eventGateway: EventGateway) :
-    TypedOperation<SuggestTagsRequest>(SuggestTagsRequest::class) {
+class SuggestTagsHeuristicOperation(
+    private val eventGateway: EventGateway,
+    private val tagCanonicalizer: TagCanonicalizer,
+) : TypedOperation<SuggestTagsRequest>(SuggestTagsRequest::class) {
 
     override fun handle(payload: SuggestTagsRequest, message: Message<*>): OperationOutcome {
         val title = payload.title.trim()
@@ -192,9 +195,14 @@ class SuggestTagsHeuristicOperation(private val eventGateway: EventGateway) :
         return Regex("""(?<![a-z0-9])$escaped(?![a-z0-9])""").containsMatchIn(text)
     }
 
-    /** [raw] as [TagNames] shapes it, unless it's a system tag or shorter than two characters. */
+    /**
+     * [raw] in canonical form (#140: an alias is its tag, a stoplisted term is dropped), unless
+     * it's a system tag or shorter than two characters.
+     */
     private fun normalizeTag(raw: String): String? =
-        TagNames.normalize(raw)?.takeIf { !TagNames.isSystem(it) && it.length >= MIN_LENGTH }
+        tagCanonicalizer.canonical(raw)?.takeIf {
+            !TagNames.isSystem(it) && it.length >= MIN_LENGTH
+        }
 
     companion object {
         /** The shortest tag the heuristic suggests. */

@@ -7,6 +7,7 @@ import dev.streampack.factoid.model.FactoidAttributeType
 import dev.streampack.factoid.repository.FactoidAttributeRepository
 import dev.streampack.factoid.repository.FactoidRepository
 import dev.streampack.taxonomy.TagNames
+import dev.streampack.taxonomy.TagVocabulary
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 class FactoidService(
     private val factoidRepository: FactoidRepository,
     private val factoidAttributeRepository: FactoidAttributeRepository,
+    private val tagVocabulary: TagVocabulary,
 ) {
     private val logger = LoggerFactory.getLogger(FactoidService::class.java)
 
@@ -52,11 +54,6 @@ class FactoidService(
         updatedBy: String?,
     ): SaveResult {
         val normalized = selector.lowercase()
-        // Tags are written in one shape (#140): normalized and de-duplicated. Stored lists are not
-        // rewritten; they take this shape when next saved.
-        val stored =
-            if (type == FactoidAttributeType.TAGS) TagNames.joinNormalized(value.split(','))
-            else value
         val now = Instant.now()
         val existingFactoid = factoidRepository.findBySelectorIgnoreCase(normalized)
 
@@ -64,6 +61,14 @@ class FactoidService(
             logger.debug("Factoid '{}' is locked, rejecting update", normalized)
             return SaveResult.Locked(normalized)
         }
+
+        // Tags go through the vocabulary (#140): normalized, aliases followed, stoplisted terms
+        // dropped, new tags created (and queued for review when doubtful), no repeats. Stored lists
+        // are not rewritten; they take this shape when next saved.
+        val stored =
+            if (type == FactoidAttributeType.TAGS)
+                tagVocabulary.acceptAll(value.split(','), TAG_SOURCE).joinToString(",")
+            else value
 
         val factoid =
             if (existingFactoid != null) {
@@ -176,10 +181,13 @@ class FactoidService(
         return factoidAttributeRepository.searchForTerm("%${term.lowercase()}%")
     }
 
-    /** Finds factoid selectors that have an exact tag match */
+    /**
+     * Finds factoid selectors that have an exact tag match. An alias finds its tag's factoids
+     * (#140): [tag] is looked up through the vocabulary ([TagVocabulary.lookup]) first.
+     */
     @Transactional(readOnly = true)
     fun searchByTag(tag: String): List<String> {
-        return factoidAttributeRepository.findSelectorsByTag(tag)
+        return factoidAttributeRepository.findSelectorsByTag(tagVocabulary.lookup(tag) ?: tag)
     }
 
     /** Paginated listing of all factoids */
@@ -261,6 +269,11 @@ class FactoidService(
         data object NotFound : DeleteResult
 
         data class Locked(val selector: String) : DeleteResult
+    }
+
+    private companion object {
+        /** What a factoid's tags are written by, for the review queue. */
+        const val TAG_SOURCE = "factoid"
     }
 
     data class FactoidListSummary(val text: String? = null, val tags: List<String> = emptyList())

@@ -3,11 +3,9 @@ package dev.streampack.ideas.operation
 
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.entity.PostTag
-import dev.streampack.blog.entity.Tag
 import dev.streampack.blog.model.PostStatus
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
-import dev.streampack.blog.repository.TagRepository
 import dev.streampack.core.entity.User
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
@@ -16,6 +14,8 @@ import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.taxonomy.entity.Tag
+import dev.streampack.taxonomy.repository.TagRepository
 import java.util.UUID
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertInstanceOf

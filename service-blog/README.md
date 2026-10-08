@@ -8,6 +8,7 @@ It owns:
 - OTP-based sign-in and token refresh
 - account export, erasure, suspension, and unsuspension
 - editor-side AI tag derivation
+- the tag vocabulary's admin endpoints (`/admin/tags`: review queue, aliases, stoplist)
 - the Atlas: the map of the site's tags every front end draws
 
 Most operations in this module are typed request handlers used by HTTP controllers rather than
@@ -25,7 +26,7 @@ chat-facing bot commands.
 | `POST /posts/{id}/access` | Records UI-driven post access without returning post content. |
 | `GET /pages/{slug}` | Reads a system page from the `_pages` category. |
 | `GET /atlas` | The Atlas: regions and places (tags) with positions, counts and pins. |
-| `GET /atlas/places/{tag}` | One place on the Atlas, with every article and factoid found there. |
+| `GET /atlas/places/{tag}` | One place on the Atlas, with every article and factoid found there; an alias finds its tag's place. |
 
 `GET /posts/popular` is intended for compact UI sections such as "popular posts" or "popular pages."
 It returns the same `ContentListResponse` shape as the normal post listing, ordered by decayed
@@ -46,6 +47,19 @@ ui-pudl and ui-primate draw the same one) and serves it at `GET /atlas`; see
 - **Cost:** the answer is kept in memory, keyed by a validator over the taxonomy's inputs, factoid
   and slug changes and the stored map, so a request with nothing changed costs a few aggregate
   queries; the same validator gives `GET /atlas` its `ETag`.
+- **Tag aliases** (#140): `GET /atlas/places/{tag}` follows an alias to its tag. The stored layout
+  isn't rewritten when a tag is aliased or split: the old tag's place simply drops off the map once
+  nothing carries it, and the target keeps its own place. Rewriting `atlas_place` keys belongs to
+  the data migration that merges existing tags.
+
+## Tag Vocabulary
+
+`AdminTagController` serves `/admin/tags` (ADMIN, `401`/`403`) over `TagCuration` (lib-taxonomy):
+the review queue of doubtful new tags with alias, split, keep and dismiss; alias and stoplist CRUD;
+and the log of changes. Aliasing or splitting re-points `post_tags` (`PostTagUsages`, lib-blog) and
+factoid tag lists (`FactoidTagUsages`, operation-factoid) in one transaction. See
+[Tag Names](../docs/reference/tags.md#the-vocabulary) and the
+[Blog HTTP API](../docs/reference/blog-http-api.md#admin-tags).
 
 
 
@@ -59,7 +73,7 @@ ui-pudl and ui-primate draw the same one) and serves it at `GET /atlas`; see
 | `SuspendAccountOperation` | `SuspendAccountRequest` | Suspends an account for moderation review; requires `ADMIN`. |
 | `UnsuspendAccountOperation` | `UnsuspendAccountRequest` | Restores a suspended account; requires `ADMIN`. |
 | `PurgeErasedContentOperation` | `PurgeErasedContentRequest` | Hard-deletes content owned by an erased sentinel and removes the sentinel; requires `ADMIN`. |
-| `DeriveTagsOperation` | `DeriveTagsRequest` | Produces non-persistent AI tag suggestions for editor content; requires `ADMIN`. |
+| `DeriveTagsOperation` | `DeriveTagsRequest` | Produces non-persistent AI tag suggestions for editor content, in canonical form (aliases followed, stoplisted terms dropped); requires `ADMIN`. |
 
 ## Notes
 

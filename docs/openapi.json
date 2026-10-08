@@ -1930,6 +1930,217 @@
         "required" : [ "tags" ],
         "type" : "object"
       },
+      "TagActionEntry" : {
+        "description" : "One change to the tag vocabulary",
+        "properties" : {
+          "actedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "action" : {
+            "enum" : [ "ALIAS", "UNALIAS", "SPLIT", "KEEP", "DISMISS", "STOP", "UNSTOP", "REMOVE" ],
+            "type" : "string"
+          },
+          "actor" : {
+            "type" : "string"
+          },
+          "detail" : {
+            "description" : "What it became, or other detail",
+            "type" : [ "string", "null" ]
+          },
+          "subject" : {
+            "description" : "The tag or term acted on",
+            "type" : "string"
+          }
+        },
+        "required" : [ "actedAt", "action", "actor", "subject" ],
+        "type" : "object"
+      },
+      "TagAliasEntry" : {
+        "description" : "An alias and the tag it means",
+        "properties" : {
+          "alias" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdBy" : {
+            "type" : "string"
+          },
+          "tag" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "alias", "createdAt", "createdBy", "tag" ],
+        "type" : "object"
+      },
+      "TagAliasRequest" : {
+        "description" : "Make a tag an alias of another",
+        "properties" : {
+          "alias" : {
+            "description" : "The name to alias; required when creating an alias",
+            "type" : [ "string", "null" ]
+          },
+          "tag" : {
+            "description" : "The tag it means",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "TagChangeResult" : {
+        "description" : "What an alias, split, keep or dismiss did",
+        "properties" : {
+          "factoids" : {
+            "description" : "Factoids whose tag lists were rewritten",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "now" : {
+            "description" : "What it now stands for: the alias target, or the split's parts",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "posts" : {
+            "description" : "Posts re-pointed",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "tag" : {
+            "description" : "The tag acted on",
+            "type" : "string"
+          }
+        },
+        "required" : [ "factoids", "now", "posts", "tag" ],
+        "type" : "object"
+      },
+      "TagReviewEntry" : {
+        "description" : "A doubtful new tag in the admin review queue",
+        "properties" : {
+          "actedAt" : {
+            "description" : "When it was decided",
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "actedBy" : {
+            "description" : "Who decided, once decided",
+            "type" : [ "string", "null" ]
+          },
+          "aiCandidate" : {
+            "description" : "The existing tag the AI thinks this duplicates",
+            "type" : [ "string", "null" ]
+          },
+          "aiConfidence" : {
+            "description" : "The AI's confidence, 0 to 1",
+            "format" : "double",
+            "type" : [ "number", "null" ]
+          },
+          "aiModel" : {
+            "description" : "The model that answered",
+            "type" : [ "string", "null" ]
+          },
+          "aiReason" : {
+            "description" : "Why the AI thinks so",
+            "type" : [ "string", "null" ]
+          },
+          "firstSeen" : {
+            "description" : "When it was first written",
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "hintKind" : {
+            "description" : "PLURAL (a trailing-s pair with hintTags[0]), MISSING_COMMA (hintTags are the existing tags it's made of) or AI (only the AI near-miss found something)",
+            "enum" : [ "PLURAL", "MISSING_COMMA", "AI" ],
+            "type" : "string"
+          },
+          "hintTags" : {
+            "description" : "The existing tags the hint names",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "source" : {
+            "description" : "What first wrote it: post, factoid",
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "OPEN", "ALIASED", "SPLIT", "KEPT", "DISMISSED" ],
+            "type" : "string"
+          },
+          "tag" : {
+            "description" : "The tag as it was written and created",
+            "type" : "string"
+          }
+        },
+        "required" : [ "firstSeen", "hintKind", "hintTags", "id", "source", "status", "tag" ],
+        "type" : "object"
+      },
+      "TagReviewListResponse" : {
+        "description" : "The review queue, a page of it",
+        "properties" : {
+          "entries" : {
+            "items" : {
+              "$ref" : "#/components/schemas/TagReviewEntry"
+            },
+            "type" : "array"
+          },
+          "openCount" : {
+            "description" : "Open entries in all, for a launcher badge",
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "entries", "openCount" ],
+        "type" : "object"
+      },
+      "TagSplitRequest" : {
+        "description" : "Split a tag into its parts",
+        "properties" : {
+          "parts" : {
+            "description" : "The parts; the entry's hint tags when left out",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : [ "array", "null" ]
+          }
+        },
+        "type" : "object"
+      },
+      "TagStopEntry" : {
+        "description" : "A stoplisted term",
+        "properties" : {
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdBy" : {
+            "type" : "string"
+          },
+          "term" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "createdBy", "term" ],
+        "type" : "object"
+      },
+      "TagStopRequest" : {
+        "description" : "A term for the stoplist",
+        "properties" : {
+          "term" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "TaxonomySnapshot" : {
         "description" : "Usage counts per taxonomy term. Terms starting with _ are never included.",
         "properties" : {
@@ -3629,6 +3840,778 @@
         "tags" : [ "Admin - RSS" ]
       }
     },
+    "/admin/tags/actions" : {
+      "get" : {
+        "description" : "Aliases, splits, keeps, dismissals and stoplist changes: who and when.",
+        "operationId" : "listTagActions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "default" : 50,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/TagActionEntry"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "The latest changes, newest first"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Recent changes to the tag vocabulary",
+        "tags" : [ "Admin - Tags" ]
+      }
+    },
+    "/admin/tags/aliases" : {
+      "delete" : {
+        "description" : "Nothing is re-pointed back: what was merged stays merged, and the name is free to be a tag of its own again.",
+        "operationId" : "deleteTagAlias",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "alias",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagAliasEntry"
+                }
+              }
+            },
+            "description" : "The alias removed"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such alias"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Remove a tag alias",
+        "tags" : [ "Admin - Tags" ]
+      },
+      "get" : {
+        "operationId" : "listTagAliases",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/TagAliasEntry"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "The aliases, by alias"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Every tag alias",
+        "tags" : [ "Admin - Tags" ]
+      },
+      "post" : {
+        "description" : "`alias` becomes an alias of the existing tag `tag`. Any posts and factoids carrying `alias` are re-pointed to `tag` in one transaction, its row goes, and its own aliases move to `tag`. Writing or looking up `alias` then finds `tag`.",
+        "operationId" : "createTagAlias",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TagAliasRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagChangeResult"
+                }
+              }
+            },
+            "description" : "What changed"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No alias, a target that isn't a tag, a system tag, or the same tag"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Make a tag an alias of another",
+        "tags" : [ "Admin - Tags" ]
+      }
+    },
+    "/admin/tags/review" : {
+      "get" : {
+        "description" : "Doubtful new tags: a trailing-s pair with an existing tag (PLURAL), several words that are each a tag (MISSING_COMMA), or a near-duplicate only the AI found (AI). Open entries by default, the AI's most confident first, then newest. `openCount` is how many are open in all, for a launcher badge.",
+        "operationId" : "listTagReviews",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "default" : "open",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 50,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagReviewListResponse"
+                }
+              }
+            },
+            "description" : "A page of the queue"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A bad status, page or size"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "The tag review queue",
+        "tags" : [ "Admin - Tags" ]
+      }
+    },
+    "/admin/tags/review/{id}/alias" : {
+      "post" : {
+        "description" : "Every post and factoid carrying the queued tag is re-pointed to `tag`, in one transaction; the queued tag's own row goes, and it becomes an alias of `tag`. The entry is marked ALIASED.",
+        "operationId" : "aliasTagReview",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TagAliasRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagChangeResult"
+                }
+              }
+            },
+            "description" : "What changed"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The target isn't an existing tag, or is the same tag"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such entry"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Alias a queued tag to an existing one",
+        "tags" : [ "Admin - Tags" ]
+      }
+    },
+    "/admin/tags/review/{id}/dismiss" : {
+      "post" : {
+        "description" : "The tag stays as it is; the entry is marked DISMISSED.",
+        "operationId" : "dismissTagReview",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagChangeResult"
+                }
+              }
+            },
+            "description" : "The tag dismissed"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The entry was already decided"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such entry"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Dismiss a queued tag",
+        "tags" : [ "Admin - Tags" ]
+      }
+    },
+    "/admin/tags/review/{id}/keep" : {
+      "post" : {
+        "description" : "The tag stays as it is; the entry is marked KEPT.",
+        "operationId" : "keepTagReview",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagChangeResult"
+                }
+              }
+            },
+            "description" : "The tag kept"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The entry was already decided"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such entry"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Keep a queued tag as a real tag",
+        "tags" : [ "Admin - Tags" ]
+      }
+    },
+    "/admin/tags/review/{id}/split" : {
+      "post" : {
+        "description" : "For a missing comma: every post and factoid carrying the queued tag carries the parts instead, in one transaction, and the queued tag's row goes. The parts default to the entry's hint tags. The entry is marked SPLIT.",
+        "operationId" : "splitTagReview",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TagSplitRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagChangeResult"
+                }
+              }
+            },
+            "description" : "What changed"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Fewer than two parts, or no parts and no hint to take them from"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such entry"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Split a queued tag into its parts",
+        "tags" : [ "Admin - Tags" ]
+      }
+    },
+    "/admin/tags/stoplist" : {
+      "delete" : {
+        "operationId" : "deleteTagStop",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "term",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagStopEntry"
+                }
+              }
+            },
+            "description" : "The term removed"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The term isn't stoplisted"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Take a term off the stoplist",
+        "tags" : [ "Admin - Tags" ]
+      },
+      "get" : {
+        "operationId" : "listTagStops",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/TagStopEntry"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "The stoplisted terms, alphabetically"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "The tag stoplist",
+        "tags" : [ "Admin - Tags" ]
+      },
+      "post" : {
+        "description" : "The term is dropped, silently, from every tag list written from now on. Tags already stored are left alone.",
+        "operationId" : "createTagStop",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TagStopRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagStopEntry"
+                }
+              }
+            },
+            "description" : "The term as stoplisted"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No term, a system tag, or an alias"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Stoplist a term",
+        "tags" : [ "Admin - Tags" ]
+      }
+    },
     "/admin/users" : {
       "get" : {
         "operationId" : "listByStatus",
@@ -3905,7 +4888,7 @@
     },
     "/atlas/places/{tag}" : {
       "get" : {
-        "description" : "The tag is matched ignoring case. 404 when it isn't on the map.",
+        "description" : "The tag is matched ignoring case, and an alias finds the place of the tag it means. 404 when it isn't on the map.",
         "operationId" : "getPlace",
         "parameters" : [ {
           "in" : "path",

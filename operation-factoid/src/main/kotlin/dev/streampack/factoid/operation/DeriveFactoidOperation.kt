@@ -17,6 +17,7 @@ import dev.streampack.factoid.model.FactoidDraft
 import dev.streampack.factoid.model.FactoidMatcher
 import dev.streampack.factoid.repository.FactoidAttributeRepository
 import dev.streampack.factoid.repository.FactoidRepository
+import dev.streampack.taxonomy.TagCanonicalizer
 import dev.streampack.taxonomy.TagNames
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
@@ -42,6 +43,7 @@ class DeriveFactoidOperation(
     private val fetcher: GuardedFetcher,
     private val factoidRepository: FactoidRepository,
     private val attributeRepository: FactoidAttributeRepository,
+    private val tagCanonicalizer: TagCanonicalizer,
     @Value("\${streampack.factoid.line-length:300}") private val target: Int = 300,
     @Value("\${streampack.factoid.draft.examples:spring boot,4gl,maven,openapi}")
     private val exampleSelectors: List<String> = DEFAULT_EXAMPLES,
@@ -166,7 +168,12 @@ class DeriveFactoidOperation(
 
     /** Two or three tags, those in use first, with at most one new one. */
     private fun tags(proposed: List<String>, known: List<String>): List<String> {
-        val normalized = TagNames.normalizeAll(proposed).filterNot(TagNames::isSystem)
+        // In canonical form (#140): an alias is its tag, a stoplisted term is dropped.
+        val normalized =
+            proposed
+                .mapNotNull(tagCanonicalizer::canonical)
+                .distinct()
+                .filterNot(TagNames::isSystem)
         // Known tags as stored (`self-hosted`) compare in the shape proposals have (`self hosted`).
         val inUse = known.mapNotNull(TagNames::normalize).toSet()
         val existing = normalized.filter { it in inUse }

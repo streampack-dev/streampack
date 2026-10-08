@@ -78,8 +78,11 @@ ignored), whether or not the identity exists. Past the limit, `POST /auth/otp/ve
 | `GET /posts/popular?page=0&size=3` | Lists published posts ordered by decayed access temperature. |
 
 A post's `tags` never include system tags (those starting with `_`, such as `_idea`), and
-`GET /posts?tag=` with a system tag lists nothing. Tags sent when a post is created or edited are
-normalized (`#C#` is `c#`, `load-testing` is `load testing`). See [Tag Names](tags.md).
+`GET /posts?tag=` with a system tag lists nothing; with an alias (`k8s`) it lists the tag it means
+(`kubernetes`). Tags sent when a post is created or edited are normalized (`#C#` is `c#`,
+`load-testing` is `load testing`) and go through the vocabulary: an alias is stored as its tag, a
+stoplisted term is dropped, and a new tag is created, queued for an admin when it looks doubtful.
+The response carries the tags as stored. See [Tag Names](tags.md#the-vocabulary).
 
 `GET /posts/popular` defaults to `size=3` so homepage sections can request a compact
 "popular posts" widget without specifying pagination. Larger callers may pass an explicit `size`.
@@ -336,6 +339,59 @@ changed (lines already hidden, or already gone, aren't counted).
 a report, with `flagged` and `cited` false. Hidden lines never appear in `GET /logs` or
 `GET /logs/search`, for anyone, admins included; this is where an admin finds them.
 
+## Admin Tags
+
+The tag vocabulary's admin side (#140), for the pudl tag window: the review queue of doubtful new
+tags, aliases and the stoplist. See [Tag Names](tags.md#the-vocabulary) for what each does. Every
+endpoint is for `ADMIN` and `SUPER_ADMIN`: `401` signed out, `403` for anyone else. Tags and terms
+go in bodies and query parameters, never the path, since a tag may hold `/` or `#`. Every change
+is recorded with who made it and when.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /admin/tags/review?status=open&page=0&size=50` | The queue: `status` is `open` (default), `aliased`, `split`, `kept`, `dismissed` or `all`; `size` is 1 to 100. The AI's most confident first, then newest. |
+| `POST /admin/tags/review/{id}/alias` | Aliases the entry's tag to an existing one, `{"tag": "compilers"}`: its posts and factoids are re-pointed in one transaction. Marks it `ALIASED`. |
+| `POST /admin/tags/review/{id}/split` | Splits the entry's tag into parts, `{"parts": ["java", "kotlin"]}`, or the hint's parts with no body. Marks it `SPLIT`. |
+| `POST /admin/tags/review/{id}/keep` | Keeps the tag. Marks it `KEPT`. |
+| `POST /admin/tags/review/{id}/dismiss` | Leaves the tag as it is. Marks it `DISMISSED`. |
+| `GET /admin/tags/aliases` | Every alias, `[{alias, tag, createdBy, createdAt}]`, by alias. |
+| `POST /admin/tags/aliases` | `{"alias": "k8s", "tag": "kubernetes"}`: makes an alias, re-pointing whatever carries it. |
+| `DELETE /admin/tags/aliases?alias=k8s` | Removes an alias; nothing is re-pointed back. |
+| `GET /admin/tags/stoplist` | Every stoplisted term, `[{term, createdBy, createdAt}]`. |
+| `POST /admin/tags/stoplist` | `{"term": "self-hosted"}`: dropped from tags written from now on. |
+| `DELETE /admin/tags/stoplist?term=self%20hosted` | Takes a term off the stoplist. |
+| `GET /admin/tags/actions?limit=50` | The latest changes, newest first, `[{action, subject, detail, actor, actedAt}]`. |
+
+An unknown entry, alias or term is a `404`; a request the vocabulary refuses (a target that isn't
+a tag, the same tag, a system tag, an entry already decided, a split into fewer than two parts) is
+a `400`.
+
+`GET /admin/tags/review` answers `TagReviewListResponse`:
+
+```json
+{
+  "openCount": 2,
+  "entries": [
+    {
+      "id": "0199...", "tag": "compiler", "firstSeen": "2026-10-08T14:00:00Z", "source": "post",
+      "hintKind": "PLURAL", "hintTags": ["compilers"],
+      "aiCandidate": "compilers", "aiConfidence": 0.97, "aiReason": "Singular of compilers.",
+      "aiModel": "claude-haiku-4-5-20251001",
+      "status": "OPEN", "actedBy": null, "actedAt": null
+    }
+  ]
+}
+```
+
+`hintKind` is `PLURAL` (`hintTags[0]` is the tag it pairs with), `MISSING_COMMA` (`hintTags` are
+its parts) or `AI` (only the AI found something; `hintTags[0]` is its candidate). The `ai` fields
+are `null` when AI is off or hasn't answered. `source` is what first wrote the tag: `post` or
+`factoid`.
+
+The alias, split, keep and dismiss actions, and `POST /admin/tags/aliases`, answer
+`TagChangeResult`: `{tag, now, posts, factoids}`, the tag acted on, what it now stands for, and how
+many posts and factoids were re-pointed.
+
 ## Atlas
 
 A map of the site's tags (ui-pudl#184), so every front end draws the same geography. Places are
@@ -345,7 +401,7 @@ tags; regions are tags used together. The layout is computed once and stored; se
 | Endpoint | Purpose |
 |----------|---------|
 | `GET /atlas` | The map: regions, places with positions, counts and pins, and the world's bounds. Public and conditional (`ETag`, `Last-Modified`). |
-| `GET /atlas/places/{tag}` | One place (matched ignoring case) with every article and factoid found there. `404` if the tag isn't on the map. |
+| `GET /atlas/places/{tag}` | One place (matched ignoring case; an alias finds its tag's place) with every article and factoid found there. `404` if the tag isn't on the map. |
 | `POST /admin/atlas/relayout` | Lays the whole map out again, stores it and returns it as `GET /atlas` would. `ADMIN` and `SUPER_ADMIN` only: `401` signed out, `403` for anyone else. |
 
 `GET /atlas` answers `AtlasResponse`:

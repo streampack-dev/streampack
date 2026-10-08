@@ -101,8 +101,9 @@ and the body ends with an attribution line:
 
 `suggest <url>` (admins only) fetches the page, extracts its text, and saves a draft whose body is a
 summary, the source URL, any warnings from the fetch, and a note that it was generated for review.
-With an `AiService` available, the title, summary and up to 5 tags (normalized, and applied to the
-post beside `_idea`; the AI can't add a system tag) come from the AI, using the prompt
+With an `AiService` available, the title, summary and up to 5 tags (in canonical form: normalized, aliases
+followed, stoplisted terms dropped; see [Tag Names](../docs/reference/tags.md#the-vocabulary); and
+applied to the post beside `_idea`; the AI can't add a system tag) come from the AI, using the prompt
 described below; without one, the page's title and the start of its text serve. An invalid TLS
 certificate stops the fetch with a warning.
 
