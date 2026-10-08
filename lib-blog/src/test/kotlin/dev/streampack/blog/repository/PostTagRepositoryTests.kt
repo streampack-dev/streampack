@@ -3,7 +3,8 @@ package dev.streampack.blog.repository
 
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.entity.PostTag
-import dev.streampack.blog.entity.Tag
+import dev.streampack.taxonomy.entity.Tag
+import dev.streampack.taxonomy.repository.TagRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows

@@ -11,6 +11,7 @@ import dev.streampack.core.integration.EgressSubscriber
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.*
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.taxonomy.repository.TagRepository
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*

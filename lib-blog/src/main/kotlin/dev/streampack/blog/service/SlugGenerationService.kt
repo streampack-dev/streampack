@@ -2,7 +2,7 @@
 package dev.streampack.blog.service
 
 import dev.streampack.blog.repository.SlugRepository
-import dev.streampack.blog.repository.TagRepository
+import dev.streampack.taxonomy.repository.TagRepository
 import java.text.Normalizer
 import java.time.Instant
 import java.time.ZoneOffset

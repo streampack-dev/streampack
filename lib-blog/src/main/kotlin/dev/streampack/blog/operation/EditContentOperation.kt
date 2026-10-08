@@ -4,7 +4,6 @@ package dev.streampack.blog.operation
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.entity.PostCategory
 import dev.streampack.blog.entity.PostTag
-import dev.streampack.blog.entity.Tag
 import dev.streampack.blog.model.ContentDetail
 import dev.streampack.blog.model.EditContentRequest
 import dev.streampack.blog.repository.*
@@ -16,6 +15,8 @@ import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.service.TypedOperation
 import dev.streampack.taxonomy.TagNames
+import dev.streampack.taxonomy.entity.Tag
+import dev.streampack.taxonomy.repository.TagRepository
 import java.util.*
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
