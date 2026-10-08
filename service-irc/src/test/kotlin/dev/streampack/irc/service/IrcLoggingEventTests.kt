@@ -2,6 +2,7 @@
 package dev.streampack.irc.service
 
 import dev.streampack.core.integration.EventGateway
+import dev.streampack.core.model.MessageKind
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.MessageLogService
@@ -64,5 +65,30 @@ class IrcLoggingEventTests {
         )
 
         assertEquals(listOf("unknown" to "* someone changed the topic to: hello"), logged(channel))
+    }
+
+    @Test
+    fun `an event is logged with its kind, in its channel`() {
+        val channel = "#evt-${UUID.randomUUID().toString().take(8)}"
+        val before = Instant.now().minusSeconds(1)
+
+        eventGateway.process(
+            IrcAdapter.loggingEvent(
+                "evtnet",
+                "nevet",
+                channel,
+                "* pebble quit (bye)",
+                "pebble",
+                MessageKind.QUIT,
+            )
+        )
+
+        val uri =
+            Provenance(protocol = Protocol.IRC, serviceId = "evtnet", replyTo = channel).encode()
+        val lines = messageLogService.findMessages(uri, before, Instant.now().plusSeconds(1), 10)
+        assertEquals(
+            listOf(MessageKind.QUIT to "* pebble quit (bye)"),
+            lines.map { it.kind to it.content },
+        )
     }
 }
