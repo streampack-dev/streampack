@@ -8,6 +8,7 @@ It owns:
 - OTP-based sign-in and token refresh
 - account export, erasure, suspension, and unsuspension
 - editor-side AI tag derivation
+- the Atlas: the map of the site's tags every front end draws
 
 Most operations in this module are typed request handlers used by HTTP controllers rather than
 chat-facing bot commands.
@@ -23,12 +24,30 @@ chat-facing bot commands.
 | `GET /posts/{id}` | Reads a post by UUID without recording access. |
 | `POST /posts/{id}/access` | Records UI-driven post access without returning post content. |
 | `GET /pages/{slug}` | Reads a system page from the `_pages` category. |
+| `GET /atlas` | The Atlas: regions and places (tags) with positions, counts and pins. |
+| `GET /atlas/places/{tag}` | One place on the Atlas, with every article and factoid found there. |
 
 `GET /posts/popular` is intended for compact UI sections such as "popular posts" or "popular pages."
 It returns the same `ContentListResponse` shape as the normal post listing, ordered by decayed
 `blog.post` / `hit` temperature.
 
-## Operations
+## The Atlas
+
+`dev.streampack.blog.atlas` lays out a map of the site's tags (ui-pudl#184, moved here from ui-pudl so
+ui-pudl and ui-primate draw the same one) and serves it at `GET /atlas`; see
+[The Atlas](../docs/explanation/atlas.md) and the [Blog HTTP API](../docs/reference/blog-http-api.md#atlas).
+
+- **Inputs** come from the database: published posts' tags (`PostTagRepository.findPublishedTagging`,
+  the rules `GET /taxonomy` counts by), factoids' tags (`FindFactoidTaggingRequest`, answered by
+  operation-factoid) and the counts from the taxonomy snapshot.
+- **Storage** is `atlas_region` and `atlas_place` (migration V69). The first request lays the map out
+  and stores it; a new tag is placed beside its strongest relative; a tag no longer used is left
+  off and keeps its row. Only `POST /admin/atlas/relayout` (admins) lays it out again.
+- **Cost:** the answer is kept in memory, keyed by a validator over the taxonomy's inputs, factoid
+  and slug changes and the stored map, so a request with nothing changed costs a few aggregate
+  queries; the same validator gives `GET /atlas` its `ETag`.
+
+
 
 | Operation | Command / payload | Purpose |
 |-----------|-------------------|---------|
