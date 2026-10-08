@@ -66,8 +66,17 @@ class ModerationScores(private val properties: ModerationProperties) {
         val signalLines = linkedMapOf<String, Double>()
     }
 
-    /** Scores one line [speaker] said at [now]. */
-    fun record(speaker: Speaker, content: String, now: Instant = Instant.now()): Scored {
+    /**
+     * Scores one line [speaker] said at [now]. An [addressed] line, a command to the bot, is scored
+     * for what it says but not for repetition or flooding (#168): asking the bot the same thing
+     * twice isn't spam, and it doesn't count toward a later line looking repeated either.
+     */
+    fun record(
+        speaker: Speaker,
+        content: String,
+        now: Instant = Instant.now(),
+        addressed: Boolean = false,
+    ): Scored {
         val sender = speaker.sender.lowercase()
         val channelSpeakers =
             speakers.computeIfAbsent(speaker.provenanceUri) { ConcurrentHashMap() }
@@ -86,16 +95,20 @@ class ModerationScores(private val properties: ModerationProperties) {
             while (tally.recent.isNotEmpty() && expired(tally.recent.first().first, now)) {
                 tally.recent.removeFirst()
             }
-            val normalized = normalize(content)
-            if (normalized.isNotEmpty()) {
-                val copies = tally.recent.count { it.second == normalized }
-                if (copies > 0) signals[Signal.REPETITION] = properties.weights.repetition * copies
+            if (!addressed) {
+                val normalized = normalize(content)
+                if (normalized.isNotEmpty()) {
+                    val copies = tally.recent.count { it.second == normalized }
+                    if (copies > 0) {
+                        signals[Signal.REPETITION] = properties.weights.repetition * copies
+                    }
+                }
+                val floodStart = now.minus(properties.floodWindow)
+                val burst = tally.recent.count { it.first > floodStart } + 1
+                if (burst > properties.floodLines) signals[Signal.FLOOD] = properties.weights.flood
+                tally.recent.addLast(now to normalized)
+                while (tally.recent.size > MAX_RECENT) tally.recent.removeFirst()
             }
-            val floodStart = now.minus(properties.floodWindow)
-            val burst = tally.recent.count { it.first > floodStart } + 1
-            if (burst > properties.floodLines) signals[Signal.FLOOD] = properties.weights.flood
-            tally.recent.addLast(now to normalized)
-            while (tally.recent.size > MAX_RECENT) tally.recent.removeFirst()
 
             tally.score += signals.values.sum()
             if (signals.isNotEmpty()) {

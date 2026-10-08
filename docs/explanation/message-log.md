@@ -150,6 +150,9 @@ it's scored, with no model involved, per person per channel:
 | Repetition | 1 per earlier copy | The same line again within the hour (case, spacing and punctuation aside) |
 | Flood | 1 | Each line past six in ten seconds |
 
+Commands to the bot (`!sentiment`, `nevet: ask …`) are scored for what they say but never count
+as repetition or flooding: asking the bot the same thing twice isn't spam.
+
 A score halves every half hour with nothing new. A line that takes it to 10 marks the person for
 the next review; one aimed insult doesn't, two in a short while do, a slur or threat does alone. The
 weights, threshold, timings and word lists are `streampack.moderation.*` settings. Scores live in

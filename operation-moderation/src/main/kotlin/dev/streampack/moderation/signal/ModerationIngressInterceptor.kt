@@ -57,6 +57,7 @@ class ModerationIngressInterceptor(
                         userId = provenance.user?.id,
                     ),
                     message.payload.toString(),
+                    addressed = message.headers[Provenance.ADDRESSED] as? Boolean ?: false,
                 )
             if (scored.signals.isNotEmpty()) {
                 logger.debug(
