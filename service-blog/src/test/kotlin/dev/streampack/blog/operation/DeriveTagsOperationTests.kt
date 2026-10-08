@@ -12,6 +12,7 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
+import dev.streampack.taxonomy.TagNames
 import dev.streampack.taxonomy.model.TaxonomySnapshot
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -27,7 +28,8 @@ class DeriveTagsOperationTests {
 
     @Test
     fun `non-admin is rejected`() {
-        val operation = DeriveTagsOperation(StubEventGateway(), providerWithAi(null))
+        val operation =
+            DeriveTagsOperation(StubEventGateway(), providerWithAi(null), TagNames::normalize)
         val request =
             DeriveTagsRequest(
                 title = "Java and Loom",
@@ -42,7 +44,8 @@ class DeriveTagsOperationTests {
 
     @Test
     fun `blank title returns validation error`() {
-        val operation = DeriveTagsOperation(StubEventGateway(), providerWithAi(null))
+        val operation =
+            DeriveTagsOperation(StubEventGateway(), providerWithAi(null), TagNames::normalize)
         val request = DeriveTagsRequest(title = "  ", markdownSource = "Some content")
 
         val result = operation.handle(request, messageWithRole(Role.ADMIN))
@@ -53,7 +56,8 @@ class DeriveTagsOperationTests {
 
     @Test
     fun `blank content returns validation error`() {
-        val operation = DeriveTagsOperation(StubEventGateway(), providerWithAi(null))
+        val operation =
+            DeriveTagsOperation(StubEventGateway(), providerWithAi(null), TagNames::normalize)
         val request = DeriveTagsRequest(title = "A title", markdownSource = "   ")
 
         val result = operation.handle(request, messageWithRole(Role.ADMIN))
@@ -64,7 +68,8 @@ class DeriveTagsOperationTests {
 
     @Test
     fun `ai unavailable returns error`() {
-        val operation = DeriveTagsOperation(StubEventGateway(), providerWithAi(null))
+        val operation =
+            DeriveTagsOperation(StubEventGateway(), providerWithAi(null), TagNames::normalize)
         val request =
             DeriveTagsRequest(
                 title = "Java and Loom",
@@ -93,6 +98,7 @@ class DeriveTagsOperationTests {
             DeriveTagsOperation(
                 eventGateway,
                 providerWithAi(StubAiService(structured = null, raw = null)),
+                TagNames::normalize,
             )
         val request =
             DeriveTagsRequest(
@@ -124,6 +130,7 @@ class DeriveTagsOperationTests {
                 providerWithAi(
                     StubAiService(structured = null, raw = """{"tags":["java","loom","design"]}""")
                 ),
+                TagNames::normalize,
             )
         val request =
             DeriveTagsRequest(
@@ -156,6 +163,7 @@ class DeriveTagsOperationTests {
                 providerWithAi(
                     StubAiService(structured = null, raw = "```json\n{\"tags\":[\"java\"]}\n```")
                 ),
+                TagNames::normalize,
             )
         val request =
             DeriveTagsRequest(
@@ -178,6 +186,7 @@ class DeriveTagsOperationTests {
                 providerWithAi(
                     StubAiService(structured = null, raw = """{"tags":["design","tools"]}""")
                 ),
+                TagNames::normalize,
             )
         val request =
             DeriveTagsRequest(
@@ -215,6 +224,7 @@ class DeriveTagsOperationTests {
                         raw = """{"tags":["tools","design"]}""",
                     )
                 ),
+                TagNames::normalize,
             )
         val request =
             DeriveTagsRequest(
@@ -247,6 +257,7 @@ class DeriveTagsOperationTests {
                 providerWithAi(
                     StubAiService(structured = null, raw = " #Java, _ignore, state management ")
                 ),
+                TagNames::normalize,
             )
         val request =
             DeriveTagsRequest(

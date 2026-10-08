@@ -21,6 +21,7 @@ import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.TypedOperation
 import dev.streampack.taxonomy.TagNames
+import dev.streampack.taxonomy.TagVocabulary
 import dev.streampack.temperature.service.TemperatureService
 import java.time.Instant
 import java.util.UUID
@@ -39,6 +40,7 @@ class FindContentOperation(
     private val postTagRepository: PostTagRepository,
     private val postCategoryRepository: PostCategoryRepository,
     private val temperatureService: TemperatureService,
+    private val tagVocabulary: TagVocabulary,
 ) : TypedOperation<FindContentRequest>(FindContentRequest::class) {
 
     override val priority = 50
@@ -188,7 +190,9 @@ class FindContentOperation(
             )
         }
         val now = Instant.now()
-        val pageResult = postRepository.findByTag(tagName, now, PageRequest.of(page, size))
+        // An alias finds its tag's posts (#140).
+        val name = tagVocabulary.lookup(tagName) ?: tagName
+        val pageResult = postRepository.findByTag(name, now, PageRequest.of(page, size))
 
         val summaries = pageResult.content.map { post -> toSummary(post) }
 

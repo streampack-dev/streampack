@@ -1,5 +1,5 @@
 /* Joseph B. Ottinger (C)2026 */
-package dev.streampack.blog.entity
+package dev.streampack.taxonomy.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

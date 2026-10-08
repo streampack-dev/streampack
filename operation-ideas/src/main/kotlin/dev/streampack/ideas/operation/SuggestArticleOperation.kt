@@ -18,6 +18,7 @@ import dev.streampack.core.service.TypedOperation
 import dev.streampack.generative.service.GenerativePromptService
 import dev.streampack.ideas.service.FetchOutcome
 import dev.streampack.ideas.service.SuggestedContentFetcher
+import dev.streampack.taxonomy.TagCanonicalizer
 import dev.streampack.taxonomy.TagNames
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.messaging.Message
@@ -33,6 +34,7 @@ class SuggestArticleOperation(
     private val aiServiceProvider: ObjectProvider<AiService>,
     private val eventGateway: dev.streampack.core.integration.EventGateway,
     private val promptService: GenerativePromptService,
+    private val tagCanonicalizer: TagCanonicalizer,
 ) : TypedOperation<String>(String::class) {
 
     private val objectMapper = JacksonMappers.standard()
@@ -288,9 +290,12 @@ class SuggestArticleOperation(
         }
     }
 
-    /** An AI-proposed tag as [TagNames] shapes it; null if empty or a system tag. */
+    /**
+     * An AI-proposed tag in canonical form (#140: an alias is its tag); null if empty, stoplisted
+     * or a system tag.
+     */
     private fun normalizeTag(raw: String): String? =
-        TagNames.normalize(raw)?.takeUnless(TagNames::isSystem)
+        tagCanonicalizer.canonical(raw)?.takeUnless(TagNames::isSystem)
 
     private data class AiDraft(val title: String, val summary: String, val tags: List<String>)
 

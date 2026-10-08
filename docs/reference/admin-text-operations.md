@@ -84,6 +84,39 @@ forget selector.attribute
 `lock` and `unlock` require `ADMIN`. Locked factoids reject ordinary updates and forget operations
 until unlocked.
 
+## Tag Vocabulary
+
+`ADMIN`:
+
+```text
+tag review
+tag alias <from> = <to>
+tag alias <from> <to>
+tag unalias <alias>
+tag aliases
+tag split <tag>
+tag split <tag> = <part>, <part>
+tag keep <tag>
+tag dismiss <tag>
+tag stop <term>
+tag unstop <term>
+tag stops
+```
+
+Operational notes:
+
+- These are the `/admin/tags` HTTP actions (#140); see [Tag Names](tags.md#the-vocabulary).
+  `tag review` lists the open queue with each tag's hint and any AI candidate.
+- `tag alias` re-points every post and factoid carrying `<from>` to `<to>` in one transaction and
+  makes `<from>` an alias. Multi-word tags need the `=` form (`tag alias build tool = build tools`);
+  two single words can go without it.
+- `tag split` without parts uses the queue entry's missing-comma hint.
+- `tag stop` drops the term from tags written from now on; stored tags are left alone.
+- Every change is recorded with the admin's username and the time.
+- Only an admin's `tag <subcommand>` is taken this way. Anyone else's `tag <word>`, and an admin's
+  `tag <word>` that isn't one of these forms, is the factoid tag search, as before: an admin who
+  wants factoids tagged `review` uses the HTTP API or the site.
+
 ## Feed Operations
 
 `ADMIN`:

@@ -4,6 +4,7 @@ package dev.streampack.blog.atlas
 import dev.streampack.blog.controller.ConditionalGet
 import dev.streampack.core.model.Role
 import dev.streampack.core.service.JwtService
+import dev.streampack.taxonomy.TagVocabulary
 import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController
 class AtlasController(
     private val atlas: Atlas,
     private val conditionalGet: ConditionalGet,
+    private val tagVocabulary: TagVocabulary,
     jwtService: JwtService,
 ) : UserAwareController(jwtService) {
 
@@ -63,7 +65,9 @@ class AtlasController(
 
     @Operation(
         summary = "One place on the Atlas, with every article and factoid found there",
-        description = "The tag is matched ignoring case. 404 when it isn't on the map.",
+        description =
+            "The tag is matched ignoring case, and an alias finds the place of the tag it means. " +
+                "404 when it isn't on the map.",
     )
     @ApiResponse(
         responseCode = "200",
@@ -83,14 +87,16 @@ class AtlasController(
     ): ResponseEntity<*> {
         val now = Instant.now()
         val validator = atlas.validator(now)
+        // An alias finds its tag's place (#140).
+        val name = tagVocabulary.lookup(tag) ?: tag.trim().lowercase()
         return conditionalGet.respond(
             request,
             response,
             personal = false,
-            key = listOf("atlas-place", tag.trim().lowercase()),
+            key = listOf("atlas-place", name),
             validator = { validator },
         ) {
-            atlas.place(tag, now)?.let { ResponseEntity.ok(it) }
+            atlas.place(name, now)?.let { ResponseEntity.ok(it) }
                 ?: problem(HttpStatus.NOT_FOUND, "No place on the map is called $tag")
         }
     }

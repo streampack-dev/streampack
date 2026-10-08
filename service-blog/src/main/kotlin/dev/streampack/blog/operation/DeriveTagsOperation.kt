@@ -11,6 +11,7 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.service.TypedOperation
+import dev.streampack.taxonomy.TagCanonicalizer
 import dev.streampack.taxonomy.TagNames
 import dev.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import dev.streampack.taxonomy.model.TaxonomySnapshot
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component
 class DeriveTagsOperation(
     private val eventGateway: EventGateway,
     private val aiServiceProvider: ObjectProvider<AiService>,
+    private val tagCanonicalizer: TagCanonicalizer,
 ) : TypedOperation<DeriveTagsRequest>(DeriveTagsRequest::class) {
 
     private val objectMapper = JacksonMappers.standard()
@@ -203,9 +205,12 @@ class DeriveTagsOperation(
         return null
     }
 
-    /** A suggested tag as [TagNames] shapes it; null if empty or a system tag. */
+    /**
+     * A suggested tag in canonical form (#140: an alias is its tag); null if empty, stoplisted or a
+     * system tag.
+     */
     private fun normalizeTag(raw: String): String? =
-        TagNames.normalize(raw)?.takeUnless(TagNames::isSystem)
+        tagCanonicalizer.canonical(raw)?.takeUnless(TagNames::isSystem)
 
     private fun filterSignificantTags(
         tags: List<String>,

@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
-package dev.streampack.blog.repository
+package dev.streampack.taxonomy.repository
 
-import dev.streampack.blog.entity.Tag
+import dev.streampack.taxonomy.entity.Tag
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
