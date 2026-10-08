@@ -295,7 +295,7 @@ sentiment [target]
 Notes:
 
 - `suggest` fetches the source URL, runs the AI pipeline when configured, and creates a draft idea.
-- `ideas ...` manages draft ideas tagged `_idea`.
+- `ideas ...` manages draft ideas tagged `_idea` (a system tag; see [Tag Names](tags.md)).
 - `sentiment` analyzes recent conversation logs: the channel it's asked in, or `[target]` (`#channel` on the same network, or a provenance URI). It answers in the channel with just the score line, or privately, naming the channel (`Sentiment for #other: …`), if the target differs from the requesting channel. In a direct conversation it asks for a channel, as direct lines are never read.
 
 ## Game Moderation
