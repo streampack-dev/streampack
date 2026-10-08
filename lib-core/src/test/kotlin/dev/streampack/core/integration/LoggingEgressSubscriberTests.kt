@@ -3,6 +3,7 @@ package dev.streampack.core.integration
 
 import dev.streampack.core.model.LoggingRequest
 import dev.streampack.core.model.MessageDirection
+import dev.streampack.core.model.MessageKind
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
@@ -164,9 +165,30 @@ class LoggingEgressSubscriberTests {
         val inbound = page.content.filter { it.direction == MessageDirection.INBOUND }
         assertEquals(1, inbound.size)
         assertEquals("* alice left the channel", inbound[0].content)
+        assertEquals(MessageKind.MESSAGE, inbound[0].kind, "a LoggingRequest with no kind")
 
         val outbound = page.content.filter { it.direction == MessageDirection.OUTBOUND }
         assertEquals(0, outbound.size)
+    }
+
+    @Test
+    fun `a LoggingRequest is logged with its kind, and a message as a message`() {
+        val prov = uniqueProvenance()
+        eventGateway.process(
+            messageWith(LoggingRequest("* alice quit (bye)", MessageKind.QUIT), prov)
+        )
+        eventGateway.process(messageWith("* alice quit (bye)", prov))
+
+        val inbound =
+            messageLogRepository
+                .findByProvenanceUriOrderByTimestampDesc(prov.encode(), PageRequest.of(0, 10))
+                .content
+                .filter { it.direction == MessageDirection.INBOUND }
+        assertEquals(
+            listOf(MessageKind.MESSAGE, MessageKind.QUIT),
+            inbound.map { it.kind }.sorted(),
+            "the typed line is a message, the event a quit",
+        )
     }
 
     /* Egress delivery happens on another thread, so the flag must be committed, not just flushed */
