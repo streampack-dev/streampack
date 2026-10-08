@@ -386,7 +386,9 @@ tags; regions are tags used together. The layout is computed once and stored; se
   `createdAt` and `updatedAt`. A post with several tags is pinned at each of its places.
 - **What's new** is the front end's: posts by `publishedAt`, factoids by `createdAt` (new) and
   `updatedAt` (changed), from `GET /posts` and `GET /factoids`. Their `tags` name the places they're
-  found at.
+  found at. `GET /factoids?since=<ISO-8601 instant>` lists only the factoids set or changed at or
+  after it, newest first (setting any attribute moves a factoid's `updatedAt`), so a front end
+  needn't read every page; `since` doesn't combine with `q` (400).
 
 `GET /atlas/places/{tag}` answers `AtlasPlaceDetailResponse`: `place` (as above), `regionName`,
 `articles` (every published post carrying the tag, newest first, each `{title, slug, publishedAt,

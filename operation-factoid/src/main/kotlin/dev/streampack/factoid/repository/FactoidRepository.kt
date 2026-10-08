@@ -16,6 +16,15 @@ interface FactoidRepository : JpaRepository<Factoid, UUID> {
     /** Paginated listing of all factoids ordered by selector */
     fun findAllByOrderBySelectorAsc(pageable: Pageable): Page<Factoid>
 
+    /**
+     * Factoids set or changed at or after [since], newest first: setting any attribute moves a
+     * factoid's updatedAt, so this is what's new or changed since then.
+     */
+    fun findByUpdatedAtGreaterThanEqualOrderByUpdatedAtDescSelectorAsc(
+        since: java.time.Instant,
+        pageable: Pageable,
+    ): Page<Factoid>
+
     /** Paginated search across selectors */
     @Query(
         "SELECT f FROM Factoid f WHERE LOWER(f.selector) LIKE :term ORDER BY f.selector",
