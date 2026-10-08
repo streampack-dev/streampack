@@ -5,6 +5,7 @@ import dev.streampack.ai.service.AiService
 import dev.streampack.core.model.MessageDirection
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.parser.CommandArgSpec
@@ -12,6 +13,7 @@ import dev.streampack.core.parser.CommandMatchResult
 import dev.streampack.core.parser.CommandPattern
 import dev.streampack.core.parser.CommandPatternMatcher
 import dev.streampack.core.parser.StringArgType
+import dev.streampack.core.service.ChannelNameProvider
 import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.MessageLogService
 import dev.streampack.core.service.TranslatingOperation
@@ -29,6 +31,9 @@ import org.springframework.stereotype.Component
  * With no target, it's the channel it was asked in. When the target differs from the source
  * channel, the response is sent via DM to avoid leaking cross-channel sentiment publicly. A direct
  * conversation is never a target: its lines are logged but never read.
+ *
+ * The answer names the channel as people know it (`#java`, not its provenance URI), and in the
+ * channel that was analyzed it's just the model's line.
  */
 @Component
 @ConditionalOnProperty(prefix = "streampack.ai", name = ["enabled"], havingValue = "true")
@@ -36,11 +41,14 @@ class SentimentOperation(
     private val aiService: AiService,
     private val messageLogService: MessageLogService,
     private val directConversations: DirectConversations,
+    channelNameProviders: List<ChannelNameProvider>,
 ) : TranslatingOperation<SentimentRequest>(SentimentRequest::class) {
 
     override val priority: Int = 40
     override val addressed: Boolean = true
     override val operationGroup: String = "sentiment"
+
+    private val channelNames = channelNameProviders.associateBy { it.protocol }
 
     override fun translate(payload: String, message: Message<*>): SentimentRequest? {
         val parsed = matcher.match(payload) as? CommandMatchResult.Match ?: return null
@@ -70,7 +78,9 @@ class SentimentOperation(
         val messages =
             messageLogService.findLatestMessages(payload.targetUri, windowStart, now, 100)
         if (messages.isEmpty()) {
-            return OperationResult.Error("No recent messages found for ${payload.targetUri}")
+            return OperationResult.Error(
+                "No recent messages found for ${label(target, payload.targetUri)}"
+            )
         }
 
         val transcript = formatTranscript(messages, botNick)
@@ -142,10 +152,11 @@ class SentimentOperation(
                 null
             }
 
-        return OperationResult.Success(
-            "Sentiment for ${payload.targetUri}: $analysis",
-            provenance = responseProvenance,
-        )
+        // In the channel analyzed, the model's line says it all; by DM, say which channel it was
+        val answer =
+            if (sourceUri == payload.targetUri) analysis
+            else "Sentiment for ${label(target, payload.targetUri)}: $analysis"
+        return OperationResult.Success(answer, provenance = responseProvenance)
     }
 
     /** Formats log entries as a transcript with ext/int prefixes */
@@ -162,6 +173,23 @@ class SentimentOperation(
                 }
             "$prefix ${entry.sender} ${entry.content}"
         }
+    }
+
+    /** The channel as people know it (`#java`), or [uri] when it has no known name */
+    private fun label(target: Provenance?, uri: String): String {
+        if (target == null) return uri
+        val name =
+            when (target.protocol) {
+                Protocol.IRC -> target.replyTo
+                // A guild channel is "<id>/<guild>[/<category>]/#<channel>"
+                Protocol.DISCORD -> target.replyTo.split("/").drop(1).lastOrNull()
+                else ->
+                    runCatching { channelNames[target.protocol]?.name(target) }
+                        .onFailure { logger.debug("No channel name for {}: {}", uri, it.message) }
+                        .getOrNull()
+            }?.removePrefix("#")
+        return if (name.isNullOrBlank()) uri
+        else if (target.protocol == Protocol.IRC) target.replyTo else "#$name"
     }
 
     /** Resolves a target string to a provenance URI, inheriting context from source */

@@ -14,6 +14,8 @@ The operation is active only when `streampack.ai.enabled=true` and requires `ADM
 
 If the requested target differs from the source channel, the result is routed to the requester by direct-message provenance.
 
+The answer names the channel as people know it, not by its provenance URI: an IRC channel as written (`#java`), and Discord, Slack and Mattermost channels by name (through the `ChannelNameProvider` beans for Slack and Mattermost). Asked in the channel analyzed, the answer is just the model's line (`Sentiment +6/10 | …`); a cross-channel answer by DM starts `Sentiment for #other:`. A target with no known name is named by its URI.
+
 The operation is addressed and uses operation group `sentiment`.
 
 ## Example Flows
