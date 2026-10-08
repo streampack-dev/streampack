@@ -992,7 +992,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "content", "direction", "kind", "sender", "timestamp" ],
+        "required" : [ "content", "direction", "sender", "timestamp" ],
         "type" : "object"
       },
       "LogProvenanceListResponse" : {
@@ -1062,7 +1062,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "content", "day", "direction", "kind", "sender", "timestamp" ],
+        "required" : [ "content", "day", "direction", "sender", "timestamp" ],
         "type" : "object"
       },
       "LogSearchResponse" : {
