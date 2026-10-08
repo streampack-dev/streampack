@@ -22,7 +22,9 @@ import org.hibernate.type.SqlTypes
  * fields are the moderation model's answer, and null when AI is off or didn't answer.
  * [excerptLineIds] are the message log lines the review read (theirs and the lines around them),
  * [flaggedLineIds] theirs that raised a signal, [citedLineIds] the ones the model pointed at. Line
- * ids are kept as strings, and stay after a purge removes the lines.
+ * ids are kept as strings, and stay after a purge removes the lines. [lineWeights] and
+ * [lineSignals] say, per flagged line, what it added and which signals it raised (#169); both are
+ * null on reports filed before they were kept.
  */
 @Entity
 @Table(name = "moderation_report")
@@ -49,6 +51,12 @@ data class ModerationReport(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     val citedLineIds: List<String> = emptyList(),
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    val lineWeights: Map<String, Double>? = null,
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    val lineSignals: Map<String, List<String>>? = null,
     @Column(nullable = false) val windowStart: Instant = Instant.now(),
     @Column(nullable = false) val windowEnd: Instant = Instant.now(),
     @Enumerated(EnumType.STRING)

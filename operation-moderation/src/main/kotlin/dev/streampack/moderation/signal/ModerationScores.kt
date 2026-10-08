@@ -40,6 +40,9 @@ class ModerationScores(private val properties: ModerationProperties) {
     /** What one line added, and where the score stands after it. */
     data class Scored(val signals: Map<Signal, Double>, val score: Double, val marked: Boolean)
 
+    /** What one line added to a score, and which signals it raised. */
+    data class SignalLine(val weight: Double, val signals: Set<Signal>)
+
     /** A person marked for review, with what raised them since the last one. */
     data class Candidate(
         val speaker: Speaker,
@@ -52,7 +55,7 @@ class ModerationScores(private val properties: ModerationProperties) {
          * The lines that raised a signal, as said, with what each added, so a review can find them
          * in the log and send the worst first.
          */
-        val signalLines: Map<String, Double>,
+        val signalLines: Map<String, SignalLine>,
     )
 
     private class Tally(var speaker: Speaker) {
@@ -63,7 +66,7 @@ class ModerationScores(private val properties: ModerationProperties) {
         var firstSignalAt: Instant? = null
         var peak = 0.0
         val signals = linkedMapOf<Signal, Int>()
-        val signalLines = linkedMapOf<String, Double>()
+        val signalLines = linkedMapOf<String, SignalLine>()
     }
 
     /**
@@ -114,7 +117,7 @@ class ModerationScores(private val properties: ModerationProperties) {
             if (signals.isNotEmpty()) {
                 if (tally.firstSignalAt == null) tally.firstSignalAt = now
                 signals.keys.forEach { tally.signals.merge(it, 1, Int::plus) }
-                keepSignalLine(tally, content, signals.values.sum())
+                keepSignalLine(tally, content, SignalLine(signals.values.sum(), signals.keys))
             }
             tally.peak = maxOf(tally.peak, tally.score)
             if (signals.isNotEmpty() && tally.score >= properties.threshold) {
@@ -125,19 +128,22 @@ class ModerationScores(private val properties: ModerationProperties) {
     }
 
     /**
-     * Remembers [content] as a line that added [weight]. When the list is full, the weakest line
-     * makes way for a stronger one: a slur after a hundred flood lines is still the line to show.
+     * Remembers [content] as a line that added [SignalLine.weight]. When the list is full, the
+     * weakest line makes way for a stronger one: a slur after a hundred flood lines is still the
+     * line to show.
      */
-    private fun keepSignalLine(tally: Tally, content: String, weight: Double) {
+    private fun keepSignalLine(tally: Tally, content: String, line: SignalLine) {
         val lines = tally.signalLines
         if (content in lines || lines.size < MAX_SIGNAL_LINES) {
-            lines.merge(content, weight, ::maxOf)
+            lines.merge(content, line) { a, b ->
+                SignalLine(maxOf(a.weight, b.weight), a.signals + b.signals)
+            }
             return
         }
-        val weakest = lines.minBy { it.value }
-        if (weakest.value < weight) {
+        val weakest = lines.minBy { it.value.weight }
+        if (weakest.value.weight < line.weight) {
             lines.remove(weakest.key)
-            lines[content] = weight
+            lines[content] = line
         }
     }
 

@@ -20,7 +20,7 @@ Nothing here hides, removes or bans anything by itself. The admin HTTP endpoints
 
 `streampack.moderation.*` (see `ModerationProperties`): `enabled` (`true`), `threshold` (`10`),
 `half-life` (`30m`), `window` (`1h`), `review-interval` (`1h`), `review-lines` (`20`),
-`context-lines` (`3`), `flood-lines` (`6`) in `flood-window` (`10s`), `weights.*`, `blocked-hosts`,
+`context-lines` (`3`), `strong-line-weight` (`3`), `flood-lines` (`6`) in `flood-window` (`10s`), `weights.*`, `blocked-hosts`,
 and the word lists `profanity`, `insults` and `slurs` (an entry ending in `*` matches words it
 starts).
 

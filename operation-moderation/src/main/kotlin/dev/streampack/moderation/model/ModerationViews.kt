@@ -49,6 +49,10 @@ data class ReportListResponse(
  * One message log line in an admin's view. [hidden] lines are out of public view; [flagged] ones
  * raised a signal; [cited] ones are those the model pointed at. [day] is its UTC day, for a link to
  * the log day.
+ *
+ * For a flagged line in a report, [signals] names what it raised, [weight] is what it added, and
+ * [strong] says whether that's enough to suggest hiding it (#169). All three are null for a line
+ * that isn't flagged, in a log day, or in a report filed before they were kept.
  */
 data class ModerationLine(
     val id: UUID,
@@ -60,6 +64,9 @@ data class ModerationLine(
     val hidden: Boolean,
     val flagged: Boolean,
     val cited: Boolean,
+    val signals: List<String>? = null,
+    val weight: Double? = null,
+    val strong: Boolean? = null,
 )
 
 /** One thing an admin did: who, what, when. */

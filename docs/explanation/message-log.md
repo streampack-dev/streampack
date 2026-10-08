@@ -173,7 +173,11 @@ never asked for.
 
 **Reports, and an admin decides.** Each review records a report: who (as the log names them, with
 the protocol and service, and their account when known), where, the signals, the verdict, and the
-ids of the lines read, the ones that raised signals and the ones the model cited. Nothing is hidden,
+ids of the lines read, the ones that raised signals (each with the signals it raised and what it
+added) and the ones the model cited. A flagged line that added at least `strong-line-weight` (3) is
+a strong one: an aimed insult, personal details, a slur or a threat. The admin windows pre-check
+only those for hiding, so a repeat or a flood line is marked but left for an admin to choose.
+Nothing is hidden,
 removed or banned automatically. From a report an admin can:
 
 - **hide** lines: kept, flagged, and gone from public view (see [Hidden lines](#hidden-lines)), and

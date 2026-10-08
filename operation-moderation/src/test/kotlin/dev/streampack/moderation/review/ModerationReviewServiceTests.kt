@@ -7,6 +7,7 @@ import dev.streampack.ai.service.AiStructuredResponse
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.repository.MessageLogRepository
 import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.MessageLogService
@@ -96,6 +97,7 @@ class ModerationReviewServiceTests {
     @Autowired lateinit var scores: ModerationScores
     @Autowired lateinit var reports: ModerationReportRepository
     @Autowired lateinit var messageLogService: MessageLogService
+    @Autowired lateinit var messageLog: MessageLogRepository
     @Autowired lateinit var channelControlService: ChannelControlService
     @Autowired lateinit var properties: ModerationProperties
     @Autowired lateinit var directConversations: DirectConversations
@@ -195,6 +197,30 @@ class ModerationReviewServiceTests {
         // insults, which are what's sent first
         assertTrue(report.flaggedLineIds.size >= 2)
         assertTrue(report.flaggedLineIds.all { it in report.excerptLineIds })
+    }
+
+    @Test
+    fun `each flagged line keeps what it added and which signals it raised`() {
+        say("bob", "morning")
+        say("troll", "bob: you moron")
+        say("troll", "lol")
+        say("troll", "lol")
+        say("troll", "bob: shut up, you idiot")
+
+        val report = review.review().single()
+
+        val content =
+            messageLog
+                .findForModeration(report.flaggedLineIds.map(java.util.UUID::fromString))
+                .associate { it.id.toString() to it.content }
+        val byContent =
+            report.flaggedLineIds.associate { id ->
+                content.getValue(id) to (report.lineSignals!![id] to report.lineWeights!![id])
+            }
+        assertEquals(listOf("AIMED_HOSTILITY"), byContent.getValue("bob: you moron").first)
+        assertEquals(properties.weights.aimedHostility, byContent.getValue("bob: you moron").second)
+        assertEquals(listOf("REPETITION"), byContent.getValue("lol").first)
+        assertEquals(properties.weights.repetition, byContent.getValue("lol").second)
     }
 
     @Test

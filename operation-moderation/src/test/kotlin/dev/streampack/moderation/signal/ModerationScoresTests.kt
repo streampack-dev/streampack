@@ -104,8 +104,8 @@ class ModerationScoresTests {
         scores.record(speaker("alice"), "bob shut up you moron", t0.plusSeconds(5))
 
         val lines = scores.takeForReview(t0.plusSeconds(10)).single().signalLines
-        val insult = lines["bob shut up you moron"]
+        val insult = lines["bob shut up you moron"]?.weight
         assertTrue(insult != null && insult >= properties.weights.aimedHostility, "$insult")
-        assertEquals(insult, lines.values.max())
+        assertEquals(insult, lines.values.maxOf { it.weight })
     }
 }

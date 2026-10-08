@@ -5,6 +5,7 @@ import dev.streampack.core.entity.MessageLog
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.MessageLogRepository
+import dev.streampack.moderation.config.ModerationProperties
 import dev.streampack.moderation.entity.ModerationAction
 import dev.streampack.moderation.entity.ModerationReport
 import dev.streampack.moderation.model.ModerationActionResult
@@ -41,6 +42,7 @@ class ModerationService(
     private val reports: ModerationReportRepository,
     private val actions: ModerationActionRepository,
     private val messageLog: MessageLogRepository,
+    private val properties: ModerationProperties,
 ) {
     private val logger = LoggerFactory.getLogger(ModerationService::class.java)
 
@@ -224,7 +226,17 @@ class ModerationService(
         val cited = report.citedLineIds.toSet()
         return ReportDetail(
             report = summary(report),
-            lines = found.map { line(it, flagged, cited) },
+            lines =
+                found.map { log ->
+                    val id = log.id.toString()
+                    val weight = report.lineWeights?.get(id)?.takeIf { id in flagged }
+                    line(log, flagged, cited)
+                        .copy(
+                            signals = report.lineSignals?.get(id)?.takeIf { id in flagged },
+                            weight = weight,
+                            strong = weight?.let { it >= properties.strongLineWeight },
+                        )
+                },
             purgedLineIds = excerptIds.filter { it !in foundIds },
             actions = actions.findByReportIdOrderByActedAtAsc(report.id).map(::view),
         )
