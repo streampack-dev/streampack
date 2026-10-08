@@ -2,12 +2,16 @@
 package dev.streampack.blog.operation
 
 import dev.streampack.blog.entity.Post
+import dev.streampack.blog.entity.PostTag
 import dev.streampack.blog.entity.Slug
+import dev.streampack.blog.entity.Tag
 import dev.streampack.blog.model.ContentListResponse
 import dev.streampack.blog.model.FindDraftsRequest
 import dev.streampack.blog.model.PostStatus
 import dev.streampack.blog.repository.PostRepository
+import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.SlugRepository
+import dev.streampack.blog.repository.TagRepository
 import dev.streampack.core.entity.User
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
@@ -36,6 +40,8 @@ class FindDraftsOperationTests {
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var slugRepository: SlugRepository
+    @Autowired lateinit var tagRepository: TagRepository
+    @Autowired lateinit var postTagRepository: PostTagRepository
 
     private lateinit var author: User
     private lateinit var admin: User
@@ -219,5 +225,16 @@ class FindDraftsOperationTests {
             "Insufficient privileges: requires ADMIN",
             (result as OperationResult.Error).message,
         )
+    }
+
+    @Test
+    fun `the pending list shows admins a draft's system tags`() {
+        val draft = postRepository.findAll().first { it.title == "Draft 1" }
+        val idea = tagRepository.save(Tag(name = "_idea", slug = "idea-system"))
+        postTagRepository.save(PostTag(post = draft, tag = idea))
+
+        val result = eventGateway.process(draftsMessage(FindDraftsRequest(), admin))
+        val listed = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(listOf("_idea"), listed.posts.single { it.id == draft.id }.tags)
     }
 }

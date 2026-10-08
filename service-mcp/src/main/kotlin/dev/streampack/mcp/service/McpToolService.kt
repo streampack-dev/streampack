@@ -10,6 +10,7 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.factoid.model.FactoidAttributeType
 import dev.streampack.factoid.service.FactoidService
+import dev.streampack.taxonomy.TagNames
 import dev.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import dev.streampack.taxonomy.model.TaxonomySnapshot
 import java.net.URI
@@ -169,7 +170,7 @@ class McpToolService(
                 "accessCount" to factoid.accessCount,
                 "text" to values[FactoidAttributeType.TEXT],
                 "urls" to csv(values[FactoidAttributeType.URLS]),
-                "tags" to csv(values[FactoidAttributeType.TAGS]),
+                "tags" to csv(values[FactoidAttributeType.TAGS]).filterNot(TagNames::isSystem),
                 "languages" to csv(values[FactoidAttributeType.LANGUAGES]),
                 "type" to csv(values[FactoidAttributeType.TYPE]),
                 "seeAlso" to csv(values[FactoidAttributeType.SEEALSO]),

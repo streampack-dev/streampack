@@ -9,8 +9,10 @@ import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.SlugRepository
+import dev.streampack.blog.service.PostTagVisibility
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.service.TypedOperation
 import java.time.Instant
@@ -73,7 +75,12 @@ class ApproveContentOperation(
                 createdAt = approved.createdAt,
                 updatedAt = approved.updatedAt,
                 commentCount = commentRepository.countActiveByPost(approved.id).toInt(),
-                tags = postTagRepository.findNamesByPost(approved.id),
+                tags =
+                    PostTagVisibility.forViewer(
+                        postTagRepository.findNamesByPost(approved.id),
+                        approved,
+                        (message.headers[Provenance.HEADER] as? Provenance)?.user,
+                    ),
                 categories = postCategoryRepository.findNamesByPost(approved.id),
                 markdownSource = approved.markdownSource,
             )

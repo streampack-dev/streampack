@@ -13,12 +13,14 @@ import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.SlugRepository
+import dev.streampack.blog.service.PostTagVisibility
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.TypedOperation
+import dev.streampack.taxonomy.TagNames
 import dev.streampack.temperature.service.TemperatureService
 import java.time.Instant
 import java.util.UUID
@@ -174,6 +176,17 @@ class FindContentOperation(
     }
 
     private fun findByTag(tagName: String, page: Int, size: Int): OperationResult {
+        // A system tag (`_idea`) isn't public: nothing is listed under it.
+        if (TagNames.isSystem(tagName)) {
+            return OperationResult.Success(
+                ContentListResponse(
+                    posts = emptyList(),
+                    page = page,
+                    totalPages = 0,
+                    totalCount = 0,
+                )
+            )
+        }
         val now = Instant.now()
         val pageResult = postRepository.findByTag(tagName, now, PageRequest.of(page, size))
 
@@ -234,7 +247,7 @@ class FindContentOperation(
             createdAt = post.createdAt,
             updatedAt = post.updatedAt,
             commentCount = commentRepository.countActiveByPost(post.id).toInt(),
-            tags = tagNamesForPost(post.id),
+            tags = PostTagVisibility.forViewer(tagNamesForPost(post.id), post, user),
             categories = categoryNamesForPost(post.id),
             markdownSource = if (canEdit) post.markdownSource else null,
         )
@@ -260,7 +273,7 @@ class FindContentOperation(
             publishedAt = post.publishedAt,
             sortOrder = post.sortOrder,
             commentCount = commentRepository.countActiveByPost(post.id).toInt(),
-            tags = tagNamesForPost(post.id),
+            tags = PostTagVisibility.withoutSystem(tagNamesForPost(post.id)),
             categories = categoryNamesForPost(post.id),
         )
     }
