@@ -11,6 +11,277 @@
         "required" : [ "publishedAt" ],
         "type" : "object"
       },
+      "AtlasArticle" : {
+        "description" : "A published post found at a place.",
+        "properties" : {
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "slug" : {
+            "description" : "Its canonical slug path; null only for a post without one.",
+            "type" : [ "string", "null" ]
+          },
+          "tags" : {
+            "description" : "Every tag it carries: the places it's found at.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "publishedAt", "tags", "title" ],
+        "type" : "object"
+      },
+      "AtlasBounds" : {
+        "description" : "A rectangle in world units.",
+        "properties" : {
+          "height" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "width" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "x" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "y" : {
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [ "height", "width", "x", "y" ],
+        "type" : "object"
+      },
+      "AtlasFactoid" : {
+        "description" : "A factoid found at a place.",
+        "properties" : {
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "selector" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "description" : "Every tag it carries: the places it's found at.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "selector", "tags", "updatedAt" ],
+        "type" : "object"
+      },
+      "AtlasPin" : {
+        "description" : "An article or factoid pinned around its place.",
+        "properties" : {
+          "createdAt" : {
+            "description" : "When a factoid was first taught.",
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "kind" : {
+            "description" : "What a pin is: an article or a factoid.",
+            "enum" : [ "article", "factoid" ],
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "description" : "When an article was published.",
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "selector" : {
+            "description" : "A factoid's selector (GET /factoids/{selector}).",
+            "type" : [ "string", "null" ]
+          },
+          "slug" : {
+            "description" : "An article's canonical slug path (GET /posts/{slug}).",
+            "type" : [ "string", "null" ]
+          },
+          "title" : {
+            "description" : "An article's title, or a factoid's selector.",
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "description" : "When a factoid last changed.",
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "x" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "y" : {
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [ "kind", "title", "x", "y" ],
+        "type" : "object"
+      },
+      "AtlasPlaceDetailResponse" : {
+        "description" : "One place, with everything found there.",
+        "properties" : {
+          "articles" : {
+            "description" : "Every published post carrying the tag, newest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/AtlasArticle"
+            },
+            "type" : "array"
+          },
+          "factoids" : {
+            "description" : "Every factoid carrying the tag, by selector.",
+            "items" : {
+              "$ref" : "#/components/schemas/AtlasFactoid"
+            },
+            "type" : "array"
+          },
+          "place" : {
+            "$ref" : "#/components/schemas/AtlasPlaceResponse"
+          },
+          "regionName" : {
+            "description" : "The name of the place's region.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "articles", "factoids", "place", "regionName" ],
+        "type" : "object"
+      },
+      "AtlasPlaceResponse" : {
+        "description" : "A place on the map: a tag, where it is, and what's found there.",
+        "properties" : {
+          "articleCount" : {
+            "description" : "Published posts carrying the tag: taxonomy's tags count.",
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "factoidCount" : {
+            "description" : "Factoids carrying the tag: taxonomy's factoidTags count.",
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "kind" : {
+            "description" : "What is found at a place: articles only, factoids only, or both.",
+            "enum" : [ "articles", "factoids", "shared" ],
+            "type" : "string"
+          },
+          "labelSize" : {
+            "description" : "The label's font size, in pixels: 10 + √size, at most 20.",
+            "format" : "double",
+            "type" : "number"
+          },
+          "minor" : {
+            "description" : "A small place (size under 3): its name shows only when zoomed in.",
+            "type" : "boolean"
+          },
+          "pins" : {
+            "description" : "The newest articles and the factoids (by name) found here, at most 8 of each, each placed around the mark. GET /atlas/places/{tag} lists them all.",
+            "items" : {
+              "$ref" : "#/components/schemas/AtlasPin"
+            },
+            "type" : "array"
+          },
+          "r" : {
+            "description" : "The mark's radius, in world units: 4 + 2.6·√(articles + factoids).",
+            "format" : "double",
+            "type" : "number"
+          },
+          "region" : {
+            "description" : "The id of the region it's in.",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "tag" : {
+            "description" : "The tag, lowercased, as /taxonomy and /posts?tag= name it.",
+            "type" : "string"
+          },
+          "x" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "y" : {
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [ "articleCount", "factoidCount", "kind", "labelSize", "minor", "pins", "r", "region", "tag", "x", "y" ],
+        "type" : "object"
+      },
+      "AtlasRegionResponse" : {
+        "description" : "A region of the map: tags that go together.",
+        "properties" : {
+          "id" : {
+            "description" : "Stable while the layout is kept; 0 is the Uncharted region.",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "name" : {
+            "description" : "The region's two biggest tags when laid out, joined by \" · \"; \"Uncharted\" for id 0.",
+            "type" : "string"
+          },
+          "r" : {
+            "description" : "How far the region reaches: its outermost place's mark, and a margin.",
+            "format" : "double",
+            "type" : "number"
+          },
+          "uncharted" : {
+            "description" : "True for the region of tags tied to nothing (id 0).",
+            "type" : "boolean"
+          },
+          "x" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "y" : {
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [ "id", "name", "r", "uncharted", "x", "y" ],
+        "type" : "object"
+      },
+      "AtlasResponse" : {
+        "description" : "The Atlas: a map of the site's tags, grouped into regions by how they're used together.",
+        "properties" : {
+          "bounds" : {
+            "$ref" : "#/components/schemas/AtlasBounds",
+            "description" : "The world the map spans, with a margin and room for region names."
+          },
+          "laidOutAt" : {
+            "description" : "When the oldest place was laid out: the last full layout. Null for an empty map.",
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "places" : {
+            "description" : "Every tag in use, each with its region and position, in region order and then biggest first. A stored tag no longer used is left out but keeps its position for when it's back.",
+            "items" : {
+              "$ref" : "#/components/schemas/AtlasPlaceResponse"
+            },
+            "type" : "array"
+          },
+          "regions" : {
+            "description" : "The regions, biggest first, the Uncharted region (id 0) last.",
+            "items" : {
+              "$ref" : "#/components/schemas/AtlasRegionResponse"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "bounds", "places", "regions" ],
+        "type" : "object"
+      },
       "AuthenticationFeatures" : {
         "properties" : {
           "codeChannels" : {
@@ -1814,6 +2085,49 @@
   },
   "openapi" : "3.1.0",
   "paths" : {
+    "/admin/atlas/relayout" : {
+      "post" : {
+        "description" : "Recomputes the whole layout from every published post and factoid, stores it and returns it. Every place may move, so readers lose the map they've learned; new tags are placed without this.",
+        "operationId" : "relayout",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AtlasResponse"
+                }
+              }
+            },
+            "description" : "The new map"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Lay the Atlas out again (admin)",
+        "tags" : [ "Atlas" ]
+      }
+    },
     "/admin/categories" : {
       "post" : {
         "operationId" : "createCategory",
@@ -3559,6 +3873,64 @@
         } ],
         "summary" : "Unsuspend a user account",
         "tags" : [ "Admin - User Management" ]
+      }
+    },
+    "/atlas" : {
+      "get" : {
+        "description" : "Laid out on the first request and stored; later requests read the stored map. A new tag is placed beside its strongest relative without moving anything; a tag no longer used is left out but keeps its place. Conditional (ETag, Last-Modified).",
+        "operationId" : "getAtlas",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AtlasResponse"
+                }
+              }
+            },
+            "description" : "The map"
+          }
+        },
+        "summary" : "The Atlas: regions and places (tags) with positions, counts and pins",
+        "tags" : [ "Atlas" ]
+      }
+    },
+    "/atlas/places/{tag}" : {
+      "get" : {
+        "description" : "The tag is matched ignoring case. 404 when it isn't on the map.",
+        "operationId" : "getPlace",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "tag",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AtlasPlaceDetailResponse"
+                }
+              }
+            },
+            "description" : "The place"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No place on the map has that tag"
+          }
+        },
+        "summary" : "One place on the Atlas, with every article and factoid found there",
+        "tags" : [ "Atlas" ]
       }
     },
     "/auth/account" : {
