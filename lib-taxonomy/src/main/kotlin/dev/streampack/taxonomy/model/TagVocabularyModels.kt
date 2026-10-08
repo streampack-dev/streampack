@@ -67,6 +67,7 @@ enum class TagActionType {
     DISMISS,
     STOP,
     UNSTOP,
+    REMOVE,
 }
 
 @Schema(description = "A doubtful new tag in the admin review queue")

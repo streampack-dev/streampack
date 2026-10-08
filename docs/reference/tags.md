@@ -130,8 +130,8 @@ re-points whatever already carries the alias, as aliasing a queued tag does. Rem
 re-points nothing back: the name is just free again. A stoplisted term is dropped from tags written
 from then on; tags already stored are left alone. System tags can't be aliased or stoplisted.
 
-Every change (alias, unalias, split, keep, dismiss, stop, unstop) is recorded with who made it and
-when (`tag_action`). The admin endpoints are under `/admin/tags` (see the
+Every change (alias, unalias, split, keep, dismiss, stop, unstop, and remove, which only the
+cleanup below makes) is recorded with who made it and when (`tag_action`). The admin endpoints are under `/admin/tags` (see the
 [Blog HTTP API](blog-http-api.md#admin-tags)), and admins have the same as text commands (see
 [Admin Text Operations](admin-text-operations.md#tag-vocabulary)).
 
@@ -150,9 +150,43 @@ taxonomy, the Atlas and factoid tag search keep matching stored tags. A factoid'
 the normalized shape the next time its `tags` are set; the whole list is re-joined, resolved
 through the vocabulary and de-duplicated.
 
-Nothing already stored is migrated here: existing hyphenated tags, `self-hosted`, plural pairs and
-factoid tags without a `tags` row are cleaned up by an approved migration (#140's third part),
-which leaves an alias behind for each merge.
+Nothing already stored is reshaped on read. The tags in use when the vocabulary arrived were
+cleaned up once, by the migration below.
+
+### The 2026-10 cleanup (V72)
+
+`V72__tag_cleanup` (`lib-taxonomy`, a Kotlin migration) applies the list decided for #140, and
+nothing else. Each rename and merge does what an admin's alias does: posts and factoid tag lists
+are re-pointed to the kept tag (one of each), the old row goes, and the old name becomes an alias.
+A hyphenated name needs no alias, since it normalizes to the kept one. The old name's Atlas place
+moves to the kept tag, or is dropped when the kept tag has a place of its own.
+
+| Kind | Old | Kept |
+|------|-----|------|
+| Rename | `load-testing`, `content-extraction`, `jakarta-ee`, `anti-pattern`, `remote-access`, `formal-languages`, `access-control` | the same with a space |
+| Merge | `build tools` | `build tool` |
+| Merge | `compilers` | `compiler` |
+| Merge | `frameworks` | `framework` |
+| Merge | `tools` | `tooling` |
+| Merge | `tunneling` | `tunnel` |
+| Merge | `distributed` | `distributed computing` |
+| Merge | `jakarta` | `jakarta ee` |
+| Merge | `rdms` | `rdbms` |
+| Merge | `consoleio` | `console` |
+| Merge | `ioc`, `di` | `dependency injection` |
+| Merge | `scm` | `version control` |
+| Merge | `standard` | `specification` |
+| Merge | `authorization` | `security` |
+| Merge | `authentication` | `identity` |
+
+`self-hosted`, `new` and `26` were removed from every post, factoid and Atlas place and
+stoplisted (as `self hosted`, `new` and `26`). `auth` was removed from factoids, with `kotauth`
+carrying `identity` instead, and its unused row and place went; it isn't aliased or stoplisted,
+since it's ambiguous: a new `auth` is accepted as written.
+
+Every change is in `tag_action` as made by `migration`, and the migration logs each entry as it
+goes. It skips a name that isn't there (a removal is stoplisted only where it was in use), so a
+database without some of these tags is fine.
 
 ## Tag slugs
 
