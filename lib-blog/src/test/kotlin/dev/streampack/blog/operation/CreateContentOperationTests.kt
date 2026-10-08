@@ -294,6 +294,49 @@ class CreateContentOperationTests {
     }
 
     @Test
+    fun `tags whose names slugify alike all get created`() {
+        val names = listOf("c", "c#", "c++", "日本語", "中文", "idea", "_idea")
+        val request = CreateContentRequest("Slug Clash", "Content.", tags = names)
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertEquals(names, response.tags)
+        val slugs = names.associateWith { tagRepository.findByName(it)!!.slug }
+        assertEquals(
+            mapOf(
+                "c" to "c",
+                "c#" to "c-2",
+                "c++" to "c-3",
+                "日本語" to "tag",
+                "中文" to "tag-2",
+                "idea" to "idea",
+                "_idea" to "idea-2",
+            ),
+            slugs,
+        )
+    }
+
+    @Test
+    fun `a tag clashing with an existing tag's slug is created on a later post`() {
+        eventGateway.process(
+            createMessage(
+                CreateContentRequest("First", "Content.", tags = listOf("c")),
+                verifiedUser,
+            )
+        )
+        val result =
+            eventGateway.process(
+                createMessage(
+                    CreateContentRequest("Second", "Content.", tags = listOf("c#")),
+                    verifiedUser,
+                )
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("c-2", tagRepository.findByName("c#")!!.slug)
+    }
+
+    @Test
     fun `create with categoryIds creates associations`() {
         val category = categoryRepository.save(Category(name = "JVM", slug = "jvm"))
         val request =

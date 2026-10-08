@@ -136,7 +136,7 @@ class CreateContentOperation(
             TagNames.normalizeAll(tagNames).map { name ->
                 tagRepository.findByName(name)
                     ?: tagRepository.save(
-                        Tag(name = name, slug = slugGenerationService.slugify(name))
+                        Tag(name = name, slug = slugGenerationService.generateTagSlug(name))
                     )
             }
         resolved.forEach { tag -> postTagRepository.save(PostTag(post = post, tag = tag)) }
