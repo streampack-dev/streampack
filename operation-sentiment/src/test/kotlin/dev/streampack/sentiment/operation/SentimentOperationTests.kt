@@ -12,6 +12,7 @@ import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.MessageLogService
 import dev.streampack.sentiment.model.SentimentRequest
 import java.util.UUID
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -119,7 +120,10 @@ class SentimentOperationTests {
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val success = result as OperationResult.Success
-        assertTrue(success.payload.toString().contains(testChannel), "${success.payload}")
+        val answer = success.payload.toString()
+        assertTrue(answer.startsWith("Score:"), "just the model's line: $answer")
+        assertFalse(answer.contains("irc://"), "no provenance URI: $answer")
+        assertFalse(answer.contains("Sentiment for"), "no prefix in the channel itself: $answer")
         assertNull(success.provenance, "answered in the channel, not by DM")
     }
 
@@ -201,6 +205,21 @@ class SentimentOperationTests {
             success.provenance!!.replyTo == "adminnick",
             "Cross-channel result should be directed to the requesting user",
         )
+        val answer = success.payload.toString()
+        assertTrue(answer.startsWith("Sentiment for #other: Score:"), answer)
+        assertFalse(answer.contains("irc://"), "no provenance URI: $answer")
+    }
+
+    @Test
+    fun `a target with no known name falls back to its URI`() {
+        val unnamed = "slack://workspace/C0123456"
+        messageLogService.logInbound(unnamed, "frank", "hello from an unnamed channel")
+
+        val result = sentimentOperation.execute(message("sentiment $unnamed"))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val answer = (result as OperationResult.Success).payload.toString()
+        assertTrue(answer.startsWith("Sentiment for $unnamed: Score:"), answer)
     }
 
     @Test
