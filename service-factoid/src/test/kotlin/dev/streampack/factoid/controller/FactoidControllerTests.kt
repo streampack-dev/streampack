@@ -85,6 +85,38 @@ class FactoidControllerTests {
     }
 
     @Test
+    fun `GET factoids since lists only what was set or changed since, newest first`() {
+        val old = java.time.Instant.parse("2026-01-01T00:00:00Z")
+        listOf("kotlin", "java").forEach { selector ->
+            val f = factoidRepository.findBySelectorIgnoreCase(selector)!!
+            factoidRepository.save(f.copy(createdAt = old, updatedAt = old))
+        }
+        val since = "2026-06-01T00:00:00Z"
+        mockMvc.get("/factoids?since=$since").andExpect {
+            status { isOk() }
+            jsonPath("$.factoids.length()") { value(1) }
+            jsonPath("$.factoids[0].selector") { value("spring") }
+            jsonPath("$.totalCount") { value(1) }
+        }
+
+        // An edit to an old factoid brings it back, newest first
+        factoidService.save("java", FactoidAttributeType.TEXT, "Still the OG", "testuser")
+        mockMvc.get("/factoids?since=$since").andExpect {
+            status { isOk() }
+            jsonPath("$.factoids.length()") { value(2) }
+            jsonPath("$.factoids[0].selector") { value("java") }
+            jsonPath("$.factoids[1].selector") { value("spring") }
+        }
+    }
+
+    @Test
+    fun `GET factoids since can't be combined with a search`() {
+        mockMvc.get("/factoids?since=2026-06-01T00:00:00Z&q=java").andExpect {
+            status { isBadRequest() }
+        }
+    }
+
+    @Test
     fun `GET factoid detail returns all summary attributes`() {
         mockMvc.get("/factoids/spring").andExpect {
             status { isOk() }

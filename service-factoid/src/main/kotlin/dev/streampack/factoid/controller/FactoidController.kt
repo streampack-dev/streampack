@@ -62,19 +62,31 @@ class FactoidController(
 ) : UserAwareController(jwtService) {
     private val logger = LoggerFactory.getLogger(FactoidController::class.java)
 
-    /** Paginated listing with optional search: GET /factoids?q=term&page=0&size=20 */
+    /**
+     * Paginated listing with optional search: GET /factoids?q=term&page=0&size=20. With `since` (an
+     * ISO-8601 instant), only the factoids set or changed at or after it, newest first, for a
+     * client asking what's new without reading every page (the Atlas's What's new). `since` and `q`
+     * don't combine.
+     */
     @GetMapping(produces = ["application/json"])
     fun list(
         @RequestParam(required = false) q: String?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(required = false) since: java.time.Instant?,
     ): FactoidListResponse {
+        if (since != null && !q.isNullOrBlank()) {
+            throw org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST,
+                "since and q can't be combined",
+            )
+        }
         val pageable = PageRequest.of(page, size.coerceAtMost(100))
         val results =
-            if (q.isNullOrBlank()) {
-                factoidService.findAll(pageable)
-            } else {
-                factoidService.searchPaginated(q, pageable)
+            when {
+                since != null -> factoidService.findUpdatedSince(since, pageable)
+                q.isNullOrBlank() -> factoidService.findAll(pageable)
+                else -> factoidService.searchPaginated(q, pageable)
             }
         val summaries = factoidService.summarizeFor(results.content)
         return FactoidListResponse(

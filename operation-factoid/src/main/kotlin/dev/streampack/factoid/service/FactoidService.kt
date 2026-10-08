@@ -182,6 +182,13 @@ class FactoidService(
         return factoidRepository.findAllByOrderBySelectorAsc(pageable)
     }
 
+    /** Factoids set or changed at or after [since], newest first */
+    fun findUpdatedSince(since: Instant, pageable: Pageable): Page<Factoid> =
+        factoidRepository.findByUpdatedAtGreaterThanEqualOrderByUpdatedAtDescSelectorAsc(
+            since,
+            pageable,
+        )
+
     /** Paginated search across factoid selectors */
     @Transactional(readOnly = true)
     fun searchPaginated(term: String, pageable: Pageable): Page<Factoid> {
