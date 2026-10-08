@@ -332,6 +332,68 @@ changed (lines already hidden, or already gone, aren't counted).
 a report, with `flagged` and `cited` false. Hidden lines never appear in `GET /logs` or
 `GET /logs/search`, for anyone, admins included; this is where an admin finds them.
 
+## Atlas
+
+A map of the site's tags (ui-pudl#184), so every front end draws the same geography. Places are
+tags; regions are tags used together. The layout is computed once and stored; see
+[The Atlas](../explanation/atlas.md) for how it's laid out and why it holds still.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /atlas` | The map: regions, places with positions, counts and pins, and the world's bounds. Public and conditional (`ETag`, `Last-Modified`). |
+| `GET /atlas/places/{tag}` | One place (matched ignoring case) with every article and factoid found there. `404` if the tag isn't on the map. |
+| `POST /admin/atlas/relayout` | Lays the whole map out again, stores it and returns it as `GET /atlas` would. `ADMIN` and `SUPER_ADMIN` only: `401` signed out, `403` for anyone else. |
+
+`GET /atlas` answers `AtlasResponse`:
+
+```json
+{
+  "regions": [
+    { "id": 1, "name": "java · spring", "x": 0.0, "y": 0.0, "r": 141.3, "uncharted": false },
+    { "id": 0, "name": "Uncharted", "x": 520.0, "y": 12.0, "r": 48.0, "uncharted": true }
+  ],
+  "places": [
+    {
+      "tag": "java", "region": 1, "x": 0.0, "y": 0.0,
+      "articleCount": 23, "factoidCount": 5, "kind": "shared",
+      "r": 17.8, "labelSize": 15.3, "minor": false,
+      "pins": [
+        { "kind": "article", "title": "Virtual threads", "slug": "2026/10/virtual-threads",
+          "x": 0.0, "y": -32.5, "publishedAt": "2026-10-01T12:00:00Z" },
+        { "kind": "factoid", "title": "jvm", "selector": "jvm", "x": 20.1, "y": -26.3,
+          "createdAt": "2026-06-02T09:00:00Z", "updatedAt": "2026-09-30T18:00:00Z" }
+      ]
+    }
+  ],
+  "bounds": { "x": -221.3, "y": -239.3, "width": 829.3, "height": 460.6 },
+  "laidOutAt": "2026-10-08T12:00:00Z"
+}
+```
+
+- **Positions** are world units; `bounds` is the world with a margin and room above each region
+  for its name. Regions are biggest first with Uncharted (`id` 0, tags only ever used alone) last;
+  places are in region order, biggest first.
+- **Counts** are the taxonomy's: `articleCount` is `tags` in `GET /taxonomy` (published posts only:
+  approved, due, not deleted, not in a hidden category) and `factoidCount` is `factoidTags`. Every
+  tag with a count is on the map, and only those.
+- **`kind`** is `articles`, `factoids` or `shared` (both). ui-pudl draws a disc, a ring and a
+  diamond, so the three are told apart without colour.
+- **`r`** is the mark's radius (`4 + 2.6·√(articles + factoids)`), `labelSize` the name's size in
+  pixels (`10 + √size`, at most 20) and `minor` a place whose name shows only close up (size
+  under 3).
+- **`pins`** are the place's newest articles and its factoids by name, at most 8 of each, each
+  already placed around the mark: an article has `slug` and `publishedAt`, a factoid `selector`,
+  `createdAt` and `updatedAt`. A post with several tags is pinned at each of its places.
+- **What's new** is the front end's: posts by `publishedAt`, factoids by `createdAt` (new) and
+  `updatedAt` (changed), from `GET /posts` and `GET /factoids`. Their `tags` name the places they're
+  found at.
+
+`GET /atlas/places/{tag}` answers `AtlasPlaceDetailResponse`: `place` (as above), `regionName`,
+`articles` (every published post carrying the tag, newest first, each `{title, slug, publishedAt,
+tags}`) and `factoids` (every factoid carrying it, by selector, each `{selector, createdAt,
+updatedAt, tags}`). It's how a tag's factoids are listed: `GET /factoids` searches, but doesn't
+list by tag.
+
 ## Generated OpenAPI
 
 The generated OpenAPI document is `docs/openapi.json`. Do not edit it by hand; regenerate it with
