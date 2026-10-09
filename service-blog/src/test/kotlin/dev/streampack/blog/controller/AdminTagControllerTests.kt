@@ -392,4 +392,260 @@ class AdminTagControllerTests {
             .containsExactly("UNSTOP", "STOP")
         assertThat(JsonPath.read<List<String>>(actions, "$[*].actor")).containsOnly("tags-admin")
     }
+
+    private fun count(table: String): Int =
+        jdbc.queryForObject("SELECT COUNT(*) FROM $table", Int::class.java)!!
+
+    /** Everything an alias or split could touch, to show a preview touched none of it. */
+    private fun snapshot(): Map<String, Any?> =
+        mapOf(
+            "post_tags" to
+                jdbc.queryForList(
+                    "SELECT post_id::text, tag_id::text FROM post_tags ORDER BY 1, 2"
+                ),
+            "tags" to jdbc.queryForList("SELECT id::text, name, slug FROM tags ORDER BY name"),
+            "factoid tags" to
+                jdbc.queryForList(
+                    "SELECT id::text, attribute_value, updated_at FROM factoid_attributes " +
+                        "WHERE attribute_type = 'TAGS' ORDER BY 1"
+                ),
+            "tag_review" to
+                jdbc.queryForList("SELECT tag, status, acted_by FROM tag_review ORDER BY tag"),
+            "tag_alias" to jdbc.queryForList("SELECT alias FROM tag_alias ORDER BY alias"),
+            "tag_action" to count("tag_action"),
+        )
+
+    private fun changeOf(result: org.springframework.test.web.servlet.ResultActionsDsl) =
+        result
+            .andExpect { status { isOk() } }
+            .andReturn()
+            .response
+            .contentAsString
+            .let {
+                listOf(
+                    JsonPath.read<String>(it, "$.tag"),
+                    JsonPath.read<List<String>>(it, "$.now"),
+                    JsonPath.read<Int>(it, "$.posts"),
+                    JsonPath.read<Int>(it, "$.factoids"),
+                )
+            }
+
+    @Test
+    fun `the new endpoints and dry runs answer 401 to no one and 403 to a user`() {
+        post("one", "compiler")
+        val id = reviewId("compiler")
+        mockMvc.get("/admin/tags/review/$id").andExpect { status { isUnauthorized() } }
+        mockMvc
+            .get("/admin/tags/review/$id") { header("Authorization", "Bearer $userToken") }
+            .andExpect { status { isForbidden() } }
+        for ((path, body) in
+            listOf(
+                "/admin/tags/review/$id/alias?dryRun=true" to """{"tag":"compilers"}""",
+                "/admin/tags/review/$id/split?dryRun=true" to """{"parts":["java","kotlin"]}""",
+                "/admin/tags/aliases?dryRun=true" to """{"alias":"compiler","tag":"compilers"}""",
+            )) {
+            mockMvc
+                .post(path) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = body
+                }
+                .andExpect { status { isUnauthorized() } }
+            mockMvc
+                .post(path) {
+                    header("Authorization", "Bearer $userToken")
+                    contentType = MediaType.APPLICATION_JSON
+                    content = body
+                }
+                .andExpect { status { isForbidden() } }
+        }
+        assertThat(reviews.findByTag("compiler")!!.status).isEqualTo(TagReviewStatus.OPEN)
+    }
+
+    @Test
+    fun `one review entry is found by id, and an unknown one is a 404`() {
+        post("one", "compiler")
+        mockMvc
+            .get("/admin/tags/review/${reviewId("compiler")}") {
+                header("Authorization", "Bearer $adminToken")
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.id") { value(reviewId("compiler")) }
+                jsonPath("$.tag") { value("compiler") }
+                jsonPath("$.hintKind") { value("PLURAL") }
+                jsonPath("$.hintTags[0]") { value("compilers") }
+                jsonPath("$.source") { value("post") }
+                jsonPath("$.status") { value("OPEN") }
+            }
+        mockMvc
+            .get("/admin/tags/review/00000000-0000-0000-0000-000000000000") {
+                header("Authorization", "Bearer $adminToken")
+            }
+            .andExpect { status { isNotFound() } }
+    }
+
+    @Test
+    fun `every status filter carries its own total and page count`() {
+        // Five entries: open x2, kept, dismissed, aliased.
+        post("one", "compiler", "kotlins", "javas", "java kotlin", "kubernete")
+        listOf("javas" to "keep", "java kotlin" to "dismiss").forEach { (tag, action) ->
+            mockMvc
+                .post("/admin/tags/review/${reviewId(tag)}/$action") {
+                    header("Authorization", "Bearer $adminToken")
+                }
+                .andExpect { status { isOk() } }
+        }
+        mockMvc
+            .post("/admin/tags/review/${reviewId("kubernete")}/alias") {
+                header("Authorization", "Bearer $adminToken")
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"tag":"kubernetes"}"""
+            }
+            .andExpect { status { isOk() } }
+        for ((status, total, pages) in
+            listOf(
+                Triple("open", 2, 1),
+                Triple("kept", 1, 1),
+                Triple("dismissed", 1, 1),
+                Triple("aliased", 1, 1),
+                Triple("split", 0, 0),
+                Triple("all", 5, 3),
+            )) {
+            mockMvc
+                .get("/admin/tags/review?status=$status&size=2") {
+                    header("Authorization", "Bearer $adminToken")
+                }
+                .andExpect {
+                    status { isOk() }
+                    jsonPath("$.totalCount") { value(total) }
+                    jsonPath("$.totalPages") { value(pages) }
+                    jsonPath("$.openCount") { value(2) }
+                    jsonPath("$.entries.length()") { value(minOf(total, 2)) }
+                }
+        }
+        mockMvc
+            .get("/admin/tags/review?status=all&size=2&page=2") {
+                header("Authorization", "Bearer $adminToken")
+            }
+            .andExpect {
+                jsonPath("$.totalCount") { value(5) }
+                jsonPath("$.entries.length()") { value(1) }
+            }
+    }
+
+    @Test
+    fun `a review alias dry run counts what the alias then does, and changes nothing`() {
+        val one = post("one", "compiler", "java")
+        post("two", "compilers", "compiler")
+        say("gcc=a compiler")
+        say("gcc.tags=compiler, java")
+        val id = reviewId("compiler")
+        val before = snapshot()
+
+        val preview =
+            changeOf(
+                mockMvc.post("/admin/tags/review/$id/alias?dryRun=true") {
+                    header("Authorization", "Bearer $adminToken")
+                    contentType = MediaType.APPLICATION_JSON
+                    content = """{"tag":"compilers"}"""
+                }
+            )
+        assertThat(preview).containsExactly("compiler", listOf("compilers"), 2, 1)
+        assertThat(snapshot()).isEqualTo(before)
+        assertThat(tagsOfPost(one)).containsExactly("compiler", "java")
+        assertThat(factoidTags("gcc")).isEqualTo("compiler,java")
+
+        // An older client's body, with "alias": null, is still taken.
+        val real =
+            changeOf(
+                mockMvc.post("/admin/tags/review/$id/alias") {
+                    header("Authorization", "Bearer $adminToken")
+                    contentType = MediaType.APPLICATION_JSON
+                    content = """{"tag":"compilers","alias":null}"""
+                }
+            )
+        assertThat(real).isEqualTo(preview)
+        assertThat(tagsOfPost(one)).containsExactly("compilers", "java")
+    }
+
+    @Test
+    fun `a dry run is refused as the action would be`() {
+        post("one", "compiler")
+        val before = snapshot()
+        mockMvc
+            .post("/admin/tags/review/${reviewId("compiler")}/alias?dryRun=true") {
+                header("Authorization", "Bearer $adminToken")
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"tag":"no such tag"}"""
+            }
+            .andExpect { status { isBadRequest() } }
+        mockMvc
+            .post("/admin/tags/review/00000000-0000-0000-0000-000000000000/split?dryRun=true") {
+                header("Authorization", "Bearer $adminToken")
+            }
+            .andExpect { status { isNotFound() } }
+        assertThat(snapshot()).isEqualTo(before)
+    }
+
+    @Test
+    fun `a review split dry run counts what the split then does, and changes nothing`() {
+        val one = post("one", "java kotlin")
+        post("two", "java kotlin", "java")
+        say("jk=both")
+        say("jk.tags=java kotlin, compilers")
+        val id = reviewId("java kotlin")
+        val before = snapshot()
+
+        val preview =
+            changeOf(
+                mockMvc.post("/admin/tags/review/$id/split?dryRun=true") {
+                    header("Authorization", "Bearer $adminToken")
+                }
+            )
+        assertThat(preview).containsExactly("java kotlin", listOf("java", "kotlin"), 2, 1)
+        assertThat(snapshot()).isEqualTo(before)
+        assertThat(tagsOfPost(one)).containsExactly("java kotlin")
+
+        val real =
+            changeOf(
+                mockMvc.post("/admin/tags/review/$id/split") {
+                    header("Authorization", "Bearer $adminToken")
+                }
+            )
+        assertThat(real).isEqualTo(preview)
+        assertThat(tagsOfPost(one)).containsExactly("java", "kotlin")
+    }
+
+    @Test
+    fun `an alias dry run counts what making the alias then does, and changes nothing`() {
+        val one = post("one", "k8s")
+        post("two", "k8s", "kubernetes")
+        say("kube=x")
+        say("kube.tags=K8s")
+        val before = snapshot()
+
+        val preview =
+            changeOf(
+                mockMvc.post("/admin/tags/aliases?dryRun=true") {
+                    header("Authorization", "Bearer $adminToken")
+                    contentType = MediaType.APPLICATION_JSON
+                    content = """{"alias":"K8s","tag":"kubernetes"}"""
+                }
+            )
+        assertThat(preview).containsExactly("k8s", listOf("kubernetes"), 2, 1)
+        assertThat(snapshot()).isEqualTo(before)
+        assertThat(tagsOfPost(one)).containsExactly("k8s")
+
+        val real =
+            changeOf(
+                mockMvc.post("/admin/tags/aliases") {
+                    header("Authorization", "Bearer $adminToken")
+                    contentType = MediaType.APPLICATION_JSON
+                    content = """{"alias":"K8s","tag":"kubernetes"}"""
+                }
+            )
+        assertThat(real).isEqualTo(preview)
+        assertThat(tagsOfPost(one)).containsExactly("kubernetes")
+        assertThat(factoidTags("kube")).isEqualTo("kubernetes")
+    }
 }

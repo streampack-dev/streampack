@@ -102,6 +102,14 @@ The queue has one entry per tag. An admin can:
 - **keep** it as a real tag;
 - **dismiss** it, leaving the tag as it is.
 
+An alias or a split can be previewed first (`?dryRun=true`, see the
+[Blog HTTP API](blog-http-api.md#previewing-an-alias-or-a-split)), and so can making an alias
+directly: the preview answers what the action would re-point, the same counts, and changes
+nothing.
+
+Each entry records what first wrote its tag (`source`): `post`, `factoid`, or `rss` for a feed tag
+promoted or created as a tag (see [Feed tags](#feed-tags)).
+
 Re-pointing keeps one of each tag: a post or factoid that already carries the target doesn't get
 it twice. Factoid tag lists are rewritten in place, the rest of each list left as it was stored,
 locked factoids included.

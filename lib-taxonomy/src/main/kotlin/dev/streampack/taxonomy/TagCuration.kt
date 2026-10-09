@@ -26,6 +26,7 @@ import org.springframework.beans.factory.ObjectProvider
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.interceptor.TransactionAspectSupport
 
 /**
  * What admins do with the tag vocabulary (#140): the review queue, aliases and the stoplist. Every
@@ -51,19 +52,54 @@ class TagCuration(
     /** Something asked for isn't there: a review entry, an alias or a stoplisted term. */
     class NotFoundException(message: String) : RuntimeException(message)
 
-    /** The queue, or the entries in [status], the AI's likeliest near-misses first. */
+    /**
+     * The queue, or the entries in [status], the AI's likeliest near-misses first, with how many
+     * there are in [status] and how many pages of [size] that makes.
+     */
     @Transactional(readOnly = true)
-    fun queue(status: TagReviewStatus?, page: Int, size: Int): TagReviewListResponse =
-        TagReviewListResponse(
+    fun queue(status: TagReviewStatus?, page: Int, size: Int): TagReviewListResponse {
+        val total = if (status == null) reviews.count() else reviews.countByStatus(status)
+        return TagReviewListResponse(
             entries = reviews.findQueue(status, PageRequest.of(page, size)).map(::entry),
             openCount = reviews.countByStatus(TagReviewStatus.OPEN),
+            totalCount = total,
+            totalPages = pages(total, size),
         )
+    }
+
+    /** The review entry [id]. */
+    @Transactional(readOnly = true)
+    fun review(id: UUID): TagReviewEntry =
+        reviews.findById(id).orElse(null)?.let(::entry)
+            ?: throw NotFoundException("Tag review entry not found")
 
     /** The review entry [id]'s tag. */
-    @Transactional(readOnly = true)
-    fun reviewTag(id: UUID): String =
-        reviews.findById(id).orElse(null)?.tag
-            ?: throw NotFoundException("Tag review entry not found")
+    @Transactional(readOnly = true) fun reviewTag(id: UUID): String = review(id).tag
+
+    /**
+     * What [alias] would do, without doing it: the same [TagChangeResult], counting the posts and
+     * factoids it would re-point. It runs the alias for real and rolls it back, so the counts are
+     * the alias's own, and so are its refusals.
+     */
+    @Transactional
+    fun previewAlias(raw: String, target: String, actor: String): TagChangeResult = rolledBack {
+        aliasing(raw, target, actor)
+    }
+
+    /** What [split] would do, without doing it; as [previewAlias]. */
+    @Transactional
+    fun previewSplit(raw: String, parts: List<String>?, actor: String): TagChangeResult =
+        rolledBack {
+            splitting(raw, parts, actor)
+        }
+
+    /** Runs [action] in this transaction, then marks it to roll back: nothing it did is kept. */
+    private fun <T> rolledBack(action: () -> T): T =
+        try {
+            action()
+        } finally {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly()
+        }
 
     /**
      * Makes [raw] an alias of the tag [target] names: every post and factoid carrying it is
@@ -71,7 +107,12 @@ class TagCuration(
      * for it is marked ALIASED. Writing or looking up [raw] afterwards finds the target.
      */
     @Transactional
-    fun alias(raw: String, target: String, actor: String): TagChangeResult {
+    fun alias(raw: String, target: String, actor: String): TagChangeResult =
+        aliasing(raw, target, actor).also {
+            log.info("Tag '{}' aliased to '{}' by {}: {}", it.tag, it.now[0], actor, it)
+        }
+
+    private fun aliasing(raw: String, target: String, actor: String): TagChangeResult {
         val names = sourceNames(raw)
         val to = existing(target)
         require(names.any { it != to }) { "'$raw' is already '$to'" }
@@ -93,7 +134,6 @@ class TagCuration(
         }
         close(key, TagReviewStatus.ALIASED, actor)
         record(TagActionType.ALIAS, key, to, actor)
-        log.info("Tag '{}' aliased to '{}' by {}: {}", key, to, actor, counts)
         return TagChangeResult(key, listOf(to), counts.first, counts.second)
     }
 
@@ -103,7 +143,12 @@ class TagCuration(
      * Its queued entry is marked SPLIT.
      */
     @Transactional
-    fun split(raw: String, parts: List<String>?, actor: String): TagChangeResult {
+    fun split(raw: String, parts: List<String>?, actor: String): TagChangeResult =
+        splitting(raw, parts, actor).also {
+            log.info("Tag '{}' split into {} by {}: {}", it.tag, it.now, actor, it)
+        }
+
+    private fun splitting(raw: String, parts: List<String>?, actor: String): TagChangeResult {
         val key = TagNames.normalize(raw) ?: throw IllegalArgumentException("No tag given")
         val names = sourceNames(raw)
         val wanted =
@@ -136,7 +181,6 @@ class TagCuration(
         }
         close(key, TagReviewStatus.SPLIT, actor)
         record(TagActionType.SPLIT, key, into.joinToString(", "), actor)
-        log.info("Tag '{}' split into {} by {}: {}", key, into, actor, counts)
         return TagChangeResult(key, into, counts.first, counts.second)
     }
 
@@ -326,4 +370,9 @@ class TagCuration(
         )
 
     private fun now() = Instant.now()
+
+    companion object {
+        /** Pages of [size] that [total] fills: 0 when there's nothing. */
+        fun pages(total: Long, size: Int): Int = ((total + size - 1) / size).toInt()
+    }
 }

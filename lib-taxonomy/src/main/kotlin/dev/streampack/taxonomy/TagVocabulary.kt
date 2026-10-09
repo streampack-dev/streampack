@@ -89,7 +89,7 @@ class TagVocabulary(
     /**
      * The create rule: [raw] resolved, its tag created when it's new (queued for review when it
      * looks doubtful), and the name to store returned; null when nothing is stored (empty or
-     * stoplisted). [source] says what wrote it (`post`, `factoid`).
+     * stoplisted). [source] says what wrote it (`post`, `factoid`, `rss`).
      */
     @Transactional fun accept(raw: String?, source: String): String? = acceptTag(raw, source)?.name
 

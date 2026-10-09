@@ -9,6 +9,8 @@ import dev.streampack.taxonomy.model.TagActionEntry
 import dev.streampack.taxonomy.model.TagAliasEntry
 import dev.streampack.taxonomy.model.TagAliasRequest
 import dev.streampack.taxonomy.model.TagChangeResult
+import dev.streampack.taxonomy.model.TagReviewAliasRequest
+import dev.streampack.taxonomy.model.TagReviewEntry
 import dev.streampack.taxonomy.model.TagReviewListResponse
 import dev.streampack.taxonomy.model.TagReviewStatus
 import dev.streampack.taxonomy.model.TagSplitRequest
@@ -16,6 +18,7 @@ import dev.streampack.taxonomy.model.TagStopEntry
 import dev.streampack.taxonomy.model.TagStopRequest
 import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -66,7 +69,8 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
             "Doubtful new tags: a trailing-s pair with an existing tag (PLURAL), several words " +
                 "that are each a tag (MISSING_COMMA), or a near-duplicate only the AI found (AI). " +
                 "Open entries by default, the AI's most confident first, then newest. `openCount` " +
-                "is how many are open in all, for a launcher badge.",
+                "is how many are open in all, for a launcher badge; `totalCount` and " +
+                "`totalPages` are for the status asked for, so any view can show page N of M.",
         operationId = "listTagReviews",
     )
     @ApiResponse(
@@ -101,11 +105,31 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
         }
 
     @Operation(
+        summary = "One entry in the tag review queue",
+        description = "The entry, open or decided, as the queue lists it.",
+        operationId = "getTagReview",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "The entry",
+        content = [Content(schema = Schema(implementation = TagReviewEntry::class))],
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "No such entry",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @GetMapping("/review/{id}", produces = ["application/json"])
+    fun review(@PathVariable id: UUID, httpRequest: HttpServletRequest): ResponseEntity<*> =
+        asAdmin(httpRequest) { ResponseEntity.ok(curation.review(id)) }
+
+    @Operation(
         summary = "Alias a queued tag to an existing one",
         description =
             "Every post and factoid carrying the queued tag is re-pointed to `tag`, in one " +
                 "transaction; the queued tag's own row goes, and it becomes an alias of `tag`. " +
-                "The entry is marked ALIASED.",
+                "The entry is marked ALIASED. With `dryRun=true` nothing changes: the answer is " +
+                "what the alias would do, the posts and factoids it would re-point.",
         operationId = "aliasTagReview",
     )
     @ApiResponse(
@@ -130,11 +154,16 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
     )
     fun aliasReview(
         @PathVariable id: UUID,
-        @RequestBody request: TagAliasRequest,
+        @RequestBody request: TagReviewAliasRequest,
+        @Parameter(description = DRY_RUN) @RequestParam(defaultValue = "false") dryRun: Boolean,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> =
         asAdmin(httpRequest) { admin ->
-            ResponseEntity.ok(curation.alias(curation.reviewTag(id), request.tag, admin.username))
+            val tag = curation.reviewTag(id)
+            ResponseEntity.ok(
+                if (dryRun) curation.previewAlias(tag, request.tag, admin.username)
+                else curation.alias(tag, request.tag, admin.username)
+            )
         }
 
     @Operation(
@@ -142,7 +171,8 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
         description =
             "For a missing comma: every post and factoid carrying the queued tag carries the " +
                 "parts instead, in one transaction, and the queued tag's row goes. The parts " +
-                "default to the entry's hint tags. The entry is marked SPLIT.",
+                "default to the entry's hint tags. The entry is marked SPLIT. With `dryRun=true` " +
+                "nothing changes: the answer is what the split would do.",
         operationId = "splitTagReview",
     )
     @ApiResponse(
@@ -164,11 +194,14 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
     fun splitReview(
         @PathVariable id: UUID,
         @RequestBody(required = false) request: TagSplitRequest?,
+        @Parameter(description = DRY_RUN) @RequestParam(defaultValue = "false") dryRun: Boolean,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> =
         asAdmin(httpRequest) { admin ->
+            val tag = curation.reviewTag(id)
             ResponseEntity.ok(
-                curation.split(curation.reviewTag(id), request?.parts, admin.username)
+                if (dryRun) curation.previewSplit(tag, request?.parts, admin.username)
+                else curation.split(tag, request?.parts, admin.username)
             )
         }
 
@@ -240,7 +273,8 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
         description =
             "`alias` becomes an alias of the existing tag `tag`. Any posts and factoids carrying " +
                 "`alias` are re-pointed to `tag` in one transaction, its row goes, and its own " +
-                "aliases move to `tag`. Writing or looking up `alias` then finds `tag`.",
+                "aliases move to `tag`. Writing or looking up `alias` then finds `tag`. With " +
+                "`dryRun=true` nothing changes: the answer is what the alias would do.",
         operationId = "createTagAlias",
     )
     @ApiResponse(
@@ -256,13 +290,15 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
     @PostMapping("/aliases", produces = ["application/json"], consumes = ["application/json"])
     fun createAlias(
         @RequestBody request: TagAliasRequest,
+        @Parameter(description = DRY_RUN) @RequestParam(defaultValue = "false") dryRun: Boolean,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> =
         asAdmin(httpRequest) { admin ->
-            val alias =
-                request.alias?.takeIf { it.isNotBlank() }
-                    ?: return@asAdmin badRequest("alias is required")
-            ResponseEntity.ok(curation.alias(alias, request.tag, admin.username))
+            if (request.alias.isBlank()) return@asAdmin badRequest("alias is required")
+            ResponseEntity.ok(
+                if (dryRun) curation.previewAlias(request.alias, request.tag, admin.username)
+                else curation.alias(request.alias, request.tag, admin.username)
+            )
         }
 
     @Operation(
@@ -395,5 +431,7 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
 
     companion object {
         const val MAX_SIZE = 100
+        const val DRY_RUN =
+            "true to preview: the answer is what the action would do, and nothing is changed"
     }
 }

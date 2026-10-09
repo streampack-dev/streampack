@@ -1229,6 +1229,16 @@
             },
             "type" : "array"
           },
+          "totalCount" : {
+            "description" : "Feed tags in all for the status asked for, across every page",
+            "format" : "int64",
+            "type" : [ "integer", "null" ]
+          },
+          "totalPages" : {
+            "description" : "Pages in all for the status and size asked for; 0 when none",
+            "format" : "int32",
+            "type" : [ "integer", "null" ]
+          },
           "waitingCount" : {
             "description" : "Waiting feed tags in all, for a launcher badge",
             "format" : "int64",
@@ -2125,18 +2135,19 @@
         "description" : "Make a tag an alias of another",
         "properties" : {
           "alias" : {
-            "description" : "The name to alias; required when creating an alias",
-            "type" : [ "string", "null" ]
+            "description" : "The name to alias",
+            "type" : "string"
           },
           "tag" : {
-            "description" : "The tag it means",
+            "description" : "The existing tag it means",
             "type" : "string"
           }
         },
+        "required" : [ "alias", "tag" ],
         "type" : "object"
       },
       "TagChangeResult" : {
-        "description" : "What an alias, split, keep or dismiss did",
+        "description" : "What an alias, split, keep or dismiss did, or, for a dry run, what an alias or split would do",
         "properties" : {
           "factoids" : {
             "description" : "Factoids whose tag lists were rewritten",
@@ -2161,6 +2172,17 @@
           }
         },
         "required" : [ "factoids", "now", "posts", "tag" ],
+        "type" : "object"
+      },
+      "TagReviewAliasRequest" : {
+        "description" : "Alias a queued tag to an existing one",
+        "properties" : {
+          "tag" : {
+            "description" : "The existing tag the queued tag means",
+            "type" : "string"
+          }
+        },
+        "required" : [ "tag" ],
         "type" : "object"
       },
       "TagReviewEntry" : {
@@ -2214,7 +2236,7 @@
             "type" : "string"
           },
           "source" : {
-            "description" : "What first wrote it: post, factoid",
+            "description" : "What first wrote it: post, factoid, or rss (a feed tag promoted or created as a tag)",
             "type" : "string"
           },
           "status" : {
@@ -2242,6 +2264,16 @@
             "description" : "Open entries in all, for a launcher badge",
             "format" : "int64",
             "type" : "integer"
+          },
+          "totalCount" : {
+            "description" : "Entries in all for the status asked for, across every page",
+            "format" : "int64",
+            "type" : [ "integer", "null" ]
+          },
+          "totalPages" : {
+            "description" : "Pages in all for the status and size asked for; 0 when none",
+            "format" : "int32",
+            "type" : [ "integer", "null" ]
           }
         },
         "required" : [ "entries", "openCount" ],
@@ -3987,7 +4019,7 @@
     },
     "/admin/rss/tags" : {
       "get" : {
-        "description" : "Waiting feed tags by default, the most carried first: counted, and created as tags once on `promoteEntries` entries across `promoteFeeds` feeds. `status=all` includes the decided ones (PROMOTED, CREATED, MAPPED, IGNORED). Feed tags that are tags, aliases or stoplisted already never wait, and aren't listed.",
+        "description" : "Waiting feed tags by default, the most carried first: counted, and created as tags once on `promoteEntries` entries across `promoteFeeds` feeds. `status=all` includes the decided ones (PROMOTED, CREATED, MAPPED, IGNORED). Feed tags that are tags, aliases or stoplisted already never wait, and aren't listed. `waitingCount` is how many wait in all, for a launcher badge; `totalCount` and `totalPages` are for the status asked for, so any view can show page N of M.",
         "operationId" : "listFeedTags",
         "parameters" : [ {
           "in" : "query",
@@ -4444,8 +4476,18 @@
         "tags" : [ "Admin - Tags" ]
       },
       "post" : {
-        "description" : "`alias` becomes an alias of the existing tag `tag`. Any posts and factoids carrying `alias` are re-pointed to `tag` in one transaction, its row goes, and its own aliases move to `tag`. Writing or looking up `alias` then finds `tag`.",
+        "description" : "`alias` becomes an alias of the existing tag `tag`. Any posts and factoids carrying `alias` are re-pointed to `tag` in one transaction, its row goes, and its own aliases move to `tag`. Writing or looking up `alias` then finds `tag`. With `dryRun=true` nothing changes: the answer is what the alias would do.",
         "operationId" : "createTagAlias",
+        "parameters" : [ {
+          "description" : "true to preview: the answer is what the action would do, and nothing is changed",
+          "in" : "query",
+          "name" : "dryRun",
+          "required" : false,
+          "schema" : {
+            "default" : false,
+            "type" : "boolean"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4507,7 +4549,7 @@
     },
     "/admin/tags/review" : {
       "get" : {
-        "description" : "Doubtful new tags: a trailing-s pair with an existing tag (PLURAL), several words that are each a tag (MISSING_COMMA), or a near-duplicate only the AI found (AI). Open entries by default, the AI's most confident first, then newest. `openCount` is how many are open in all, for a launcher badge.",
+        "description" : "Doubtful new tags: a trailing-s pair with an existing tag (PLURAL), several words that are each a tag (MISSING_COMMA), or a near-duplicate only the AI found (AI). Open entries by default, the AI's most confident first, then newest. `openCount` is how many are open in all, for a launcher badge; `totalCount` and `totalPages` are for the status asked for, so any view can show page N of M.",
         "operationId" : "listTagReviews",
         "parameters" : [ {
           "in" : "query",
@@ -4585,10 +4627,10 @@
         "tags" : [ "Admin - Tags" ]
       }
     },
-    "/admin/tags/review/{id}/alias" : {
-      "post" : {
-        "description" : "Every post and factoid carrying the queued tag is re-pointed to `tag`, in one transaction; the queued tag's own row goes, and it becomes an alias of `tag`. The entry is marked ALIASED.",
-        "operationId" : "aliasTagReview",
+    "/admin/tags/review/{id}" : {
+      "get" : {
+        "description" : "The entry, open or decided, as the queue lists it.",
+        "operationId" : "getTagReview",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -4598,11 +4640,82 @@
             "type" : "string"
           }
         } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagReviewEntry"
+                }
+              }
+            },
+            "description" : "The entry"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such entry"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "One entry in the tag review queue",
+        "tags" : [ "Admin - Tags" ]
+      }
+    },
+    "/admin/tags/review/{id}/alias" : {
+      "post" : {
+        "description" : "Every post and factoid carrying the queued tag is re-pointed to `tag`, in one transaction; the queued tag's own row goes, and it becomes an alias of `tag`. The entry is marked ALIASED. With `dryRun=true` nothing changes: the answer is what the alias would do, the posts and factoids it would re-point.",
+        "operationId" : "aliasTagReview",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "description" : "true to preview: the answer is what the action would do, and nothing is changed",
+          "in" : "query",
+          "name" : "dryRun",
+          "required" : false,
+          "schema" : {
+            "default" : false,
+            "type" : "boolean"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/TagAliasRequest"
+                "$ref" : "#/components/schemas/TagReviewAliasRequest"
               }
             }
           },
@@ -4813,7 +4926,7 @@
     },
     "/admin/tags/review/{id}/split" : {
       "post" : {
-        "description" : "For a missing comma: every post and factoid carrying the queued tag carries the parts instead, in one transaction, and the queued tag's row goes. The parts default to the entry's hint tags. The entry is marked SPLIT.",
+        "description" : "For a missing comma: every post and factoid carrying the queued tag carries the parts instead, in one transaction, and the queued tag's row goes. The parts default to the entry's hint tags. The entry is marked SPLIT. With `dryRun=true` nothing changes: the answer is what the split would do.",
         "operationId" : "splitTagReview",
         "parameters" : [ {
           "in" : "path",
@@ -4822,6 +4935,15 @@
           "schema" : {
             "format" : "uuid",
             "type" : "string"
+          }
+        }, {
+          "description" : "true to preview: the answer is what the action would do, and nothing is changed",
+          "in" : "query",
+          "name" : "dryRun",
+          "required" : false,
+          "schema" : {
+            "default" : false,
+            "type" : "boolean"
           }
         } ],
         "requestBody" : {

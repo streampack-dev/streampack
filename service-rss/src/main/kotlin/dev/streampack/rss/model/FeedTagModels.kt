@@ -58,6 +58,10 @@ data class FeedTagListResponse(
     val promoteEntries: Int,
     @field:Schema(description = "Distinct feeds a waiting tag needs to become a tag")
     val promoteFeeds: Int,
+    @field:Schema(description = "Feed tags in all for the status asked for, across every page")
+    val totalCount: Long? = null,
+    @field:Schema(description = "Pages in all for the status and size asked for; 0 when none")
+    val totalPages: Int? = null,
 )
 
 @Schema(description = "Map a feed tag to an existing tag")
