@@ -167,7 +167,8 @@ applies to entries already stored:
    `articles`, `update` and `updates` (recorded as by `migration`). Not `news`, which is a real
    tag. The stoplist is the vocabulary's own, so these are dropped from posts and factoids written
    from now on too.
-3. **A system tag** (`_idea`) is never taken from a feed: it maps to nothing and never waits.
+3. **A system tag** (`_idea`) is never taken from a feed: it isn't kept, so it maps to nothing
+   and never waits.
 4. **Anything else waits.** It never becomes a tag just by appearing.
 
 The alias and stoplist tables remember the first two kinds of decision. Waiting feed tags are in

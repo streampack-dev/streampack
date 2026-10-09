@@ -104,7 +104,7 @@ class FeedTagServiceTests {
                 )
                 .single()
         val tagged = tagsOf(entry)
-        assertEquals(listOf("Blog", "Java", "K8s", "Uncategorized", "_idea"), tagged.categories)
+        assertEquals(listOf("Blog", "Java", "K8s", "Uncategorized"), tagged.categories)
         assertEquals(listOf("java", "kubernetes"), tagged.tags)
         // Mapped, ignored and system tags never wait
         assertEquals(0, waiting.count())
