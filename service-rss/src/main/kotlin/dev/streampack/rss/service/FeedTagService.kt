@@ -193,8 +193,10 @@ class FeedTagService(
         }
 
     /**
-     * A page of feed tags in [status] (all when null), the most carried first. A waiting one that
-     * the vocabulary has decided since it was last seen is shown, and stored, as decided.
+     * A page of feed tags in [status] (all when null), the most carried first, with how many there
+     * are in [status] and how many pages of [size] that makes. A waiting one that the vocabulary
+     * has decided since it was last seen is shown, and stored, as decided; the totals are counted
+     * after that.
      */
     @Transactional
     fun list(status: FeedTagStatus?, page: Int, size: Int): FeedTagListResponse {
@@ -212,9 +214,12 @@ class FeedTagService(
                 feedTags.save(decidedElsewhere(row, resolution, now))
             } else row
         }
+        val total = if (status == null) feedTags.count() else feedTags.countByStatus(status)
         return FeedTagListResponse(
             tags = settled.map(::entry),
             waitingCount = feedTags.countByStatus(FeedTagStatus.WAITING),
+            totalCount = total,
+            totalPages = TagCuration.pages(total, size),
             promoteEntries = properties.tags.promoteEntries,
             promoteFeeds = properties.tags.promoteFeeds,
         )

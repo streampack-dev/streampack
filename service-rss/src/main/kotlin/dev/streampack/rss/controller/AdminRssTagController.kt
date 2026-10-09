@@ -59,7 +59,9 @@ class AdminRssTagController(private val feedTags: FeedTagService, jwtService: Jw
             "Waiting feed tags by default, the most carried first: counted, and created as tags " +
                 "once on `promoteEntries` entries across `promoteFeeds` feeds. `status=all` " +
                 "includes the decided ones (PROMOTED, CREATED, MAPPED, IGNORED). Feed tags that " +
-                "are tags, aliases or stoplisted already never wait, and aren't listed.",
+                "are tags, aliases or stoplisted already never wait, and aren't listed. " +
+                "`waitingCount` is how many wait in all, for a launcher badge; `totalCount` and " +
+                "`totalPages` are for the status asked for, so any view can show page N of M.",
         operationId = "listFeedTags",
     )
     @ApiResponse(

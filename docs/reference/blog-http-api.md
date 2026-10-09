@@ -350,12 +350,13 @@ is recorded with who made it and when.
 | Endpoint | Purpose |
 |----------|---------|
 | `GET /admin/tags/review?status=open&page=0&size=50` | The queue: `status` is `open` (default), `aliased`, `split`, `kept`, `dismissed` or `all`; `size` is 1 to 100. The AI's most confident first, then newest. |
-| `POST /admin/tags/review/{id}/alias` | Aliases the entry's tag to an existing one, `{"tag": "compilers"}`: its posts and factoids are re-pointed in one transaction. Marks it `ALIASED`. |
-| `POST /admin/tags/review/{id}/split` | Splits the entry's tag into parts, `{"parts": ["java", "kotlin"]}`, or the hint's parts with no body. Marks it `SPLIT`. |
+| `GET /admin/tags/review/{id}` | One entry, open or decided (`TagReviewEntry`, below). |
+| `POST /admin/tags/review/{id}/alias` | Aliases the entry's tag to an existing one, `{"tag": "compilers"}` (`TagReviewAliasRequest`): its posts and factoids are re-pointed in one transaction. Marks it `ALIASED`. `?dryRun=true` previews it. |
+| `POST /admin/tags/review/{id}/split` | Splits the entry's tag into parts, `{"parts": ["java", "kotlin"]}`, or the hint's parts with no body. Marks it `SPLIT`. `?dryRun=true` previews it. |
 | `POST /admin/tags/review/{id}/keep` | Keeps the tag. Marks it `KEPT`. |
 | `POST /admin/tags/review/{id}/dismiss` | Leaves the tag as it is. Marks it `DISMISSED`. |
 | `GET /admin/tags/aliases` | Every alias, `[{alias, tag, createdBy, createdAt}]`, by alias. |
-| `POST /admin/tags/aliases` | `{"alias": "k8s", "tag": "kubernetes"}`: makes an alias, re-pointing whatever carries it. |
+| `POST /admin/tags/aliases` | `{"alias": "k8s", "tag": "kubernetes"}` (`TagAliasRequest`, both required): makes an alias, re-pointing whatever carries it. `?dryRun=true` previews it. |
 | `DELETE /admin/tags/aliases?alias=k8s` | Removes an alias; nothing is re-pointed back. |
 | `GET /admin/tags/stoplist` | Every stoplisted term, `[{term, createdBy, createdAt}]`. |
 | `POST /admin/tags/stoplist` | `{"term": "self-hosted"}`: dropped from tags written from now on. |
@@ -370,7 +371,7 @@ a `400`.
 
 ```json
 {
-  "openCount": 2,
+  "openCount": 2, "totalCount": 2, "totalPages": 1,
   "entries": [
     {
       "id": "0199...", "tag": "compiler", "firstSeen": "2026-10-08T14:00:00Z", "source": "post",
@@ -388,9 +389,28 @@ its parts) or `AI` (only the AI found something; `hintTags[0]` is its candidate)
 are `null` when AI is off or hasn't answered. `source` is what first wrote the tag: `post`,
 `factoid`, or `rss` (a feed tag promoted or created, below).
 
+`openCount` is how many entries are open in all, whatever `status` asked for, for a launcher badge.
+`totalCount` is how many entries the `status` asked for has in all, across every page, and
+`totalPages` how many pages of `size` that makes (`0` when there are none), so any view can show
+"page N of M". The spec marks the two optional, for older clients; the server always sends them.
+`GET /admin/tags/review/{id}` answers one `TagReviewEntry`, as the list shows it.
+
 The alias, split, keep and dismiss actions, and `POST /admin/tags/aliases`, answer
 `TagChangeResult`: `{tag, now, posts, factoids}`, the tag acted on, what it now stands for, and how
 many posts and factoids were re-pointed.
+
+The review alias takes `TagReviewAliasRequest`, `{"tag"}` only: the entry names the tag being
+aliased. `POST /admin/tags/aliases` takes `TagAliasRequest`, `{"alias", "tag"}`, both required.
+
+### Previewing an alias or a split
+
+`?dryRun=true` on `POST /admin/tags/review/{id}/alias`, `POST /admin/tags/review/{id}/split` and
+`POST /admin/tags/aliases` previews the action, for a confirm step: it takes the same body and
+answers the same `TagChangeResult`, with the posts and factoids the action would re-point, but
+changes nothing (no tag, alias, entry or `tag_action` is touched). The action runs for real in a
+transaction that is rolled back, so the counts are the ones it would produce at that moment, and a
+request the action would refuse is refused the same way (`400`, `404`). Without `dryRun`, or with
+`dryRun=false`, the action is taken.
 
 ## Admin Feed Tags
 
@@ -411,7 +431,7 @@ action answers the feed tag as decided (`FeedTagEntry`). The list answers `FeedT
 
 ```json
 {
-  "waitingCount": 12, "promoteEntries": 3, "promoteFeeds": 2,
+  "waitingCount": 12, "promoteEntries": 3, "promoteFeeds": 2, "totalCount": 12, "totalPages": 1,
   "tags": [
     {
       "name": "quarkus", "written": ["Quarkus", "quarkus"], "status": "WAITING",
@@ -425,6 +445,12 @@ action answers the feed tag as decided (`FeedTagEntry`). The list answers `FeedT
   ]
 }
 ```
+
+`waitingCount` is how many feed tags wait in all, whatever `status` asked for, for a launcher
+badge. `totalCount` is how many the `status` asked for has in all, across every page, and
+`totalPages` how many pages of `size` that makes (`0` when there are none); optional in the spec
+for older clients, always sent. A waiting feed tag the vocabulary has decided some other way is
+settled as the page is listed, and the totals are counted after that.
 
 `tag` is the tag a decided feed tag became or maps to. `decidedBy` is the admin, `rss` for one
 promoted past the threshold, or `vocabulary` for one that became a tag, an alias or a stoplisted

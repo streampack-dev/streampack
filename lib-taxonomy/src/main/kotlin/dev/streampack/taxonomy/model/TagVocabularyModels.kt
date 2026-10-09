@@ -75,7 +75,11 @@ data class TagReviewEntry(
     val id: UUID,
     @field:Schema(description = "The tag as it was written and created") val tag: String,
     @field:Schema(description = "When it was first written") val firstSeen: Instant,
-    @field:Schema(description = "What first wrote it: post, factoid") val source: String,
+    @field:Schema(
+        description =
+            "What first wrote it: post, factoid, or rss (a feed tag promoted or created as a tag)"
+    )
+    val source: String,
     @field:Schema(
         description =
             "PLURAL (a trailing-s pair with hintTags[0]), MISSING_COMMA (hintTags are the " +
@@ -97,6 +101,10 @@ data class TagReviewEntry(
 data class TagReviewListResponse(
     val entries: List<TagReviewEntry>,
     @field:Schema(description = "Open entries in all, for a launcher badge") val openCount: Long,
+    @field:Schema(description = "Entries in all for the status asked for, across every page")
+    val totalCount: Long? = null,
+    @field:Schema(description = "Pages in all for the status and size asked for; 0 when none")
+    val totalPages: Int? = null,
 )
 
 @Schema(description = "An alias and the tag it means")
@@ -119,7 +127,11 @@ data class TagActionEntry(
     val actedAt: Instant,
 )
 
-@Schema(description = "What an alias, split, keep or dismiss did")
+@Schema(
+    description =
+        "What an alias, split, keep or dismiss did, or, for a dry run, what an alias or split " +
+            "would do"
+)
 data class TagChangeResult(
     @field:Schema(description = "The tag acted on") val tag: String,
     @field:Schema(description = "What it now stands for: the alias target, or the split's parts")
@@ -130,9 +142,13 @@ data class TagChangeResult(
 
 @Schema(description = "Make a tag an alias of another")
 data class TagAliasRequest(
-    @field:Schema(description = "The name to alias; required when creating an alias")
-    val alias: String? = null,
-    @field:Schema(description = "The tag it means") val tag: String = "",
+    @field:Schema(description = "The name to alias") val alias: String,
+    @field:Schema(description = "The existing tag it means") val tag: String,
+)
+
+@Schema(description = "Alias a queued tag to an existing one")
+data class TagReviewAliasRequest(
+    @field:Schema(description = "The existing tag the queued tag means") val tag: String
 )
 
 @Schema(description = "Split a tag into its parts")

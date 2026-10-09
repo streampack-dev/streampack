@@ -76,6 +76,43 @@ class OpenApiGeneratorTest {
             "LogEntry's non-null fields are always sent: ${required("LogEntry")}"
         }
 
+        // A review alias takes only the tag (TagReviewAliasRequest), so clients send no "alias";
+        // the alias CRUD keeps TagAliasRequest. New list totals are optional, for older clients.
+        val reviewAlias = root.at("/paths/~1admin~1tags~1review~1{id}~1alias/post")
+        check(
+            reviewAlias
+                .at("/requestBody/content")
+                .toString()
+                .contains("#/components/schemas/TagReviewAliasRequest")
+        ) {
+            "POST /admin/tags/review/{id}/alias should take a TagReviewAliasRequest: $reviewAlias"
+        }
+        val reviewAliasProperties =
+            root
+                .at("/components/schemas/TagReviewAliasRequest/properties")
+                .propertyNames()
+                .asSequence()
+                .toList()
+        check(
+            reviewAliasProperties == listOf("tag") &&
+                required("TagReviewAliasRequest") == listOf("tag")
+        ) {
+            "TagReviewAliasRequest is {tag}, required: $reviewAliasProperties"
+        }
+        check(required("TagAliasRequest").containsAll(listOf("alias", "tag"))) {
+            "TagAliasRequest needs alias and tag: ${required("TagAliasRequest")}"
+        }
+        for (schema in listOf("TagReviewListResponse", "FeedTagListResponse")) {
+            check(required(schema).none { it == "totalCount" || it == "totalPages" }) {
+                "$schema's totals are optional: ${required(schema)}"
+            }
+        }
+        check(
+            root.at("/paths/~1admin~1tags~1review~1{id}/get/operationId").asText() == "getTagReview"
+        ) {
+            "GET /admin/tags/review/{id} is getTagReview"
+        }
+
         // A page is a post's ContentDetail, typed like getPostBySlug, so clients get it typed
         // (#90).
         val page = root.at("/paths/~1pages~1{slug}/get")

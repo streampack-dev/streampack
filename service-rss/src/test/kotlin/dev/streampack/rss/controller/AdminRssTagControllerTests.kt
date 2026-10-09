@@ -164,6 +164,44 @@ class AdminRssTagControllerTests {
     }
 
     @Test
+    fun `every status filter carries its own total and page count`() {
+        postJson("/admin/rss/tags/map", """{"name":"golang","tag":"go"}""").andExpect {
+            status { isOk() }
+        }
+        // golang MAPPED; rumour and helidon WAITING.
+        for ((status, total, pages) in
+            listOf(
+                Triple("waiting", 2, 2),
+                Triple("mapped", 1, 1),
+                Triple("ignored", 0, 0),
+                Triple("promoted", 0, 0),
+                Triple("created", 0, 0),
+                Triple("all", 3, 3),
+            )) {
+            mockMvc
+                .get("/admin/rss/tags?status=$status&size=1") {
+                    header("Authorization", "Bearer $adminToken")
+                }
+                .andExpect {
+                    status { isOk() }
+                    jsonPath("$.totalCount") { value(total) }
+                    jsonPath("$.totalPages") { value(pages) }
+                    jsonPath("$.waitingCount") { value(2) }
+                    jsonPath("$.tags.length()") { value(minOf(total, 1)) }
+                }
+        }
+        mockMvc
+            .get("/admin/rss/tags?status=all&size=2&page=1") {
+                header("Authorization", "Bearer $adminToken")
+            }
+            .andExpect {
+                jsonPath("$.totalCount") { value(3) }
+                jsonPath("$.totalPages") { value(2) }
+                jsonPath("$.tags.length()") { value(1) }
+            }
+    }
+
+    @Test
     fun `bad decisions are refused`() {
         postJson("/admin/rss/tags/map", """{"name":"golang","tag":"not a tag"}""").andExpect {
             status { isBadRequest() }
