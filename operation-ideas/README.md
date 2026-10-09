@@ -105,7 +105,8 @@ With an `AiService` available, the title, summary and up to 5 tags (in canonical
 followed, stoplisted terms dropped; see [Tag Names](../docs/reference/tags.md#the-vocabulary); and
 applied to the post beside `_idea`; the AI can't add a system tag) come from the AI, using the prompt
 described below; without one, the page's title and the start of its text serve. An invalid TLS
-certificate stops the fetch with a warning.
+certificate stops the fetch with a warning. The text is extracted by lib-core's `ArticleText`, which
+the RSS rating guess uses too.
 
 ## Reviewing ideas: `ideas`
 

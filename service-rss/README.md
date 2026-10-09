@@ -9,6 +9,7 @@ It covers:
 - feed polling in bounded, spread-out batches with backoff, and new-entry notifications
 - OPML export and import for the registered feed catalog
 - following the sites published posts link to (autosubscribe, #128)
+- admins' ratings of items (RATES, MIGHT, DULL), and the model's hidden guess at them (#187)
 
 ## Operations
 
@@ -115,6 +116,10 @@ The non-URL lines are ignored; the URL lines are treated as feed candidates. OPM
 - `GET /admin/rss/tags`, `POST /admin/rss/tags/map`, `/ignore`, `/create`
   Feed tags the vocabulary didn't know, and an admin's decision on one. See
   [Admin Feed Tags](../docs/reference/blog-http-api.md#admin-feed-tags).
+- `PUT|DELETE /admin/rss/items/{id}/rating`, `GET /admin/rss/items`, `GET /admin/rss/ratings.csv`,
+  `GET /admin/rss/rating-stats`, `POST /admin/rss/rating-guesses/run`
+  Admins' ratings of items, and the model's hidden guess. See [Item Ratings](#item-ratings) and
+  [Admin Feed Item Ratings](../docs/reference/blog-http-api.md#admin-feed-item-ratings).
 
 ## Feed Tags
 
@@ -135,6 +140,45 @@ feed tag map golang = go
 feed tag ignore rumour
 feed tag create helidon
 ```
+
+## Item Ratings
+
+The annotation phase of picking items worth an article (#16, #187): admins rate items `RATES`
+(worth writing about), `MIGHT` or `DULL`, and a model's guess is measured against them before
+anything is shown or suggested. Ratings are in `rss_item_rating`, one per item, with every change
+in `rss_item_rating_history`; none of it is public, and `/rss/items` is unchanged.
+
+**The model's hidden guess** is off unless `streampack.rss.rating.model-guess`
+(`RSS_RATING_MODEL_GUESS=true`). Then `RssRatingGuessTickListener` runs a pass once a day (ten
+minutes after startup, then every `guess-interval`), off the tick thread, as the moderation review
+does; an admin can run one now with `POST /admin/rss/rating-guesses/run`. A pass:
+
+1. takes the items received in the last `guess-lookback` (two days) with no guess, at most
+   `max-items-per-run` (200), leaving out the ones shown as examples;
+2. finds each one's text: the feed's own full content (RSS `content:encoded`, Atom `<content>`),
+   kept as plain text in `rss_entry_text` as the item is stored; else the article page's, fetched
+   once through `GuardedFetcher` (public addresses, its timeouts, the bot's user agent, no retry)
+   and extracted with lib-core's `ArticleText`, then kept (or the fact it had none); else the
+   summary; else nothing but the title. Each is cut at a word to 4,000 characters;
+3. sends them to the moderation model (`AI_MODERATION_MODEL`, never asked to think), `chunk-size`
+   (20) to a call, with structured output: `{itemId, label, confidence, reason}` per item;
+4. stores each usable answer in `rss_item_guess` with the model and the text's source
+   (`content`, `page`, `summary` or `title`). A bad label, a confidence outside 0..1, an item it
+   wasn't asked about, or no answer at all is logged and skipped; the item is tried again in a
+   later pass while it's still in the lookback.
+
+The system prompt is a short rubric (surprise, craft, delight, depth, a story worth telling, versus
+release notes, marketing and another tutorial) and examples: the editor's ten most recent RATES and
+five most recent DULL, with title, feed and summary. Until there are `min-rated-examples` (3) RATES,
+`streampack.rss.rating.seed-examples` are added (Pong Wars; the Total Annihilation rewrite; a point
+release; a tutorial or marketing). It's the same for every chunk and every pass until the editor
+rates more, so prompt caching can serve it; the items are the user message. At 15 to 25 items a day
+a pass is one plain call; should volume grow, the Message Batches API (asynchronous, half the price)
+is the upgrade. Mind `AI_MAX_TOKENS`: a chunk's answer is about 40 tokens an item.
+
+The guess is never shown where items are rated (`GET /admin/rss/items` carries ratings only), so it
+can't bias them: only the CSV export and `GET /admin/rss/rating-stats` read it. Nothing about it
+blocks polling.
 
 ## Discovery Notes
 

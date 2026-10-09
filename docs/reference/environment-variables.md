@@ -50,6 +50,11 @@ This reference covers the variables commonly used by `server-streampack`.
 | `RSS_POLL_MAX_BACKOFF` | Optional | Cap on the exponential backoff a failing feed's next poll is pushed out by (default `P1D`). |
 | `RSS_TAG_PROMOTE_ENTRIES` | Optional | Feed entries a feed tag the vocabulary doesn't know must be seen on before it becomes a tag (default `3`). See [Tag Names](tags.md#feed-tags). |
 | `RSS_TAG_PROMOTE_FEEDS` | Optional | Distinct feeds those entries must span (default `2`), so one blog's own tags never become tags on their own. |
+| `RSS_RATING_MODEL_GUESS` | Optional | Once a day, ask `AI_MODERATION_MODEL` to guess how an admin would rate each new feed item (RATES, MIGHT or DULL), stored hidden from the rating UI and read only by the ratings export and stats (default `false`). Needs AI on. See [Admin Feed Item Ratings](blog-http-api.md#admin-feed-item-ratings). |
+| `RSS_RATING_GUESS_INTERVAL` | Optional | How often the guess pass runs, ISO-8601 duration (default `P1D`); the first is ten minutes after startup. |
+| `RSS_RATING_GUESS_LOOKBACK` | Optional | How far back a pass looks for items with no guess (default `P2D`). |
+| `RSS_RATING_GUESS_CHUNK_SIZE` | Optional | Items per call to the model (default `20`). Each item carries up to 4,000 characters of text, and its answer needs about 40 output tokens, so keep `AI_MAX_TOKENS` above 40 times this. |
+| `RSS_RATING_GUESS_MAX_ITEMS` | Optional | The most items one pass sends (default `200`). |
 | `BLOG_MENTIONS_ENABLED` | Optional | Tell the pages a published post links to of the mention, by Webmention or Pingback (default `true`). Never sent while `BLOG_BASE_URL` is localhost or a private address. |
 | `BLOG_AUTOSUBSCRIBE_ENABLED` | Optional | Subscribe the RSS reader to the site feeds of the sites a published post links to, if not already had (default `true`). The hosts never subscribed to are `streampack.rss.autosubscribe.skip-hosts`. |
 | `GITLAB_<PATH>_TOKEN` | Per project | API token for a watched gitlab.com project, with `/` in the path flattened to `_`, e.g. `GITLAB_GROUP_SUBGROUP_PROJECT_TOKEN`. Externalized and enforced at startup like GitHub tokens. |

@@ -64,7 +64,9 @@ Fetch addresses chosen by anyone other than an admin (a post's links, a page to 
 with `GuardedFetcher` (`dev.streampack.core.fetch`), not a client of your own: http(s) only, public
 addresses only (checked after DNS and on every redirect), short timeouts, a capped body. Its
 settings are `streampack.fetch.*`; `allow-loopback`/`allow-private` exist for tests and local
-development.
+development. `ArticleText` (same package) extracts a fetched page's title and readable text (the
+longest of its `<article>`, `<main>` and body, scripts dropped); `suggest <url>` and the RSS rating
+guess (#187) both use it.
 
 For parser details and the new grammar/help rendering surface, see
 [docs/reference/command-parser.md](/Users/joeo/work/streampack-dev/streampack/docs/reference/command-parser.md).

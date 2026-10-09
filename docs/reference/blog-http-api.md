@@ -459,6 +459,82 @@ term some other way (`/admin/tags`, a post) while it waited.
 Stored feed items (`GET /rss/items`) carry `categories`, the item's own tags as the feed wrote
 them, and `tags`, the BCN tags those map to; both are empty lists when there are none.
 
+## Admin Feed Item Ratings
+
+Admins rate feed items to learn what's worth writing about (#187, the annotation phase of #16):
+`RATES` (worth an article), `MIGHT` or `DULL`. A model's hidden guess, off by default, is measured
+against the ratings before anything is shown or suggested. Every endpoint is for `ADMIN` and
+`SUPER_ADMIN` (`401` signed out, `403` for anyone else). **Ratings and guesses are never public**:
+`GET /rss/items` is unchanged.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `PUT /admin/rss/items/{id}/rating` | `{"rating": "RATES"}` (`RATES`, `MIGHT` or `DULL`): rates the item, replacing any rating it had. Answers `RssItemRatingResponse`. The same rating again changes nothing. |
+| `DELETE /admin/rss/items/{id}/rating` | Clears the item's rating (`204`, whether it had one or not). |
+| `GET /admin/rss/items?rating=all&page=0&size=50` | Items as `/rss/items` lists them, with their ratings. `rating` is `all` (default), `rates`, `might`, `dull` or `unrated`; `size` is 1 to 100; `feed` and `title` filter as on `/rss/items`. |
+| `GET /admin/rss/ratings.csv` | Every item with a rating or a guess, as CSV, for offline evaluation. |
+| `GET /admin/rss/rating-stats` | How the guess agrees with the ratings. |
+| `POST /admin/rss/rating-guesses/run` | Runs a guess pass now, as the daily one does. `409` while the guess is off, or while a pass is running. |
+
+An unknown item is a `404`; a rating that isn't one of the three is a `400`. Every set and clear is
+kept in `rss_item_rating_history` (what it became, what it was, who, when).
+
+`PUT` answers `RssItemRatingResponse`, every field always sent:
+
+```json
+{"itemId": "0199...", "rating": "RATES", "ratedBy": "joe", "ratedAt": "2026-10-09T14:00:00Z"}
+```
+
+The list answers `AdminRssItemsResponse`, `{items, page, totalPages, totalCount}`, where each item
+(`AdminRssItemResponse`) has every field a `/rss/items` item has, plus `rating`, `ratedBy` and
+`ratedAt` (`null` when unrated). `totalCount` and `totalPages` are for the `rating` asked for. It
+**never** carries the model's guess, so the guess can't bias the ratings.
+
+The CSV (`text/csv`, RFC 4180, CRLF line ends) has a header row and these columns: `item_id`,
+`feed`, `title`, `link`, `published`, `rating`, `rated_by`, `rated_at`, `guess`,
+`guess_confidence`, `guess_reason`, `guess_model`, `guess_source` (`content`, `page`, `summary` or
+`title`: what the model judged), `guessed_at`. Rated items come first, newest rating first, then
+the guessed-only ones; a column is empty where there's no rating or no guess. A text field that a
+spreadsheet would take for a formula (starting `=`, `+`, `-`, `@`) is prefixed with `'`.
+
+The stats (`RssRatingStatsResponse`) compare the items that have both a rating and a guess:
+
+```json
+{
+  "counts": {"rates": 2, "might": 1, "dull": 2, "rated": 5, "guessed": 5, "compared": 4},
+  "agreement": 0.5,
+  "perClass": [
+    {"rating": "RATES", "rated": 2, "guessed": 2, "agreed": 1, "recall": 0.5, "precision": 0.5},
+    {"rating": "MIGHT", "rated": 1, "guessed": 1, "agreed": 1, "recall": 1.0, "precision": 1.0},
+    {"rating": "DULL", "rated": 1, "guessed": 1, "agreed": 0, "recall": 0.0, "precision": 0.0}
+  ],
+  "confusion": [{"rated": "RATES", "guessed": "RATES", "count": 1}, "... all nine cells ..."],
+  "guessedRatesRatedDull": [{"itemId": "0199...", "title": "...", "feedTitle": "..."}],
+  "ratedRatesGuessedDull": [{"itemId": "0199...", "title": "...", "feedTitle": "..."}]
+}
+```
+
+`counts.rates`, `might` and `dull` count all ratings; `compared` the items with both. `recall` is
+the share of the items rated so that were guessed so, `precision` the share guessed so that were
+rated so; each, and `agreement`, is `null` with nothing to divide by. `confusion` always has all nine
+cells.
+
+The manual run answers `RssRatingGuessRunResponse`: `{candidates, calls, stored, skipped}`: the
+items it found with no guess, the calls to the model (one per chunk), the guesses stored, and the
+items left without one (tried again in a later pass).
+
+### The model's hidden guess
+
+Off unless `RSS_RATING_MODEL_GUESS=true` (and AI is on). Once a day a pass sends the items received
+in the last two days with no guess to `AI_MODERATION_MODEL`, 20 to a call, one plain call per
+chunk, with structured output: `{itemId, label, confidence, reason}` per item. Each item is judged
+on its text, cut to 4,000 characters: the feed's own full content when it gave any, else the
+article page's (fetched once, through the guarded fetcher, and kept), else its summary. The rubric
+and the examples (the editor's ten latest `RATES` and five latest `DULL`, or seed exemplars until
+there are three `RATES`) are the system prompt, the same for every call. A bad or partial answer
+is skipped and logged; it never blocks polling. See [service-rss](../../service-rss/README.md#item-ratings)
+and the `RSS_RATING_*` [environment variables](environment-variables.md).
+
 ## Atlas
 
 A map of the site's tags (ui-pudl#184), so every front end draws the same geography. Places are

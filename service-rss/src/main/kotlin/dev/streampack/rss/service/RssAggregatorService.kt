@@ -24,13 +24,25 @@ class RssAggregatorService(
     private val feedTags: FeedTagService,
 ) {
 
-    fun listItems(page: Int, size: Int, feed: String?, title: String?): RssAggregatedItemsResponse {
+    /**
+     * A page of stored items, newest first. [narrowedBy] narrows it further, for the admin list
+     * (#187); the public list passes none.
+     */
+    fun listItems(
+        page: Int,
+        size: Int,
+        feed: String?,
+        title: String?,
+        narrowedBy: Specification<RssEntry>? = null,
+    ): RssAggregatedItemsResponse {
         val pageable = PageRequest.of(page.coerceAtLeast(0), size.coerceIn(1, 200))
         val normalizedFeed = feed?.trim()?.ifBlank { null }
         val normalizedTitle = title?.trim()?.ifBlank { null }
         val results =
             entryRepository.findAll(
-                aggregatedEntrySpecification(normalizedFeed, normalizedTitle),
+                aggregatedEntrySpecification(normalizedFeed, normalizedTitle).let { spec ->
+                    narrowedBy?.let(spec::and) ?: spec
+                },
                 pageable,
             )
         val tags = feedTags.tagsFor(results.content.map { it.id })
