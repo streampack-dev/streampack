@@ -163,9 +163,9 @@ applies to entries already stored:
 1. **A tag or an alias** maps to the tag: `Java` is `java`; with `golang` an alias of `go`,
    `Golang` is `go`.
 2. **A stoplisted term** is ignored. `V74__rss_tag_stoplist` stoplists feed boilerplate:
-   `uncategorized`, `blog`, `featured`, `post`, `posts`, `general`, `misc`, `other`, `article`,
-   `articles`, `update` and `updates` (recorded as by `migration`). Not `news`, which is a real
-   tag. The stoplist is the vocabulary's own, so these are dropped from posts and factoids written
+   `uncategorized`, `featured`, `post`, `posts`, `general`, `misc`, `other`, `article`,
+   `articles`, `update` and `updates` (recorded as by `migration`). Not `news` or `blog`, which
+   are real tags. The stoplist is the vocabulary's own, so these are dropped from posts and factoids written
    from now on too.
 3. **A system tag** (`_idea`) is never taken from a feed: it isn't kept, so it maps to nothing
    and never waits.

@@ -121,7 +121,7 @@ The non-URL lines are ignored; the URL lines are treated as feed candidates. OPM
 Entries keep their own tags (RSS `<category>`, Atom `<category term>`), as written and normalized,
 in `rss_entry_category`, on every poll and when a feed is registered, while they're in the feed.
 They map onto BCN's tags through lib-taxonomy's `TagVocabulary` when entries are read: a tag or an
-alias maps, a stoplisted term (feed boilerplate such as `uncategorized` and `blog` is stoplisted by
+alias maps, a stoplisted term (feed boilerplate such as `uncategorized` and `featured` is stoplisted by
 `V74`) is ignored, and anything else waits in `rss_feed_tag`, counted, until it's on
 `streampack.rss.tags.promote-entries` (3) entries across `promote-feeds` (2) feeds; then it's
 created as a tag through the vocabulary's create rule. Admins can map, ignore or create one first.

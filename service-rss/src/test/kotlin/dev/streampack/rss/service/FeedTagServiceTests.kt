@@ -98,13 +98,15 @@ class FeedTagServiceTests {
                     parse(
                         rss(
                             "https://a.example",
-                            mapOf("1" to listOf("Java", "K8s", "Uncategorized", "Blog", "_idea")),
+                            mapOf(
+                                "1" to listOf("Java", "K8s", "Uncategorized", "Featured", "_idea")
+                            ),
                         )
                     ),
                 )
                 .single()
         val tagged = tagsOf(entry)
-        assertEquals(listOf("Blog", "Java", "K8s", "Uncategorized"), tagged.categories)
+        assertEquals(listOf("Featured", "Java", "K8s", "Uncategorized"), tagged.categories)
         assertEquals(listOf("java", "kubernetes"), tagged.tags)
         // Mapped, ignored and system tags never wait
         assertEquals(0, waiting.count())
@@ -112,11 +114,10 @@ class FeedTagServiceTests {
     }
 
     @Test
-    fun `the feed boilerplate is stoplisted, and news is not`() {
+    fun `the feed boilerplate is stoplisted, and news and blog are not`() {
         for (term in
             listOf(
                 "uncategorized",
-                "blog",
                 "featured",
                 "post",
                 "posts",
@@ -132,6 +133,8 @@ class FeedTagServiceTests {
             assertInstanceOf(TagResolution.Stopped::class.java, vocabulary.resolve(term))
         }
         assertFalse(stops.existsById("news"))
+        // blog is a real BCN tag (on posts), so it's never stoplisted
+        assertFalse(stops.existsById("blog"))
         assertInstanceOf(TagResolution.New::class.java, vocabulary.resolve("News"))
     }
 
