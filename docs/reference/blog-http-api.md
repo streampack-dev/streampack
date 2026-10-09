@@ -385,12 +385,53 @@ a `400`.
 
 `hintKind` is `PLURAL` (`hintTags[0]` is the tag it pairs with), `MISSING_COMMA` (`hintTags` are
 its parts) or `AI` (only the AI found something; `hintTags[0]` is its candidate). The `ai` fields
-are `null` when AI is off or hasn't answered. `source` is what first wrote the tag: `post` or
-`factoid`.
+are `null` when AI is off or hasn't answered. `source` is what first wrote the tag: `post`,
+`factoid`, or `rss` (a feed tag promoted or created, below).
 
 The alias, split, keep and dismiss actions, and `POST /admin/tags/aliases`, answer
 `TagChangeResult`: `{tag, now, posts, factoids}`, the tag acted on, what it now stands for, and how
 many posts and factoids were re-pointed.
+
+## Admin Feed Tags
+
+Feed entries' own tags (#139) that the vocabulary didn't know: the waiting ones, for the pudl tag
+window, and an admin's decision on one. See [Tag Names](tags.md#feed-tags). Every endpoint is for
+`ADMIN` and `SUPER_ADMIN` (`401` signed out, `403` for anyone else), and feed tags go in bodies,
+never the path.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /admin/rss/tags?status=waiting&page=0&size=50` | Feed tags: `status` is `waiting` (default), `promoted`, `created`, `mapped`, `ignored` or `all`; `size` is 1 to 100. The most carried first. |
+| `POST /admin/rss/tags/map` | `{"name": "golang", "tag": "go"}`: the feed tag becomes an alias of the existing tag (off the stoplist first, if it was on it). Marks it `MAPPED`. |
+| `POST /admin/rss/tags/ignore` | `{"name": "rumour"}`: stoplists it (its alias removed first, if it had one). Marks it `IGNORED`. |
+| `POST /admin/rss/tags/create` | `{"name": "helidon"}`: creates it as a tag now, through the create rule (review-queue hints, AI near-miss). Marks it `CREATED`. |
+
+A feed tag no feed has carried is a `404`; a map to something that isn't a tag is a `400`. Each
+action answers the feed tag as decided (`FeedTagEntry`). The list answers `FeedTagListResponse`:
+
+```json
+{
+  "waitingCount": 12, "promoteEntries": 3, "promoteFeeds": 2,
+  "tags": [
+    {
+      "name": "quarkus", "written": ["Quarkus", "quarkus"], "status": "WAITING",
+      "entries": 2, "feeds": 1,
+      "firstSeen": "2026-10-08T14:00:00Z", "lastSeen": "2026-10-08T15:00:00Z",
+      "tag": null, "decidedBy": null, "decidedAt": null,
+      "examples": [
+        {"entryId": "0199...", "title": "Quarkus 4", "link": "https://...", "feedTitle": "A blog"}
+      ]
+    }
+  ]
+}
+```
+
+`tag` is the tag a decided feed tag became or maps to. `decidedBy` is the admin, `rss` for one
+promoted past the threshold, or `vocabulary` for one that became a tag, an alias or a stoplisted
+term some other way (`/admin/tags`, a post) while it waited.
+
+Stored feed items (`GET /rss/items`) carry `categories`, the item's own tags as the feed wrote
+them, and `tags`, the BCN tags those map to; both are empty lists when there are none.
 
 ## Atlas
 

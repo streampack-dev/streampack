@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.model
 
+import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
 import java.util.UUID
 
@@ -17,4 +18,19 @@ data class RssAggregatedItemResponse(
     val summary: String? = null,
     val publishedAt: Instant?,
     val receivedAt: Instant,
+    /** The feed's own tags for the item, as written; empty when it gave none (#139). */
+    @field:Schema(
+        description =
+            "The feed's own tags for the item (RSS category, Atom category term), as written; " +
+                "empty when it gave none or the item was stored before tags were kept"
+    )
+    val categories: List<String>,
+    /** The BCN tags the feed's own tags map to (#139). */
+    @field:Schema(
+        description =
+            "The BCN tags the item's feed tags map to: a tag of the same name, or an alias's tag. " +
+                "Stoplisted and waiting feed tags map to nothing. Feed items don't count toward " +
+                "tag counts or the taxonomy."
+    )
+    val tags: List<String>,
 )

@@ -87,6 +87,7 @@ This deactivates the feed and any active subscriptions attached to it.
 - Polling stores a baseline of entries and only notifies on new items.
 - Feeds are polled in small batches spread over time, not all at once: every 90 seconds the poller takes the five feeds that have been due longest, and each polled feed is next due an hour later (all configurable, see [Environment Variables](../../reference/environment-variables.md)). A feed that fails to fetch is retried with doubling delays up to a day, so a dead feed never ties up the poller.
 - Duplicate guid entries in one upstream fetch are ignored.
+- Entries keep the feed's own tags (RSS `<category>`, Atom `<category term>`), mapped onto the site's tags where the tag vocabulary knows them. A feed tag it doesn't know waits until it's on three entries across two feeds, then becomes a tag; admins can decide one sooner with `feed tags` and `feed tag map|ignore|create`. See [Tag Names](../../reference/tags.md#feed-tags).
 
 ## OPML Import and Export
 

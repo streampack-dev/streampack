@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * [batchSize] oldest-due feeds; a polled feed is next due [pollInterval] later, or later still
  * after failures, up to [maxBackoff]. Fetches go through the guarded fetcher, whose timeouts are
  * `streampack.fetch.*`. [autosubscribe] governs following the sites published posts link to (#128).
+ * [tags] governs when a feed tag the vocabulary doesn't know becomes a tag (#139).
  */
 @ConfigurationProperties(prefix = "streampack.rss")
 data class RssProperties(
@@ -17,7 +18,15 @@ data class RssProperties(
     val batchSize: Int = 5,
     val maxBackoff: Duration = Duration.ofDays(1),
     val autosubscribe: Autosubscribe = Autosubscribe(),
+    val tags: Tags = Tags(),
 ) {
+    /**
+     * A feed tag the vocabulary doesn't know waits until it's been seen on at least
+     * [promoteEntries] entries across at least [promoteFeeds] distinct feeds; then it's created as
+     * a tag. One blog's own tags never flood the vocabulary while [promoteFeeds] is above one.
+     */
+    data class Tags(val promoteEntries: Int = 3, val promoteFeeds: Int = 2)
+
     /**
      * Sites never subscribed to because a post linked them: [skipHosts], each with its subdomains.
      * Code hosts, video, encyclopedias, documentation and specs; not `github.io`, where many

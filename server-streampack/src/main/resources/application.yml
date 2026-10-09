@@ -106,6 +106,9 @@ streampack:
     scheduler-interval: ${RSS_SCHEDULER_INTERVAL:PT90S}
     batch-size: ${RSS_POLL_BATCH_SIZE:5}
     max-backoff: ${RSS_POLL_MAX_BACKOFF:P1D}
+    tags:
+      promote-entries: ${RSS_TAG_PROMOTE_ENTRIES:3}
+      promote-feeds: ${RSS_TAG_PROMOTE_FEEDS:2}
   github:
     poll-interval: ${GITHUB_POLL_INTERVAL:PT60M}
     scheduler-interval: ${GITHUB_SCHEDULER_INTERVAL:PT90S}

@@ -141,6 +141,74 @@ Looking a tag up follows an alias: `GET /posts?tag=`, the factoid tag search (`t
 `GET /atlas/places/{tag}` all find the alias's tag's posts, factoids and place. Otherwise the name
 is matched as stored tags are read (below), or in its normalized shape when only that is in use.
 
+## Feed tags
+
+RSS and Atom entries carry their own tags (`<category>` in RSS, `<category term>` in Atom; an
+Atom `label` is not used). The RSS reader keeps them and maps them onto this vocabulary
+(streampack#139, `service-rss`'s `FeedTagService`).
+
+### Keeping them
+
+On every poll, and when a feed is registered, each entry in the feed keeps its tags: as the feed
+wrote them, and normalized as above (`Spring-Boot` and `#Spring_Boot` are both `spring boot`),
+one per normalized name, the first form kept. A name over 100 characters is a sentence, not a tag,
+and is dropped. An entry's tags follow the feed while the entry is still in it. Entries stored
+before this have none until a poll sees them again; nothing older is backfilled.
+
+### Mapping them
+
+A feed tag is resolved through the vocabulary when entries are read, so a decision made later
+applies to entries already stored:
+
+1. **A tag or an alias** maps to the tag: `Java` is `java`; with `golang` an alias of `go`,
+   `Golang` is `go`.
+2. **A stoplisted term** is ignored. `V74__rss_tag_stoplist` stoplists feed boilerplate:
+   `uncategorized`, `featured`, `post`, `posts`, `general`, `misc`, `other`, `article`,
+   `articles`, `update` and `updates` (recorded as by `migration`). Not `news` or `blog`, which
+   are real tags. The stoplist is the vocabulary's own, so these are dropped from posts and factoids written
+   from now on too.
+3. **A system tag** (`_idea`) is never taken from a feed: it isn't kept, so it maps to nothing
+   and never waits.
+4. **Anything else waits.** It never becomes a tag just by appearing.
+
+The alias and stoplist tables remember the first two kinds of decision. Waiting feed tags are in
+`rss_feed_tag`, one row each, with how many entries and how many distinct feeds carry them (the
+counts as of the last poll that saw them).
+
+### Promotion
+
+A waiting feed tag becomes a tag once it has earned it: seen on at least
+`streampack.rss.tags.promote-entries` entries (`RSS_TAG_PROMOTE_ENTRIES`, default `3`) across at
+least `streampack.rss.tags.promote-feeds` distinct feeds (`RSS_TAG_PROMOTE_FEEDS`, default `2`), so
+one blog's own tags never flood the vocabulary. It's then created through the create rule above
+(`accept`, source `rss`): a doubtful one gets its review-queue hint, and with AI on the near-miss
+runs after the poll commits, once per promoted tag, never per waiting tag. Its row is marked
+`PROMOTED`, and it's decided: later polls only update its counts.
+
+### Deciding by hand
+
+An admin can decide a feed tag before it's promoted, from the pudl tag window
+(`/admin/rss/tags`, see the [Blog HTTP API](blog-http-api.md#admin-feed-tags)) or with `feed tag`
+commands (see [Admin Text Operations](admin-text-operations.md#feed-operations)):
+
+| Action | What it does | Marked |
+|--------|--------------|--------|
+| map | Makes it an alias of an existing tag, as `tag alias` does (taking it off the stoplist first). | `MAPPED` |
+| ignore | Stoplists it, as `tag stop` does (removing its alias first). | `IGNORED` |
+| create | Creates it now, through the create rule. | `CREATED` |
+
+A waiting feed tag that becomes a tag, an alias or a stoplisted term some other way (an admin's
+`tag alias`, a post that uses it) is marked `MAPPED` or `IGNORED` by `vocabulary` the next time
+it's polled or listed. If an alias or stop is later removed, the feed tag waits again, and the
+promotion rule applies to it as to any other.
+
+### Feed tags and counts
+
+Feed items carry their mapped tags (`GET /rss/items`: `categories` and `tags`), but don't count
+toward tag counts: a promoted feed tag is a `tags` row no post or factoid carries yet, so the
+taxonomy (`GET /taxonomy`), tag pages and the Atlas are as they were. Counting feed items there,
+apart from posts, is a later choice. Nothing about feed tags messages anyone.
+
 ## Tags already stored
 
 Normalization applies to tags as they are written. Tags stored before it existed are left as they

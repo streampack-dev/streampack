@@ -17,6 +17,7 @@ It covers:
 | `AddFeedOperation` | `feed add <url>` | Registers a feed directly or discovers one from a site URL; requires `ADMIN`. |
 | `FeedManagementOperation` | `feed list`, `feed subscribe ...`, `feed unsubscribe ...`, `feed subscriptions`, `feed remove ...` | Lists feeds, manages subscriptions, and deactivates feeds. |
 | `LinkedSiteSubscriptionOperation` | (typed `LinkedSiteSubscriptionRequest`, from the blog) | Follows the site feed of a site a published post links to; see [Autosubscribe](#autosubscribe). |
+| `FeedTagOperation` | `feed tags`, `feed tag <name>`, `feed tag map <name> = <tag>`, `feed tag ignore <name>`, `feed tag create <name>` | Lists and decides feed tags the tag vocabulary doesn't know; requires `ADMIN`. See [Feed Tags](#feed-tags). |
 
 ## User Commands
 
@@ -87,7 +88,7 @@ This deactivates the feed and any active subscriptions attached to it.
 
 ## HTTP API
 
-`service-rss` also exposes admin HTTP endpoints for feed-catalog portability:
+`service-rss` also exposes HTTP endpoints. For feed-catalog portability, for admins:
 
 - `GET /admin/rss/opml`
   Exports all active registered feeds as OPML.
@@ -107,6 +108,33 @@ https://baz.com/rss.xml
 ```
 
 The non-URL lines are ignored; the URL lines are treated as feed candidates. OPML is still attempted first when the payload is valid XML/OPML.
+
+- `GET /rss/items`, `GET /rss/feeds`
+  The stored items, newest first, and the active feeds, for the front ends. Each item carries
+  `categories` (its own tags, as the feed wrote them) and `tags` (the BCN tags they map to).
+- `GET /admin/rss/tags`, `POST /admin/rss/tags/map`, `/ignore`, `/create`
+  Feed tags the vocabulary didn't know, and an admin's decision on one. See
+  [Admin Feed Tags](../docs/reference/blog-http-api.md#admin-feed-tags).
+
+## Feed Tags
+
+Entries keep their own tags (RSS `<category>`, Atom `<category term>`), as written and normalized,
+in `rss_entry_category`, on every poll and when a feed is registered, while they're in the feed.
+They map onto BCN's tags through lib-taxonomy's `TagVocabulary` when entries are read: a tag or an
+alias maps, a stoplisted term (feed boilerplate such as `uncategorized` and `featured` is stoplisted by
+`V74`) is ignored, and anything else waits in `rss_feed_tag`, counted, until it's on
+`streampack.rss.tags.promote-entries` (3) entries across `promote-feeds` (2) feeds; then it's
+created as a tag through the vocabulary's create rule. Admins can map, ignore or create one first.
+Feed items don't count toward tag counts or the taxonomy. The whole of it is in
+[Tag Names](../docs/reference/tags.md#feed-tags).
+
+```text
+feed tags
+feed tag quarkus
+feed tag map golang = go
+feed tag ignore rumour
+feed tag create helidon
+```
 
 ## Discovery Notes
 

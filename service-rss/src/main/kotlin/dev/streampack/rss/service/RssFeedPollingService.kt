@@ -30,6 +30,7 @@ class RssFeedPollingService(
     private val discoveryService: FeedDiscoveryService,
     private val egressNotifier: EgressNotifier,
     private val rssProperties: RssProperties,
+    private val feedTags: FeedTagService,
 ) : DueBatchPollingService<RssFeed>(rssProperties.schedulerInterval, rssProperties.batchSize) {
     private val logger = LoggerFactory.getLogger(RssFeedPollingService::class.java)
 
@@ -84,7 +85,8 @@ class RssFeedPollingService(
         }
 
         val guids = fetchedEntries.mapNotNull { it.uri ?: it.link }
-        val existingGuids = entryRepository.findByFeedAndGuidIn(feed, guids).map { it.guid }.toSet()
+        val existing = entryRepository.findByFeedAndGuidIn(feed, guids)
+        val existingGuids = existing.map { it.guid }.toSet()
 
         val newSyndEntries = fetchedEntries.filter { entry ->
             val guid = entry.uri ?: entry.link
@@ -92,10 +94,20 @@ class RssFeedPollingService(
         }
 
         val newEntries = newSyndEntries.mapNotNull { entry -> toRssEntry(entry, feed) }
-        if (newEntries.isNotEmpty()) {
-            entryRepository.saveAll(newEntries)
-            logger.info("Stored {} new entries for feed \"{}\"", newEntries.size, feed.title)
-        }
+        val stored =
+            if (newEntries.isNotEmpty()) {
+                entryRepository.saveAll(newEntries).also {
+                    logger.info("Stored {} new entries for feed \"{}\"", it.size, feed.title)
+                }
+            } else emptyList()
+
+        // Every entry in the window keeps the feed's own tags, old entries included (#139)
+        val byGuid = (existing + stored).associateBy { it.guid }
+        feedTags.record(
+            fetchedEntries.mapNotNull { entry ->
+                byGuid[entry.uri ?: entry.link]?.let { it to entry }
+            }
+        )
 
         val fetched = feedRepository.save(feed.copy(lastFetchedAt = Instant.now()))
 
