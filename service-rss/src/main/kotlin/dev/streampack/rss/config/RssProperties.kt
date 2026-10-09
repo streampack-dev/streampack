@@ -9,7 +9,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * [batchSize] oldest-due feeds; a polled feed is next due [pollInterval] later, or later still
  * after failures, up to [maxBackoff]. Fetches go through the guarded fetcher, whose timeouts are
  * `streampack.fetch.*`. [autosubscribe] governs following the sites published posts link to (#128).
- * [tags] governs when a feed tag the vocabulary doesn't know becomes a tag (#139).
+ * [tags] governs when a feed tag the vocabulary doesn't know becomes a tag (#139). [rating] governs
+ * the model's hidden guess at admins' ratings of items (#187).
  */
 @ConfigurationProperties(prefix = "streampack.rss")
 data class RssProperties(
@@ -19,7 +20,40 @@ data class RssProperties(
     val maxBackoff: Duration = Duration.ofDays(1),
     val autosubscribe: Autosubscribe = Autosubscribe(),
     val tags: Tags = Tags(),
+    val rating: Rating = Rating(),
 ) {
+    /**
+     * The model's hidden guess at how an admin would rate an item (#187), off unless [modelGuess].
+     * Every [guessInterval] the items received in the last [guessLookback] with no guess are sent
+     * to the moderation model (the first pass [firstGuessDelay] after startup), [chunkSize] to a
+     * call, at most [maxItemsPerRun] in a pass. Each is judged on up to 4,000 characters of its
+     * text (about 1,000 tokens), hence the small chunks.
+     *
+     * The prompt's examples are the editor's own most recent ratings; until there are at least
+     * [minRatedExamples] RATES among them, [seedExamples] are added: each a described exemplar,
+     * starting with its label (`RATES:`, `MIGHT:` or `DULL:`).
+     */
+    data class Rating(
+        val modelGuess: Boolean = false,
+        val guessInterval: Duration = Duration.ofDays(1),
+        val firstGuessDelay: Duration = Duration.ofMinutes(10),
+        val guessLookback: Duration = Duration.ofDays(2),
+        val chunkSize: Int = 20,
+        val maxItemsPerRun: Int = 200,
+        val minRatedExamples: Int = 3,
+        val seedExamples: List<String> =
+            listOf(
+                "RATES: Pong Wars: two balls play Breakout against each other's colors on one " +
+                    "board. A surprising toy, a few lines of code, that shows something deep " +
+                    "about balance.",
+                "RATES: An open-source rewrite of Total Annihilation, a beloved real-time " +
+                    "strategy game, with the author's story of why and how they rebuilt it.",
+                "DULL: Version 3.4.2 released: dependency updates and bug fixes.",
+                "DULL: Another getting-started tutorial on REST endpoints, or a vendor's " +
+                    "marketing announcement.",
+            ),
+    )
+
     /**
      * A feed tag the vocabulary doesn't know waits until it's been seen on at least
      * [promoteEntries] entries across at least [promoteFeeds] distinct feeds; then it's created as

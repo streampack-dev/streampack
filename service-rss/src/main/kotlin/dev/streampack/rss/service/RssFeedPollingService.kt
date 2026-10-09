@@ -31,6 +31,7 @@ class RssFeedPollingService(
     private val egressNotifier: EgressNotifier,
     private val rssProperties: RssProperties,
     private val feedTags: FeedTagService,
+    private val itemTexts: RssItemTextService,
 ) : DueBatchPollingService<RssFeed>(rssProperties.schedulerInterval, rssProperties.batchSize) {
     private val logger = LoggerFactory.getLogger(RssFeedPollingService::class.java)
 
@@ -103,6 +104,9 @@ class RssFeedPollingService(
 
         // Every entry in the window keeps the feed's own tags, old entries included (#139)
         val byGuid = (existing + stored).associateBy { it.guid }
+        // A new entry keeps the feed's full content, for the rating guess (#187)
+        val newByGuid = newSyndEntries.associateBy { it.uri ?: it.link }
+        itemTexts.recordContent(stored.mapNotNull { e -> newByGuid[e.guid]?.let { e to it } })
         feedTags.record(
             fetchedEntries.mapNotNull { entry ->
                 byGuid[entry.uri ?: entry.link]?.let { it to entry }

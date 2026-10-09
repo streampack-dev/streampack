@@ -28,6 +28,7 @@ class RssSubscriptionService(
     private val subscriptionRepository: RssFeedSubscriptionRepository,
     private val rssProperties: RssProperties,
     private val feedTags: FeedTagService,
+    private val itemTexts: RssItemTextService,
 ) {
 
     private val logger = LoggerFactory.getLogger(RssSubscriptionService::class.java)
@@ -106,6 +107,7 @@ class RssSubscriptionService(
 
         val entries = entryRepository.saveAll(seeded.map { it.first })
         feedTags.record(entries.zip(seeded.map { it.second }))
+        itemTexts.recordContent(entries.zip(seeded.map { it.second }))
         logger.info("Added feed \"{}\" with {} entries", feed.title, entries.size)
         return AddFeedOutcome.Added(feed, entries.size)
     }

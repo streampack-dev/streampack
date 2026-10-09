@@ -88,6 +88,7 @@ This deactivates the feed and any active subscriptions attached to it.
 - Feeds are polled in small batches spread over time, not all at once: every 90 seconds the poller takes the five feeds that have been due longest, and each polled feed is next due an hour later (all configurable, see [Environment Variables](../../reference/environment-variables.md)). A feed that fails to fetch is retried with doubling delays up to a day, so a dead feed never ties up the poller.
 - Duplicate guid entries in one upstream fetch are ignored.
 - Entries keep the feed's own tags (RSS `<category>`, Atom `<category term>`), mapped onto the site's tags where the tag vocabulary knows them. A feed tag it doesn't know waits until it's on three entries across two feeds, then becomes a tag; admins can decide one sooner with `feed tags` and `feed tag map|ignore|create`. See [Tag Names](../../reference/tags.md#feed-tags).
+- Admins can rate items `RATES`, `MIGHT` or `DULL` (through the front ends, or `PUT /admin/rss/items/{id}/rating`), to learn what's worth writing about. Ratings are never public. With `RSS_RATING_MODEL_GUESS=true`, a model guesses each new item's rating once a day, judging the feed's full content when it gives one, else the article page, else the summary; the guess stays hidden from the rating UI and is measured against the ratings in `GET /admin/rss/rating-stats`. See [Admin Feed Item Ratings](../../reference/blog-http-api.md#admin-feed-item-ratings).
 
 ## OPML Import and Export
 

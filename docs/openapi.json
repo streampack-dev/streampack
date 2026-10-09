@@ -1,6 +1,95 @@
 {
   "components" : {
     "schemas" : {
+      "AdminRssItemResponse" : {
+        "properties" : {
+          "categories" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "feedTitle" : {
+            "type" : "string"
+          },
+          "feedUrl" : {
+            "type" : "string"
+          },
+          "guid" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "ratedAt" : {
+            "description" : "When it was rated; null when it has no rating",
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "ratedBy" : {
+            "description" : "The admin who rated it; null when it has no rating",
+            "type" : [ "string", "null" ]
+          },
+          "rating" : {
+            "description" : "The item's rating; null when it has none",
+            "enum" : [ "RATES", "MIGHT", "DULL" ],
+            "type" : [ "string", "null" ]
+          },
+          "receivedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "siteUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "summary" : {
+            "type" : [ "string", "null" ]
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "categories", "feedTitle", "feedUrl", "guid", "id", "link", "receivedAt", "tags", "title" ],
+        "type" : "object"
+      },
+      "AdminRssItemsResponse" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AdminRssItemResponse"
+            },
+            "type" : "array"
+          },
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "items", "page", "totalCount", "totalPages" ],
+        "type" : "object"
+      },
       "ApproveContentHttpRequest" : {
         "properties" : {
           "publishedAt" : {
@@ -2041,6 +2130,201 @@
         "required" : [ "feeds" ],
         "type" : "object"
       },
+      "RssItemRatingRequest" : {
+        "properties" : {
+          "rating" : {
+            "enum" : [ "RATES", "MIGHT", "DULL" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "rating" ],
+        "type" : "object"
+      },
+      "RssItemRatingResponse" : {
+        "properties" : {
+          "itemId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "ratedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "ratedBy" : {
+            "type" : "string"
+          },
+          "rating" : {
+            "enum" : [ "RATES", "MIGHT", "DULL" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "itemId", "ratedAt", "ratedBy", "rating" ],
+        "type" : "object"
+      },
+      "RssRatingClassAgreement" : {
+        "properties" : {
+          "agreed" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "guessed" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "precision" : {
+            "format" : "double",
+            "type" : [ "number", "null" ]
+          },
+          "rated" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "rating" : {
+            "enum" : [ "RATES", "MIGHT", "DULL" ],
+            "type" : "string"
+          },
+          "recall" : {
+            "format" : "double",
+            "type" : [ "number", "null" ]
+          }
+        },
+        "required" : [ "agreed", "guessed", "rated", "rating" ],
+        "type" : "object"
+      },
+      "RssRatingConfusionCell" : {
+        "properties" : {
+          "count" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "guessed" : {
+            "enum" : [ "RATES", "MIGHT", "DULL" ],
+            "type" : "string"
+          },
+          "rated" : {
+            "enum" : [ "RATES", "MIGHT", "DULL" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "count", "guessed", "rated" ],
+        "type" : "object"
+      },
+      "RssRatingCounts" : {
+        "properties" : {
+          "compared" : {
+            "description" : "Items with both a rating and a guess",
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "dull" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "guessed" : {
+            "description" : "Items with a guess from the model",
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "might" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "rated" : {
+            "description" : "Items with any rating",
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "rates" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "compared", "dull", "guessed", "might", "rated", "rates" ],
+        "type" : "object"
+      },
+      "RssRatingGuessRunResponse" : {
+        "properties" : {
+          "calls" : {
+            "description" : "Calls made to the model, one per chunk",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "candidates" : {
+            "description" : "Items received in the lookback with no guess, sent to the model",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "skipped" : {
+            "description" : "Items left without a guess: a bad, partial or missing answer",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "stored" : {
+            "description" : "Guesses stored",
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "calls", "candidates", "skipped", "stored" ],
+        "type" : "object"
+      },
+      "RssRatingStatsItem" : {
+        "properties" : {
+          "feedTitle" : {
+            "type" : "string"
+          },
+          "itemId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "feedTitle", "itemId", "title" ],
+        "type" : "object"
+      },
+      "RssRatingStatsResponse" : {
+        "properties" : {
+          "agreement" : {
+            "description" : "The share of compared items whose guess matches the rating; null when none are compared",
+            "format" : "double",
+            "type" : [ "number", "null" ]
+          },
+          "confusion" : {
+            "description" : "All nine cells, rated by guessed, zeros included",
+            "items" : {
+              "$ref" : "#/components/schemas/RssRatingConfusionCell"
+            },
+            "type" : "array"
+          },
+          "counts" : {
+            "$ref" : "#/components/schemas/RssRatingCounts"
+          },
+          "guessedRatesRatedDull" : {
+            "description" : "Guessed RATES, rated DULL",
+            "items" : {
+              "$ref" : "#/components/schemas/RssRatingStatsItem"
+            },
+            "type" : "array"
+          },
+          "perClass" : {
+            "items" : {
+              "$ref" : "#/components/schemas/RssRatingClassAgreement"
+            },
+            "type" : "array"
+          },
+          "ratedRatesGuessedDull" : {
+            "description" : "Rated RATES, guessed DULL",
+            "items" : {
+              "$ref" : "#/components/schemas/RssRatingStatsItem"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "confusion", "counts", "guessedRatesRatedDull", "perClass", "ratedRatesGuessedDull" ],
+        "type" : "object"
+      },
       "SeeAlsoToNothing" : {
         "properties" : {
           "missing" : {
@@ -3908,6 +4192,242 @@
         "tags" : [ "Admin - Post Management" ]
       }
     },
+    "/admin/rss/items" : {
+      "get" : {
+        "description" : "Stored items as `/rss/items` lists them (active feeds, newest first, `feed` and `title` filters alike), each with its `rating`, `ratedBy` and `ratedAt` (null when unrated). `rating` is `all` (default), `rates`, `might`, `dull` or `unrated`; `size` is 1 to 100. `totalCount` and `totalPages` are for the filter asked for. Never carries the model's guess.",
+        "operationId" : "listRatedRssItems",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "rating",
+          "required" : false,
+          "schema" : {
+            "default" : "all",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 50,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "feed",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "title",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminRssItemsResponse"
+                }
+              }
+            },
+            "description" : "A page of items"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A bad rating filter, page or size"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Feed items with their ratings",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
+    "/admin/rss/items/{id}/rating" : {
+      "delete" : {
+        "description" : "Kept in the rating history. An item with no rating is left as it is.",
+        "operationId" : "clearRssItemRating",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "The item has no rating"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such item"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Clear a feed item's rating",
+        "tags" : [ "Admin - RSS" ]
+      },
+      "put" : {
+        "description" : "`RATES` (worth writing about), `MIGHT` or `DULL`. Replaces any rating the item had; every change is kept in the rating history. The same rating again changes nothing.",
+        "operationId" : "rateRssItem",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RssItemRatingRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RssItemRatingResponse"
+                }
+              }
+            },
+            "description" : "The item's rating"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No rating, or not RATES, MIGHT or DULL"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such item"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Rate a feed item",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
     "/admin/rss/opml" : {
       "get" : {
         "operationId" : "export",
@@ -4014,6 +4534,145 @@
           "bearerAuth" : [ ]
         } ],
         "summary" : "Import RSS feeds from an OPML or plain text upload",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
+    "/admin/rss/rating-guesses/run" : {
+      "post" : {
+        "description" : "Guesses the items received in the lookback that have no guess yet, as the daily pass does, and answers what it did. Only while the guess is on (`RSS_RATING_MODEL_GUESS`).",
+        "operationId" : "runRssRatingGuesses",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RssRatingGuessRunResponse"
+                }
+              }
+            },
+            "description" : "What the pass did"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The guess is off, or a pass is running already"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Run a guess pass now",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
+    "/admin/rss/rating-stats" : {
+      "get" : {
+        "description" : "Counts per rating; agreement overall and per rating, and the confusion matrix, over the items with both a rating and a guess; and the items guessed RATES but rated DULL, and rated RATES but guessed DULL.",
+        "operationId" : "rssRatingStats",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RssRatingStatsResponse"
+                }
+              }
+            },
+            "description" : "The stats"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "How the model's guess agrees with the ratings",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
+    "/admin/rss/ratings.csv" : {
+      "get" : {
+        "description" : "Every item with a rating or a guess: item_id, feed, title, link, published, rating, rated_by, rated_at, guess, guess_confidence, guess_reason, guess_model, guess_source, guessed_at. Empty where there's no rating or no guess.",
+        "operationId" : "exportRssRatings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "text/csv" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "The CSV"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Export ratings and guesses as CSV",
         "tags" : [ "Admin - RSS" ]
       }
     },

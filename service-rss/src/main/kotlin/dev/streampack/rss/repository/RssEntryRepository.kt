@@ -16,6 +16,10 @@ interface RssEntryRepository : JpaRepository<RssEntry, UUID>, JpaSpecificationEx
 
     fun countByFeed(feed: RssFeed): Long
 
+    /** The entries [ids], each with its feed loaded, for use outside a transaction. */
+    @Query("select entry from RssEntry entry join fetch entry.feed where entry.id in :ids")
+    fun findWithFeedByIdIn(@Param("ids") ids: Collection<UUID>): List<RssEntry>
+
     @Query(
         "select max(coalesce(entry.publishedAt, entry.createdAt)) from RssEntry entry where entry.feed = :feed"
     )

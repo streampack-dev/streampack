@@ -109,6 +109,13 @@ streampack:
     tags:
       promote-entries: ${RSS_TAG_PROMOTE_ENTRIES:3}
       promote-feeds: ${RSS_TAG_PROMOTE_FEEDS:2}
+    # The model's hidden guess at admins' ratings of items (#187); off by default
+    rating:
+      model-guess: ${RSS_RATING_MODEL_GUESS:false}
+      guess-interval: ${RSS_RATING_GUESS_INTERVAL:P1D}
+      guess-lookback: ${RSS_RATING_GUESS_LOOKBACK:P2D}
+      chunk-size: ${RSS_RATING_GUESS_CHUNK_SIZE:20}
+      max-items-per-run: ${RSS_RATING_GUESS_MAX_ITEMS:200}
   github:
     poll-interval: ${GITHUB_POLL_INTERVAL:PT60M}
     scheduler-interval: ${GITHUB_SCHEDULER_INTERVAL:PT90S}

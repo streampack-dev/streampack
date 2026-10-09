@@ -38,6 +38,10 @@
             <artifactId>lib-taxonomy</artifactId>
         </dependency>
         <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-ai</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.rometools</groupId>
             <artifactId>rome</artifactId>
         </dependency>
