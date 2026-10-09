@@ -59,6 +59,30 @@ class TagVocabulary(
         return TagResolution.New(name, hint(name, known))
     }
 
+    /**
+     * [resolve] for many names at once, keyed by normalized name (the empty ones left out): the
+     * stoplist and aliases are read once for all of them, and the vocabulary ([knownNames]) at most
+     * once. For readers that resolve a page of names, such as feed entries' tags (#139). Creates
+     * nothing.
+     */
+    @Transactional(readOnly = true)
+    fun resolveAll(raws: Iterable<String?>): Map<String, TagResolution> {
+        val names = TagNames.normalizeAll(raws)
+        if (names.isEmpty()) return emptyMap()
+        val stopped = stops.findAllById(names).map { it.term }.toSet()
+        val aliased = aliases.findAllById(names).associate { it.alias to it.tag.name }
+        val known by lazy { knownNames() }
+        return names.associateWith { name ->
+            when {
+                TagNames.isSystem(name) -> TagResolution.System(name)
+                name in stopped -> TagResolution.Stopped(name)
+                name in aliased -> TagResolution.Aliased(name, aliased.getValue(name))
+                name in known -> TagResolution.Canonical(name)
+                else -> TagResolution.New(name, hint(name, known))
+            }
+        }
+    }
+
     /** [raw] in canonical form, for a suggestion: nothing is created or queued (#140). */
     override fun canonical(raw: String?): String? = resolve(raw)?.name
 

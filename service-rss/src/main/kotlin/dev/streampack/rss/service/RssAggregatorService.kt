@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 class RssAggregatorService(
     private val entryRepository: RssEntryRepository,
     private val feedRepository: RssFeedRepository,
+    private val feedTags: FeedTagService,
 ) {
 
     fun listItems(page: Int, size: Int, feed: String?, title: String?): RssAggregatedItemsResponse {
@@ -32,8 +33,9 @@ class RssAggregatorService(
                 aggregatedEntrySpecification(normalizedFeed, normalizedTitle),
                 pageable,
             )
+        val tags = feedTags.tagsFor(results.content.map { it.id })
         return RssAggregatedItemsResponse(
-            items = results.content.map { it.toResponse() },
+            items = results.content.map { it.toResponse(tags[it.id] ?: NO_TAGS) },
             page = results.number,
             totalPages = results.totalPages,
             totalCount = results.totalElements,
@@ -65,7 +67,7 @@ class RssAggregatorService(
         )
     }
 
-    private fun RssEntry.toResponse(): RssAggregatedItemResponse =
+    private fun RssEntry.toResponse(tags: EntryTags): RssAggregatedItemResponse =
         RssAggregatedItemResponse(
             id = id,
             feedTitle = feed.title,
@@ -77,6 +79,8 @@ class RssAggregatorService(
             summary = summary,
             publishedAt = publishedAt,
             receivedAt = createdAt,
+            categories = tags.categories,
+            tags = tags.tags,
         )
 
     private fun aggregatedEntrySpecification(
@@ -127,5 +131,9 @@ class RssAggregatorService(
         }
 
         criteriaBuilder.and(*predicates.toTypedArray())
+    }
+
+    private companion object {
+        val NO_TAGS = EntryTags(emptyList(), emptyList())
     }
 }

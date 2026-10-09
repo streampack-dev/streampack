@@ -1131,6 +1131,137 @@
         "required" : [ "adapters", "ai", "anonymousSubmission", "authentication", "operationGroups", "siteName", "version" ],
         "type" : "object"
       },
+      "FeedTagEntry" : {
+        "description" : "A feed tag the tag vocabulary didn't know, and what became of it",
+        "properties" : {
+          "decidedAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "decidedBy" : {
+            "description" : "Who decided: an admin, rss (promoted), or vocabulary",
+            "type" : [ "string", "null" ]
+          },
+          "entries" : {
+            "description" : "Feed entries carrying it",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "examples" : {
+            "description" : "A few of the entries carrying it, newest first",
+            "items" : {
+              "$ref" : "#/components/schemas/FeedTagExample"
+            },
+            "type" : "array"
+          },
+          "feeds" : {
+            "description" : "Distinct feeds carrying it",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "firstSeen" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "lastSeen" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "The feed tag, normalized",
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "WAITING", "PROMOTED", "CREATED", "MAPPED", "IGNORED" ],
+            "type" : "string"
+          },
+          "tag" : {
+            "description" : "The tag it became or maps to; absent while waiting or ignored",
+            "type" : [ "string", "null" ]
+          },
+          "written" : {
+            "description" : "How feeds wrote it, a few of the forms",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "entries", "examples", "feeds", "firstSeen", "lastSeen", "name", "status", "written" ],
+        "type" : "object"
+      },
+      "FeedTagExample" : {
+        "description" : "A feed entry carrying a feed tag, as an example",
+        "properties" : {
+          "entryId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "feedTitle" : {
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "entryId", "feedTitle", "link", "title" ],
+        "type" : "object"
+      },
+      "FeedTagListResponse" : {
+        "description" : "Feed tags, a page of them",
+        "properties" : {
+          "promoteEntries" : {
+            "description" : "Entries across feeds a waiting tag needs to become a tag",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "promoteFeeds" : {
+            "description" : "Distinct feeds a waiting tag needs to become a tag",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "tags" : {
+            "items" : {
+              "$ref" : "#/components/schemas/FeedTagEntry"
+            },
+            "type" : "array"
+          },
+          "waitingCount" : {
+            "description" : "Waiting feed tags in all, for a launcher badge",
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "promoteEntries", "promoteFeeds", "tags", "waitingCount" ],
+        "type" : "object"
+      },
+      "FeedTagMapRequest" : {
+        "description" : "Map a feed tag to an existing tag",
+        "properties" : {
+          "name" : {
+            "description" : "The feed tag",
+            "type" : "string"
+          },
+          "tag" : {
+            "description" : "The existing tag it means",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "FeedTagRequest" : {
+        "description" : "A feed tag to ignore or create",
+        "properties" : {
+          "name" : {
+            "description" : "The feed tag",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "JsonRpcRequest" : {
         "properties" : {
           "id" : { },
@@ -1790,6 +1921,13 @@
       },
       "RssAggregatedItemResponse" : {
         "properties" : {
+          "categories" : {
+            "description" : "The feed's own tags for the item (RSS category, Atom category term), as written; empty when it gave none or the item was stored before tags were kept",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "feedTitle" : {
             "type" : "string"
           },
@@ -1820,11 +1958,18 @@
           "summary" : {
             "type" : [ "string", "null" ]
           },
+          "tags" : {
+            "description" : "The BCN tags the item's feed tags map to: a tag of the same name, or an alias's tag. Stoplisted and waiting feed tags map to nothing. Feed items don't count toward tag counts or the taxonomy.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "title" : {
             "type" : "string"
           }
         },
-        "required" : [ "feedTitle", "feedUrl", "guid", "id", "link", "receivedAt", "title" ],
+        "required" : [ "categories", "feedTitle", "feedUrl", "guid", "id", "link", "receivedAt", "tags", "title" ],
         "type" : "object"
       },
       "RssAggregatedItemsResponse" : {
@@ -3837,6 +3982,305 @@
           "bearerAuth" : [ ]
         } ],
         "summary" : "Import RSS feeds from an OPML or plain text upload",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
+    "/admin/rss/tags" : {
+      "get" : {
+        "description" : "Waiting feed tags by default, the most carried first: counted, and created as tags once on `promoteEntries` entries across `promoteFeeds` feeds. `status=all` includes the decided ones (PROMOTED, CREATED, MAPPED, IGNORED). Feed tags that are tags, aliases or stoplisted already never wait, and aren't listed.",
+        "operationId" : "listFeedTags",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "default" : "waiting",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 50,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FeedTagListResponse"
+                }
+              }
+            },
+            "description" : "A page of feed tags"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A bad status, page or size"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Feed tags the tag vocabulary didn't know",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
+    "/admin/rss/tags/create" : {
+      "post" : {
+        "description" : "`name` is created as a tag without waiting for the threshold, through the vocabulary's create rule: a doubtful one goes to the review queue, and the AI near-miss checks it, as for any new tag. Marked CREATED.",
+        "operationId" : "createFeedTag",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FeedTagRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FeedTagEntry"
+                }
+              }
+            },
+            "description" : "The feed tag as decided"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No name given"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No feed has carried that tag"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Create a feed tag as a tag now",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
+    "/admin/rss/tags/ignore" : {
+      "post" : {
+        "description" : "`name` is stoplisted (its alias removed first if it had one): dropped from feed entries' tags, and from every tag list written from now on. Marked IGNORED.",
+        "operationId" : "ignoreFeedTag",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FeedTagRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FeedTagEntry"
+                }
+              }
+            },
+            "description" : "The feed tag as decided"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No name given"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No feed has carried that tag"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Ignore a feed tag",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
+    "/admin/rss/tags/map" : {
+      "post" : {
+        "description" : "`name` becomes an alias of the existing tag `tag` (as `POST /admin/tags/aliases` makes one, taken off the stoplist first if it was there), so feed entries carrying it carry `tag`, and so does anything written with it. Marked MAPPED.",
+        "operationId" : "mapFeedTag",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FeedTagMapRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FeedTagEntry"
+                }
+              }
+            },
+            "description" : "The feed tag as decided"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The target isn't an existing tag, or is the feed tag itself"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No feed has carried that tag"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Map a feed tag to an existing tag",
         "tags" : [ "Admin - RSS" ]
       }
     },

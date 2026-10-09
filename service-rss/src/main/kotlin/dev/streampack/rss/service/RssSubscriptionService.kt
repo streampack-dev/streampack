@@ -27,6 +27,7 @@ class RssSubscriptionService(
     private val entryRepository: RssEntryRepository,
     private val subscriptionRepository: RssFeedSubscriptionRepository,
     private val rssProperties: RssProperties,
+    private val feedTags: FeedTagService,
 ) {
 
     private val logger = LoggerFactory.getLogger(RssSubscriptionService::class.java)
@@ -86,8 +87,8 @@ class RssSubscriptionService(
                 )
             )
 
-        // Seed all current entries to establish the baseline
-        val entries =
+        // Seed all current entries to establish the baseline, with their own tags (#139)
+        val seeded =
             deduplicateEntries(syndFeed.entries).mapNotNull { entry ->
                 val guid = entry.uri ?: entry.link ?: return@mapNotNull null
                 val link = entry.link ?: guid
@@ -100,10 +101,11 @@ class RssSubscriptionService(
                     link = link,
                     title = title.take(500),
                     publishedAt = publishedAt,
-                )
+                ) to entry
             }
 
-        entryRepository.saveAll(entries)
+        val entries = entryRepository.saveAll(seeded.map { it.first })
+        feedTags.record(entries.zip(seeded.map { it.second }))
         logger.info("Added feed \"{}\" with {} entries", feed.title, entries.size)
         return AddFeedOutcome.Added(feed, entries.size)
     }

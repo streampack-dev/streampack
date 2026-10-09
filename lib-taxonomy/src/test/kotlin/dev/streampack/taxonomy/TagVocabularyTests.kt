@@ -69,6 +69,21 @@ class TagVocabularyTests {
     }
 
     @Test
+    fun `resolveAll resolves as resolve does, keyed by normalized name, creating nothing`() {
+        val raws = listOf("JAVA", "Auth", "self-hosted", "_idea", "compiler", "Spring-Boot", "#")
+        val resolved = vocabulary.resolveAll(raws)
+        assertEquals(
+            listOf("java", "auth", "self hosted", "_idea", "compiler", "spring boot"),
+            resolved.keys.toList(),
+        )
+        for ((name, resolution) in resolved) assertEquals(vocabulary.resolve(name), resolution)
+        assertNull(tags.findByName("compiler"))
+        assertNull(tags.findByName("spring boot"))
+        assertEquals(0, reviews.count())
+        assertEquals(emptyMap<String, TagResolution>(), vocabulary.resolveAll(listOf(" ", null)))
+    }
+
+    @Test
     fun `an existing tag is canonical`() {
         assertEquals(TagResolution.Canonical("java"), vocabulary.resolve(" JAVA "))
     }

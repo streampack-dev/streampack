@@ -138,9 +138,24 @@ feed subscriptions
 feed subscriptions for <destination-uri>
 ```
 
+Feed tags (#139), `ADMIN`:
+
+```text
+feed tags
+feed tag <name>
+feed tag map <name> = <tag>
+feed tag map <name> <tag>
+feed tag ignore <name>
+feed tag create <name>
+```
+
 Operational notes:
 
 - `feed add` accepts direct feed URLs or site URLs and performs autodiscovery.
+- `feed tags` lists the waiting feed tags, the most carried first, as `name (entries/feeds)`;
+  `feed tag <name>` shows one with its status and example entries. `map`, `ignore` and `create`
+  are the `/admin/rss/tags` actions: an alias of an existing tag, a stoplisted term, a new tag.
+  See [Tag Names](tags.md#feed-tags).
 - OPML import and export are HTTP admin endpoints, not text commands:
   - `GET /admin/rss/opml`
   - `POST /admin/rss/opml/import`
