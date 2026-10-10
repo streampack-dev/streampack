@@ -175,4 +175,12 @@ class RssAggregatorControllerTests {
     fun `POST rss item access returns accepted`() {
         mockMvc.post("/rss/items/$bytecodeSpringId/access").andExpect { status { isAccepted() } }
     }
+
+    @Test
+    fun `a page far past the end is a 400, not a server error`() {
+        mockMvc.get("/rss/items?page=2000000000&size=20").andExpect {
+            status { isBadRequest() }
+            jsonPath("$.detail") { value("That page is too far past the end.") }
+        }
+    }
 }
