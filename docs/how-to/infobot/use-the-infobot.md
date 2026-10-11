@@ -66,10 +66,23 @@ jep456
 pep 8
 jsr 330
 jcp 380
+cve 2021-44228
+cve org.apache.logging.log4j:log4j-core 2.14.1
+cve npm:lodash
+cve log4j
 ```
 
 These commands look up external reference material and often seed factoids so later requests are
 faster. `jcp` is another name for `jsr`.
+
+`cve <term> [version]` takes a CVE id (`CVE-2021-44228` or `2021-44228`), Maven coordinates
+(`group:artifact`), another ecosystem's package with a prefix (`npm:`, `go:`, `crates:`, `pypi:`,
+`gem:`, `nuget:`, `composer:`, `hex:`, `pub:`) or a bare name. With a version it lists the CVEs that
+affect it, worst first, and the lowest version that fixes them all; without one it summarizes. A
+bare name is a known alias (`log4j` is both `log4j:log4j` and log4j-core) or an artifactId Maven
+Central has exactly one of; when several share it, they're listed for you to pick. Nothing known to
+OSV is reported as just that, not as "safe". See
+[operation-specs](../../../operation-specs/README.md#cve-lookup).
 
 ### Calculator, Date, and Weather
 
