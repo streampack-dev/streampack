@@ -8,6 +8,7 @@ import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.JwtService
+import dev.streampack.generative.config.GenerativeProperties
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.entity.RssEntryText
 import dev.streampack.rss.entity.RssFeed
@@ -20,6 +21,8 @@ import dev.streampack.rss.repository.RssItemGuessRepository
 import dev.streampack.rss.service.RssRatingGuessService.GuessAnswer
 import dev.streampack.rss.service.RssRatingGuessService.ItemGuess
 import dev.streampack.test.ResetDatabaseBeforeEach
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -27,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -45,7 +49,8 @@ import org.springframework.test.web.servlet.post
 /**
  * The model's hidden guess (#187), turned on, with the model and the article pages faked: one call
  * per chunk to the moderation model, the prompt's examples and texts, and what's stored or skipped.
- * The passes are run directly, so nothing waits on the daily schedule.
+ * The passes are run directly, so nothing waits on the daily schedule. The rubric's override
+ * directory is a scratch one, emptied before each test.
  */
 @SpringBootTest(
     properties =
@@ -55,6 +60,7 @@ import org.springframework.test.web.servlet.post
             "streampack.rss.rating.min-rated-examples=2",
             // The scheduled pass never runs during these tests; they run passes themselves
             "streampack.rss.rating.first-guess-delay=P30D",
+            "streampack.generative.prompt-dir=\${java.io.tmpdir}/streampack-rss-rubric-tests",
         ]
 )
 @AutoConfigureMockMvc
@@ -139,8 +145,12 @@ class RssRatingGuessServiceTests {
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var jwtService: JwtService
+    @Autowired lateinit var generativeProperties: GenerativeProperties
 
     private lateinit var feed: RssFeed
+
+    private val promptDir: Path
+        get() = Path.of(generativeProperties.promptDir)
 
     @BeforeEach
     fun setUp() {
@@ -148,6 +158,8 @@ class RssRatingGuessServiceTests {
         ai.answer = RecordingAi::allRates
         pages.pages.clear()
         pages.reads.clear()
+        Files.createDirectories(promptDir)
+        Files.list(promptDir).use { paths -> paths.forEach { Files.deleteIfExists(it) } }
         feed = feeds.save(RssFeed(feedUrl = "https://a.example/feed.xml", title = "Feed A"))
     }
 
@@ -185,7 +197,14 @@ class RssRatingGuessServiceTests {
         assertEquals(1, RecordingAi.idsIn(ai.calls[1].prompt).size)
         // The rubric and examples are the same for every chunk, so they can be cached
         assertEquals(ai.calls[0].system, ai.calls[1].system)
-        assertTrue(ai.calls[0].system.startsWith(RssRatingGuessService.RUBRIC))
+        assertTrue(
+            ai.calls[0]
+                .system
+                .startsWith(
+                    RssRatingGuessService.defaultRubric() + "\n\n" + RssRatingGuessService.ANSWER
+                ),
+            ai.calls[0].system,
+        )
         val stored = guesses.findAll().associateBy { it.itemId }
         assertEquals(items.map { it.id }.toSet(), stored.keys)
         val one = stored.getValue(items[0].id)
@@ -193,6 +212,77 @@ class RssRatingGuessServiceTests {
         assertEquals(0.9, one.confidence)
         assertEquals("Delightful.", one.reason)
         assertEquals(aiProperties.moderationModel, one.model)
+    }
+
+    /** The rubric part of [system]: everything before the answer's instructions. */
+    private fun rubricOf(system: String) =
+        system.substringBefore("\n\n" + RssRatingGuessService.ANSWER)
+
+    @Test
+    fun `without an override the rubric is the bundled default, and every guess has its hash`() {
+        val default = RssRatingGuessService.defaultRubric()
+        assertTrue(default.startsWith("You help the editor of Bytecode News (BCN)"), default)
+        assertTrue(default.endsWith("Most items are DULL or MIGHT; RATES is rare."), default)
+        (1..3).map { item(it) }
+
+        service.run()
+
+        assertEquals(2, ai.calls.size)
+        assertTrue(ai.calls.all { rubricOf(it.system) == default }, ai.calls[0].system)
+        // The answer's shape is in code, after the rubric and before the examples
+        assertTrue(
+            RssRatingGuessService.ANSWER + "\n\nExamples of how the editor rates items:" in
+                ai.calls[0].system,
+            ai.calls[0].system,
+        )
+        val hash = RssRatingGuessService.rubricHash(default)
+        assertEquals(12, hash.length)
+        assertEquals(listOf(hash, hash, hash), guesses.findAll().map { it.rubric })
+    }
+
+    @Test
+    fun `a txt override replaces the rubric, and changes the hash`() {
+        val override = "You guess ratings for a site about 6502 assembly.\nRATES is rare."
+        Files.writeString(promptDir.resolve("rss-rating-rubric.txt"), override + "\n")
+        (1..3).map { item(it) }
+
+        service.run()
+
+        assertEquals(2, ai.calls.size)
+        assertTrue(ai.calls.all { rubricOf(it.system) == override }, ai.calls[0].system)
+        // An override changes how items are judged, never the answer's shape
+        assertTrue(RssRatingGuessService.ANSWER in ai.calls[0].system)
+        assertFalse("Bytecode News" in ai.calls[0].system, ai.calls[0].system)
+        val hash = RssRatingGuessService.rubricHash(override)
+        assertNotEquals(
+            RssRatingGuessService.rubricHash(RssRatingGuessService.defaultRubric()),
+            hash,
+        )
+        assertEquals(listOf(hash, hash, hash), guesses.findAll().map { it.rubric })
+    }
+
+    @Test
+    fun `a broken override falls back to the default`() {
+        Files.writeString(promptDir.resolve("rss-rating-rubric.clj"), "(fn [ctx] (str \"unclosed\"")
+        item(1)
+
+        service.run()
+
+        val default = RssRatingGuessService.defaultRubric()
+        assertEquals(default, rubricOf(ai.calls.single().system))
+        assertEquals(RssRatingGuessService.rubricHash(default), guesses.findAll().single().rubric)
+    }
+
+    @Test
+    fun `a blank override falls back to the default`() {
+        Files.writeString(promptDir.resolve("rss-rating-rubric.txt"), "  \n")
+        item(1)
+
+        service.run()
+
+        val default = RssRatingGuessService.defaultRubric()
+        assertEquals(default, rubricOf(ai.calls.single().system))
+        assertEquals(RssRatingGuessService.rubricHash(default), guesses.findAll().single().rubric)
     }
 
     @Test

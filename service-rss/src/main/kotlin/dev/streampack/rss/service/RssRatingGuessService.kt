@@ -3,6 +3,7 @@ package dev.streampack.rss.service
 
 import dev.streampack.ai.config.AiProperties
 import dev.streampack.ai.service.AiService
+import dev.streampack.generative.service.GenerativePromptService
 import dev.streampack.rss.config.RssProperties
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.entity.RssItemGuess
@@ -12,11 +13,13 @@ import dev.streampack.rss.model.RssRatingGuessRunResponse
 import dev.streampack.rss.repository.RssEntryRepository
 import dev.streampack.rss.repository.RssItemGuessRepository
 import dev.streampack.rss.repository.RssItemRatingRepository
+import java.security.MessageDigest
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.core.io.ClassPathResource
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 
@@ -32,14 +35,20 @@ import org.springframework.stereotype.Service
  * the Message Batches API is the upgrade: asynchronous and half the price, at the cost of polling
  * for the result.
  *
- * The rubric and the examples are the system prompt, the same for every chunk of a pass (and every
- * pass, until the editor rates more), so prompt caching can serve them; the items are the user
- * message. The moderation model is never asked to think (`streampack.ai.thinking` is the default
- * model's alone).
+ * The system prompt is the rubric, then [ANSWER] (the texts' sources and the answer's shape), then
+ * the examples. The rubric is the `rss-rating-rubric` prompt from `lib-generative` (#192): bundled
+ * at [RUBRIC_RESOURCE], and replaced by `rss-rating-rubric.clj` or `.txt` in
+ * `STREAMPACK_GENERATIVE_PROMPT_DIR` without a rebuild. An override changes how items are judged,
+ * never how the answer is read: [ANSWER] stays in code. The rubric is rendered once per pass, so
+ * the system prompt is the same for every chunk of a pass (and every pass, until the editor rates
+ * more or the rubric changes), and prompt caching can serve it; the items are the user message.
+ * Each guess records [rubricHash] of the rubric it was made with. The moderation model is never
+ * asked to think (`streampack.ai.thinking` is the default model's alone).
  *
  * Nothing here blocks polling: the pass runs off the tick thread, and every failure (AI off, no
  * answer, a bad answer, an item the model invented) is logged and skipped. Guesses are never shown
- * where items are rated; only the CSV export and the rating stats read them.
+ * where items are rated; only the CSV export, the rating stats and the admin list of guesses read
+ * them.
  */
 @Service
 class RssRatingGuessService(
@@ -48,6 +57,7 @@ class RssRatingGuessService(
     private val ratings: RssItemRatingRepository,
     private val guesses: RssItemGuessRepository,
     private val itemTexts: RssItemTextService,
+    private val prompts: GenerativePromptService,
     private val aiServiceProvider: ObjectProvider<AiService>,
     private val aiPropertiesProvider: ObjectProvider<AiProperties>,
 ) {
@@ -76,6 +86,9 @@ class RssRatingGuessService(
         val confidence: Double = -1.0,
         val reason: String = "",
     )
+
+    /** The rubric a pass judges with, and its [hash], stored with each guess. */
+    data class Rubric(val text: String, val hash: String)
 
     /** An example the model is shown: an item and its rating. */
     data class Example(
@@ -121,7 +134,9 @@ class RssRatingGuessService(
             return RssRatingGuessRunResponse(candidates.size, 0, 0, candidates.size)
         }
         val shownExamples = rated.map { it.second }
-        val system = systemPrompt(shownExamples, seeds(shownExamples))
+        // Rendered once, so every chunk of the pass has the same system prompt and rubric hash
+        val rubric = rubric()
+        val system = systemPrompt(rubric.text, shownExamples, seeds(shownExamples))
         val model = aiPropertiesProvider.getIfAvailable()?.moderationModel
         var calls = 0
         var stored = 0
@@ -147,7 +162,14 @@ class RssRatingGuessService(
                 logger.warn("RSS rating guess: no usable answer for {} item(s)", items.size)
                 continue
             }
-            stored += store(answer, items.associate { it.first.id to it.second.source }, model, now)
+            stored +=
+                store(
+                    answer,
+                    items.associate { it.first.id to it.second.source },
+                    model,
+                    rubric.hash,
+                    now,
+                )
         }
         val skipped = candidates.size - stored
         logger.info(
@@ -172,12 +194,13 @@ class RssRatingGuessService(
 
     /**
      * Stores the usable guesses in [answer] for the items [asked] (each with the source of the text
-     * it was judged on), returning how many.
+     * it was judged on), made with the rubric [rubricHash], returning how many.
      */
     private fun store(
         answer: GuessAnswer,
         asked: Map<UUID, RssTextSource>,
         model: String?,
+        rubricHash: String,
         now: Instant,
     ): Int {
         val seen = mutableSetOf<UUID>()
@@ -210,11 +233,29 @@ class RssRatingGuessService(
                     model = model,
                     textSource = asked.getValue(id),
                     guessedAt = now,
+                    rubric = rubricHash,
                 )
             )
             stored++
         }
         return stored
+    }
+
+    /**
+     * The rubric, rendered from the `rss-rating-rubric` prompt: an override in
+     * `STREAMPACK_GENERATIVE_PROMPT_DIR` if there's a usable one, else the bundled default. An
+     * override that renders blank is no rubric at all, so the default is used instead.
+     */
+    fun rubric(): Rubric {
+        val text =
+            prompts.render(RUBRIC_PROMPT, RUBRIC_RESOURCE).trim().ifEmpty {
+                logger.warn(
+                    "RSS rating guess: the {} prompt is blank; using the default",
+                    RUBRIC_PROMPT,
+                )
+                defaultRubric()
+            }
+        return Rubric(text, rubricHash(text))
     }
 
     /**
@@ -251,34 +292,56 @@ class RssRatingGuessService(
         private const val MAX_REASON = 1000
         private const val MAX_SUMMARY = 300
 
-        const val RUBRIC =
-            """You help the editor of a site about programming decide which items from the news
-feeds it follows are worth an article. For each item, guess how the editor would rate it:
+        /** The rubric's prompt name in `lib-generative` (#192). */
+        const val RUBRIC_PROMPT = "rss-rating-rubric"
 
-RATES: worth writing about. Surprise, craft, delight, depth, or a story worth telling: something
-that makes a reader say "huh, I didn't know that could be done", a beautiful piece of work, or a
-person's account of building something they care about.
-MIGHT: could be worth writing about with the right angle, but nothing about it stands out.
-DULL: routine. Release notes and version bumps, marketing and announcements, another tutorial
-like many others, news with nothing to add to it.
+        /** The bundled default rubric, used when no override is usable. */
+        const val RUBRIC_RESOURCE = "dev/streampack/rss/prompts/rss-rating-rubric.txt"
 
-Judge what the item is, not its topic: a dull item may share every word with a fascinating one.
-Most items are DULL or MIGHT; RATES is rare. Each item comes with its text and where that came
-from: "content" is the feed's own full text, "page" the article page's, "summary" only the feed's
-short summary, and "title" nothing but the title. With only a summary or a title you know less, so
-lower your confidence. Give each item's itemId exactly as it was given, a label, your confidence
-from 0 to 1 that the editor would rate it so, and a reason of one short sentence (under 20
-words)."""
+        /** How many hex characters of the rubric's SHA-256 a guess records. */
+        const val RUBRIC_HASH_LENGTH = 12
 
-        /** The system prompt: the rubric, then the examples, the same for every item in a pass. */
-        fun systemPrompt(examples: List<Example>, seeds: List<String> = emptyList()): String {
+        /**
+         * What the parsing depends on, appended to every rubric: where an item's text came from,
+         * and the answer's shape. Kept in code, so an override can't break how the answer is read.
+         */
+        const val ANSWER =
+            """Each item comes with its text and where that came from: "content" is the feed's own
+full text, "page" the article page's, "summary" only the feed's short summary, and "title" nothing
+but the title. With only a summary or a title you know less, so lower your confidence. Give each
+item's itemId exactly as it was given, a label, your confidence from 0 to 1 that the editor would
+rate it so, and a reason of one short sentence (under 20 words)."""
+
+        /** The bundled default rubric, trimmed. */
+        fun defaultRubric(): String =
+            ClassPathResource(RUBRIC_RESOURCE).inputStream.use {
+                it.readAllBytes().toString(Charsets.UTF_8).trim()
+            }
+
+        /** The first [RUBRIC_HASH_LENGTH] hex characters of the SHA-256 of [rubric]. */
+        fun rubricHash(rubric: String): String =
+            MessageDigest.getInstance("SHA-256")
+                .digest(rubric.toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
+                .take(RUBRIC_HASH_LENGTH)
+
+        /**
+         * The system prompt: the [rubric], then [ANSWER], then the examples, the same for every
+         * item in a pass.
+         */
+        fun systemPrompt(
+            rubric: String,
+            examples: List<Example>,
+            seeds: List<String> = emptyList(),
+        ): String {
+            val instructions = rubric.trim() + "\n\n" + ANSWER
             val lines =
                 examples.map { example ->
                     val summary = example.summary?.let { " ${it.take(MAX_SUMMARY)}" }.orEmpty()
                     "- ${example.rating}: \"${example.title}\" (${example.feed}).$summary"
                 } + seeds.map { "- $it" }
-            if (lines.isEmpty()) return RUBRIC
-            return RUBRIC +
+            if (lines.isEmpty()) return instructions
+            return instructions +
                 "\n\nExamples of how the editor rates items:\n" +
                 lines.joinToString("\n")
         }

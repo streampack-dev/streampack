@@ -41,7 +41,7 @@ data class RssItemRatingHistory(
 
 /**
  * The model's hidden guess at an item's rating (#187). Never shown where items are rated: only the
- * CSV export and the rating stats read it.
+ * CSV export, the rating stats and the admin list of guesses (#192) read it.
  */
 @Entity
 @Table(name = "rss_item_guess")
@@ -58,6 +58,11 @@ data class RssItemGuess(
     @Column(nullable = false, length = 10)
     val textSource: RssTextSource = RssTextSource.SUMMARY,
     @Column(nullable = false) val guessedAt: Instant = Instant.now(),
+    /**
+     * A short hash of the rubric the guess was made with (#192); null for guesses made before the
+     * rubric was recorded.
+     */
+    @Column(length = 16) val rubric: String? = null,
 )
 
 /**

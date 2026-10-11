@@ -8,6 +8,7 @@ import dev.streampack.rss.model.AdminRssItemsResponse
 import dev.streampack.rss.model.RssItemRatingRequest
 import dev.streampack.rss.model.RssItemRatingResponse
 import dev.streampack.rss.model.RssRatingGuessRunResponse
+import dev.streampack.rss.model.RssRatingGuessesResponse
 import dev.streampack.rss.model.RssRatingStatsResponse
 import dev.streampack.rss.service.RssRatingGuessService
 import dev.streampack.rss.service.RssRatingService
@@ -38,8 +39,8 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * Admins rate feed items (#187): RATES, MIGHT or DULL, to learn what's worth writing about. The
  * item list here carries ratings and never the model's guess, so the guess can't bias them; the
- * guess is read only through the CSV export and the stats. None of it is public: `/rss/items` is
- * unchanged.
+ * guess is read only through the CSV export, the stats and its own list (#192), kept apart from the
+ * item list. None of it is public: `/rss/items` is unchanged.
  */
 @RestController
 @RequestMapping("/admin/rss")
@@ -160,7 +161,8 @@ class AdminRssRatingController(
         description =
             "Every item with a rating or a guess: item_id, feed, title, link, published, " +
                 "rating, rated_by, rated_at, guess, guess_confidence, guess_reason, guess_model, " +
-                "guess_source, guessed_at. Empty where there's no rating or no guess.",
+                "guess_source, guessed_at, guess_rubric. Empty where there's no rating or no " +
+                "guess; guess_rubric is empty for guesses made before the rubric was recorded.",
         operationId = "exportRssRatings",
     )
     @ApiResponse(
@@ -194,6 +196,52 @@ class AdminRssRatingController(
     @GetMapping("/rating-stats", produces = ["application/json"])
     fun stats(httpRequest: HttpServletRequest): ResponseEntity<*> =
         asAdmin(httpRequest) { ResponseEntity.ok(ratings.stats()) }
+
+    @Operation(
+        summary = "The model's guesses",
+        description =
+            "The model's guesses, the newest first, each with its item, the rubric it was made " +
+                "with (a short hash), and the editor's `rating` and whether the guess `agrees` " +
+                "with it (both null when the item is unrated). Unrated items are listed too; " +
+                "the item list (`/admin/rss/items`) never carries a guess. `label` is `all` " +
+                "(default), `rates`, `might` or `dull`; `rated` is `all` (default), `yes` or " +
+                "`no`; `feed` matches a feed's title or address and `title` a part of the " +
+                "item's title, as on `/rss/items`; `size` is 1 to 100. `totalCount` and " +
+                "`totalPages` are for the filter asked for.",
+        operationId = "listRssRatingGuesses",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "A page of guesses",
+        content = [Content(schema = Schema(implementation = RssRatingGuessesResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "A bad label or rated filter, page or size",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @GetMapping("/rating-guesses", produces = ["application/json"])
+    fun listGuesses(
+        @RequestParam(defaultValue = "all") label: String,
+        @RequestParam(defaultValue = "all") rated: String,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "50") size: Int,
+        @RequestParam(required = false) feed: String?,
+        @RequestParam(required = false) title: String?,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> =
+        asAdmin(httpRequest) {
+            val labelFilter =
+                RssRatingService.GuessLabelFilter.parse(label)
+                    ?: return@asAdmin badRequest("label is all, rates, might or dull")
+            val ratedFilter =
+                RssRatingService.RatedFilter.parse(rated)
+                    ?: return@asAdmin badRequest("rated is all, yes or no")
+            if (page < 0) return@asAdmin badRequest("The page can't be negative.")
+            if (size < 1 || size > MAX_SIZE)
+                return@asAdmin badRequest("The size is 1 to $MAX_SIZE.")
+            ResponseEntity.ok(ratings.guesses(labelFilter, ratedFilter, page, size, feed, title))
+        }
 
     @Operation(
         summary = "Run a guess pass now",

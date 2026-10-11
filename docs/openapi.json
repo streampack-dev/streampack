@@ -2242,6 +2242,65 @@
         "required" : [ "compared", "dull", "guessed", "might", "rated", "rates" ],
         "type" : "object"
       },
+      "RssRatingGuessResponse" : {
+        "properties" : {
+          "agrees" : {
+            "description" : "Whether the guess matches the editor's rating; null when the item is unrated",
+            "type" : [ "boolean", "null" ]
+          },
+          "confidence" : {
+            "description" : "The model's confidence in the guess, from 0 to 1",
+            "format" : "double",
+            "type" : "number"
+          },
+          "feedTitle" : {
+            "type" : "string"
+          },
+          "guessedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "itemId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "label" : {
+            "description" : "The guess: RATES, MIGHT or DULL",
+            "enum" : [ "RATES", "MIGHT", "DULL" ],
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "model" : {
+            "description" : "The model that guessed; null when it wasn't recorded",
+            "type" : [ "string", "null" ]
+          },
+          "rating" : {
+            "description" : "The editor's rating; null when the item is unrated",
+            "enum" : [ "RATES", "MIGHT", "DULL" ],
+            "type" : [ "string", "null" ]
+          },
+          "reason" : {
+            "description" : "The model's reason, one short sentence",
+            "type" : "string"
+          },
+          "rubric" : {
+            "description" : "The first 12 hex characters of the SHA-256 of the rubric the guess was made with; null for guesses made before the rubric was recorded",
+            "type" : [ "string", "null" ]
+          },
+          "textSource" : {
+            "description" : "What the model judged the item on: CONTENT (the feed's full text), PAGE (the article page), SUMMARY or TITLE",
+            "enum" : [ "CONTENT", "PAGE", "SUMMARY", "TITLE", "NONE" ],
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "confidence", "feedTitle", "guessedAt", "itemId", "label", "link", "reason", "textSource", "title" ],
+        "type" : "object"
+      },
       "RssRatingGuessRunResponse" : {
         "properties" : {
           "calls" : {
@@ -2266,6 +2325,30 @@
           }
         },
         "required" : [ "calls", "candidates", "skipped", "stored" ],
+        "type" : "object"
+      },
+      "RssRatingGuessesResponse" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/RssRatingGuessResponse"
+            },
+            "type" : "array"
+          },
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "items", "page", "totalCount", "totalPages" ],
         "type" : "object"
       },
       "RssRatingStatsItem" : {
@@ -4537,6 +4620,108 @@
         "tags" : [ "Admin - RSS" ]
       }
     },
+    "/admin/rss/rating-guesses" : {
+      "get" : {
+        "description" : "The model's guesses, the newest first, each with its item, the rubric it was made with (a short hash), and the editor's `rating` and whether the guess `agrees` with it (both null when the item is unrated). Unrated items are listed too; the item list (`/admin/rss/items`) never carries a guess. `label` is `all` (default), `rates`, `might` or `dull`; `rated` is `all` (default), `yes` or `no`; `feed` matches a feed's title or address and `title` a part of the item's title, as on `/rss/items`; `size` is 1 to 100. `totalCount` and `totalPages` are for the filter asked for.",
+        "operationId" : "listRssRatingGuesses",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "label",
+          "required" : false,
+          "schema" : {
+            "default" : "all",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "rated",
+          "required" : false,
+          "schema" : {
+            "default" : "all",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 50,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "feed",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "title",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RssRatingGuessesResponse"
+                }
+              }
+            },
+            "description" : "A page of guesses"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A bad label or rated filter, page or size"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "The model's guesses",
+        "tags" : [ "Admin - RSS" ]
+      }
+    },
     "/admin/rss/rating-guesses/run" : {
       "post" : {
         "description" : "Guesses the items received in the lookback that have no guess yet, as the daily pass does, and answers what it did. Only while the guess is on (`RSS_RATING_MODEL_GUESS`).",
@@ -4635,7 +4820,7 @@
     },
     "/admin/rss/ratings.csv" : {
       "get" : {
-        "description" : "Every item with a rating or a guess: item_id, feed, title, link, published, rating, rated_by, rated_at, guess, guess_confidence, guess_reason, guess_model, guess_source, guessed_at. Empty where there's no rating or no guess.",
+        "description" : "Every item with a rating or a guess: item_id, feed, title, link, published, rating, rated_by, rated_at, guess, guess_confidence, guess_reason, guess_model, guess_source, guessed_at, guess_rubric. Empty where there's no rating or no guess; guess_rubric is empty for guesses made before the rubric was recorded.",
         "operationId" : "exportRssRatings",
         "responses" : {
           "200" : {
