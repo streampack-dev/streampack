@@ -148,6 +148,26 @@ class CveLookupServiceTests {
     }
 
     @Test
+    fun `Maven Central has a longer timeout of its own`() {
+        assertEquals(
+            Duration.ofSeconds(30),
+            dev.streampack.specs.config.CveProperties().mavenSearchTimeout,
+        )
+        stub.routes[CveStubServer.MAVEN] = {
+            Reply(
+                200,
+                CveStubServer.mavenSearch("com.google.guava:guava"),
+                delay = Duration.ofMillis(600),
+            )
+        }
+        val properties =
+            stub.properties(Duration.ofMillis(200)).copy(mavenSearchTimeout = Duration.ofSeconds(5))
+
+        val artifacts = CveLookupService(properties, "test", clock).mavenArtifacts("guava")
+        assertEquals(listOf("com.google.guava:guava"), artifacts.map { it.coordinates })
+    }
+
+    @Test
     fun `a body that isn't JSON is a failure`() {
         stub.routes[CveStubServer.MAVEN] = { Reply(200, "<html>rate limited</html>") }
 

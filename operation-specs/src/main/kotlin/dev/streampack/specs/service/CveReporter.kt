@@ -18,7 +18,10 @@ import org.springframework.stereotype.Service
  * The term is tried, in order, as a CVE id, as package coordinates, as an alias, and as an
  * artifactId Maven Central has exactly one of: several get the candidates back, never a guess. Long
  * lists are cut with a count and OSV's page for the package. A package with nothing in OSV is "none
- * known to OSV", never "safe". An upstream that can't be asked gets one line saying so.
+ * known to OSV", never "safe", and a fix version is said to be OSV's ("OSV lists 2.25.4 as fixing
+ * all"): it's OSV's data, unverified, and may not even be a version the package has. An alias
+ * naming several packages, asked about with a version, gets the packages listed back, since a
+ * version is one package's. An upstream that can't be asked gets one line saying so.
  */
 @Service
 class CveReporter(private val lookup: CveLookupService, private val properties: CveProperties) {
@@ -54,6 +57,8 @@ class CveReporter(private val lookup: CveLookupService, private val properties: 
         }
 
         properties.effectiveAliases[term.lowercase()]?.let { aliased ->
+            if (version != null && aliased.size > 1)
+                return Answer(severalPackages(term, aliased, version))
             return Answer(aliasLines(aliased, version))
         }
         return guarded { byName(term, version) }
@@ -127,6 +132,16 @@ class CveReporter(private val lookup: CveLookupService, private val properties: 
         }
     }
 
+    /**
+     * An alias naming several packages, asked about with a version: a version is one package's, so
+     * it isn't applied to them all. The packages are listed for the asker to choose from.
+     */
+    private fun severalPackages(name: String, coordinates: List<String>, version: String): String {
+        val shown = coordinates.take(LIST_LIMIT).joinToString(", ")
+        return "$name covers ${coordinates.size} packages: $shown${more(coordinates.size - LIST_LIMIT)}; " +
+            "ask again with one of them and the version, as in `cve ${coordinates.first()} $version`."
+    }
+
     private fun aliasLines(coordinates: List<String>, version: String?): String {
         val lines =
             coordinates.take(MAX_LINES).map { c ->
@@ -154,8 +169,8 @@ class CveReporter(private val lookup: CveLookupService, private val properties: 
         val showFixes = fix is Versions.Fix.Unordered
         val fixText =
             when (fix) {
-                is Versions.Fix.At -> "; all fixed in ${fix.version}"
-                Versions.Fix.None -> "; no release fixes all of them yet"
+                is Versions.Fix.At -> "; OSV lists ${fix.version} as fixing all"
+                Versions.Fix.None -> "; OSV lists no version fixing all"
                 Versions.Fix.Unordered -> ""
             }
         val count = "$label: ${advisories.size} known to OSV"
@@ -225,8 +240,8 @@ class CveReporter(private val lookup: CveLookupService, private val properties: 
             val fixNote =
                 when {
                     !withFixes -> null
-                    fixes.isEmpty() -> "no fix"
-                    else -> "fixed ${fixes.joinToString("/")}"
+                    fixes.isEmpty() -> "OSV lists no fix"
+                    else -> "OSV says fixed in ${fixes.joinToString("/")}"
                 }
             val notes = listOfNotNull(severity?.label, fixNote)
             return if (notes.isEmpty()) id else "$id (${notes.joinToString(", ")})"

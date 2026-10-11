@@ -62,6 +62,7 @@ class CveStubServer {
             osvUrl = "$baseUrl/v1/query",
             mavenSearchUrl = "$baseUrl/solrsearch/select",
             requestTimeout = requestTimeout,
+            mavenSearchTimeout = requestTimeout,
         )
 
     fun reset() {

@@ -20,7 +20,10 @@ data class CveProperties(
     val osvUrl: String = "https://api.osv.dev/v1/query",
     val mavenSearchUrl: String = "https://search.maven.org/solrsearch/select",
     val connectTimeout: Duration = Duration.ofSeconds(5),
+    /** Timeout for a whole call to CVE.org or OSV. */
     val requestTimeout: Duration = Duration.ofSeconds(10),
+    /** Maven Central's search is often slow (half a minute isn't rare), so it gets longer. */
+    val mavenSearchTimeout: Duration = Duration.ofSeconds(30),
     val recordTtl: Duration = Duration.ofDays(1),
     val searchTtl: Duration = Duration.ofDays(1),
     val packageTtl: Duration = Duration.ofHours(4),

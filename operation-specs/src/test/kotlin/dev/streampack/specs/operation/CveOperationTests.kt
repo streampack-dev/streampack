@@ -118,8 +118,8 @@ class CveOperationTests {
         val expected =
             "org.apache.logging.log4j:log4j-core 2.14.1: 7 known to OSV, worst first: " +
                 "CVE-2021-44228 (critical), CVE-2021-45046 (critical), CVE-2021-45105 (high), " +
-                "CVE-2021-44832 (medium), CVE-2025-68161 (medium), …and 2 more; all fixed in " +
-                "2.25.4. https://osv.dev/list?ecosystem=Maven&q=org.apache.logging.log4j%3Alog4j-core"
+                "CVE-2021-44832 (medium), CVE-2025-68161 (medium), …and 2 more; OSV lists " +
+                "2.25.4 as fixing all. https://osv.dev/list?ecosystem=Maven&q=org.apache.logging.log4j%3Alog4j-core"
         assertEquals(expected, reply("cve org.apache.logging.log4j:log4j-core 2.14.1"))
         // The version can also be the coordinates' third part.
         assertEquals(expected, reply("cve org.apache.logging.log4j:log4j-core:2.14.1"))
@@ -139,7 +139,7 @@ class CveOperationTests {
 
         assertEquals(
             "org.apache.logging.log4j:log4j-core: 11 known to OSV, worst CVE-2021-44228 " +
-                "(critical), newest CVE-2026-34480 (medium); all fixed in 2.25.4. " +
+                "(critical), newest CVE-2026-34480 (medium); OSV lists 2.25.4 as fixing all. " +
                 "https://osv.dev/list?ecosystem=Maven&q=org.apache.logging.log4j%3Alog4j-core",
             reply("cve org.apache.logging.log4j:log4j-core"),
         )
@@ -151,8 +151,8 @@ class CveOperationTests {
 
         assertEquals(
             "npm:lodash 4.17.15: 4 known to OSV, worst first: CVE-2021-23337 (high), " +
-                "CVE-2020-8203 (high), CVE-2025-13465 (medium), CVE-2020-28500 (medium); all " +
-                "fixed in 4.18.0. https://osv.dev/list?ecosystem=npm&q=lodash",
+                "CVE-2020-8203 (high), CVE-2025-13465 (medium), CVE-2020-28500 (medium); OSV " +
+                "lists 4.18.0 as fixing all. https://osv.dev/list?ecosystem=npm&q=lodash",
             reply("cve npm:lodash 4.17.15"),
         )
     }
@@ -215,6 +215,56 @@ class CveOperationTests {
             osvPackages(),
         )
         assertTrue(stub.requests.none { it.path == MAVEN })
+    }
+
+    @Test
+    fun `an alias naming several packages, with a version, asks which package`() {
+        val payload = reply("cve log4j 1.2.17")
+        assertEquals(
+            "log4j covers 2 packages: log4j:log4j, org.apache.logging.log4j:log4j-core; ask " +
+                "again with one of them and the version, as in `cve log4j:log4j 1.2.17`.",
+            payload,
+        )
+        assertTrue(stub.requests.isEmpty())
+    }
+
+    @Test
+    fun `an alias naming one package takes a version`() {
+        stub.routes[OSV] = { Reply(200, fixture("osv-log4j-core-2.14.1.json")) }
+
+        val payload = reply("cve log4j2 2.14.1")
+        assertTrue(
+            payload.startsWith("org.apache.logging.log4j:log4j-core 2.14.1: 7 known to OSV"),
+            payload,
+        )
+        assertEquals(listOf("Maven" to "org.apache.logging.log4j:log4j-core"), osvPackages())
+        assertEquals(
+            "2.14.1",
+            mapper.readTree(stub.osvQueries().single()).path("version").asString(),
+        )
+    }
+
+    @Test
+    fun `versions that can't be ordered get each CVE's fixes, as OSV's`() {
+        stub.routes[OSV] = {
+            Reply(
+                200,
+                """{"vulns":[{"id":"PYSEC-1","aliases":["CVE-2020-1111"],""" +
+                    """"database_specific":{"severity":"HIGH"},"affected":[{"package":""" +
+                    """{"name":"example","ecosystem":"PyPI"},"ranges":[{"type":"ECOSYSTEM",""" +
+                    """"events":[{"introduced":"0"},{"fixed":"1.0.post1"}]}]}]},""" +
+                    """{"id":"PYSEC-2","aliases":["CVE-2021-2222"],"affected":[{"package":""" +
+                    """{"name":"example","ecosystem":"PyPI"},"ranges":[{"type":"ECOSYSTEM",""" +
+                    """"events":[{"introduced":"0"}]}]}]}]}""",
+            )
+        }
+
+        assertEquals(
+            "pypi:example 0.9: 2 known to OSV, worst first: CVE-2020-1111 (high, OSV says fixed " +
+                "in 1.0.post1), CVE-2021-2222 (OSV lists no fix). " +
+                "https://osv.dev/list?ecosystem=PyPI&q=example",
+            reply("cve pypi:example 0.9"),
+        )
     }
 
     @Test

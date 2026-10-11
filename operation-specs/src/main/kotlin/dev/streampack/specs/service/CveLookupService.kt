@@ -17,6 +17,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Clock
+import java.time.Duration
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import org.slf4j.LoggerFactory
@@ -110,7 +111,10 @@ class CveLookupService(
         searches.get(artifactId) {
             val query = URLEncoder.encode("a:\"$artifactId\"", Charsets.UTF_8)
             val uri = URI("${properties.mavenSearchUrl}?q=$query&rows=$MAVEN_ROWS&wt=json")
-            val body = ok("Maven Central", send("Maven Central", HttpRequest.newBuilder(uri).GET()))
+            // Maven Central's search is often slow, so it has a timeout of its own.
+            val request = HttpRequest.newBuilder(uri).GET()
+            val body =
+                ok("Maven Central", send("Maven Central", request, properties.mavenSearchTimeout))
             parse("Maven Central", body) { root ->
                 root
                     .path("response")
@@ -131,10 +135,14 @@ class CveLookupService(
         searches.clear()
     }
 
-    private fun send(upstream: String, request: HttpRequest.Builder): HttpResponse<String> =
+    private fun send(
+        upstream: String,
+        request: HttpRequest.Builder,
+        timeout: Duration = properties.requestTimeout,
+    ): HttpResponse<String> =
         try {
             client.send(
-                request.timeout(properties.requestTimeout).header("User-Agent", userAgent).build(),
+                request.timeout(timeout).header("User-Agent", userAgent).build(),
                 HttpResponse.BodyHandlers.ofString(),
             )
         } catch (e: InterruptedException) {

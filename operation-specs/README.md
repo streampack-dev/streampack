@@ -22,6 +22,11 @@ Replies link the spec's own page.
 
 ## CVE Lookup
 
+> **Not a security verdict.** `cve` relays what CVE.org and OSV.dev say, unverified and
+> incomplete. "None known to OSV" doesn't mean safe. A fix version is OSV's data, said as such
+> ("OSV lists 2.25.4 as fixing all"), and may not even exist for that package: OSV lists `2.0` as
+> fixing `log4j:log4j`, which never had a 2.0. Check the advisory before acting on a reply.
+
 `cve <term> [version]` resolves the term in this order:
 
 1. **A CVE id**, `CVE-2021-44228` or `2021-44228`, from CVE.org's record API. The reply has the
@@ -37,8 +42,11 @@ Replies link the spec's own page.
    first, with a request for coordinates. It never guesses.
 
 With a version, a package's reply lists the CVEs affecting it, worst first, and the lowest
-version that fixes all of them. Without one, it's a summary: how many, the worst, the newest, and
-the lowest version fixing all. An alias naming several packages gets one line for each. A package
+version OSV's data says fixes all of them. Without one, it's a summary: how many, the worst, the
+newest, and the lowest version fixing all, again per OSV. An alias naming several packages gets
+one line for each; asked with a version, it gets the packages listed instead, with a request for
+coordinates, since a version is one package's (`cve log4j 1.2.17` doesn't ask about log4j-core
+1.2.17). A package
 OSV has nothing for is "none known to OSV", never "safe". Lists are cut with a count and OSV's
 page for the package, so a reply fits a chat line.
 
@@ -50,10 +58,11 @@ OSV id. A severity is the advisory's own rating, or worked out from its CVSS 3 v
 about, that no listed vulnerability's ranges take in. Maven versions are ordered as Maven's
 `ComparableVersion` orders them, npm, Go, Cargo, Hex and Pub versions as semantic versions. For
 PyPI, RubyGems, NuGet and Packagist only plain dotted numbers are compared; when a version there
-is anything else, each CVE's fixed versions are listed instead.
+is anything else, each CVE's fixed versions are listed instead ("OSV says fixed in …").
 
-Every upstream call has a timeout (`streampack.specs.cve.request-timeout`, 10 seconds). One that
-fails, is slow or is rate-limited gets "Couldn't look that up right now" and one WARN log line.
+Every upstream call has a timeout: 10 seconds for CVE.org and OSV
+(`streampack.specs.cve.request-timeout`), 30 seconds for Maven Central's often slow search
+(`streampack.specs.cve.maven-search-timeout`). One that fails, is slow or is rate-limited gets "Couldn't look that up right now" and one WARN log line.
 
 **Caching.** Answers are kept in the module: CVE records and Maven Central searches for a day,
 package results for four hours, since that's where new CVEs appear. A failed call isn't kept.
@@ -75,7 +84,8 @@ drops a shipped one.
 | `streampack.specs.cve.search-ttl` | `P1D` | How long a Maven Central search is kept. |
 | `streampack.specs.cve.package-ttl` | `PT4H` | How long a package's vulnerabilities are kept. |
 | `streampack.specs.cve.connect-timeout` | `5s` | Connect timeout for every upstream. |
-| `streampack.specs.cve.request-timeout` | `10s` | Timeout for a whole upstream call. |
+| `streampack.specs.cve.request-timeout` | `10s` | Timeout for a whole call to CVE.org or OSV. |
+| `streampack.specs.cve.maven-search-timeout` | `30s` | Timeout for a whole Maven Central search. |
 | `streampack.specs.cve.cve-url`, `osv-url`, `maven-search-url` | the public services | Upstream addresses (tests point them at a stub). |
 
 ## Example Flows
