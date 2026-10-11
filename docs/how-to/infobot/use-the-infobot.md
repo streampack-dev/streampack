@@ -66,10 +66,28 @@ jep456
 pep 8
 jsr 330
 jcp 380
+cve 2021-44228
+cve org.apache.logging.log4j:log4j-core 2.14.1
+cve npm:lodash
+cve log4j
 ```
 
 These commands look up external reference material and often seed factoids so later requests are
 faster. `jcp` is another name for `jsr`.
+
+`cve <term> [version]` takes a CVE id (`CVE-2021-44228` or `2021-44228`), Maven coordinates
+(`group:artifact`), another ecosystem's package with a prefix (`npm:`, `go:`, `crates:`, `pypi:`,
+`gem:`, `nuget:`, `composer:`, `hex:`, `pub:`) or a bare name. With a version it lists the CVEs that
+affect it, worst first, and the lowest version OSV says fixes them all; without one it summarizes.
+A bare name is a known alias (`log4j` is both `log4j:log4j` and log4j-core) or an artifactId Maven
+Central has exactly one of; when several share it, they're listed for you to pick, and so are an
+alias's packages when you give a version. See
+[operation-specs](../../../operation-specs/README.md#cve-lookup).
+
+> **`cve` isn't a security verdict.** Its answers come straight from CVE.org and OSV.dev, and are
+> neither verified nor complete. "None known to OSV" doesn't mean safe. A fix version is OSV's
+> data and may not exist for that package (OSV lists `2.0` as fixing `log4j:log4j`, which never
+> had a 2.0). Check the advisory before acting.
 
 ### Calculator, Date, and Weather
 

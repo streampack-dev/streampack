@@ -14,7 +14,7 @@ For repository-facing operator and moderator commands, see:
 
 | Area | Examples |
 |------|----------|
-| Knowledge and lookup | `spring`, `define ubiquitous`, `rfc 2616`, `calc 2+3`, `weather Boston` |
+| Knowledge and lookup | `spring`, `define ubiquitous`, `rfc 2616`, `cve log4j`, `calc 2+3`, `weather Boston` |
 | Ambient behavior | `kotlin++`, paste a URL |
 | Messaging and channel tools | `tell alice hello`, `bridge provenance` |
 | Games | `hangman`, `21`, `safecracker` |
@@ -32,6 +32,7 @@ For module-local command details and implementation notes, see:
 
 - [lib-core/README.md](../../lib-core/README.md)
 - [operation-factoid/README.md](../../operation-factoid/README.md)
+- [operation-specs/README.md](../../operation-specs/README.md)
 - [service-github/README.md](../../service-github/README.md)
 - [service-gitlab/README.md](../../service-gitlab/README.md)
 - [service-rss/README.md](../../service-rss/README.md)

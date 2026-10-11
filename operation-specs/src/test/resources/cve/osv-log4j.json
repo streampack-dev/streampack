@@ -1,0 +1,340 @@
+{
+  "vulns": [
+    {
+      "id": "GHSA-2qrg-x229-3v8q",
+      "aliases": [
+        "CVE-2019-17571"
+      ],
+      "published": "2020-01-06T18:43:49Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+        }
+      ],
+      "database_specific": {
+        "severity": "CRITICAL"
+      },
+      "affected": [
+        {
+          "package": {
+            "name": "log4j:log4j",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/log4j/log4j"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "1.2"
+                },
+                {
+                  "last_affected": "1.2.17"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "org.zenframework.z8.dependencies.commons:log4j-1.2.17",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/org.zenframework.z8.dependencies.commons/log4j-1.2.17"
+          },
+          "ranges": []
+        }
+      ]
+    },
+    {
+      "id": "GHSA-65fg-84f6-3jq3",
+      "aliases": [
+        "CVE-2022-23305"
+      ],
+      "published": "2022-01-21T23:26:47Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+        }
+      ],
+      "database_specific": {
+        "severity": "CRITICAL"
+      },
+      "affected": [
+        {
+          "package": {
+            "name": "log4j:log4j",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/log4j/log4j"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "1.2.17"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "org.zenframework.z8.dependencies.commons:log4j-1.2.17",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/org.zenframework.z8.dependencies.commons/log4j-1.2.17"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "2.0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GHSA-f7vh-qwp3-x37m",
+      "aliases": [
+        "CVE-2022-23307"
+      ],
+      "published": "2022-01-19T00:01:15Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+        }
+      ],
+      "database_specific": {
+        "severity": "CRITICAL"
+      },
+      "affected": [
+        {
+          "package": {
+            "name": "log4j:log4j",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/log4j/log4j"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "1.2.17"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "org.zenframework.z8.dependencies.commons:log4j-1.2.17",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/org.zenframework.z8.dependencies.commons/log4j-1.2.17"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "2.0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GHSA-fp5r-v3w9-4333",
+      "aliases": [
+        "CVE-2021-4104"
+      ],
+      "published": "2021-12-14T19:49:31Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H"
+        }
+      ],
+      "database_specific": {
+        "severity": "HIGH"
+      },
+      "affected": [
+        {
+          "package": {
+            "name": "log4j:log4j",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/log4j/log4j"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "1.2.0"
+                },
+                {
+                  "last_affected": "1.2.17"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "org.zenframework.z8.dependencies.commons:log4j-1.2.17",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/org.zenframework.z8.dependencies.commons/log4j-1.2.17"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "2.0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GHSA-vp98-w2p3-mv35",
+      "aliases": [
+        "CVE-2023-26464"
+      ],
+      "published": "2023-03-10T15:30:43Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+        }
+      ],
+      "database_specific": {
+        "severity": "HIGH"
+      },
+      "affected": [
+        {
+          "package": {
+            "name": "org.apache.logging.log4j:log4j-core",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/org.apache.logging.log4j/log4j-core"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "1.0.4"
+                },
+                {
+                  "fixed": "2.0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "log4j:log4j",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/log4j/log4j"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "1.0.4"
+                },
+                {
+                  "fixed": "2.0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GHSA-w9p3-5cr8-m3jj",
+      "aliases": [
+        "CVE-2022-23302"
+      ],
+      "published": "2022-01-21T23:27:14Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
+        }
+      ],
+      "database_specific": {
+        "severity": "HIGH"
+      },
+      "affected": [
+        {
+          "package": {
+            "name": "log4j:log4j",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/log4j/log4j"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "1.2.17"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "org.zenframework.z8.dependencies.commons:log4j-1.2.17",
+            "ecosystem": "Maven",
+            "purl": "pkg:maven/org.zenframework.z8.dependencies.commons/log4j-1.2.17"
+          },
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {
+                  "introduced": "0"
+                },
+                {
+                  "last_affected": "2.0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

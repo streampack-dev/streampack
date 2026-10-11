@@ -1,0 +1,46 @@
+{
+  "responseHeader": {
+    "status": 0
+  },
+  "response": {
+    "numFound": 5,
+    "start": 0,
+    "docs": [
+      {
+        "id": "org.apache.logging.log4j:log4j-core",
+        "g": "org.apache.logging.log4j",
+        "a": "log4j-core",
+        "latestVersion": "3.0.0-beta3",
+        "versionCount": 76
+      },
+      {
+        "id": "org.lucee:log4j-core",
+        "g": "org.lucee",
+        "a": "log4j-core",
+        "latestVersion": "2.20.0",
+        "versionCount": 7
+      },
+      {
+        "id": "com.guicedee.services:log4j-core",
+        "g": "com.guicedee.services",
+        "a": "log4j-core",
+        "latestVersion": "1.2.2.1-jre17",
+        "versionCount": 364
+      },
+      {
+        "id": "io.github.roman-mityukov:log4j-core",
+        "g": "io.github.roman-mityukov",
+        "a": "log4j-core",
+        "latestVersion": "2.3",
+        "versionCount": 1
+      },
+      {
+        "id": "uk.co.nichesolutions.logging.log4j:log4j-core",
+        "g": "uk.co.nichesolutions.logging.log4j",
+        "a": "log4j-core",
+        "latestVersion": "2.6.3-CUSTOM",
+        "versionCount": 1
+      }
+    ]
+  }
+}
