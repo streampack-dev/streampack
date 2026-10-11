@@ -117,7 +117,7 @@ The non-URL lines are ignored; the URL lines are treated as feed candidates. OPM
   Feed tags the vocabulary didn't know, and an admin's decision on one. See
   [Admin Feed Tags](../docs/reference/blog-http-api.md#admin-feed-tags).
 - `PUT|DELETE /admin/rss/items/{id}/rating`, `GET /admin/rss/items`, `GET /admin/rss/ratings.csv`,
-  `GET /admin/rss/rating-stats`, `POST /admin/rss/rating-guesses/run`
+  `GET /admin/rss/rating-stats`, `GET /admin/rss/rating-guesses`, `POST /admin/rss/rating-guesses/run`
   Admins' ratings of items, and the model's hidden guess. See [Item Ratings](#item-ratings) and
   [Admin Feed Item Ratings](../docs/reference/blog-http-api.md#admin-feed-item-ratings).
 
@@ -162,13 +162,20 @@ does; an admin can run one now with `POST /admin/rss/rating-guesses/run`. A pass
    summary; else nothing but the title. Each is cut at a word to 4,000 characters;
 3. sends them to the moderation model (`AI_MODERATION_MODEL`, never asked to think), `chunk-size`
    (20) to a call, with structured output: `{itemId, label, confidence, reason}` per item;
-4. stores each usable answer in `rss_item_guess` with the model and the text's source
-   (`content`, `page`, `summary` or `title`). A bad label, a confidence outside 0..1, an item it
+4. stores each usable answer in `rss_item_guess` with the model, the text's source
+   (`content`, `page`, `summary` or `title`) and the rubric's hash. A bad label, a confidence outside 0..1, an item it
    wasn't asked about, or no answer at all is logged and skipped; the item is tried again in a
    later pass while it's still in the lookback.
 
-The system prompt is a short rubric (surprise, craft, delight, depth, a story worth telling, versus
-release notes, marketing and another tutorial) and examples: the editor's ten most recent RATES and
+The system prompt is the rubric, the instructions for the answer, and examples. The rubric is the
+`rss-rating-rubric` prompt, rendered once per pass through `lib-generative`'s
+`GenerativePromptService` (#192): the bundled default, `dev/streampack/rss/prompts/rss-rating-rubric.txt`
+(what BCN publishes: something worth thinking about, new or old, centred on the JVM but not limited
+to it; never hype, never shaming), unless `STREAMPACK_GENERATIVE_PROMPT_DIR` holds a usable
+`rss-rating-rubric.clj` or `.txt`. The text sources and the answer's shape (`ANSWER`) stay in code,
+after the rubric, so an override can't break how the answer is read. Each guess stores the first 12
+hex characters of the SHA-256 of the rendered rubric (`rubric`, `V76`; null for older guesses). The
+examples are the editor's ten most recent RATES and
 five most recent DULL, with title, feed and summary. Until there are `min-rated-examples` (3) RATES,
 `streampack.rss.rating.seed-examples` are added (Pong Wars; the Total Annihilation rewrite; a point
 release; a tutorial or marketing). It's the same for every chunk and every pass until the editor
@@ -176,8 +183,9 @@ rates more, so prompt caching can serve it; the items are the user message. At 1
 a pass is one plain call; should volume grow, the Message Batches API (asynchronous, half the price)
 is the upgrade. Mind `AI_MAX_TOKENS`: a chunk's answer is about 40 tokens an item.
 
-The guess is never shown where items are rated (`GET /admin/rss/items` carries ratings only), so it
-can't bias them: only the CSV export and `GET /admin/rss/rating-stats` read it. Nothing about it
+The guess is never shown where items are rated (`GET /admin/rss/items` carries ratings only): only
+the CSV export, `GET /admin/rss/rating-stats` and the admin list of guesses,
+`GET /admin/rss/rating-guesses` (newest first, with the rating and whether it agrees), read it. Nothing about it
 blocks polling.
 
 ## Discovery Notes

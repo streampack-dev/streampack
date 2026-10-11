@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.model
 
+import dev.streampack.rss.entity.RssTextSource
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
 import java.util.UUID
@@ -43,6 +44,50 @@ data class AdminRssItemResponse(
 /** A page of the admin item list (#187). */
 data class AdminRssItemsResponse(
     val items: List<AdminRssItemResponse>,
+    val page: Int,
+    val totalPages: Int,
+    val totalCount: Long,
+)
+
+/**
+ * The model's guess at an item, with the editor's rating of it (#192), for the admin list of
+ * guesses. Kept apart from [AdminRssItemResponse], which never carries a guess.
+ */
+data class RssRatingGuessResponse(
+    val itemId: UUID,
+    val title: String,
+    val link: String,
+    val feedTitle: String,
+    @field:Schema(description = "The guess: RATES, MIGHT or DULL") val label: RssRating,
+    @field:Schema(description = "The model's confidence in the guess, from 0 to 1")
+    val confidence: Double,
+    @field:Schema(description = "The model's reason, one short sentence") val reason: String,
+    @field:Schema(
+        description =
+            "What the model judged the item on: CONTENT (the feed's full text), PAGE (the " +
+                "article page), SUMMARY or TITLE"
+    )
+    val textSource: RssTextSource,
+    @field:Schema(description = "The model that guessed; null when it wasn't recorded")
+    val model: String?,
+    @field:Schema(
+        description =
+            "The first 12 hex characters of the SHA-256 of the rubric the guess was made with; " +
+                "null for guesses made before the rubric was recorded"
+    )
+    val rubric: String?,
+    val guessedAt: Instant,
+    @field:Schema(description = "The editor's rating; null when the item is unrated")
+    val rating: RssRating?,
+    @field:Schema(
+        description = "Whether the guess matches the editor's rating; null when the item is unrated"
+    )
+    val agrees: Boolean?,
+)
+
+/** A page of the admin list of guesses (#192). */
+data class RssRatingGuessesResponse(
+    val items: List<RssRatingGuessResponse>,
     val page: Int,
     val totalPages: Int,
     val totalCount: Long,

@@ -42,6 +42,10 @@
             <artifactId>lib-ai</artifactId>
         </dependency>
         <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-generative</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.rometools</groupId>
             <artifactId>rome</artifactId>
         </dependency>

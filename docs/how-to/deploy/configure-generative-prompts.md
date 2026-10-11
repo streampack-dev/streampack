@@ -137,13 +137,19 @@ More keys can be added later if the caller needs richer prompt composition.
 
 That gives you a way to tune prompt tone and synthesis behavior over time without changing application code.
 
-## Current Consumer
+## Current Consumers
 
 The first consumer of this mechanism is `operation-ideas` for the `suggest` command.
 
 The bundled fallback prompt lives at:
 
 [`operation-ideas/src/main/resources/dev/streampack/ideas/prompts/suggest-prompt.txt`](/Users/joeo/work/streampack-dev/streampack/operation-ideas/src/main/resources/dev/streampack/ideas/prompts/suggest-prompt.txt)
+
+`service-rss` renders `rss-rating-rubric`, the rubric the model's hidden guess at feed item ratings
+judges by (#192). Its bundled default is
+`service-rss/src/main/resources/dev/streampack/rss/prompts/rss-rating-rubric.txt`; it gets no context
+keys. The instructions for the answer are appended in code, so an override can't break how the
+answer is read. See [Admin Feed Item Ratings](../../reference/blog-http-api.md#admin-feed-item-ratings).
 
 ## Developer Notes
 

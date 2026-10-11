@@ -145,7 +145,13 @@ class AdminRssRatingControllerTests {
             content = """{"rating":"$rating"}"""
         }
 
-    private fun guess(n: Int, label: RssRating, confidence: Double = 0.8) =
+    private fun guess(
+        n: Int,
+        label: RssRating,
+        confidence: Double = 0.8,
+        guessedAt: Instant = Instant.parse("2026-10-02T00:00:00Z"),
+        rubric: String? = "0123456789ab",
+    ) =
         guesses.save(
             RssItemGuess(
                 itemId = item(n),
@@ -154,7 +160,8 @@ class AdminRssRatingControllerTests {
                 reason = "Because $n",
                 model = "test-model",
                 textSource = RssTextSource.CONTENT,
-                guessedAt = Instant.parse("2026-10-02T00:00:00Z"),
+                guessedAt = guessedAt,
+                rubric = rubric,
             )
         )
 
@@ -168,7 +175,12 @@ class AdminRssRatingControllerTests {
             .delete("/admin/rss/items/$id/rating") { header("Authorization", "Bearer $userToken") }
             .andExpect { status { isForbidden() } }
         for (path in
-            listOf("/admin/rss/items", "/admin/rss/ratings.csv", "/admin/rss/rating-stats")) {
+            listOf(
+                "/admin/rss/items",
+                "/admin/rss/ratings.csv",
+                "/admin/rss/rating-stats",
+                "/admin/rss/rating-guesses",
+            )) {
             mockMvc.get(path).andExpect { status { isUnauthorized() } }
             mockMvc
                 .get(path) { header("Authorization", "Bearer $userToken") }
@@ -330,7 +342,7 @@ class AdminRssRatingControllerTests {
         val lines = response.contentAsString.split("\r\n").filter { it.isNotEmpty() }
         assertEquals(
             "item_id,feed,title,link,published,rating,rated_by,rated_at,guess,guess_confidence," +
-                "guess_reason,guess_model,guess_source,guessed_at",
+                "guess_reason,guess_model,guess_source,guessed_at,guess_rubric",
             lines[0],
         )
         assertEquals(4, lines.size, response.contentAsString)
@@ -348,7 +360,9 @@ class AdminRssRatingControllerTests {
             one,
         )
         assertTrue(
-            one.endsWith(",DULL,0.25,Because 1,test-model,content,2026-10-02T00:00:00Z"),
+            one.endsWith(
+                ",DULL,0.25,Because 1,test-model,content,2026-10-02T00:00:00Z,0123456789ab"
+            ),
             one,
         )
         assertTrue(
@@ -357,6 +371,143 @@ class AdminRssRatingControllerTests {
             ),
             lines[3],
         )
+    }
+
+    @Test
+    fun `an older guess has an empty rubric in the CSV`() {
+        guess(1, RssRating.MIGHT, rubric = null)
+        val body =
+            mockMvc
+                .get("/admin/rss/ratings.csv") { header("Authorization", "Bearer $adminToken") }
+                .andReturn()
+                .response
+                .contentAsString
+        val line = body.split("\r\n")[1]
+        assertTrue(line.endsWith(",content,2026-10-02T00:00:00Z,"), line)
+    }
+
+    private fun listGuesses(query: String = "") =
+        mockMvc.get("/admin/rss/rating-guesses?$query") {
+            header("Authorization", "Bearer $adminToken")
+        }
+
+    /** Guesses on items 1 to 5, an hour apart (item 5 newest); items 1 to 3 rated. */
+    private fun guessFixture() {
+        val base = Instant.parse("2026-10-03T00:00:00Z")
+        guess(1, RssRating.RATES, 0.9, base.plus(Duration.ofHours(1)))
+        guess(2, RssRating.DULL, 0.6, base.plus(Duration.ofHours(2)))
+        guess(3, RssRating.MIGHT, 0.5, base.plus(Duration.ofHours(3)), rubric = null)
+        guess(4, RssRating.DULL, 0.7, base.plus(Duration.ofHours(4)))
+        guess(5, RssRating.RATES, 0.8, base.plus(Duration.ofHours(5)))
+        rate(item(1), "RATES")
+        rate(item(2), "RATES")
+        rate(item(3), "MIGHT")
+    }
+
+    @Test
+    fun `the list of guesses, newest first, with the rating and whether it agrees`() {
+        guessFixture()
+        listGuesses().andExpect {
+            status { isOk() }
+            jsonPath("$.totalCount") { value(5) }
+            jsonPath("$.totalPages") { value(1) }
+            jsonPath("$.page") { value(0) }
+            jsonPath("$.items.length()") { value(5) }
+            jsonPath("$.items[0].itemId") { value(item(5).toString()) }
+            jsonPath("$.items[0].title") { value("Item 5") }
+            jsonPath("$.items[0].link") { value("https://a.example/5") }
+            jsonPath("$.items[0].feedTitle") { value("A") }
+            jsonPath("$.items[0].label") { value("RATES") }
+            jsonPath("$.items[0].confidence") { value(0.8) }
+            jsonPath("$.items[0].reason") { value("Because 5") }
+            jsonPath("$.items[0].textSource") { value("CONTENT") }
+            jsonPath("$.items[0].model") { value("test-model") }
+            jsonPath("$.items[0].rubric") { value("0123456789ab") }
+            jsonPath("$.items[0].guessedAt") { value("2026-10-03T05:00:00Z") }
+            // Unrated: no rating, and nothing to agree with
+            jsonPath("$.items[0].rating") { value(null) }
+            jsonPath("$.items[0].agrees") { value(null) }
+            jsonPath("$.items[2].title") { value("Item 3") }
+            jsonPath("$.items[2].rubric") { value(null) }
+            jsonPath("$.items[2].rating") { value("MIGHT") }
+            jsonPath("$.items[2].agrees") { value(true) }
+            jsonPath("$.items[3].title") { value("Item 2") }
+            jsonPath("$.items[3].label") { value("DULL") }
+            jsonPath("$.items[3].rating") { value("RATES") }
+            jsonPath("$.items[3].agrees") { value(false) }
+            jsonPath("$.items[4].title") { value("Item 1") }
+            jsonPath("$.items[4].agrees") { value(true) }
+        }
+    }
+
+    @Test
+    fun `the list of guesses pages and filters`() {
+        guessFixture()
+        listGuesses("size=2&page=1").andExpect {
+            jsonPath("$.totalCount") { value(5) }
+            jsonPath("$.totalPages") { value(3) }
+            jsonPath("$.page") { value(1) }
+            jsonPath("$.items.length()") { value(2) }
+            jsonPath("$.items[0].title") { value("Item 3") }
+            jsonPath("$.items[1].title") { value("Item 2") }
+        }
+        listGuesses("label=rates").andExpect {
+            jsonPath("$.totalCount") { value(2) }
+            jsonPath("$.items[0].title") { value("Item 5") }
+            jsonPath("$.items[1].title") { value("Item 1") }
+        }
+        listGuesses("label=DULL").andExpect { jsonPath("$.totalCount") { value(2) } }
+        listGuesses("label=might").andExpect { jsonPath("$.totalCount") { value(1) } }
+        listGuesses("rated=yes").andExpect {
+            jsonPath("$.totalCount") { value(3) }
+            jsonPath("$.items[0].title") { value("Item 3") }
+        }
+        listGuesses("rated=no").andExpect {
+            jsonPath("$.totalCount") { value(2) }
+            jsonPath("$.items[0].title") { value("Item 5") }
+            jsonPath("$.items[1].title") { value("Item 4") }
+        }
+        listGuesses("label=dull&rated=yes").andExpect {
+            jsonPath("$.totalCount") { value(1) }
+            jsonPath("$.items[0].title") { value("Item 2") }
+        }
+        listGuesses("title=ITEM 4").andExpect {
+            jsonPath("$.totalCount") { value(1) }
+            jsonPath("$.items[0].title") { value("Item 4") }
+        }
+        listGuesses("feed=a").andExpect { jsonPath("$.totalCount") { value(5) } }
+        listGuesses("feed=https://a.example/feed.xml").andExpect {
+            jsonPath("$.totalCount") { value(5) }
+        }
+        listGuesses("feed=nowhere").andExpect {
+            jsonPath("$.totalCount") { value(0) }
+            jsonPath("$.items.length()") { value(0) }
+        }
+        listGuesses("label=bogus").andExpect { status { isBadRequest() } }
+        listGuesses("rated=maybe").andExpect { status { isBadRequest() } }
+        listGuesses("size=0").andExpect { status { isBadRequest() } }
+        listGuesses("size=101").andExpect { status { isBadRequest() } }
+        listGuesses("page=-1").andExpect { status { isBadRequest() } }
+        listGuesses("size=100").andExpect { status { isOk() } }
+    }
+
+    @Test
+    fun `the item list still never carries a guess`() {
+        guessFixture()
+        val body =
+            mockMvc
+                .get("/admin/rss/items") { header("Authorization", "Bearer $adminToken") }
+                .andExpect {
+                    status { isOk() }
+                    jsonPath("$.items[0].title") { value("Item 6") }
+                }
+                .andReturn()
+                .response
+                .contentAsString
+        for (field in listOf("label", "confidence", "reason", "textSource", "rubric", "agrees")) {
+            assertTrue("\"$field\"" !in body, "$field in $body")
+        }
+        assertTrue("Because" !in body && "0123456789ab" !in body, body)
     }
 
     @Test

@@ -12,6 +12,8 @@ import dev.streampack.rss.model.RssRating
 import dev.streampack.rss.model.RssRatingClassAgreement
 import dev.streampack.rss.model.RssRatingConfusionCell
 import dev.streampack.rss.model.RssRatingCounts
+import dev.streampack.rss.model.RssRatingGuessResponse
+import dev.streampack.rss.model.RssRatingGuessesResponse
 import dev.streampack.rss.model.RssRatingStatsItem
 import dev.streampack.rss.model.RssRatingStatsResponse
 import dev.streampack.rss.repository.RssEntryRepository
@@ -20,6 +22,7 @@ import dev.streampack.rss.repository.RssItemRatingHistoryRepository
 import dev.streampack.rss.repository.RssItemRatingRepository
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -56,6 +59,36 @@ class RssRatingService(
                     "unrated" -> Unrated
                     else -> RssRating.parse(value)?.let(::Rated)
                 }
+        }
+    }
+
+    /** Which guesses the admin list of guesses shows, by the guess's label (#192). */
+    sealed interface GuessLabelFilter {
+        data class Guessed(val label: RssRating) : GuessLabelFilter
+
+        data object All : GuessLabelFilter
+
+        companion object {
+            /** `rates`, `might`, `dull` or `all`, in any case; null for anything else. */
+            fun parse(value: String): GuessLabelFilter? =
+                when (value.trim().lowercase()) {
+                    "all" -> All
+                    else -> RssRating.parse(value)?.let(::Guessed)
+                }
+        }
+    }
+
+    /** Which guesses the admin list of guesses shows, by whether the item is rated (#192). */
+    enum class RatedFilter {
+        ALL,
+        YES,
+        NO;
+
+        companion object {
+            /** `all`, `yes` or `no`, in any case; null for anything else. */
+            fun parse(value: String): RatedFilter? = entries.firstOrNull {
+                it.name.equals(value.trim(), ignoreCase = true)
+            }
         }
     }
 
@@ -136,6 +169,57 @@ class RssRatingService(
     }
 
     /**
+     * A page of the model's guesses (#192), the newest first, narrowed by [label], [rated], and the
+     * [feed] (its title or address, in any case) and [title] (a part of the item's title) filters
+     * as `/rss/items` has them. Each with the editor's rating, if any, and whether the guess agrees
+     * with it. Unrated items are listed too: this is kept apart from where items are rated.
+     */
+    @Transactional(readOnly = true)
+    fun guesses(
+        label: GuessLabelFilter,
+        rated: RatedFilter,
+        page: Int,
+        size: Int,
+        feed: String?,
+        title: String?,
+    ): RssRatingGuessesResponse {
+        val chosen = (label as? GuessLabelFilter.Guessed)?.label
+        val found =
+            guesses.findListing(
+                anyLabel = chosen == null,
+                // Never null: a null enum parameter is untyped to the database
+                label = chosen ?: RssRating.MIGHT,
+                rated = rated.name.lowercase(),
+                feed = feed?.trim()?.lowercase().orEmpty(),
+                title = title?.trim()?.ifBlank { null }?.let { "%${it.lowercase()}%" }.orEmpty(),
+                pageable = PageRequest.of(page, size),
+            )
+        return RssRatingGuessesResponse(
+            items =
+                found.content.map {
+                    RssRatingGuessResponse(
+                        itemId = it.itemId,
+                        title = it.title,
+                        link = it.link,
+                        feedTitle = it.feedTitle,
+                        label = it.label,
+                        confidence = it.confidence,
+                        reason = it.reason,
+                        textSource = it.textSource,
+                        model = it.model,
+                        rubric = it.rubric,
+                        guessedAt = it.guessedAt,
+                        rating = it.rating,
+                        agrees = it.rating?.let { rating -> rating == it.label },
+                    )
+                },
+            page = found.number,
+            totalPages = found.totalPages,
+            totalCount = found.totalElements,
+        )
+    }
+
+    /**
      * Every item with a rating or a guess, as CSV (RFC 4180, CRLF line ends), newest rating first,
      * then the guessed-only ones newest first. The guess columns are empty when there's no guess,
      * and the rating ones when there's no rating. A text field that a spreadsheet would take for a
@@ -174,6 +258,7 @@ class RssRatingService(
                     text(guess?.model.orEmpty()),
                     guess?.textSource?.name?.lowercase().orEmpty(),
                     guess?.guessedAt?.toString().orEmpty(),
+                    guess?.rubric.orEmpty(),
                 )
             out.append(row.joinToString(",") { quote(it) }).append("\r\n")
         }
@@ -314,6 +399,7 @@ class RssRatingService(
                 "guess_model",
                 "guess_source",
                 "guessed_at",
+                "guess_rubric",
             )
 
         private fun share(part: Long, whole: Long): Double? =

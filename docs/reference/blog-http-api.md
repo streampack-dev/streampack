@@ -474,9 +474,11 @@ against the ratings before anything is shown or suggested. Every endpoint is for
 | `GET /admin/rss/items?rating=all&page=0&size=50` | Items as `/rss/items` lists them, with their ratings. `rating` is `all` (default), `rates`, `might`, `dull` or `unrated`; `size` is 1 to 100; `feed` and `title` filter as on `/rss/items`. |
 | `GET /admin/rss/ratings.csv` | Every item with a rating or a guess, as CSV, for offline evaluation. |
 | `GET /admin/rss/rating-stats` | How the guess agrees with the ratings. |
+| `GET /admin/rss/rating-guesses?label=all&rated=all&page=0&size=50` | The model's guesses, newest first, with the editor's rating and whether they agree. `label` is `all` (default), `rates`, `might` or `dull`; `rated` is `all` (default), `yes` or `no`; `size` is 1 to 100; `feed` and `title` filter as on `/rss/items`. |
 | `POST /admin/rss/rating-guesses/run` | Runs a guess pass now, as the daily one does. `409` while the guess is off, or while a pass is running. |
 
-An unknown item is a `404`; a rating that isn't one of the three is a `400`. Every set and clear is
+An unknown item is a `404`; a rating that isn't one of the three is a `400`, as is a bad filter,
+a negative page or a size outside 1 to 100 on either list. Every set and clear is
 kept in `rss_item_rating_history` (what it became, what it was, who, when).
 
 `PUT` answers `RssItemRatingResponse`, every field always sent:
@@ -493,7 +495,8 @@ The list answers `AdminRssItemsResponse`, `{items, page, totalPages, totalCount}
 The CSV (`text/csv`, RFC 4180, CRLF line ends) has a header row and these columns: `item_id`,
 `feed`, `title`, `link`, `published`, `rating`, `rated_by`, `rated_at`, `guess`,
 `guess_confidence`, `guess_reason`, `guess_model`, `guess_source` (`content`, `page`, `summary` or
-`title`: what the model judged), `guessed_at`. Rated items come first, newest rating first, then
+`title`: what the model judged), `guessed_at`, `guess_rubric` (the rubric's hash; empty for guesses
+made before it was recorded). Rated items come first, newest rating first, then
 the guessed-only ones; a column is empty where there's no rating or no guess. A text field that a
 spreadsheet would take for a formula (starting `=`, `+`, `-`, `@`) is prefixed with `'`.
 
@@ -519,6 +522,23 @@ the share of the items rated so that were guessed so, `precision` the share gues
 rated so; each, and `agreement`, is `null` with nothing to divide by. `confusion` always has all nine
 cells.
 
+The list of guesses answers `RssRatingGuessesResponse`, `{items, page, totalPages, totalCount}`,
+with `totalCount` and `totalPages` for the filters asked for. Each item (`RssRatingGuessResponse`):
+
+```json
+{
+  "itemId": "0199...", "title": "...", "link": "https://...", "feedTitle": "...",
+  "label": "RATES", "confidence": 0.8, "reason": "A new take on an old idea.",
+  "textSource": "CONTENT", "model": "claude-haiku-...", "rubric": "3f9c0a1b2d4e",
+  "guessedAt": "2026-10-11T10:00:00Z", "rating": "MIGHT", "agrees": false
+}
+```
+
+`textSource` is `CONTENT`, `PAGE`, `SUMMARY` or `TITLE`; `rubric` is `null` for guesses made before
+the rubric was recorded; `rating` and `agrees` are `null` when the item is unrated. Unrated items
+are listed too: seeing a guess may bias a rating, which the editor accepts, so it's kept apart from
+the item list, and `GET /admin/rss/items` still never carries a guess.
+
 The manual run answers `RssRatingGuessRunResponse`: `{candidates, calls, stored, skipped}`: the
 items it found with no guess, the calls to the model (one per chunk), the guesses stored, and the
 items left without one (tried again in a later pass).
@@ -529,9 +549,19 @@ Off unless `RSS_RATING_MODEL_GUESS=true` (and AI is on). Once a day a pass sends
 in the last two days with no guess to `AI_MODERATION_MODEL`, 20 to a call, one plain call per
 chunk, with structured output: `{itemId, label, confidence, reason}` per item. Each item is judged
 on its text, cut to 4,000 characters: the feed's own full content when it gave any, else the
-article page's (fetched once, through the guarded fetcher, and kept), else its summary. The rubric
-and the examples (the editor's ten latest `RATES` and five latest `DULL`, or seed exemplars until
-there are three `RATES`) are the system prompt, the same for every call. A bad or partial answer
+article page's (fetched once, through the guarded fetcher, and kept), else its summary. The rubric,
+the instructions for the answer, and the examples (the editor's ten latest `RATES` and five latest
+`DULL`, or seed exemplars until there are three `RATES`) are the system prompt, the same for every
+call in a pass.
+
+The rubric is the `rss-rating-rubric` prompt, through `lib-generative`: the bundled default
+(`service-rss/src/main/resources/dev/streampack/rss/prompts/rss-rating-rubric.txt`) is replaced by
+`${STREAMPACK_GENERATIVE_PROMPT_DIR}/rss-rating-rubric.clj` or `.txt` without a rebuild. A broken or
+blank override falls back to the default. An override changes how items are judged, not how the
+answer is read: the text sources and the answer's shape stay in code, after the rubric. It's
+rendered once per pass, and each guess stores the first 12 hex characters of the SHA-256 of the
+rubric it was made with (`rubric`; `null` before #192). An item is still guessed once: changing the
+rubric doesn't guess it again. A bad or partial answer
 is skipped and logged; it never blocks polling. See [service-rss](../../service-rss/README.md#item-ratings)
 and the `RSS_RATING_*` [environment variables](environment-variables.md).
 
