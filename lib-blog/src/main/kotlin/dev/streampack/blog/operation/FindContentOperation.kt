@@ -98,7 +98,7 @@ class FindContentOperation(
         val now = Instant.now()
         val pageResult = postRepository.findPublished(now, PageRequest.of(page, size))
 
-        val summaries = pageResult.content.map { post -> toSummary(post) }
+        val summaries = toSummaries(pageResult.content)
 
         return OperationResult.Success(
             ContentListResponse(
@@ -124,7 +124,7 @@ class FindContentOperation(
                 .mapNotNull { score -> score.subjectKey.toUuidOrNull() }
                 .mapNotNull { id -> postRepository.findActiveByIdWithAuthor(id) }
                 .filter { post -> isVisible(post, null) && !isSystemContent(post.id) }
-                .map { post -> toSummary(post) }
+                .let { posts -> toSummaries(posts) }
 
         return OperationResult.Success(
             ContentListResponse(
@@ -147,10 +147,11 @@ class FindContentOperation(
         val pageResult = postRepository.searchPublished(query, now, PageRequest.of(page, size))
 
         val summaries =
-            pageResult.content.map { post ->
-                val resolvedPost = postRepository.findActiveByIdWithAuthor(post.id) ?: post
-                toSummary(resolvedPost)
-            }
+            toSummaries(
+                pageResult.content.map { post ->
+                    postRepository.findActiveByIdWithAuthor(post.id) ?: post
+                }
+            )
 
         return OperationResult.Success(
             ContentListResponse(
@@ -167,7 +168,7 @@ class FindContentOperation(
         val pageResult =
             postRepository.findByCategory(categoryName, now, PageRequest.of(page, size))
 
-        val summaries = pageResult.content.map { post -> toSummary(post) }
+        val summaries = toSummaries(pageResult.content)
 
         return OperationResult.Success(
             ContentListResponse(
@@ -196,7 +197,7 @@ class FindContentOperation(
         val name = tagVocabulary.lookup(tagName) ?: tagName
         val pageResult = postRepository.findByTag(name, now, PageRequest.of(page, size))
 
-        val summaries = pageResult.content.map { post -> toSummary(post) }
+        val summaries = toSummaries(pageResult.content)
 
         return OperationResult.Success(
             ContentListResponse(
@@ -269,7 +270,13 @@ class FindContentOperation(
     private fun isSystemContent(postId: UUID): Boolean =
         categoryNamesForPost(postId).any { it.startsWith("_") }
 
-    private fun toSummary(post: Post): ContentSummary {
+    /** Summaries of [posts], with their kinds of version read in one query for them all (#200). */
+    private fun toSummaries(posts: List<Post>): List<ContentSummary> {
+        val kinds = postVersionService.kindsFor(posts.map { it.id })
+        return posts.map { post -> toSummary(post, kinds[post.id].orEmpty()) }
+    }
+
+    private fun toSummary(post: Post, versionKinds: List<String>): ContentSummary {
         val canonicalSlug = slugRepository.findCanonical(post.id)
         return ContentSummary(
             id = post.id,
@@ -282,6 +289,7 @@ class FindContentOperation(
             commentCount = commentRepository.countActiveByPost(post.id).toInt(),
             tags = PostTagVisibility.withoutSystem(tagNamesForPost(post.id)),
             categories = categoryNamesForPost(post.id),
+            versionKinds = versionKinds,
         )
     }
 

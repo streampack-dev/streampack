@@ -486,6 +486,58 @@ class PostVersionControllerTests {
             }
     }
 
+    // --- Post lists (#200) ---
+
+    @Test
+    fun `post lists mark posts with a recording by its kind`() {
+        upload(spoken.id, AudioFixtures.mp3()).andExpect { status { isCreated() } }
+
+        System.out.println(
+            "DEBUGBODY " + mockMvc.get("/posts").andReturn().response.contentAsString
+        )
+        mockMvc.get("/posts").andExpect {
+            status { isOk() }
+            jsonPath("$.posts[0].title") { value("Spoken Post") }
+            jsonPath("$.posts[0].versionKinds.length()") { value(1) }
+            jsonPath("$.posts[0].versionKinds[0]") { value("audio") }
+            jsonPath("$.posts[1].title") { value("Silent Post") }
+            jsonPath("$.posts[1].versionKinds.length()") { value(0) }
+        }
+        mockMvc
+            .get("/posts/search") { param("q", "Spoken") }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.posts[0].title") { value("Spoken Post") }
+                jsonPath("$.posts[0].versionKinds.length()") { value(1) }
+                jsonPath("$.posts[0].versionKinds[0]") { value("audio") }
+            }
+    }
+
+    @Test
+    fun `the drafts list marks drafts with a recording`() {
+        upload(draft.id, AudioFixtures.mp3()).andExpect { status { isCreated() } }
+
+        mockMvc
+            .get("/admin/posts/pending") { header("Authorization", "Bearer $adminToken") }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.posts[0].title") { value("Draft Post") }
+                jsonPath("$.posts[0].versionKinds.length()") { value(1) }
+                jsonPath("$.posts[0].versionKinds[0]") { value("audio") }
+            }
+    }
+
+    @Test
+    fun `kinds for several posts, sorted, leaving out posts without versions`() {
+        upload(spoken.id, AudioFixtures.mp3()).andExpect { status { isCreated() } }
+
+        assertEquals(
+            mapOf(spoken.id to listOf("audio")),
+            postVersionService.kindsFor(listOf(spoken.id, silent.id, draft.id)),
+        )
+        assertEquals(emptyMap<UUID, List<String>>(), postVersionService.kindsFor(emptyList()))
+    }
+
     // --- Feeds ---
 
     @Test

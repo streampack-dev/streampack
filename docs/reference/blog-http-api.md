@@ -102,7 +102,8 @@ The response shape is `ContentListResponse`:
       "sortOrder": 0,
       "commentCount": 0,
       "tags": ["java"],
-      "categories": ["articles"]
+      "categories": ["articles"],
+      "versionKinds": ["audio"]
     }
   ],
   "page": 0,
@@ -110,6 +111,11 @@ The response shape is `ContentListResponse`:
   "totalCount": 1
 }
 ```
+
+Each post's `versionKinds` lists the kinds of version it has, sorted, such as `audio` for a
+recording, so a list can mark it; it's empty for most posts, and while media is off (#200). The
+versions themselves are in the post's details. The admin drafts list (`GET /admin/posts/pending`)
+carries it too.
 
 Popularity is based on `lib-temperature`: each successful direct post read and explicit post access
 event accrues a `blog.post` / `hit` signal. Scores decay over time, so older traffic gradually matters
@@ -166,7 +172,8 @@ off:
 (`BASE_URL`), and stays the same when the version is replaced; front ends must not rewrite it.
 `current` is false once the post's markdown has been edited since the version was attached (the
 version records a hash of the markdown it was made from); nothing else acts on it. Show the kinds you
-know and ignore the rest. Post lists (`ContentListResponse`) don't carry versions.
+know and ignore the rest. Post lists (`ContentListResponse`) carry only the kinds, as each post's
+`versionKinds`.
 
 ### Serving
 

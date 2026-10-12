@@ -116,6 +116,11 @@ class MediaNotConfiguredTests {
             status { isOk() }
             jsonPath("$.versions.length()") { value(0) }
         }
+        mockMvc.get("/posts").andExpect {
+            status { isOk() }
+            jsonPath("$.posts[0].title") { value("Quiet Post") }
+            jsonPath("$.posts[0].versionKinds.length()") { value(0) }
+        }
         for (path in listOf("/feed.xml", "/feed.atom", "/blog/rss.xml", "/blog/atom.xml")) {
             mockMvc.get(path).andExpect {
                 status { isOk() }

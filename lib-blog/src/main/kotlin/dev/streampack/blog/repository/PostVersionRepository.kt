@@ -31,6 +31,13 @@ interface PostVersionRepository : JpaRepository<PostVersion, UUID> {
     )
     fun findByPostsAndKind(postIds: Collection<UUID>, kind: String): List<PostVersion>
 
+    /** The kinds of version each of several posts has, a row per post and kind (#200). */
+    @Query(
+        "SELECT DISTINCT v.post.id AS postId, v.kind AS kind FROM PostVersion v " +
+            "WHERE v.post.id IN :postIds"
+    )
+    fun findKindsByPosts(postIds: Collection<UUID>): List<PostVersionKindProjection>
+
     /**
      * Versions of [kind] without a variant whose posts anonymous readers can see (approved, not
      * deleted, published by [now]), with their posts and the posts' authors, newest post first.
@@ -46,4 +53,10 @@ interface PostVersionRepository : JpaRepository<PostVersion, UUID> {
     /** The storage keys of the versions of every post by [authorId], read before a purge. */
     @Query("SELECT v.storageKey FROM PostVersion v WHERE v.post.author.id = :authorId")
     fun findStorageKeysByPostAuthor(authorId: UUID): List<String>
+}
+
+/** A post and one kind of version it has (#200). */
+interface PostVersionKindProjection {
+    val postId: UUID
+    val kind: String
 }

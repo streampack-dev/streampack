@@ -176,6 +176,18 @@ class PostVersionService(
     }
 
     /**
+     * The kinds of version each of [postIds] has, sorted, for post lists (#200): one query for the
+     * whole list. Posts without versions are left out; none while media is off, as with [views].
+     */
+    fun kindsFor(postIds: Collection<UUID>): Map<UUID, List<String>> {
+        if (!storage.available || postIds.isEmpty()) return emptyMap()
+        return versionRepository
+            .findKindsByPosts(postIds)
+            .groupBy({ it.postId }, { it.kind })
+            .mapValues { (_, kinds) -> kinds.distinct().sorted() }
+    }
+
+    /**
      * The audio version (no variant) of each of [postIds] that has one; none while media is off.
      */
     fun audioByPost(postIds: Collection<UUID>): Map<UUID, PostVersion> {
