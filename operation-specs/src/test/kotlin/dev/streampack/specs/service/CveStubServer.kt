@@ -15,7 +15,12 @@ import java.util.concurrent.CopyOnWriteArrayList
 class CveStubServer {
     data class Request(val method: String, val path: String, val query: String?, val body: String)
 
-    data class Reply(val status: Int, val body: String = "", val delay: Duration = Duration.ZERO)
+    data class Reply(
+        val status: Int,
+        val body: String = "",
+        val delay: Duration = Duration.ZERO,
+        val headers: Map<String, String> = emptyMap(),
+    )
 
     val routes = mutableMapOf<String, (Request) -> Reply>()
     val requests = CopyOnWriteArrayList<Request>()
@@ -37,6 +42,7 @@ class CveStubServer {
             val bytes = reply.body.toByteArray()
             try {
                 exchange.responseHeaders.add("Content-Type", "application/json")
+                reply.headers.forEach { (name, value) -> exchange.responseHeaders.add(name, value) }
                 exchange.sendResponseHeaders(
                     reply.status,
                     if (bytes.isEmpty()) -1 else bytes.size.toLong(),
@@ -64,6 +70,9 @@ class CveStubServer {
             requestTimeout = requestTimeout,
             mavenSearchTimeout = requestTimeout,
         )
+
+    /** Maven Central searches asked. */
+    fun mavenSearches(): List<Request> = requests.filter { it.path == MAVEN }
 
     fun reset() {
         routes.clear()

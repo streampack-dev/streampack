@@ -5,6 +5,10 @@ import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.ThrottlePolicy
+import dev.streampack.core.service.OperationService
+import dev.streampack.core.service.ThrottleService
+import dev.streampack.specs.config.CveProperties
 import dev.streampack.specs.model.CveRequest
 import dev.streampack.specs.service.CveLookupService
 import dev.streampack.specs.service.CveReporter
@@ -16,6 +20,7 @@ import dev.streampack.specs.service.CveStubServer.Companion.cvePath
 import dev.streampack.specs.service.CveStubServer.Companion.fixture
 import dev.streampack.specs.service.CveStubServer.Companion.mavenSearch
 import dev.streampack.specs.service.CveStubServer.Reply
+import java.time.Duration
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -37,6 +42,9 @@ class CveOperationTests {
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var lookupService: CveLookupService
     @Autowired lateinit var reporter: CveReporter
+    @Autowired lateinit var properties: CveProperties
+    @Autowired lateinit var throttleService: ThrottleService
+    @Autowired lateinit var operation: CveOperation
 
     private val mapper = JsonMapper.builder().build()
 
@@ -65,6 +73,7 @@ class CveOperationTests {
     fun setUp() {
         stub.reset()
         lookupService.clearCache()
+        throttleService.clear()
     }
 
     @Test
@@ -353,7 +362,7 @@ class CveOperationTests {
                     seeded += message.payload.toString()
                 }
             }
-        val operation = CveOperation(reporter, recorder)
+        val operation = CveOperation(reporter, recorder, properties)
 
         operation.handle(CveRequest("CVE-2021-44228"), message("cve CVE-2021-44228"))
         assertEquals(
@@ -367,7 +376,46 @@ class CveOperationTests {
         assertEquals(emptyList<String>(), seeded)
     }
 
+    @Test
+    fun `the command is throttled per channel, as configured`() {
+        assertEquals(ThrottlePolicy(THROTTLE, Duration.ofHours(1)), operation.throttlePolicy)
+        assertEquals(
+            ThrottlePolicy(10, Duration.ofHours(1)),
+            CveOperation(reporter, eventGateway, CveProperties()).throttlePolicy,
+        )
+
+        // An alias asked with a version needs no upstream, so the throttle is all that's tested.
+        repeat(THROTTLE) { reply("cve log4j 1.2.17") }
+        val throttled = eventGateway.process(message("cve log4j 1.2.17"))
+        assertEquals(OperationResult.Error(OperationService.THROTTLED), throttled)
+    }
+
+    @Test
+    fun `during a Maven Central back-off searches get the plain failure line, and the rest answer`() {
+        stub.routes[MAVEN] = { Reply(200, mavenSearch("org.yaml:snakeyaml-engine")) }
+        stub.routes[OSV] = { Reply(200, NO_VULNS) }
+        reply("cve snakeyaml-engine")
+        stub.routes[MAVEN] = { Reply(429, "slow down") }
+
+        val unavailable = "Couldn't look that up right now: Maven Central didn't answer."
+        assertEquals(unavailable, reply("cve netty"))
+        // Refused without asking, and not kept.
+        assertEquals(unavailable, reply("cve netty"))
+        assertEquals(2, stub.mavenSearches().size)
+
+        // A kept search, an alias and coordinates still answer.
+        assertTrue(
+            reply("cve snakeyaml-engine").startsWith("org.yaml:snakeyaml-engine: none known")
+        )
+        assertTrue(reply("cve h2").startsWith("com.h2database:h2: none known"))
+        assertTrue(reply("cve io.netty:netty-codec-http").startsWith("io.netty:netty-codec-http:"))
+        assertEquals(2, stub.mavenSearches().size)
+    }
+
     companion object {
+        /** Above the default, so tests that ask many times aren't throttled. */
+        private const val THROTTLE = 40
+
         private val stub = CveStubServer()
 
         @JvmStatic
@@ -377,6 +425,8 @@ class CveOperationTests {
             registry.add("streampack.specs.cve.cve-url") { properties.cveUrl }
             registry.add("streampack.specs.cve.osv-url") { properties.osvUrl }
             registry.add("streampack.specs.cve.maven-search-url") { properties.mavenSearchUrl }
+            registry.add("streampack.specs.cve.throttle-requests") { THROTTLE }
+            registry.add("streampack.specs.cve.maven-search-gap") { "0s" }
         }
 
         @JvmStatic @AfterAll fun stopStub() = stub.stop()

@@ -78,6 +78,9 @@ This reference covers the variables commonly used by `server-streampack`.
 | `STREAMPACK_MEDIA_MAX_SIZE` | Optional | The largest file an upload may carry (default `100MB`); the multipart limits follow it. |
 | `STREAMPACK_MEDIA_CACHE_MAX_AGE` | Optional | How long caches may keep a media file before asking again (default `PT5M`). |
 | `PODCAST_TITLE` | Optional | The podcast feed's (`/podcast.xml`) title (default `BLOG_SITE_NAME`). The channel's other settings are `PODCAST_*` too: `DESCRIPTION` ("Posts from *site*, read aloud"), `AUTHOR`, `IMAGE` (the artwork's absolute URL), `CATEGORY` (`Technology`, or `News/Tech News` for a subcategory), `OWNER_NAME` and `OWNER_EMAIL` (none of these by default), `EXPLICIT` (`false`) and `LANGUAGE` (`en-us`). Each is also `STREAMPACK_BLOG_PODCAST_*`. |
+| `STREAMPACK_SPECS_CVE_THROTTLE_REQUESTS` | Optional | How many `cve` commands a channel may run in `STREAMPACK_SPECS_CVE_THROTTLE_WINDOW` (defaults `10` and `PT1H`); past that, the usual rate-limited reply. |
+| `STREAMPACK_SPECS_CVE_MAVEN_SEARCH_GAP` | Optional | The least time between two Maven Central searches by `cve` (default `2s`). Only one search runs at a time; another asked meanwhile fails at once. |
+| `STREAMPACK_SPECS_CVE_MAVEN_BACK_OFF` | Optional | How long `cve` stops searching Maven Central after a 429 or 503 without a `Retry-After` (default `PT15M`); with one, it waits as long as that says, up to `STREAMPACK_SPECS_CVE_MAVEN_BACK_OFF_MAX` (default `PT24H`). Other lookups carry on. |
 | `BLOG_SUMMARY_PROMPT` | Optional | System prompt for admins' AI-derived post summaries. Empty uses the built-in stance: lead with the substance, never tease or bury the lede. |
 | `IRC_ENABLED` | Optional | Enables IRC adapter. |
 | `IRC_IDENTITY` | Optional | The bot's identity, as its CTCP `VERSION` answer (default `Nevet IRC Bridge`). |

@@ -38,4 +38,28 @@ class CvePropertiesTests {
         assertEquals(java.time.Duration.ofHours(2), properties.packageTtl)
         assertEquals(java.time.Duration.ofDays(1), properties.recordTtl)
     }
+
+    @Test
+    fun `the throttle and Maven Central's gap and back-off are configurable`() {
+        val defaults = bind()
+        assertEquals(10, defaults.throttleRequests)
+        assertEquals(java.time.Duration.ofHours(1), defaults.throttleWindow)
+        assertEquals(java.time.Duration.ofSeconds(2), defaults.mavenSearchGap)
+        assertEquals(java.time.Duration.ofMinutes(15), defaults.mavenBackOff)
+        assertEquals(java.time.Duration.ofHours(24), defaults.mavenBackOffMax)
+
+        val properties =
+            bind(
+                "streampack.specs.cve.throttle-requests" to "3",
+                "streampack.specs.cve.throttle-window" to "30m",
+                "streampack.specs.cve.maven-search-gap" to "5s",
+                "streampack.specs.cve.maven-back-off" to "1h",
+                "streampack.specs.cve.maven-back-off-max" to "6h",
+            )
+        assertEquals(3, properties.throttleRequests)
+        assertEquals(java.time.Duration.ofMinutes(30), properties.throttleWindow)
+        assertEquals(java.time.Duration.ofSeconds(5), properties.mavenSearchGap)
+        assertEquals(java.time.Duration.ofHours(1), properties.mavenBackOff)
+        assertEquals(java.time.Duration.ofHours(6), properties.mavenBackOffMax)
+    }
 }
