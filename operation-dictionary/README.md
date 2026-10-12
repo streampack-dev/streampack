@@ -12,6 +12,8 @@
 
 The operation runs at priority `95`, after normal factoid lookup. This lets known definitions be served from factoids first. On a successful external lookup, it seeds a factoid through `EventGateway` so future lookups can hit the cache.
 
+The definitions are Wiktionary's, under CC BY-SA. Every reply, and every factoid it seeds, ends with a credit: `Source: <Wiktionary page> (Wiktionary, <license>)`. A definition too long to fit in a factoid with its credit (512 characters) is answered but not cached.
+
 The operation is addressed and uses operation group `dictionary`.
 
 ## Example Flows
