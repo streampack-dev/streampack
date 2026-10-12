@@ -669,6 +669,14 @@
           },
           "title" : {
             "type" : "string"
+          },
+          "versionKinds" : {
+            "description" : "The kinds of version the post has, sorted, such as `audio` for a recording of it; empty when it has none or media is off. The versions themselves are in the post's details.",
+            "example" : [ "audio" ],
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
           }
         },
         "required" : [ "authorDisplayName", "id", "slug", "title" ],

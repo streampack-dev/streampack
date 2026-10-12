@@ -149,6 +149,23 @@ class PostVersionRepositoryTests {
     }
 
     @Test
+    fun `kinds of several posts, a row per post and kind`() {
+        val other = post("Other", PostStatus.APPROVED, Instant.now().minus(3, ChronoUnit.DAYS))
+        val silent = post("Silent", PostStatus.APPROVED, Instant.now().minus(4, ChronoUnit.DAYS))
+        version(published)
+        // Another variant of the same kind is still the one kind.
+        version(published, variant = "slow")
+        version(other)
+
+        val found = versionRepository.findKindsByPosts(listOf(published.id, other.id, silent.id))
+
+        assertEquals(
+            listOf(published.id to "audio", other.id to "audio").sortedBy { it.first },
+            found.map { it.postId to it.kind }.sortedBy { it.first },
+        )
+    }
+
+    @Test
     fun `deleting a post deletes its versions`() {
         val keys = listOf(version(published), version(post("Other", PostStatus.DRAFT, null)))
         assertEquals(

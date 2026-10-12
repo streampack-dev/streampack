@@ -9,6 +9,7 @@ import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.blog.service.PostTagVisibility
+import dev.streampack.blog.service.PostVersionService
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -25,6 +26,7 @@ class FindDraftsOperation(
     private val slugRepository: SlugRepository,
     private val postTagRepository: PostTagRepository,
     private val postCategoryRepository: PostCategoryRepository,
+    private val postVersionService: PostVersionService,
 ) : TypedOperation<FindDraftsRequest>(FindDraftsRequest::class) {
 
     override val priority = 50
@@ -41,6 +43,8 @@ class FindDraftsOperation(
                 postRepository.findDrafts(PageRequest.of(payload.page, payload.size))
             }
 
+        // One query for the page's kinds of version (#200).
+        val kinds = postVersionService.kindsFor(pageResult.content.map { it.id })
         val summaries =
             pageResult.content.map { post ->
                 val canonicalSlug = slugRepository.findCanonical(post.id)
@@ -58,6 +62,7 @@ class FindDraftsOperation(
                             (message.headers[Provenance.HEADER] as? Provenance)?.user,
                         ),
                     categories = postCategoryRepository.findNamesByPost(post.id),
+                    versionKinds = kinds[post.id].orEmpty(),
                 )
             }
 
