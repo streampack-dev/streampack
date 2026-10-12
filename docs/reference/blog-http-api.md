@@ -127,6 +127,109 @@ Successful `GET /posts/{year}/{month}/{slug}` and `GET /posts/{id}` requests are
 not record post access or change temperature buckets. UI clients should call `POST /posts/{id}/access`
 when a post link is opened from client-side navigation.
 
+A post's details carry its `versions`, such as a recording of it; see
+[Post Versions and Media](#post-versions-and-media).
+
+## Post Versions and Media
+
+A post can have **versions**: the post in another form, belonging to it and recording which edit of
+it it was made from (#196). The post's markdown stays the original. A recording of the post (`kind`
+`audio`) is the only kind so far, and a post has at most one version per kind (and variant, which is
+null for audio). Media is off until `STREAMPACK_MEDIA_DIR` is set; see
+[Configure Media Storage](../how-to/deploy/configure-media-storage.md).
+
+### In the post API
+
+Post details (`GET /posts/{year}/{month}/{slug}`, `GET /posts/{id}`, `GET /pages/{slug}`, and the
+answers to editing and approving a post) carry `versions`, empty when the post has none or media is
+off:
+
+```json
+"versions": [
+  {
+    "kind": "audio",
+    "variant": null,
+    "mediaType": "audio/mpeg",
+    "size": 4123456,
+    "duration": 257,
+    "url": "https://api.bytecode.news/media/posts/019d.../audio",
+    "note": "read by the author",
+    "maker": "Joseph Ottinger",
+    "current": true,
+    "createdAt": "2026-10-11T12:00:00Z",
+    "replacedAt": null
+  }
+]
+```
+
+`duration` is whole seconds, null when unknown. `url` is absolute, on the API's own origin
+(`BASE_URL`), and stays the same when the version is replaced; front ends must not rewrite it.
+`current` is false once the post's markdown has been edited since the version was attached (the
+version records a hash of the markdown it was made from); nothing else acts on it. Show the kinds you
+know and ignore the rest. Post lists (`ContentListResponse`) don't carry versions.
+
+### Serving
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /media/posts/{postId}/{kind}` | The version's bytes, such as the post's recording. |
+| `GET /media/posts/{postId}/{kind}/{variant}` | The same, for a variant. |
+
+Public, read-only, for published, undeleted posts; an admin may also fetch an unpublished post's (to
+preview it), with `Cache-Control: private, no-store`. Anything else is `404`, as is everything while
+media is off. Responses carry `Content-Type`, `Content-Length`, `Accept-Ranges: bytes`, an `ETag`
+from the content's SHA-256, `Last-Modified` and `Cache-Control: public, max-age=300`
+(`STREAMPACK_MEDIA_CACHE_MAX_AGE`). `Range` requests answer `206` with the bytes asked for (`416`
+past the end), so players can seek; `If-None-Match` answers `304`. A replaced file keeps its address
+and gets a new ETag.
+
+### Uploading (admin)
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /admin/posts/{id}/versions/{kind}` | Attaches the post's version of `kind`, or replaces it. `201` when attached, `200` when replaced. |
+| `DELETE /admin/posts/{id}/versions/{kind}` | Removes it and its file. `204`. |
+
+ADMIN only (`401`, `403`). The upload is `multipart/form-data`:
+
+| Part | Required | Meaning |
+|------|----------|---------|
+| `file` | Yes | The recording: MP3 (`audio/mpeg`), MP4/M4A (`audio/mp4`), Ogg Vorbis (`audio/ogg`) or Ogg Opus (`audio/ogg` or `audio/opus`). |
+| `duration` | No | Length in whole seconds. Left out, it's read from the file's headers (MP3 Xing/VBRI or constant bitrate, MP4 `mvhd`, Ogg granule position), or null if they don't say. |
+| `note` | No | Up to 500 characters, such as "read by the author". |
+
+The file's type is decided by its first bytes. A declared type that isn't accepted, or disagrees with
+the bytes, is refused; a part sent as `application/octet-stream` (or with no type) takes the type of
+its bytes. The answer is the version as the post API shows it.
+
+```bash
+curl -X POST "$API/admin/posts/$POST_ID/versions/audio" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@reading.mp3;type=audio/mpeg" -F "note=read by the author"
+```
+
+| Status | When |
+|--------|------|
+| `400` | A kind other than `audio`, an empty file, a duration outside 1 second to 7 days, or a note too long or with control characters. |
+| `404` | No such post, or it's deleted; for `DELETE`, the post has no such version. |
+| `409` | Another upload of the same version was being stored at once; try again. |
+| `413` | The file is larger than `STREAMPACK_MEDIA_MAX_SIZE` (100 MB by default). |
+| `415` | Not audio of an accepted type, or not the type it was sent as. |
+| `503` | Media isn't configured (`STREAMPACK_MEDIA_DIR`). |
+
+Deleting a post (a purge of an erased user's content) deletes its versions and their files. A
+soft-deleted post keeps them, unserved, in case it's restored.
+
+### Feeds
+
+`/feed.xml` and `/blog/rss.xml` give a post with a recording an
+`<enclosure url="…" length="…" type="…"/>`; `/feed.atom` and `/blog/atom.xml` a
+`<link rel="enclosure" href="…" length="…" type="…"/>`. `/podcast.xml` is `/feed.xml` limited to the
+posts with a recording, with the `itunes:` tags (the show's author, artwork, category, explicit and
+owner; each episode's duration, title and summary). Its channel is configured with `PODCAST_*`; see
+[The Podcast Feed](../how-to/deploy/configure-media-storage.md#the-podcast-feed). Enclosure
+addresses are the media addresses above, on the API's origin.
+
 ## Channel Logs
 
 The public log browser reads these. Each takes the caller's credentials if there are any (the

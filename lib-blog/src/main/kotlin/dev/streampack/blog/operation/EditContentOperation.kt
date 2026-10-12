@@ -8,6 +8,7 @@ import dev.streampack.blog.model.ContentDetail
 import dev.streampack.blog.model.EditContentRequest
 import dev.streampack.blog.repository.*
 import dev.streampack.blog.service.MarkdownRenderingService
+import dev.streampack.blog.service.PostVersionService
 import dev.streampack.blog.service.SlugGenerationService
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
@@ -33,6 +34,7 @@ class EditContentOperation(
     private val postTagRepository: PostTagRepository,
     private val categoryRepository: CategoryRepository,
     private val postCategoryRepository: PostCategoryRepository,
+    private val postVersionService: PostVersionService,
 ) : TypedOperation<EditContentRequest>(EditContentRequest::class) {
 
     override fun handle(payload: EditContentRequest, message: Message<*>): OperationOutcome {
@@ -100,6 +102,7 @@ class EditContentOperation(
                 tags = tagNames,
                 categories = categoryNames,
                 markdownSource = updated.markdownSource,
+                versions = postVersionService.views(updated),
             )
         )
     }

@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component
  * anonymous readers when it is approved, published by now and not deleted; the board, tag listings,
  * search and taxonomy tag counts also leave out posts in hidden (`_`) categories. Sets are
  * fingerprinted by their members, their newest change and their comments, so a post falling due (no
- * row changes, only time) or a comment being added changes the validator too.
+ * row changes, only time) or a comment being added changes the validator too. A single post's also
+ * covers its versions (#196), so attaching or replacing a recording does.
  */
 @Component
 class ContentValidators(private val jdbc: NamedParameterJdbcTemplate) {
@@ -150,7 +151,10 @@ class ContentValidators(private val jdbc: NamedParameterJdbcTemplate) {
                      FROM post_categories pc WHERE pc.post_id = p.id) AS filing,
                   (SELECT count(*) || ':' || count(*) FILTER (WHERE NOT c.deleted) FROM comments c
                      WHERE c.post_id = p.id) AS talk,
-                  (SELECT max(c.updated_at) FROM comments c WHERE c.post_id = p.id) AS talked
+                  (SELECT max(c.updated_at) FROM comments c WHERE c.post_id = p.id) AS talked,
+                  (SELECT count(*) || ':' || coalesce(sum(hashtext(pv.content_hash)), 0)
+                     FROM post_version pv WHERE pv.post_id = p.id) AS versions,
+                  (SELECT max(pv.updated_at) FROM post_version pv WHERE pv.post_id = p.id) AS versioned
                 FROM slugs s JOIN posts p ON p.id = s.post_id
                 WHERE $where AND $VISIBLE
                 LIMIT 1
@@ -160,7 +164,8 @@ class ContentValidators(private val jdbc: NamedParameterJdbcTemplate) {
                 val updated = rs.getTimestamp("updated_at").toInstant()
                 val published = rs.getTimestamp("published_at").toInstant()
                 val talked = rs.getTimestamp("talked")?.toInstant()
-                val lastModified = listOfNotNull(updated, published, talked).max()
+                val versioned = rs.getTimestamp("versioned")?.toInstant()
+                val lastModified = listOfNotNull(updated, published, talked, versioned).max()
                 Validator(
                     listOf(
                             rs.getString("id"),
@@ -171,6 +176,8 @@ class ContentValidators(private val jdbc: NamedParameterJdbcTemplate) {
                             rs.getString("filing"),
                             rs.getString("talk"),
                             talked,
+                            rs.getString("versions"),
+                            versioned,
                         )
                         .joinToString("|"),
                     lastModified,

@@ -15,13 +15,14 @@ import java.util.Date
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 
-/** Builds an RSS 2.0 feed from published blog posts */
+/** Builds an RSS 2.0 feed from published blog posts, with an enclosure on each post with audio */
 @Service
 class RssFeedService(
     private val postRepository: PostRepository,
     private val slugRepository: SlugRepository,
     private val streampackProperties: StreampackProperties,
     private val rssFeedProperties: RssFeedProperties,
+    private val postVersionService: PostVersionService,
 ) {
 
     /** Assembles a SyndFeed containing the most recent published posts */
@@ -41,6 +42,8 @@ class RssFeedService(
         feed.link = baseUrl
         feed.language = rssFeedProperties.language
 
+        val audio = postVersionService.audioByPost(posts.map { it.id })
+
         feed.entries = posts.map { post ->
             val slug = slugRepository.findCanonical(post.id)
             val entry: SyndEntry = SyndEntryImpl()
@@ -57,6 +60,9 @@ class RssFeedService(
                 entry.publishedDate = Date.from(post.publishedAt)
             }
             entry.author = post.author?.displayName ?: ""
+            audio[post.id]?.let {
+                entry.enclosures = mutableListOf(postVersionService.enclosure(it))
+            }
             entry
         }
 

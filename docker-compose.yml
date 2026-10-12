@@ -45,10 +45,15 @@ services:
       MATTERMOST_ENABLED: ${MATTERMOST_ENABLED:-false}
       AI_ENABLED: ${AI_ENABLED:-false}
       STREAMPACK_GENERATIVE_PROMPT_DIR: ${STREAMPACK_GENERATIVE_PROMPT_DIR:-/opt/streampack/generative}
+      # Posts' recordings and other uploads (#196); blank turns media off.
+      STREAMPACK_MEDIA_DIR: ${STREAMPACK_MEDIA_DIR-/opt/streampack/media}
+      STREAMPACK_MEDIA_MAX_SIZE: ${STREAMPACK_MEDIA_MAX_SIZE:-100MB}
     ports:
       - "8080:8080"
     volumes:
       - ${GENERATIVE_PROMPT_VOLUME:-./generative}:/opt/streampack/generative:ro
+      # Writable, and kept across rebuilds; back it up with the database (see docs).
+      - ${MEDIA_VOLUME:-media}:/opt/streampack/media
   db:
     image: postgres:18
     restart: unless-stopped
@@ -78,3 +83,4 @@ services:
 
 volumes:
   pgdata:
+  media:

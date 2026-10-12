@@ -14,6 +14,7 @@ import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.blog.service.PostTagVisibility
+import dev.streampack.blog.service.PostVersionService
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -41,6 +42,7 @@ class FindContentOperation(
     private val postCategoryRepository: PostCategoryRepository,
     private val temperatureService: TemperatureService,
     private val tagVocabulary: TagVocabulary,
+    private val postVersionService: PostVersionService,
 ) : TypedOperation<FindContentRequest>(FindContentRequest::class) {
 
     override val priority = 50
@@ -254,6 +256,7 @@ class FindContentOperation(
             tags = PostTagVisibility.forViewer(tagNamesForPost(post.id), post, user),
             categories = categoryNamesForPost(post.id),
             markdownSource = if (canEdit) post.markdownSource else null,
+            versions = postVersionService.views(post),
         )
     }
 

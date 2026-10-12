@@ -2,6 +2,10 @@
 
 Prefer logical backups with `pg_dump` and `pg_restore`.
 
+Posts' recordings and other uploads are not in the database: they're files in
+`STREAMPACK_MEDIA_DIR`. Back that directory (or volume) up at the same time, and restore both
+together; see [Configure Media Storage](configure-media-storage.md).
+
 ## Back Up From Docker Compose
 
 For a custom-format dump:

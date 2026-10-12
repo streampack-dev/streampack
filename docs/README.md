@@ -22,6 +22,8 @@ For repository-side release mechanics, see [Version and Publish Maven Artifacts 
 
 For AI prompt customization, see [Configure Generative Prompts](how-to/deploy/configure-generative-prompts.md).
 
+For posts' recordings, the media directory they're stored in, and the podcast feed, see [Configure Media Storage and the Podcast Feed](how-to/deploy/configure-media-storage.md).
+
 For what the message log keeps, what channel settings do, and why direct messages are kept but never read back, see [The Message Log](explanation/message-log.md).
 
 For how the Atlas (the map of the site's tags) is laid out, and why it holds still, see [The Atlas](explanation/atlas.md).

@@ -4,6 +4,7 @@ package dev.streampack.blog.operation
 import dev.streampack.blog.model.PurgeErasedContentRequest
 import dev.streampack.blog.repository.CommentRepository
 import dev.streampack.blog.repository.PostRepository
+import dev.streampack.blog.service.PostVersionService
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
@@ -16,13 +17,15 @@ import org.springframework.transaction.annotation.Transactional
  * Hard-deletes all content belonging to an erased user sentinel, then removes the sentinel itself.
  *
  * Admin/super-admin only. Validates that the target user has ERASED status before proceeding.
- * Comments must be deleted before posts to satisfy FK constraints on parent_comment_id.
+ * Comments must be deleted before posts to satisfy FK constraints on parent_comment_id. The posts'
+ * versions (#196) go with them by cascade, and their files once the purge commits.
  */
 @Component
 class PurgeErasedContentOperation(
     private val userRepository: UserRepository,
     private val postRepository: PostRepository,
     private val commentRepository: CommentRepository,
+    private val postVersionService: PostVersionService,
 ) : Operation {
     override val priority = 50
 
@@ -45,6 +48,7 @@ class PurgeErasedContentOperation(
         }
 
         // Delete comments first (FK on parent_comment_id), then posts
+        postVersionService.deleteFilesOfPostsByAuthor(sentinel.id)
         commentRepository.hardDeleteByAuthor(sentinel.id)
         postRepository.hardDeleteByAuthor(sentinel.id)
 

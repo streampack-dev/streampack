@@ -580,6 +580,12 @@
           "updatedAt" : {
             "format" : "date-time",
             "type" : "string"
+          },
+          "versions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/PostVersionView"
+            },
+            "type" : "array"
           }
         },
         "required" : [ "authorDisplayName", "createdAt", "id", "renderedHtml", "slug", "status", "title", "updatedAt" ],
@@ -1849,6 +1855,64 @@
             "type" : [ "string", "null" ]
           }
         },
+        "type" : "object"
+      },
+      "PostVersionView" : {
+        "description" : "A version of a post: the post in another form, such as a recording of it",
+        "properties" : {
+          "createdAt" : {
+            "description" : "When it was first attached",
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "current" : {
+            "description" : "Whether it was made from the post as it is now: false once the post's markdown has been edited since it was attached",
+            "type" : "boolean"
+          },
+          "duration" : {
+            "description" : "Its length in whole seconds, when known",
+            "format" : "int32",
+            "type" : [ "integer", "null" ]
+          },
+          "kind" : {
+            "description" : "What it is; `audio` is the only kind so far",
+            "example" : "audio",
+            "type" : "string"
+          },
+          "maker" : {
+            "description" : "Who made it: the uploader's display name, when known",
+            "type" : [ "string", "null" ]
+          },
+          "mediaType" : {
+            "description" : "Its media type",
+            "example" : "audio/mpeg",
+            "type" : "string"
+          },
+          "note" : {
+            "description" : "A note about it, such as \"read by the author\"",
+            "type" : [ "string", "null" ]
+          },
+          "replacedAt" : {
+            "description" : "When its content was last replaced; null if never",
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "size" : {
+            "description" : "Its size in bytes",
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "url" : {
+            "description" : "Where to fetch it: an absolute address on the API's own origin, stable while the version is replaced. Supports Range requests. Front ends must not rewrite it.",
+            "example" : "https://api.bytecode.news/media/posts/0190a1b2-0000-7000-8000-000000000000/audio",
+            "type" : "string"
+          },
+          "variant" : {
+            "description" : "Which one of its kind, when a kind has several; null for audio",
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "createdAt", "current", "kind", "mediaType", "size", "url" ],
         "type" : "object"
       },
       "ProblemDetail" : {
@@ -4273,6 +4337,241 @@
         } ],
         "summary" : "Derive AI tag suggestions from unsaved editor content",
         "tags" : [ "Admin - Post Management" ]
+      }
+    },
+    "/admin/posts/{id}/versions/{kind}" : {
+      "delete" : {
+        "description" : "Removes the post's version of this kind and its file.",
+        "operationId" : "deletePostVersion",
+        "parameters" : [ {
+          "description" : "Post UUIDv7",
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "description" : "The version's kind",
+          "example" : "audio",
+          "in" : "path",
+          "name" : "kind",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Removed"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such post, or it's deleted; or, to delete, it has no such version"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Remove a post's version",
+        "tags" : [ "Admin - Post Versions" ]
+      },
+      "post" : {
+        "description" : "Uploads a post's recording (`kind` `audio`, the only kind accepted) as multipart/form-data: `file`, and optionally `duration` (whole seconds; read from the file when left out) and `note` (up to 500 characters, such as \"read by the author\"). The file must be MP3 (`audio/mpeg`), MP4/M4A (`audio/mp4`), Ogg Vorbis (`audio/ogg`) or Ogg Opus (`audio/ogg`, `audio/opus`); its first bytes are checked, and a declared type that disagrees is refused. A version the post had is replaced at the same address. Answers the version as the post API shows it.",
+        "operationId" : "putPostVersion",
+        "parameters" : [ {
+          "description" : "Post UUIDv7",
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "description" : "The version's kind",
+          "example" : "audio",
+          "in" : "path",
+          "name" : "kind",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Length in whole seconds; read from the file when left out",
+          "in" : "query",
+          "name" : "duration",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "description" : "A note, such as \"read by the author\"",
+          "in" : "query",
+          "name" : "note",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PostVersionView"
+                }
+              }
+            },
+            "description" : "Replaced"
+          },
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PostVersionView"
+                }
+              }
+            },
+            "description" : "Attached"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A kind other than audio, an empty file, or a bad duration or note"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No such post, or it's deleted; or, to delete, it has no such version"
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Another upload of the same version was being stored"
+          },
+          "413" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The file is larger than the limit"
+          },
+          "415" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not audio of an accepted type, or not the type it was sent as"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Media storage isn't configured"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Attach or replace a post's version",
+        "tags" : [ "Admin - Post Versions" ]
       }
     },
     "/admin/rss/items" : {
@@ -7518,6 +7817,148 @@
         "tags" : [ "mcp-controller" ]
       }
     },
+    "/media/posts/{postId}/{kind}" : {
+      "get" : {
+        "description" : "The bytes of a post's version, such as its recording (`kind` `audio`). Supports `Range` requests (206 Partial Content; 416 when the range is past the end) and `If-None-Match`. The address stays the same when the version is replaced; the ETag changes. Public for published posts.",
+        "operationId" : "getPostMedia",
+        "parameters" : [ {
+          "description" : "Post UUIDv7",
+          "in" : "path",
+          "name" : "postId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "description" : "The version's kind",
+          "example" : "audio",
+          "in" : "path",
+          "name" : "kind",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "audio/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "The whole file"
+          },
+          "206" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "The range asked for"
+          },
+          "304" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "Not modified"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "No such media, or it isn't public"
+          },
+          "416" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "The range is past the end of the file"
+          }
+        },
+        "summary" : "Fetch a post version's media",
+        "tags" : [ "Media" ]
+      }
+    },
+    "/media/posts/{postId}/{kind}/{variant}" : {
+      "get" : {
+        "description" : "As `/media/posts/{postId}/{kind}`, for a kind with several variants.",
+        "operationId" : "getPostMediaVariant",
+        "parameters" : [ {
+          "description" : "Post UUIDv7",
+          "in" : "path",
+          "name" : "postId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "description" : "The version's kind",
+          "in" : "path",
+          "name" : "kind",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "The version's variant",
+          "in" : "path",
+          "name" : "variant",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "audio/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "The whole file"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "No such media, or it isn't public"
+          }
+        },
+        "summary" : "Fetch a post version's media, by variant",
+        "tags" : [ "Media" ]
+      }
+    },
     "/pages/{slug}" : {
       "get" : {
         "description" : "Returns a page from the _pages or _sidebar category (About, Policies, and the like) as the same ContentDetail a post has, at its undated address.",
@@ -7556,6 +7997,24 @@
         },
         "summary" : "Get a system page by slug",
         "tags" : [ "Pages" ]
+      }
+    },
+    "/podcast.xml" : {
+      "get" : {
+        "operationId" : "podcast",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/xml" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "blog-feed-controller" ]
       }
     },
     "/posts" : {
