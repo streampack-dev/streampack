@@ -69,6 +69,24 @@ streampack:
       # feeds (#128).
       mentions: ${BLOG_MENTIONS_ENABLED:true}
       autosubscribe: ${BLOG_AUTOSUBSCRIBE_ENABLED:true}
+    # The podcast feed's channel (/podcast.xml, #196). Blank title uses BLOG_SITE_NAME; blank
+    # author, image, category and owner are left out.
+    podcast:
+      title: ${PODCAST_TITLE:}
+      description: ${PODCAST_DESCRIPTION:}
+      author: ${PODCAST_AUTHOR:}
+      image: ${PODCAST_IMAGE:}
+      category: ${PODCAST_CATEGORY:}
+      explicit: ${PODCAST_EXPLICIT:false}
+      owner-name: ${PODCAST_OWNER_NAME:}
+      owner-email: ${PODCAST_OWNER_EMAIL:}
+      language: ${PODCAST_LANGUAGE:en-us}
+  # Uploaded media, such as posts' recordings (#196). Off while the directory is blank; startup
+  # fails if it's set but can't be written. The multipart limits follow max-size.
+  media:
+    dir: ${STREAMPACK_MEDIA_DIR:}
+    max-size: ${STREAMPACK_MEDIA_MAX_SIZE:100MB}
+    cache-max-age: ${STREAMPACK_MEDIA_CACHE_MAX_AGE:PT5M}
   karma:
     immune-subjects: ${KARMA_IMMUNE_SUBJECTS:nevet}
   weather:

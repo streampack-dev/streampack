@@ -22,4 +22,6 @@ data class ContentDetail(
     val tags: List<String> = emptyList(),
     val categories: List<String> = emptyList(),
     val markdownSource: String? = null,
+    /** The post in other forms, such as a recording of it (#196); empty while media is off. */
+    val versions: List<PostVersionView> = emptyList(),
 )

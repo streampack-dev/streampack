@@ -10,6 +10,7 @@ import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.blog.service.PostTagVisibility
+import dev.streampack.blog.service.PostVersionService
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -27,6 +28,7 @@ class ApproveContentOperation(
     private val commentRepository: CommentRepository,
     private val postTagRepository: PostTagRepository,
     private val postCategoryRepository: PostCategoryRepository,
+    private val postVersionService: PostVersionService,
 ) : TypedOperation<ApproveContentRequest>(ApproveContentRequest::class) {
 
     override val priority = 50
@@ -83,6 +85,7 @@ class ApproveContentOperation(
                     ),
                 categories = postCategoryRepository.findNamesByPost(approved.id),
                 markdownSource = approved.markdownSource,
+                versions = postVersionService.views(approved),
             )
         )
     }

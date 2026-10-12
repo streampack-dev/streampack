@@ -42,8 +42,18 @@ class WebSecurityConfiguration(
                 "Accept-Version",
                 "Cookie",
                 "X-Web-Console",
+                // Players fetching media (#196) by script ask for ranges and read what came back.
+                "Range",
             )
-        config.exposedHeaders = listOf("Content-Version", "Accept-Version", "Set-Cookie")
+        config.exposedHeaders =
+            listOf(
+                "Content-Version",
+                "Accept-Version",
+                "Set-Cookie",
+                "Content-Range",
+                "Accept-Ranges",
+                "ETag",
+            )
         config.allowCredentials = true
         config.maxAge = 3600L
         val source = UrlBasedCorsConfigurationSource()

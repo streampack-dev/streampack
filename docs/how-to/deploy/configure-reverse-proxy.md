@@ -20,7 +20,10 @@ server {
 }
 ```
 
-`client_max_body_size` matters if this nginx instance also fronts Nexus Docker pushes.
+`client_max_body_size` matters if this nginx instance also fronts Nexus Docker pushes, and for
+uploads of posts' recordings: it must be at least `STREAMPACK_MEDIA_MAX_SIZE` (100 MB by default)
+plus a megabyte. Media under `/media/` is served with `Range` support; nginx passes `Range` and
+`If-None-Match` through as it is (see [Configure Media Storage](configure-media-storage.md)).
 
 The admin web console's stream (`GET /admin/console/stream`) is a long-lived server-sent event
 response. Its responses say `X-Accel-Buffering: no`, which nginx honours, but a location of its own

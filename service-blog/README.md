@@ -27,6 +27,9 @@ chat-facing bot commands.
 | `GET /pages/{slug}` | Reads a system page from the `_pages` category. |
 | `GET /atlas` | The Atlas: regions and places (tags) with positions, counts and pins. |
 | `GET /atlas/places/{tag}` | One place on the Atlas, with every article and factoid found there; an alias finds its tag's place. |
+| `GET /media/posts/{postId}/{kind}` | A post version's media (a recording), with `Range` support; published posts only. |
+| `GET /feed.xml`, `/feed.atom`, `/blog/rss.xml`, `/blog/atom.xml` | Feeds of published posts, with an enclosure on posts with a recording. |
+| `GET /podcast.xml` | The feed limited to posts with a recording, with the `itunes:` tags. |
 
 `GET /posts/popular` is intended for compact UI sections such as "popular posts" or "popular pages."
 It returns the same `ContentListResponse` shape as the normal post listing, ordered by decayed
@@ -51,6 +54,24 @@ ui-pudl and ui-primate draw the same one) and serves it at `GET /atlas`; see
   isn't rewritten when a tag is aliased or split: the old tag's place simply drops off the map once
   nothing carries it, and the target keeps its own place. Rewriting `atlas_place` keys belongs to
   the data migration that merges existing tags.
+
+## Post Versions and Media
+
+A post's versions (#196), for now a recording of it: the entity, storage and rules are in lib-blog
+(`PostVersion`, migration V77; `MediaStorage` and `FilesystemMediaStorage` in
+`dev.streampack.blog.media`; `PostVersionService`), and this module serves them:
+
+- `AdminPostVersionController`: `POST`/`DELETE /admin/posts/{id}/versions/{kind}` (ADMIN), a
+  multipart upload checked by its first bytes and against `STREAMPACK_MEDIA_MAX_SIZE`, which
+  `MediaMultipartConfiguration` also makes the multipart limit.
+- `MediaController`: `GET /media/posts/{postId}/{kind}`, returning the file as a `Resource` so
+  Spring answers `Range` (206/416) without reading the whole file, with the content hash as ETag.
+- `BlogFeedController` and `RssFeedController` add enclosures; `BlogFeedController` also builds
+  `/podcast.xml` with ROME's iTunes module (`rome-modules`), configured by `PodcastProperties`.
+
+Media is off while `STREAMPACK_MEDIA_DIR` is unset. See the
+[Blog HTTP API](../docs/reference/blog-http-api.md#post-versions-and-media) and
+[Configure Media Storage](../docs/how-to/deploy/configure-media-storage.md).
 
 ## Tag Vocabulary
 
