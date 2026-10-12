@@ -18,8 +18,12 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Clock
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.locks.ReentrantLock
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -32,12 +36,24 @@ import tools.jackson.databind.JsonNode
  * Every call has a timeout. One that fails (unreachable, slow, rate-limited, an error status, a
  * body that can't be read) is logged once at WARN and thrown as [CveLookupFailed]; nothing is kept
  * for it. A CVE id CVE.org doesn't know isn't a failure: it's a `null` record, and is kept.
+ *
+ * Maven Central's search is slow at times and may refuse a client that asks too often, so it's
+ * asked gently (#197): one search at a time, a second failing at once rather than queueing behind
+ * one that may take half a minute; at least [CveProperties.mavenSearchGap] between searches; and
+ * after a 429, a 503 or an error with a `Retry-After`, no searches until the time it gives (at most
+ * [CveProperties.mavenBackOffMax] away), or for [CveProperties.mavenBackOff]. The back-off is
+ * logged once at WARN; a search refused during it isn't logged (one refused while another is in
+ * flight is, at DEBUG), and fails as any other would, not kept. Everything else (CVE.org, OSV, kept
+ * searches) carries on as normal.
+ *
+ * [sleeper] waits out the gap; tests pass one that moves their [clock] instead.
  */
 @Service
 class CveLookupService(
     private val properties: CveProperties,
     private val userAgent: String,
-    clock: Clock,
+    private val clock: Clock,
+    private val sleeper: (Duration) -> Unit = { Thread.sleep(it.toMillis()) },
 ) {
     @Autowired
     constructor(
@@ -59,6 +75,13 @@ class CveLookupService(
     private val records = ExpiringCache<String, RecordLookup>(properties.recordTtl, clock)
     private val packages = ExpiringCache<String, List<OsvVuln>>(properties.packageTtl, clock)
     private val searches = ExpiringCache<String, List<MavenArtifact>>(properties.searchTtl, clock)
+
+    /** Held for the length of a Maven Central search. */
+    private val searchLock = ReentrantLock()
+    /** When the last search ended. */
+    @Volatile private var lastSearch: Instant? = null
+    /** No searches before this. */
+    @Volatile private var backOffUntil: Instant? = null
 
     /** The record for [id] (`CVE-2021-44228`), or null when CVE.org has none. */
     fun record(id: String): CveRecord? =
@@ -111,11 +134,8 @@ class CveLookupService(
         searches.get(artifactId) {
             val query = URLEncoder.encode("a:\"$artifactId\"", Charsets.UTF_8)
             val uri = URI("${properties.mavenSearchUrl}?q=$query&rows=$MAVEN_ROWS&wt=json")
-            // Maven Central's search is often slow, so it has a timeout of its own.
-            val request = HttpRequest.newBuilder(uri).GET()
-            val body =
-                ok("Maven Central", send("Maven Central", request, properties.mavenSearchTimeout))
-            parse("Maven Central", body) { root ->
+            val body = search(uri)
+            parse(MAVEN, body) { root ->
                 root
                     .path("response")
                     .path("docs")
@@ -128,12 +148,86 @@ class CveLookupService(
             }
         }
 
-    /** Forgets every kept answer. */
+    /** Forgets every kept answer, and any Maven Central back-off. */
     fun clearCache() {
         records.clear()
         packages.clear()
         searches.clear()
+        lastSearch = null
+        backOffUntil = null
     }
+
+    /** One Maven Central search's body, asked as gently as the class comment says. */
+    private fun search(uri: URI): String {
+        if (!searchLock.tryLock()) {
+            logger.debug("cve: a Maven Central search is in flight; refusing another")
+            throw CveLookupFailed(MAVEN, "another search is in flight")
+        }
+        try {
+            backOffUntil?.let { until ->
+                if (clock.instant().isBefore(until)) {
+                    throw CveLookupFailed(MAVEN, "backing off until $until")
+                }
+            }
+            lastSearch?.let { last ->
+                val wait = Duration.between(clock.instant(), last.plus(properties.mavenSearchGap))
+                if (wait.isPositive) pause(wait)
+            }
+            try {
+                // Maven Central's search is often slow, so it has a timeout of its own.
+                val response =
+                    send(MAVEN, HttpRequest.newBuilder(uri).GET(), properties.mavenSearchTimeout)
+                backOff(response)
+                return ok(MAVEN, response)
+            } finally {
+                lastSearch = clock.instant()
+            }
+        } finally {
+            searchLock.unlock()
+        }
+    }
+
+    private fun pause(wait: Duration) {
+        try {
+            sleeper(wait)
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw CveLookupFailed(MAVEN, "interrupted")
+        }
+    }
+
+    /**
+     * Starts a back-off when [response] asks for one: a 429 or 503, or any error with a
+     * `Retry-After` (seconds, or an HTTP date). Throws, so the response isn't read.
+     */
+    private fun backOff(response: HttpResponse<String>) {
+        val status = response.statusCode()
+        val retryAfter = response.headers().firstValue("Retry-After").orElse(null)
+        if (status !in BACK_OFF_STATUSES && (status in 200..299 || retryAfter == null)) return
+        val now = clock.instant()
+        val until =
+            retryAfter
+                ?.let { retryAt(it.trim(), now) }
+                ?.let {
+                    minOf(it, now.plus(properties.mavenBackOffMax))
+                } ?: now.plus(properties.mavenBackOff)
+        backOffUntil = until
+        logger.warn(
+            "cve: Maven Central answered HTTP {}{}; not searching it until {}",
+            status,
+            retryAfter?.let { " (Retry-After: $it)" }.orEmpty(),
+            until,
+        )
+        throw CveLookupFailed(MAVEN, "HTTP $status from ${response.uri()}")
+    }
+
+    /** When a `Retry-After` of [value] ends, or null when it can't be read. */
+    private fun retryAt(value: String, now: Instant): Instant? =
+        value.toLongOrNull()?.let { now.plusSeconds(it.coerceAtLeast(0)) }
+            ?: runCatching {
+                ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()
+            }
+                .getOrNull()
 
     private fun send(
         upstream: String,
@@ -289,6 +383,8 @@ class CveLookupService(
     }
 
     private companion object {
+        private const val MAVEN = "Maven Central"
+        private val BACK_OFF_STATUSES = setOf(429, 503)
         private const val MAX_OSV_PAGES = 5
         private const val MAVEN_ROWS = 20
         private val CVSS_KEYS = listOf("cvssV4_0", "cvssV3_1", "cvssV3_0", "cvssV2_0")
