@@ -1,11 +1,17 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.specs.service
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
+import dev.streampack.specs.config.CveProperties
 import dev.streampack.specs.model.Ecosystem
 import dev.streampack.specs.model.PackageRef
 import dev.streampack.specs.model.Severity
 import dev.streampack.specs.service.CveStubServer.Companion.cvePath
 import dev.streampack.specs.service.CveStubServer.Companion.fixture
+import dev.streampack.specs.service.CveStubServer.Companion.mavenSearch
 import dev.streampack.specs.service.CveStubServer.Reply
 import java.time.Clock
 import java.time.Duration
@@ -13,13 +19,21 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.slf4j.LoggerFactory
 
-/** The upstream calls, against canned responses: parsing, caching and failure. */
+/**
+ * The upstream calls, against canned responses: parsing, caching, failure, and going easy on Maven
+ * Central.
+ */
 class CveLookupServiceTests {
 
     private val stub = CveStubServer()
@@ -35,8 +49,17 @@ class CveLookupServiceTests {
 
     private val clock = ManualClock()
 
-    private fun service(timeout: Duration = Duration.ofSeconds(5)) =
-        CveLookupService(stub.properties(timeout), "test", clock)
+    /** The waits for Maven Central's gap; each moves [clock] on instead of sleeping. */
+    private val pauses = mutableListOf<Duration>()
+
+    private fun service(
+        timeout: Duration = Duration.ofSeconds(5),
+        properties: CveProperties = stub.properties(timeout),
+    ) =
+        CveLookupService(properties, "test", clock) {
+            pauses += it
+            clock.now = clock.now.plus(it)
+        }
 
     private val log4jCore = PackageRef(Ecosystem.MAVEN, "org.apache.logging.log4j:log4j-core")
 
@@ -183,5 +206,150 @@ class CveLookupServiceTests {
         assert(artifacts.zipWithNext().all { (a, b) -> a.versionCount >= b.versionCount })
         val query = stub.requests.single().query!!
         assert(query.contains("q=a:\"log4j-core\"")) { query }
+    }
+
+    @Test
+    fun `searches in quick succession are spaced by the minimum gap`() {
+        assertEquals(Duration.ofSeconds(2), CveProperties().mavenSearchGap)
+        stub.routes[CveStubServer.MAVEN] = { Reply(200, mavenSearch("a:b")) }
+        val service = service()
+
+        service.mavenArtifacts("one")
+        service.mavenArtifacts("two")
+        assertEquals(listOf(Duration.ofSeconds(2)), pauses)
+
+        clock.now = clock.now.plusMillis(500)
+        service.mavenArtifacts("three")
+        assertEquals(listOf(Duration.ofSeconds(2), Duration.ofMillis(1500)), pauses)
+
+        clock.now = clock.now.plusSeconds(5)
+        service.mavenArtifacts("four")
+        assertEquals(2, pauses.size)
+        assertEquals(4, stub.mavenSearches().size)
+
+        // Only searches are spaced.
+        stub.routes[CveStubServer.OSV] = { Reply(200, CveStubServer.NO_VULNS) }
+        service.vulnerabilities(log4jCore, null)
+        assertEquals(2, pauses.size)
+    }
+
+    @Test
+    fun `a search while another is in flight fails at once rather than overlapping`() {
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        stub.routes[CveStubServer.MAVEN] = {
+            entered.countDown()
+            release.await(10, TimeUnit.SECONDS)
+            Reply(200, mavenSearch("org.yaml:snakeyaml"))
+        }
+        val service = service()
+        val executor = Executors.newSingleThreadExecutor()
+        try {
+            val first =
+                executor.submit<List<String>> {
+                    service.mavenArtifacts("snakeyaml").map { it.coordinates }
+                }
+            assert(entered.await(10, TimeUnit.SECONDS))
+
+            val refused = assertThrows<CveLookupFailed> { service.mavenArtifacts("other") }
+            assertEquals("Maven Central", refused.upstream)
+            release.countDown()
+            assertEquals(listOf("org.yaml:snakeyaml"), first.get(10, TimeUnit.SECONDS))
+            assertEquals(1, stub.mavenSearches().size)
+        } finally {
+            release.countDown()
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
+    fun `a 429 with Retry-After in seconds stops searches until then, logged once`() {
+        var reply = Reply(429, "slow down", headers = mapOf("Retry-After" to "120"))
+        stub.routes[CveStubServer.MAVEN] = { reply }
+        val service = service()
+        val logger = LoggerFactory.getLogger(CveLookupService::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        try {
+            assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
+            reply = Reply(200, mavenSearch("a:one"))
+            clock.now = clock.now.plusSeconds(119)
+            repeat(3) { assertThrows<CveLookupFailed> { service.mavenArtifacts("one") } }
+            assertEquals(1, stub.mavenSearches().size)
+            assertEquals(
+                1,
+                appender.list.count { it.level == Level.WARN },
+                appender.list.toString(),
+            )
+        } finally {
+            logger.detachAppender(appender)
+        }
+
+        // The refused searches weren't kept: once the back-off ends, the name is searched.
+        clock.now = clock.now.plusSeconds(1)
+        assertEquals(listOf("a:one"), service.mavenArtifacts("one").map { it.coordinates })
+        assertEquals(2, stub.mavenSearches().size)
+    }
+
+    @Test
+    fun `a Retry-After date is waited for`() {
+        val until = clock.now.plus(Duration.ofMinutes(42))
+        val date = DateTimeFormatter.RFC_1123_DATE_TIME.format(until.atZone(ZoneOffset.UTC))
+        var reply = Reply(503, "", headers = mapOf("Retry-After" to date))
+        stub.routes[CveStubServer.MAVEN] = { reply }
+        val service = service()
+
+        assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
+        reply = Reply(200, mavenSearch("a:one"))
+        clock.now = until.minusSeconds(1)
+        assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
+        clock.now = until
+        service.mavenArtifacts("one")
+        assertEquals(2, stub.mavenSearches().size)
+    }
+
+    @Test
+    fun `a 429 without Retry-After stops searches for the configured back-off`() {
+        assertEquals(Duration.ofMinutes(15), CveProperties().mavenBackOff)
+        var reply = Reply(429, "slow down")
+        stub.routes[CveStubServer.MAVEN] = { reply }
+        val service =
+            service(properties = stub.properties().copy(mavenBackOff = Duration.ofMinutes(5)))
+
+        assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
+        reply = Reply(200, mavenSearch("a:one"))
+        clock.now = clock.now.plus(Duration.ofMinutes(5)).minusSeconds(1)
+        assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
+        clock.now = clock.now.plusSeconds(1)
+        service.mavenArtifacts("one")
+        assertEquals(2, stub.mavenSearches().size)
+    }
+
+    @Test
+    fun `another error without Retry-After starts no back-off`() {
+        var reply = Reply(500, "oops")
+        stub.routes[CveStubServer.MAVEN] = { reply }
+        val service = service()
+
+        assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
+        reply = Reply(200, mavenSearch("a:one"))
+        service.mavenArtifacts("one")
+        assertEquals(2, stub.mavenSearches().size)
+    }
+
+    @Test
+    fun `during a back-off kept searches, records and packages still answer`() {
+        stub.routes[CveStubServer.MAVEN] = { Reply(200, fixture("maven-log4j-core.json")) }
+        stub.routes[cvePath("CVE-2021-44228")] = { Reply(200, fixture("CVE-2021-44228.json")) }
+        stub.routes[CveStubServer.OSV] = { Reply(200, fixture("osv-log4j-core.json")) }
+        val service = service()
+        service.mavenArtifacts("log4j-core")
+        stub.routes[CveStubServer.MAVEN] = { Reply(429, "slow down") }
+        assertThrows<CveLookupFailed> { service.mavenArtifacts("other") }
+
+        assertEquals(5, service.mavenArtifacts("log4j-core").size)
+        assertEquals(Severity.CRITICAL, service.record("CVE-2021-44228")!!.severity)
+        assert(service.vulnerabilities(log4jCore, null).isNotEmpty())
+        assertEquals(2, stub.mavenSearches().size)
     }
 }

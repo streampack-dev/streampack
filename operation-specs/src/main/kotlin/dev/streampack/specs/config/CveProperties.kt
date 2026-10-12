@@ -13,6 +13,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * [aliases] are names that aren't an artifact's, each mapped to one or more coordinates, added to
  * (or, for the same name, replacing) [DEFAULT_ALIASES]; an empty list drops a default. Coordinates
  * are `group:artifact`, or an ecosystem prefix and a name (`npm:lodash`).
+ *
+ * `cve` is throttled to [throttleRequests] per [throttleWindow] in each channel (#197). Maven
+ * Central's search, the fragile upstream, is asked once at a time, at least [mavenSearchGap] apart,
+ * and not at all for [mavenBackOff] after it refuses a search without saying how long to wait.
  */
 @ConfigurationProperties(prefix = "streampack.specs.cve")
 data class CveProperties(
@@ -28,6 +32,13 @@ data class CveProperties(
     val searchTtl: Duration = Duration.ofDays(1),
     val packageTtl: Duration = Duration.ofHours(4),
     val aliases: Map<String, List<String>> = emptyMap(),
+    /** How many `cve` commands a channel may run in [throttleWindow]. */
+    val throttleRequests: Int = 10,
+    val throttleWindow: Duration = Duration.ofHours(1),
+    /** The least time between the end of one Maven Central search and the start of the next. */
+    val mavenSearchGap: Duration = Duration.ofSeconds(2),
+    /** How long to stop searching after a 429 or 503 that has no `Retry-After`. */
+    val mavenBackOff: Duration = Duration.ofMinutes(15),
 ) {
     /** The aliases in force: the defaults, with configured ones added or replacing them. */
     val effectiveAliases: Map<String, List<String>>
