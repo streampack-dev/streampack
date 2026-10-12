@@ -309,6 +309,29 @@ class CveLookupServiceTests {
     }
 
     @Test
+    fun `a huge Retry-After backs off only up to the cap`() {
+        assertEquals(Duration.ofHours(24), CveProperties().mavenBackOffMax)
+        val far = clock.now.plus(Duration.ofDays(30))
+        val date = DateTimeFormatter.RFC_1123_DATE_TIME.format(far.atZone(ZoneOffset.UTC))
+        for (retryAfter in listOf("31536000", date)) {
+            val start = clock.now
+            var reply = Reply(429, "slow down", headers = mapOf("Retry-After" to retryAfter))
+            stub.routes[CveStubServer.MAVEN] = { reply }
+            val service =
+                service(properties = stub.properties().copy(mavenBackOffMax = Duration.ofHours(2)))
+
+            assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
+            reply = Reply(200, mavenSearch("a:one"))
+            clock.now = start.plus(Duration.ofHours(2)).minusSeconds(1)
+            assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
+            clock.now = start.plus(Duration.ofHours(2))
+            service.mavenArtifacts("one")
+            assertEquals(2, stub.mavenSearches().size, retryAfter)
+            stub.requests.clear()
+        }
+    }
+
+    @Test
     fun `a 429 without Retry-After stops searches for the configured back-off`() {
         assertEquals(Duration.ofMinutes(15), CveProperties().mavenBackOff)
         var reply = Reply(429, "slow down")

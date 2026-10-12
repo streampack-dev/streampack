@@ -40,10 +40,11 @@ import tools.jackson.databind.JsonNode
  * Maven Central's search is slow at times and may refuse a client that asks too often, so it's
  * asked gently (#197): one search at a time, a second failing at once rather than queueing behind
  * one that may take half a minute; at least [CveProperties.mavenSearchGap] between searches; and
- * after a 429, a 503 or an error with a `Retry-After`, no searches until the time it gives, or for
- * [CveProperties.mavenBackOff]. The back-off is logged once at WARN; a search refused during it
- * isn't logged (one refused while another is in flight is, at INFO), and fails as any other would,
- * not kept. Everything else (CVE.org, OSV, kept searches) carries on as normal.
+ * after a 429, a 503 or an error with a `Retry-After`, no searches until the time it gives (at most
+ * [CveProperties.mavenBackOffMax] away), or for [CveProperties.mavenBackOff]. The back-off is
+ * logged once at WARN; a search refused during it isn't logged (one refused while another is in
+ * flight is, at DEBUG), and fails as any other would, not kept. Everything else (CVE.org, OSV, kept
+ * searches) carries on as normal.
  *
  * [sleeper] waits out the gap; tests pass one that moves their [clock] instead.
  */
@@ -159,7 +160,7 @@ class CveLookupService(
     /** One Maven Central search's body, asked as gently as the class comment says. */
     private fun search(uri: URI): String {
         if (!searchLock.tryLock()) {
-            logger.info("cve: a Maven Central search is in flight; refusing another")
+            logger.debug("cve: a Maven Central search is in flight; refusing another")
             throw CveLookupFailed(MAVEN, "another search is in flight")
         }
         try {
@@ -204,7 +205,12 @@ class CveLookupService(
         val retryAfter = response.headers().firstValue("Retry-After").orElse(null)
         if (status !in BACK_OFF_STATUSES && (status in 200..299 || retryAfter == null)) return
         val now = clock.instant()
-        val until = retryAfter?.let { retryAt(it.trim(), now) } ?: now.plus(properties.mavenBackOff)
+        val until =
+            retryAfter
+                ?.let { retryAt(it.trim(), now) }
+                ?.let {
+                    minOf(it, now.plus(properties.mavenBackOffMax))
+                } ?: now.plus(properties.mavenBackOff)
         backOffUntil = until
         logger.warn(
             "cve: Maven Central answered HTTP {}{}; not searching it until {}",

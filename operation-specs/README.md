@@ -69,8 +69,8 @@ to 10 an hour (`streampack.specs.cve.throttle-requests` and `throttle-window`); 
 the usual rate-limited reply. Maven Central's search is the fragile upstream, so it's asked gently:
 one search at a time (another asked meanwhile fails at once rather than queueing behind one that
 may take half a minute), at least 2 seconds apart (`maven-search-gap`), and after a 429 or 503, or
-an error with a `Retry-After`, not at all until the time it gives, or for 15 minutes without one
-(`maven-back-off`). The back-off is logged once at WARN. None of this shows in chat: a lookup
+an error with a `Retry-After`, not at all until the time it gives (at most a day away,
+`maven-back-off-max`), or for 15 minutes without one (`maven-back-off`). The back-off is logged once at WARN. None of this shows in chat: a lookup
 that can't search gets the same "Couldn't look that up right now", and isn't kept. CVE ids,
 coordinates, aliases and kept searches answer as usual during a back-off.
 
@@ -100,6 +100,7 @@ drops a shipped one.
 | `streampack.specs.cve.throttle-window` | `PT1H` | The throttle's window. |
 | `streampack.specs.cve.maven-search-gap` | `2s` | The least time between Maven Central searches. |
 | `streampack.specs.cve.maven-back-off` | `PT15M` | How long to stop searching after a 429 or 503 without a `Retry-After`. |
+| `streampack.specs.cve.maven-back-off-max` | `PT24H` | The longest a `Retry-After` may stop searches for. |
 | `streampack.specs.cve.cve-url`, `osv-url`, `maven-search-url` | the public services | Upstream addresses (tests point them at a stub). |
 
 ## Example Flows

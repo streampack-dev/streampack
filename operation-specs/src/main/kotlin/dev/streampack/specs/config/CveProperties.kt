@@ -16,7 +16,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  *
  * `cve` is throttled to [throttleRequests] per [throttleWindow] in each channel (#197). Maven
  * Central's search, the fragile upstream, is asked once at a time, at least [mavenSearchGap] apart,
- * and not at all for [mavenBackOff] after it refuses a search without saying how long to wait.
+ * and not at all for [mavenBackOff] after it refuses a search without saying how long to wait, or
+ * for as long as it says, up to [mavenBackOffMax].
  */
 @ConfigurationProperties(prefix = "streampack.specs.cve")
 data class CveProperties(
@@ -39,6 +40,8 @@ data class CveProperties(
     val mavenSearchGap: Duration = Duration.ofSeconds(2),
     /** How long to stop searching after a 429 or 503 that has no `Retry-After`. */
     val mavenBackOff: Duration = Duration.ofMinutes(15),
+    /** The longest a `Retry-After` may stop searches for; a longer one is cut to this. */
+    val mavenBackOffMax: Duration = Duration.ofHours(24),
 ) {
     /** The aliases in force: the defaults, with configured ones added or replacing them. */
     val effectiveAliases: Map<String, List<String>>
