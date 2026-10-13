@@ -109,6 +109,9 @@ class RssSubscriptionService(
         feedTags.record(entries.zip(seeded.map { it.second }))
         itemTexts.recordContent(entries.zip(seeded.map { it.second }))
         logger.info("Added feed \"{}\" with {} entries", feed.title, entries.size)
+        SuspectLinks.warning(feed.title, feed.feedUrl, feed.siteUrl, entries.map { it.link })?.let {
+            logger.warn(it)
+        }
         return AddFeedOutcome.Added(feed, entries.size)
     }
 

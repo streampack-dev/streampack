@@ -81,6 +81,14 @@ class RssFeedPollingService(
                 ?: return PollResult.Failure("could not fetch or parse ${feed.feedUrl}")
 
         val fetchedEntries = deduplicateEntries(syndFeed.entries)
+        // A feed whose links look wrong is said so on each poll, for someone to tell its publisher
+        SuspectLinks.warning(
+                feed.title,
+                feed.feedUrl,
+                syndFeed.link,
+                fetchedEntries.mapNotNull { it.link ?: it.uri },
+            )
+            ?.let { logger.warn(it) }
         if (fetchedEntries.isEmpty()) {
             return PollResult.Success(feedRepository.save(feed.copy(lastFetchedAt = Instant.now())))
         }

@@ -1,6 +1,10 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.service
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import com.sun.net.httpserver.HttpServer
 import dev.streampack.core.integration.EgressSubscriber
 import dev.streampack.core.model.OperationResult
@@ -22,6 +26,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
@@ -120,6 +125,73 @@ class RssFeedPollingServiceTests {
         val entries =
             entryRepository.findByFeedAndGuidIn(feed, (1..3).map { "http://example.com/entry/$it" })
         assertEquals(3, entries.size)
+    }
+
+    /** What [action] logs at WARN from the polling service. */
+    private fun warnings(action: () -> Unit): List<String> {
+        val logger = LoggerFactory.getLogger(RssFeedPollingService::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        try {
+            action()
+        } finally {
+            logger.detachAppender(appender)
+        }
+        return appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage }
+    }
+
+    @Test
+    fun `a feed published with localhost links is warned about on each poll, and still stored`() {
+        val feed = createFeed("Blog posts | RSS Feed", "/localhost.xml")
+        httpServer.createContext("/localhost.xml") { exchange ->
+            val rss =
+                """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rss version="2.0">
+                    <channel>
+                        <title>Blog posts | RSS Feed</title>
+                        <link>http://localhost:3000</link>
+                        <item><title>AI</title><link>http://localhost:3000/blog/ai</link></item>
+                        <item><title>Two</title><link>http://localhost:3000/blog/two</link></item>
+                    </channel>
+                </rss>
+                """
+                    .trimIndent()
+            exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(rss.toByteArray()) }
+        }
+
+        val first = warnings { pollingService.pollFeed(feed) }
+        val second = warnings { pollingService.pollFeed(feed) }
+
+        val expected =
+            "Feed \"Blog posts | RSS Feed\" ($baseUrl/localhost.xml): " +
+                "2 of 2 item links look wrong, e.g. http://localhost:3000/blog/ai (a local host); " +
+                "its site link looks wrong: http://localhost:3000 (a local host)"
+        assertEquals(listOf(expected), first)
+        assertEquals(listOf(expected), second)
+        // Only said: the items are kept as the feed gave them
+        assertEquals(
+            2,
+            entryRepository
+                .findByFeedAndGuidIn(
+                    feed,
+                    listOf("http://localhost:3000/blog/ai", "http://localhost:3000/blog/two"),
+                )
+                .size,
+        )
+    }
+
+    @Test
+    fun `a feed with public links is polled without a warning`() {
+        val feed = createFeed("Fine Feed", "/fine.xml")
+        httpServer.createContext("/fine.xml") { exchange ->
+            val rss = sampleRss("Fine Feed", 2)
+            exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(rss.toByteArray()) }
+        }
+
+        assertEquals(listOf<String>(), warnings { pollingService.pollFeed(feed) })
     }
 
     @Test

@@ -1,6 +1,10 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.service
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import com.sun.net.httpserver.HttpServer
 import dev.streampack.rss.model.AddFeedOutcome
 import dev.streampack.rss.repository.RssEntryRepository
@@ -13,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
@@ -58,6 +63,33 @@ class RssSubscriptionServiceTests {
 
         assertEquals(1, feedRepository.count())
         assertEquals(3, entryRepository.count())
+    }
+
+    @Test
+    fun `adding a feed whose links point at localhost is warned about, and still added`() {
+        httpServer.createContext("/dev.xml") { exchange ->
+            val rss = sampleRss("Dev Build", 2, link = "http://localhost:3000")
+            exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(rss.toByteArray()) }
+        }
+        val logger = LoggerFactory.getLogger(RssSubscriptionService::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        val outcome =
+            try {
+                feedService.addFeed("$baseUrl/dev.xml")
+            } finally {
+                logger.detachAppender(appender)
+            }
+
+        assertInstanceOf(AddFeedOutcome.Added::class.java, outcome)
+        assertEquals(
+            listOf(
+                "Feed \"Dev Build\" ($baseUrl/dev.xml): its site link looks wrong: " +
+                    "http://localhost:3000 (a local host)"
+            ),
+            appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage },
+        )
     }
 
     @Test
