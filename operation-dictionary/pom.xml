@@ -31,5 +31,11 @@
             <artifactId>lib-testsupport</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Lets tests check what a lookup caches as a factoid -->
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>operation-factoid</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

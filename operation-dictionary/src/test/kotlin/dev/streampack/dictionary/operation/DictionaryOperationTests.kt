@@ -73,6 +73,55 @@ class DictionaryOperationTests {
         assertTrue(payload.contains("ephemeral"))
         assertTrue(payload.contains("adjective"))
         assertTrue(payload.contains("lasting for a very short time."))
+        assertTrue(
+            payload.contains(
+                "Source: https://en.wiktionary.org/wiki/ephemeral (Wiktionary, CC BY-SA 3.0)"
+            ),
+            payload,
+        )
+    }
+
+    @Test
+    fun `the cached factoid keeps the credit`() {
+        httpServer.createContext("/api/v2/entries/en/transient") { exchange ->
+            val json = dictionaryJson("transient", "adjective", "lasting only for a short time.")
+            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(json.toByteArray()) }
+        }
+        eventGateway.process(message("define transient"))
+        httpServer.removeContext("/api/v2/entries/en/transient")
+
+        val result = eventGateway.process(message("define transient"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload.toString()
+        assertTrue(payload.contains("lasting only for a short time."), payload)
+        assertTrue(
+            payload.contains(
+                "Source: https://en.wiktionary.org/wiki/transient (Wiktionary, CC BY-SA 3.0)"
+            ),
+            payload,
+        )
+    }
+
+    @Test
+    fun `a definition too long to cache with its credit is answered but not cached`() {
+        val definition = "very long. ".repeat(45).trim()
+        httpServer.createContext("/api/v2/entries/en/verbose") { exchange ->
+            val json = dictionaryJson("verbose", "adjective", definition)
+            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(json.toByteArray()) }
+        }
+
+        val first = eventGateway.process(message("define verbose"))
+        assertInstanceOf(OperationResult.Success::class.java, first)
+        assertTrue((first as OperationResult.Success).payload.toString().contains("Source: "))
+
+        httpServer.removeContext("/api/v2/entries/en/verbose")
+        httpServer.createContext("/api/v2/entries/en/verbose") { exchange ->
+            exchange.sendResponseHeaders(404, -1)
+        }
+        val second = eventGateway.process(message("define verbose"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, second)
     }
 
     @Test

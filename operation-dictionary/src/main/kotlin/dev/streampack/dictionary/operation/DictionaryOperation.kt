@@ -18,7 +18,7 @@ import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
 /**
- * Looks up word definitions from the Free Dictionary API.
+ * Looks up word definitions from the Free Dictionary API, crediting Wiktionary as their source.
  *
  * Acts as a factoid cache-miss handler: runs after the factoid get operation (priority 90) so that
  * known definitions are served from the factoid store. On first lookup, fetches the definition from
@@ -48,7 +48,8 @@ class DictionaryOperation(
 
     override fun handle(payload: DictionaryRequest, message: Message<*>): OperationOutcome? {
         val result = lookupService.lookup(payload.word) ?: return null
-        val description = "${result.word} (${result.partOfSpeech}): ${result.definition}"
+        val description =
+            "${result.word} (${result.partOfSpeech}): ${result.definition} ${result.credit}"
 
         seedFactoid(payload.selector, description)
 
@@ -57,6 +58,12 @@ class DictionaryOperation(
 
     /** Create a factoid so future lookups hit the factoid cache instead of the API */
     private fun seedFactoid(selector: String, value: String) {
+        // Caching without the credit would drop the attribution, so a definition too long to
+        // carry it is simply not cached
+        if ("<reply>$value".length > MAX_FACTOID_TEXT) {
+            logger.debug("Definition for '{}' is too long to cache as a factoid", selector)
+            return
+        }
         try {
             val factoidText = "$selector=<reply>$value"
             val msg = MessageBuilder.withPayload(factoidText).build()
@@ -67,6 +74,9 @@ class DictionaryOperation(
     }
 
     private companion object {
+        /** factoid_attributes.attribute_value is VARCHAR(512) */
+        private const val MAX_FACTOID_TEXT = 512
+
         private val matcher =
             CommandPatternMatcher(
                 listOf(

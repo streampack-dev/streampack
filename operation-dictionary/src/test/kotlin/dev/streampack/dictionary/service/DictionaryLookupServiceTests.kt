@@ -49,6 +49,36 @@ class DictionaryLookupServiceTests {
     }
 
     @Test
+    fun `carries the source page and license from the response`() {
+        httpServer.createContext("/word") { exchange ->
+            val json = dictionaryJson("ephemeral", "adjective", "lasting for a very short time.")
+            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(json.toByteArray()) }
+        }
+
+        val result = lookupService.lookupUrl("$baseUrl/word")!!
+        assertEquals("https://en.wiktionary.org/wiki/ephemeral", result.sourceUrl)
+        assertEquals("CC BY-SA 3.0", result.license)
+        assertEquals(
+            "Source: https://en.wiktionary.org/wiki/ephemeral (Wiktionary, CC BY-SA 3.0)",
+            result.credit,
+        )
+    }
+
+    @Test
+    fun `falls back to the Wiktionary page when the response has no source`() {
+        httpServer.createContext("/word") { exchange ->
+            val json = dictionaryJson("ice cream", "noun", "a frozen dessert.", credited = false)
+            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(json.toByteArray()) }
+        }
+
+        val result = lookupService.lookupUrl("$baseUrl/word")!!
+        assertEquals("https://en.wiktionary.org/wiki/ice_cream", result.sourceUrl)
+        assertEquals("CC BY-SA", result.license)
+    }
+
+    @Test
     fun `returns null for 404 response`() {
         httpServer.createContext("/missing") { exchange -> exchange.sendResponseHeaders(404, -1) }
 
