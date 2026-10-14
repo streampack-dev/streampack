@@ -15,6 +15,7 @@ data class StreampackProperties(
     val refreshToken: RefreshTokenProperties = RefreshTokenProperties(),
     val cookie: CookieProperties = CookieProperties(),
     val maxHops: Int = 3,
+    val logs: LogsProperties = LogsProperties(),
 ) {
     data class JwtProperties(val secret: String = "", val expirationHours: Long = 24)
 
@@ -35,4 +36,7 @@ data class StreampackProperties(
     data class RefreshTokenProperties(val days: Long = 30)
 
     data class CookieProperties(val secure: Boolean = true)
+
+    /** [zone] is the IANA timezone channel logs are split into days by (#212) */
+    data class LogsProperties(val zone: String = "UTC")
 }

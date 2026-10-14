@@ -1218,6 +1218,9 @@
           "authentication" : {
             "$ref" : "#/components/schemas/AuthenticationFeatures"
           },
+          "logs" : {
+            "$ref" : "#/components/schemas/LogsFeature"
+          },
           "operationGroups" : {
             "items" : {
               "type" : "string"
@@ -1231,7 +1234,7 @@
             "$ref" : "#/components/schemas/VersionInfo"
           }
         },
-        "required" : [ "adapters", "ai", "anonymousSubmission", "authentication", "operationGroups", "siteName", "version" ],
+        "required" : [ "adapters", "ai", "anonymousSubmission", "authentication", "logs", "operationGroups", "siteName", "version" ],
         "type" : "object"
       },
       "FeedTagEntry" : {
@@ -1627,6 +1630,15 @@
           }
         },
         "required" : [ "principal", "token" ],
+        "type" : "object"
+      },
+      "LogsFeature" : {
+        "properties" : {
+          "zone" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "zone" ],
         "type" : "object"
       },
       "MessageResponse" : {
@@ -3464,7 +3476,7 @@
     },
     "/admin/moderation/logs" : {
       "get" : {
-        "description" : "One UTC day of a channel's log as an admin reviews it: every line with its id, hidden ones included and marked `hidden`, oldest first, at most 5000. Direct conversations are never returned. `day` defaults to today.",
+        "description" : "One log day (in the zone `/features` gives as `logs.zone`) of a channel's log as an admin reviews it: every line with its id, hidden ones included and marked `hidden`, oldest first, at most 5000. Direct conversations are never returned. `day` defaults to today.",
         "operationId" : "getModerationLogDay",
         "parameters" : [ {
           "in" : "query",
@@ -7597,7 +7609,7 @@
     },
     "/logs" : {
       "get" : {
-        "description" : "Every line of one UTC day, oldest first, each with its `kind`: `MESSAGE`, `JOIN`, `PART`, `QUIT`, `NICK` or `TOPIC`. `events=none` leaves out channel events (joins, parts, quits, nick changes and topics); `kinds` picks the kinds to include. Without either, every line is returned.",
+        "description" : "Every line of one log day (in the zone `/features` gives as `logs.zone`), oldest first, each with its `kind`: `MESSAGE`, `JOIN`, `PART`, `QUIT`, `NICK` or `TOPIC`. `events=none` leaves out channel events (joins, parts, quits, nick changes and topics); `kinds` picks the kinds to include. Without either, every line is returned.",
         "operationId" : "getDayLogs",
         "parameters" : [ {
           "in" : "query",

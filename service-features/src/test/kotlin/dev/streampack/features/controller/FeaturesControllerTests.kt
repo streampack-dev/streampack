@@ -35,6 +35,14 @@ class FeaturesControllerTests {
     }
 
     @Test
+    fun `GET features gives the log zone, UTC by default`() {
+        mockMvc.get("/features").andExpect {
+            status { isOk() }
+            jsonPath("$.logs.zone") { value("UTC") }
+        }
+    }
+
+    @Test
     fun `GET features returns sorted operation groups`() {
         mockMvc.get("/features").andExpect {
             status { isOk() }
@@ -104,6 +112,22 @@ class FeaturesControllerTests {
         mockMvc.get("/features").andExpect {
             status { isOk() }
             jsonPath("$.siteName") { isNotEmpty() }
+        }
+    }
+}
+
+/** The configured log zone reaches /features, for front ends to label log days with (#212) */
+@SpringBootTest(properties = ["streampack.logs.zone=America/New_York"])
+@AutoConfigureMockMvc(addFilters = false)
+@Import(TestSecurityConfiguration::class)
+class FeaturesLogZoneTests {
+    @Autowired lateinit var mockMvc: MockMvc
+
+    @Test
+    fun `GET features gives the configured log zone`() {
+        mockMvc.get("/features").andExpect {
+            status { isOk() }
+            jsonPath("$.logs.zone") { value("America/New_York") }
         }
     }
 }

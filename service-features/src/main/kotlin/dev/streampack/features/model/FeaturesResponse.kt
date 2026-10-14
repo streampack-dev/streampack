@@ -10,7 +10,11 @@ data class FeaturesResponse(
     val adapters: List<String>,
     val ai: Boolean,
     val anonymousSubmission: Boolean,
+    val logs: LogsFeature,
 )
+
+/** How channel logs are kept: [zone] is the IANA timezone their days are split by (#212) */
+data class LogsFeature(val zone: String)
 
 /** Build identity from BuildProperties and GitProperties */
 data class VersionInfo(

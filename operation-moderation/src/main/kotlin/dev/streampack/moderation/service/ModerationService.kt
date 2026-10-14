@@ -5,6 +5,7 @@ import dev.streampack.core.entity.MessageLog
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.MessageLogRepository
+import dev.streampack.core.service.LogDays
 import dev.streampack.moderation.config.ModerationProperties
 import dev.streampack.moderation.entity.ModerationAction
 import dev.streampack.moderation.entity.ModerationReport
@@ -22,7 +23,6 @@ import dev.streampack.moderation.repository.ModerationActionRepository
 import dev.streampack.moderation.repository.ModerationReportRepository
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 import java.util.UUID
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
@@ -43,6 +43,7 @@ class ModerationService(
     private val actions: ModerationActionRepository,
     private val messageLog: MessageLogRepository,
     private val properties: ModerationProperties,
+    private val logDays: LogDays,
 ) {
     private val logger = LoggerFactory.getLogger(ModerationService::class.java)
 
@@ -70,13 +71,13 @@ class ModerationService(
     @Transactional(readOnly = true) fun detail(id: UUID): ReportDetail = detail(find(id))
 
     /**
-     * One UTC day of a channel's log with hidden lines included and marked, for an admin to find
+     * One log day of a channel's log with hidden lines included and marked, for an admin to find
      * and unhide them. Direct lines are never included.
      */
     @Transactional(readOnly = true)
     fun logDay(provenanceUri: String, day: LocalDate): ModerationLogDay {
-        val start = day.atStartOfDay().toInstant(ZoneOffset.UTC)
-        val end = day.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
+        val start = logDays.start(day)
+        val end = logDays.end(day)
         val lines =
             messageLog.findWindowForModeration(provenanceUri, start, end, DAY_LIMIT).map {
                 line(it, emptySet(), emptySet())
@@ -271,7 +272,7 @@ class ModerationService(
         ModerationLine(
             id = log.id,
             timestamp = log.timestamp,
-            day = log.timestamp.atZone(ZoneOffset.UTC).toLocalDate().toString(),
+            day = logDays.dayOf(log.timestamp).toString(),
             sender = log.sender,
             content = log.content,
             direction = log.direction,

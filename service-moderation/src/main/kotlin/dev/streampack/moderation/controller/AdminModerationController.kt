@@ -4,6 +4,7 @@ package dev.streampack.moderation.controller
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.service.JwtService
+import dev.streampack.core.service.LogDays
 import dev.streampack.moderation.dto.ModerationDismissRequest
 import dev.streampack.moderation.dto.ModerationLinesRequest
 import dev.streampack.moderation.dto.ModerationPurgeRequest
@@ -54,6 +55,7 @@ import org.springframework.web.bind.annotation.RestController
 )
 class AdminModerationController(
     private val moderation: ModerationService,
+    private val logDays: LogDays,
     jwtService: JwtService,
 ) : UserAwareController(jwtService) {
 
@@ -259,7 +261,7 @@ class AdminModerationController(
     @Operation(
         summary = "A day of a channel's log, hidden lines included",
         description =
-            "One UTC day of a channel's log as an admin reviews it: every line with its id, " +
+            "One log day (in the zone `/features` gives as `logs.zone`) of a channel's log as an admin reviews it: every line with its id, " +
                 "hidden ones included and marked `hidden`, oldest first, at most 5000. Direct " +
                 "conversations are never returned. `day` defaults to today.",
         operationId = "getModerationLogDay",
@@ -282,7 +284,7 @@ class AdminModerationController(
     ): ResponseEntity<*> =
         asAdmin(httpRequest) {
             val date =
-                if (day.isNullOrBlank()) LocalDate.now(java.time.ZoneOffset.UTC)
+                if (day.isNullOrBlank()) logDays.today()
                 else
                     runCatching { LocalDate.parse(day) }.getOrNull()
                         ?: return@asAdmin badRequest("Invalid day format. Use YYYY-MM-DD")

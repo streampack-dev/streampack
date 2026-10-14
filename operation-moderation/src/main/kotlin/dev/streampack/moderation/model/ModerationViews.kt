@@ -47,7 +47,7 @@ data class ReportListResponse(
 
 /**
  * One message log line in an admin's view. [hidden] lines are out of public view; [flagged] ones
- * raised a signal; [cited] ones are those the model pointed at. [day] is its UTC day, for a link to
+ * raised a signal; [cited] ones are those the model pointed at. [day] is its log day, for a link to
  * the log day.
  *
  * For a flagged line in a report, [signals] names what it raised, [weight] is what it added, and
@@ -92,7 +92,7 @@ data class ReportDetail(
     val actions: List<ModerationActionView>,
 )
 
-/** One UTC day of a channel's log as an admin sees it: hidden lines included, and marked. */
+/** One log day of a channel's log as an admin sees it: hidden lines included, and marked. */
 data class ModerationLogDay(
     val provenanceUri: String,
     val day: String,
