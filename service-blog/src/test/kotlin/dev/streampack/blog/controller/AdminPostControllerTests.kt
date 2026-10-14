@@ -145,6 +145,92 @@ class AdminPostControllerTests {
         }
     }
 
+    // --- GET /admin/posts/scheduled (#207) ---
+
+    private fun post(
+        title: String,
+        status: PostStatus,
+        publishedAt: Instant?,
+        deleted: Boolean = false,
+    ) =
+        postRepository.save(
+            Post(
+                title = title,
+                markdownSource = "$title content.",
+                renderedHtml = "<p>$title content.</p>",
+                excerpt = "$title content.",
+                status = status,
+                deleted = deleted,
+                publishedAt = publishedAt,
+                author = regularUser,
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            )
+        )
+
+    @Test
+    fun `GET scheduled lists approved posts still to go out, soonest first`() {
+        val now = Instant.now()
+        val later = post("Next Week", PostStatus.APPROVED, now.plus(7, ChronoUnit.DAYS))
+        slugRepository.save(Slug(path = "2026/10/next-week", post = later, canonical = true))
+        post("Tomorrow", PostStatus.APPROVED, now.plus(1, ChronoUnit.DAYS))
+        // None of these is scheduled: already out, a draft (even one dated ahead), deleted
+        post("Yesterday", PostStatus.APPROVED, now.minus(1, ChronoUnit.DAYS))
+        post("Dated Draft", PostStatus.DRAFT, now.plus(2, ChronoUnit.DAYS))
+        post("Deleted", PostStatus.APPROVED, now.plus(3, ChronoUnit.DAYS), deleted = true)
+
+        mockMvc
+            .get("/admin/posts/scheduled") { header("Authorization", "Bearer $adminToken") }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.totalCount") { value(2) }
+                jsonPath("$.posts[0].title") { value("Tomorrow") }
+                jsonPath("$.posts[0].publishedAt") { exists() }
+                jsonPath("$.posts[1].title") { value("Next Week") }
+                jsonPath("$.posts[1].id") { value(later.id.toString()) }
+                jsonPath("$.posts[1].slug") { value("2026/10/next-week") }
+            }
+    }
+
+    @Test
+    fun `GET scheduled pages`() {
+        val now = Instant.now()
+        (1..3).forEach {
+            post("Soon $it", PostStatus.APPROVED, now.plus(it.toLong(), ChronoUnit.HOURS))
+        }
+
+        mockMvc
+            .get("/admin/posts/scheduled?page=1&size=2") {
+                header("Authorization", "Bearer $adminToken")
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.page") { value(1) }
+                jsonPath("$.totalPages") { value(2) }
+                jsonPath("$.totalCount") { value(3) }
+                jsonPath("$.posts.length()") { value(1) }
+                jsonPath("$.posts[0].title") { value("Soon 3") }
+            }
+    }
+
+    @Test
+    fun `GET scheduled by non-admin returns 403`() {
+        mockMvc
+            .get("/admin/posts/scheduled") { header("Authorization", "Bearer $regularUserToken") }
+            .andExpect {
+                status { isForbidden() }
+                jsonPath("$.detail") { value("Insufficient privileges: requires ADMIN") }
+            }
+    }
+
+    @Test
+    fun `GET scheduled unauthenticated returns 401`() {
+        mockMvc.get("/admin/posts/scheduled").andExpect {
+            status { isUnauthorized() }
+            jsonPath("$.detail") { value("Authentication required") }
+        }
+    }
+
     // --- PUT /admin/posts/{id}/approve ---
 
     @Test
