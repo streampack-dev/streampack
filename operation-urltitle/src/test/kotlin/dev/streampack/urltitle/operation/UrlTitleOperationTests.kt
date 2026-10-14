@@ -85,15 +85,15 @@ class UrlTitleOperationTests {
     fun `url ignore list returns ignored hosts for anyone`() {
         assertTrue(
             payloadOf(eventGateway.process(textMessage("url ignore list")))
-                .contains("Ignored hosts include:")
+                .contains("Ignored hosts include:"),
         )
         assertTrue(
             payloadOf(
                     eventGateway.process(
-                        textMessage("url ignore list", user = principal(Role.USER))
-                    )
+                        textMessage("url ignore list", user = principal(Role.USER)),
+                    ),
                 )
-                .contains("Ignored hosts include:")
+                .contains("Ignored hosts include:"),
         )
     }
 
@@ -109,8 +109,8 @@ class UrlTitleOperationTests {
         val payload =
             payloadOf(
                 eventGateway.process(
-                    adminMessage("url ignore add https://www.Repopack.example.com/Project/")
-                )
+                    adminMessage("url ignore add https://www.Repopack.example.com/Project/"),
+                ),
             )
         assertEquals("Added repopack.example.com/project to ignored hosts.", payload)
         assertTrue(urlTitleService.findAllIgnoredHosts().contains("repopack.example.com/project"))
@@ -144,7 +144,7 @@ class UrlTitleOperationTests {
     fun `url ignore delete is refused for non-admins`() {
         val result =
             eventGateway.process(
-                textMessage("url ignore delete pastebin.com", user = principal(Role.USER))
+                textMessage("url ignore delete pastebin.com", user = principal(Role.USER)),
             )
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue(urlTitleService.isIgnoredHost("https://pastebin.com/abc"))

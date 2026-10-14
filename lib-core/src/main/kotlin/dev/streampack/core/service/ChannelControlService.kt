@@ -35,7 +35,7 @@ class ChannelControlService(private val repository: ChannelControlOptionsReposit
                 provenanceUri = provenanceUri,
                 visible = !private,
                 logged = !private,
-            )
+            ),
         )
     }
 

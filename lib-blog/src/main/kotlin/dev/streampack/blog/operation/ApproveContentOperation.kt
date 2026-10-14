@@ -53,7 +53,7 @@ class ApproveContentOperation(
                     status = PostStatus.APPROVED,
                     publishedAt = payload.publishedAt,
                     updatedAt = now,
-                )
+                ),
             )
         val approved =
             postRepository.findActiveByIdWithAuthor(saved.id)
@@ -86,7 +86,7 @@ class ApproveContentOperation(
                 categories = postCategoryRepository.findNamesByPost(approved.id),
                 markdownSource = approved.markdownSource,
                 versions = postVersionService.views(approved),
-            )
+            ),
         )
     }
 }

@@ -41,7 +41,7 @@ class IrcRepositoryTests {
     fun `save channel with network FK`() {
         val network =
             networkRepository.save(
-                IrcNetwork(name = "libera-ch", host = "irc.libera.chat", nick = "nevet")
+                IrcNetwork(name = "libera-ch", host = "irc.libera.chat", nick = "nevet"),
             )
         val channel = channelRepository.save(IrcChannel(network = network, name = "#java"))
 
@@ -54,7 +54,12 @@ class IrcRepositoryTests {
     @Test
     fun `findByAutoconnectTrue returns only autoconnect networks`() {
         networkRepository.save(
-            IrcNetwork(name = "auto-net", host = "irc.auto.net", nick = "nevet", autoconnect = true)
+            IrcNetwork(
+                name = "auto-net",
+                host = "irc.auto.net",
+                nick = "nevet",
+                autoconnect = true,
+            ),
         )
         networkRepository.save(
             IrcNetwork(
@@ -62,7 +67,7 @@ class IrcRepositoryTests {
                 host = "irc.manual.net",
                 nick = "nevet",
                 autoconnect = false,
-            )
+            ),
         )
 
         val autoNetworks = networkRepository.findByAutoconnectTrueAndDeletedFalse()
@@ -73,7 +78,7 @@ class IrcRepositoryTests {
     @Test
     fun `soft delete excludes network from queries`() {
         networkRepository.save(
-            IrcNetwork(name = "active-net", host = "irc.active.net", nick = "nevet")
+            IrcNetwork(name = "active-net", host = "irc.active.net", nick = "nevet"),
         )
         networkRepository.save(
             IrcNetwork(
@@ -81,7 +86,7 @@ class IrcRepositoryTests {
                 host = "irc.deleted.net",
                 nick = "nevet",
                 deleted = true,
-            )
+            ),
         )
 
         val active = networkRepository.findByDeletedFalse()
@@ -95,7 +100,7 @@ class IrcRepositoryTests {
     fun `soft delete excludes channel from queries`() {
         val network =
             networkRepository.save(
-                IrcNetwork(name = "libera-del", host = "irc.libera.chat", nick = "nevet")
+                IrcNetwork(name = "libera-del", host = "irc.libera.chat", nick = "nevet"),
             )
         channelRepository.save(IrcChannel(network = network, name = "#active-ch"))
         channelRepository.save(IrcChannel(network = network, name = "#deleted-ch", deleted = true))
@@ -128,7 +133,7 @@ class IrcRepositoryTests {
     fun `channel provenanceUri encodes correctly`() {
         val network =
             networkRepository.save(
-                IrcNetwork(name = "libera-uri", host = "irc.libera.chat", nick = "nevet")
+                IrcNetwork(name = "libera-uri", host = "irc.libera.chat", nick = "nevet"),
             )
         val channel = channelRepository.save(IrcChannel(network = network, name = "#java"))
         val uri = channel.provenanceUri()

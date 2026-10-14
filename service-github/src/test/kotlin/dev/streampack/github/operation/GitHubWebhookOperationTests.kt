@@ -131,7 +131,7 @@ class GitHubWebhookOperationTests {
                 dev.streampack.github.entity.GitHubInstance(
                     host = "ghe.example.com",
                     apiUrl = "https://ghe.example.com/api/v3",
-                )
+                ),
             )
         val result =
             eventGateway.process(message("github webhook private owner/repo on ghe.example.com"))

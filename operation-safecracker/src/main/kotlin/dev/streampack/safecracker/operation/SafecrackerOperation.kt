@@ -55,7 +55,7 @@ class SafecrackerOperation(
             val remaining = state.formatTimeRemaining(Instant.now())
             return OperationResult.Success(
                 "Safecracker game in progress! ($remaining to go!)" +
-                    " Use '{{ref:safecracker N N N N}}' to guess."
+                    " Use '{{ref:safecracker N N N N}}' to guess.",
             )
         }
 
@@ -74,7 +74,7 @@ class SafecrackerOperation(
 
         val pattern = ". ".repeat(SafecrackerGameState.COMBINATION_LENGTH).trim()
         return OperationResult.Success(
-            "safecracker pattern: $pattern Good luck, players! (5:00 to go!)"
+            "safecracker pattern: $pattern Good luck, players! (5:00 to go!)",
         )
     }
 
@@ -82,13 +82,13 @@ class SafecrackerOperation(
         val existing =
             stateService.getState(provenanceUri, SafecrackerGameState.STATE_KEY)
                 ?: return OperationResult.Error(
-                    "No game in progress. Use '{{ref:safecracker}}' to start a new game."
+                    "No game in progress. Use '{{ref:safecracker}}' to start a new game.",
                 )
 
         val digits =
             parseGuess(args)
                 ?: return OperationResult.Error(
-                    "Guess must be 4 digits (0-9) separated by spaces. Example: {{ref:safecracker 3 0 3 0}}"
+                    "Guess must be 4 digits (0-9) separated by spaces. Example: {{ref:safecracker 3 0 3 0}}",
                 )
 
         val state = objectMapper.convertValue<SafecrackerGameState>(existing)
@@ -98,14 +98,14 @@ class SafecrackerOperation(
             stateService.clearState(provenanceUri, SafecrackerGameState.STATE_KEY)
             timerService.unregisterGame(provenanceUri)
             return OperationResult.Success(
-                "$playerName has broken the code! Way to go, $playerName!"
+                "$playerName has broken the code! Way to go, $playerName!",
             )
         }
 
         val feedback = state.feedback(digits)
         val remaining = state.formatTimeRemaining(Instant.now())
         return OperationResult.Success(
-            "safecracker result for $playerName: $feedback ($remaining to go!)"
+            "safecracker result for $playerName: $feedback ($remaining to go!)",
         )
     }
 
@@ -113,7 +113,7 @@ class SafecrackerOperation(
         val existing =
             stateService.getState(provenanceUri, SafecrackerGameState.STATE_KEY)
                 ?: return OperationResult.Success(
-                    "No game in progress. Use '{{ref:safecracker}}' to start one."
+                    "No game in progress. Use '{{ref:safecracker}}' to start one.",
                 )
 
         val state = objectMapper.convertValue<SafecrackerGameState>(existing)

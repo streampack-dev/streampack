@@ -31,7 +31,7 @@ class PageOffsetAdvice {
                 ProblemDetail.forStatusAndDetail(
                     HttpStatus.BAD_REQUEST,
                     "That page is too far past the end.",
-                )
+                ),
             )
     }
 

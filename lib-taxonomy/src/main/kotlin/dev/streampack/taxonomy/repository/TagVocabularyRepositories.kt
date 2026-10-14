@@ -39,7 +39,7 @@ interface TagReviewRepository : JpaRepository<TagReview, UUID> {
         WHERE (:status IS NULL OR r.status = :status)
         ORDER BY CASE WHEN r.aiConfidence IS NULL THEN 1 ELSE 0 END, r.aiConfidence DESC,
           r.firstSeen DESC
-        """
+        """,
     )
     fun findQueue(status: TagReviewStatus?, pageable: Pageable): List<TagReview>
 

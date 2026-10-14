@@ -60,7 +60,7 @@ class TemperatureService(
                     bucketDate = occurredOn,
                     positiveDelta = positiveDelta,
                     negativeDelta = negativeDelta,
-                )
+                ),
             )
         } else {
             repository.save(
@@ -68,7 +68,7 @@ class TemperatureService(
                     positiveDelta = existing.positiveDelta + positiveDelta,
                     negativeDelta = existing.negativeDelta + negativeDelta,
                     updatedAt = Instant.now(),
-                )
+                ),
             )
         }
 

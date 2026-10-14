@@ -1,14 +1,13 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import dev.streampack.core.json.JacksonMappers
 import java.net.URI
 import java.net.URLEncoder
+import java.time.Duration
 import java.util.Optional
-import java.util.concurrent.TimeUnit
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -24,10 +23,9 @@ class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
     private val mapper = JacksonMappers.standard()
 
     private val titleCache: LoadingCache<String, Optional<String>> =
-        CacheBuilder.newBuilder()
-            .maximumSize(100)
-            .expireAfterWrite(1, TimeUnit.HOURS)
-            .build(CacheLoader.from { url -> Optional.ofNullable(loadTitle(url)) })
+        Caffeine.newBuilder().maximumSize(100).expireAfterWrite(Duration.ofHours(1)).build { url ->
+            Optional.ofNullable(loadTitle(url))
+        }
 
     companion object {
         private val YOUTUBE_HOSTS =
@@ -37,7 +35,7 @@ class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
     }
 
     override fun fetchTitle(url: String): String? {
-        return titleCache.get(url).orElse(null)
+        return titleCache.get(url)?.orElse(null)
     }
 
     override fun fetchTitleResult(url: String): TitleFetchResult {

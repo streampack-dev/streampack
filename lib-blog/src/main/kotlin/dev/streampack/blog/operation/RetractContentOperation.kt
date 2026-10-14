@@ -42,7 +42,7 @@ class RetractContentOperation(private val postRepository: PostRepository) :
         logger.info("Post retracted: {}", post.id)
 
         return OperationResult.Success(
-            ContentOperationConfirmation(id = post.id, message = "Post retracted")
+            ContentOperationConfirmation(id = post.id, message = "Post retracted"),
         )
     }
 }

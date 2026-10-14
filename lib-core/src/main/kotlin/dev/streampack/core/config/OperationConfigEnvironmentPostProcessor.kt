@@ -41,7 +41,7 @@ class OperationConfigEnvironmentPostProcessor : EnvironmentPostProcessor, Ordere
                         FROM operation_config
                         WHERE provenance_pattern = '' AND operation_group LIKE 'service:%'
                         """
-                            .trimIndent()
+                            .trimIndent(),
                     )
                 stmt.use { ps ->
                     ps.executeQuery().use { rs ->
@@ -61,7 +61,7 @@ class OperationConfigEnvironmentPostProcessor : EnvironmentPostProcessor, Ordere
 
         if (overrides.isNotEmpty()) {
             environment.propertySources.addFirst(
-                MapPropertySource("operationConfigOverrides", overrides)
+                MapPropertySource("operationConfigOverrides", overrides),
             )
         }
     }

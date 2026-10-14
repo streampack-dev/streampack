@@ -129,7 +129,7 @@ class AdminCategoryController(
                         ProblemDetail.forStatusAndDetail(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "Unhandled request",
-                        )
+                        ),
                     )
             }
         }
@@ -163,7 +163,7 @@ class AdminCategoryController(
                         ProblemDetail.forStatusAndDetail(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "Unhandled request",
-                        )
+                        ),
                     )
             }
         }

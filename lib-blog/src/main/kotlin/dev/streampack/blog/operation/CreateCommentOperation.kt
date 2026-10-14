@@ -84,7 +84,7 @@ class CreateCommentOperation(
                     renderedHtml = renderedHtml,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         blogNotificationService.notifyComment(post, parentComment, comment)
@@ -98,7 +98,7 @@ class CreateCommentOperation(
                 authorDisplayName = user.displayName,
                 renderedHtml = comment.renderedHtml,
                 createdAt = comment.createdAt,
-            )
+            ),
         )
     }
 }

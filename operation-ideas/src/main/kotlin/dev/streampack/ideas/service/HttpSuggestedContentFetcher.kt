@@ -20,7 +20,7 @@ class HttpSuggestedContentFetcher(private val pageFetcher: PageFetcher) : Sugges
                 )
             }
             return FetchOutcome.Failure(
-                fetchResult.warnings.firstOrNull() ?: "Fetched page body was empty"
+                fetchResult.warnings.firstOrNull() ?: "Fetched page body was empty",
             )
         }
 

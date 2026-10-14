@@ -19,7 +19,7 @@ class GitHubWebhookDeliveryTrackerTests {
                     readTimeoutSeconds = 10,
                     webhookSecretKey = "test-key",
                     deliveryDedupeTtl = Duration.ofMinutes(10),
-                )
+                ),
             )
 
         assertFalse(tracker.isDuplicate("delivery-abc"))

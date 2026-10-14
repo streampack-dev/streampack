@@ -13,7 +13,7 @@ class FeedCategoriesTests {
                 FeedTagSamples.rss(
                     "https://a.example",
                     mapOf("1" to listOf("Spring-Boot", "#Kotlin", "load_testing", "  Java  ")),
-                )
+                ),
             )
         assertEquals(
             listOf(
@@ -30,7 +30,7 @@ class FeedCategoriesTests {
     fun `Atom category terms are kept, not their labels`() {
         val feed =
             FeedTagSamples.parse(
-                FeedTagSamples.atom("https://b.example", mapOf("1" to listOf("Kotlin", "C#")))
+                FeedTagSamples.atom("https://b.example", mapOf("1" to listOf("Kotlin", "C#"))),
             )
         assertEquals(
             listOf(FeedCategory("kotlin", "Kotlin"), FeedCategory("c#", "C#")),
@@ -46,7 +46,7 @@ class FeedCategoriesTests {
                 FeedTagSamples.rss(
                     "https://a.example",
                     mapOf("1" to listOf("Spring Boot", "spring-boot", "#", "-", tooLong, "c++")),
-                )
+                ),
             )
         assertEquals(
             listOf(FeedCategory("spring boot", "Spring Boot"), FeedCategory("c++", "c++")),

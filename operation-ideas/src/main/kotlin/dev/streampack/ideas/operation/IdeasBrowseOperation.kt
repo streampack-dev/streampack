@@ -70,7 +70,7 @@ class IdeasBrowseOperation(
                 OperationResult.Error(
                     "Unknown ideas command. Use '{{ref:ideas}}' to list, " +
                         "'{{ref:ideas search <term>}}' to search, " +
-                        "or '{{ref:ideas remove #N}}' to remove."
+                        "or '{{ref:ideas remove #N}}' to remove.",
                 )
         }
     }
@@ -139,7 +139,7 @@ class IdeasBrowseOperation(
         val ideas = findIdeaPosts()
         if (number < 1 || number > ideas.size) {
             return OperationResult.Error(
-                "Idea #$number not found. There are ${ideas.size} idea${if (ideas.size != 1) "s" else ""}."
+                "Idea #$number not found. There are ${ideas.size} idea${if (ideas.size != 1) "s" else ""}.",
             )
         }
         val idea = ideas[number - 1]

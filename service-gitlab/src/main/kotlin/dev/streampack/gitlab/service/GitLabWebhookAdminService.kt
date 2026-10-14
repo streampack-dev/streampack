@@ -48,7 +48,7 @@ class GitLabWebhookAdminService(
     ): GitLabWebhookEnableOutcome {
         if (!secretCipher.isConfigured) {
             return GitLabWebhookEnableOutcome.NotConfigured(
-                GitLabWebhookSecretCipher.NOT_CONFIGURED_MESSAGE
+                GitLabWebhookSecretCipher.NOT_CONFIGURED_MESSAGE,
             )
         }
         if (!GitLabForgeClient.isValidPath(path)) {

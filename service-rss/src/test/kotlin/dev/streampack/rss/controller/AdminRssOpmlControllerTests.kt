@@ -47,7 +47,7 @@ class AdminRssOpmlControllerTests {
                     displayName = "RSS Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         adminToken = jwtService.generateToken(admin.toUserPrincipal())
 
@@ -59,7 +59,7 @@ class AdminRssOpmlControllerTests {
                     displayName = "RSS User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         userToken = jwtService.generateToken(user.toUserPrincipal())
     }
@@ -90,7 +90,7 @@ class AdminRssOpmlControllerTests {
                 siteUrl = "https://example.com",
                 title = "Example Feed",
                 active = true,
-            )
+            ),
         )
 
         mockMvc
@@ -166,7 +166,7 @@ class AdminRssOpmlControllerTests {
             .perform(
                 multipart("/admin/rss/opml/import")
                     .file(file)
-                    .header("Authorization", "Bearer $adminToken")
+                    .header("Authorization", "Bearer $adminToken"),
             )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.added").value(0))

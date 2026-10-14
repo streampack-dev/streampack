@@ -64,7 +64,10 @@ class AdminFactoidController(
     private fun unauthorized(): ResponseEntity<ProblemDetail> =
         ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(
-                ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Authentication required")
+                ProblemDetail.forStatusAndDetail(
+                    HttpStatus.UNAUTHORIZED,
+                    "Authentication required",
+                ),
             )
 
     private fun forbidden(): ResponseEntity<ProblemDetail> =
@@ -73,6 +76,6 @@ class AdminFactoidController(
                 ProblemDetail.forStatusAndDetail(
                     HttpStatus.FORBIDDEN,
                     "Insufficient privileges: requires ADMIN",
-                )
+                ),
             )
 }

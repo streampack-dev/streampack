@@ -25,7 +25,7 @@ class RecordPostAccessOperation(
         val post =
             postRepository.findById(payload.id).orElse(null) ?: return Consumed("post missing")
         postRepository.save(
-            post.copy(accessCount = post.accessCount + 1, lastAccessedAt = Instant.now())
+            post.copy(accessCount = post.accessCount + 1, lastAccessedAt = Instant.now()),
         )
         temperatureService.accrue(
             namespace = BlogTemperature.POST_NAMESPACE,

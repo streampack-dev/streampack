@@ -152,7 +152,7 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
           AND m.direct = false
           AND m.hidden = false
         ORDER BY m.timestamp DESC
-        """
+        """,
     )
     fun findRecentBySenderOnProtocol(
         sender: String,

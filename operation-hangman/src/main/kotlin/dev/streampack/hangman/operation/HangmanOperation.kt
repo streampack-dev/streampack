@@ -58,7 +58,7 @@ class HangmanOperation(
             else ->
                 OperationResult.Error(
                     "Unknown hangman command. Use '{{ref:hangman}}' to start, " +
-                        "'{{ref:hangman <letter>}}' to guess, or '{{ref:hangman solve <word>}}' to solve."
+                        "'{{ref:hangman <letter>}}' to guess, or '{{ref:hangman solve <word>}}' to solve.",
                 )
         }
     }
@@ -79,7 +79,7 @@ class HangmanOperation(
         )
         return OperationResult.Success(
             "Hangman: ${state.maskedWord} (${state.livesRemaining}/${HangmanGameState.MAX_LIVES} lives)" +
-                " -- Use '{{ref:hangman <letter>}}' to guess, '{{ref:hangman solve <word>}}' to solve."
+                " -- Use '{{ref:hangman <letter>}}' to guess, '{{ref:hangman solve <word>}}' to solve.",
         )
     }
 
@@ -91,7 +91,7 @@ class HangmanOperation(
         val existing =
             stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
                 ?: return OperationResult.Error(
-                    "No game in progress. Use '{{ref:hangman}}' to start a new game."
+                    "No game in progress. Use '{{ref:hangman}}' to start a new game.",
                 )
 
         val state = objectMapper.convertValue<HangmanGameState>(existing)
@@ -114,14 +114,14 @@ class HangmanOperation(
         if (updated.isWon) {
             stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
             return OperationResult.Success(
-                "$playerName got it! The word was '${state.word}'. Use '{{ref:hangman}}' to play again."
+                "$playerName got it! The word was '${state.word}'. Use '{{ref:hangman}}' to play again.",
             )
         }
 
         if (updated.isLost) {
             stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
             return OperationResult.Success(
-                "No lives left! The word was '${state.word}'. Use '{{ref:hangman}}' to start over."
+                "No lives left! The word was '${state.word}'. Use '{{ref:hangman}}' to start over.",
             )
         }
 
@@ -135,7 +135,7 @@ class HangmanOperation(
             OperationResult.Success(
                 "Hangman: ${updated.maskedWord} " +
                     "(${updated.livesRemaining}/${HangmanGameState.MAX_LIVES} lives, " +
-                    "guessed: ${formatGuessed(updated)}) -- '$letter' is in the word!"
+                    "guessed: ${formatGuessed(updated)}) -- '$letter' is in the word!",
             )
         } else {
             OperationResult.Success(
@@ -148,7 +148,7 @@ class HangmanOperation(
                             } else {
                                 "life"
                             }
-                        } left."
+                        } left.",
             )
         }
     }
@@ -157,7 +157,7 @@ class HangmanOperation(
         val existing =
             stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
                 ?: return OperationResult.Error(
-                    "No game in progress. Use '{{ref:hangman}}' to start a new game."
+                    "No game in progress. Use '{{ref:hangman}}' to start a new game.",
                 )
 
         val state = objectMapper.convertValue<HangmanGameState>(existing)
@@ -166,7 +166,7 @@ class HangmanOperation(
             stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
             val reaction = solveReaction(state.guessedLetters.size, playerName)
             return OperationResult.Success(
-                "$reaction The word was '${state.word}'. Use '{{ref:hangman}}' to play again."
+                "$reaction The word was '${state.word}'. Use '{{ref:hangman}}' to play again.",
             )
         }
 
@@ -174,7 +174,7 @@ class HangmanOperation(
         if (updated.isLost) {
             stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
             return OperationResult.Success(
-                "No lives left! The word was '${state.word}'. Use '{{ref:hangman}}' to start over."
+                "No lives left! The word was '${state.word}'. Use '{{ref:hangman}}' to start over.",
             )
         }
 
@@ -184,7 +184,7 @@ class HangmanOperation(
             objectMapper.convertValue<Map<String, Any>>(updated),
         )
         return OperationResult.Success(
-            "'${guess.lowercase()}' is not the word. ${formatState(updated)}"
+            "'${guess.lowercase()}' is not the word. ${formatState(updated)}",
         )
     }
 
@@ -192,13 +192,13 @@ class HangmanOperation(
         val existing =
             stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
                 ?: return OperationResult.Success(
-                    "No game in progress. Use '{{ref:hangman}}' to start one."
+                    "No game in progress. Use '{{ref:hangman}}' to start one.",
                 )
 
         val state = objectMapper.convertValue<HangmanGameState>(existing)
         stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
         return OperationResult.Success(
-            "$playerName concedes. The word was '${state.word}'. Use '{{ref:hangman}}' for a new game."
+            "$playerName concedes. The word was '${state.word}'. Use '{{ref:hangman}}' for a new game.",
         )
     }
 

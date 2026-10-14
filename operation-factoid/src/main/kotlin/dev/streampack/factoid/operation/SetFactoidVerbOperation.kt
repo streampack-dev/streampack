@@ -48,7 +48,7 @@ class SetFactoidVerbOperation(
                 eventGateway.send(
                     MessageBuilder.withPayload(FactoidUpdatedEvent(payload.selector))
                         .copyHeadersIfAbsent(message.headers.forFollowUp())
-                        .build()
+                        .build(),
                 )
                 logger.debug("Factoid '{}' updated by {}", payload.selector, senderNick)
                 OperationResult.Success("ok, $senderNick: updated ${payload.selector}.")

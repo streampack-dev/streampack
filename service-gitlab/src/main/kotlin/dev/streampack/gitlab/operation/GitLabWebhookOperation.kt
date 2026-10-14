@@ -55,7 +55,7 @@ class GitLabWebhookOperation(
                     listOf(path, on, host),
                 ),
                 CommandPattern("gitlab_webhook", listOf("gitlab", "webhook"), listOf(path)),
-            )
+            ),
         )
 
     private val webhookBaseUrl =
@@ -97,7 +97,7 @@ class GitLabWebhookOperation(
                     "Webhook enabled for $name. Configure GitLab to POST to ${webhookUrl(instance)} " +
                         "with the provided Secret token (sent to you directly) for Issues, " +
                         "Merge request, and Releases events. GitLab sends the token verbatim, " +
-                        "so the URL must be HTTPS.$note"
+                        "so the URL must be HTTPS.$note",
                 )
             }
             is GitLabWebhookEnableOutcome.ProjectInactive ->

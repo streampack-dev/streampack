@@ -93,7 +93,7 @@ class IdeasBrowseOperationTests {
                     markdownSource = "Test content for $title",
                     renderedHtml = "<p>Test content for $title</p>",
                     status = PostStatus.DRAFT,
-                )
+                ),
             )
         postTagRepository.save(PostTag(post = post, tag = ideaTag))
         return post
@@ -206,7 +206,7 @@ class IdeasBrowseOperationTests {
                     markdownSource = "content",
                     renderedHtml = "<p>content</p>",
                     status = PostStatus.APPROVED,
-                )
+                ),
             )
         postTagRepository.save(PostTag(post = post, tag = ideaTag))
         createIdea("Draft Idea")

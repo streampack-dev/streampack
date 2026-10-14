@@ -192,7 +192,7 @@ class FeedManagementOperationTests {
         val result = eventGateway.process(message("feed remove $feedUrl"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue(
-            (result as OperationResult.Success).payload.toString().contains("already inactive")
+            (result as OperationResult.Success).payload.toString().contains("already inactive"),
         )
     }
 
@@ -288,7 +288,7 @@ class FeedManagementOperationTests {
         eventGateway.process(consoleMessage("feed subscribe $feedUrl to irc://libera/%23java"))
         val result =
             eventGateway.process(
-                consoleMessage("feed unsubscribe $feedUrl to irc://libera/%23java")
+                consoleMessage("feed unsubscribe $feedUrl to irc://libera/%23java"),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals(

@@ -65,7 +65,7 @@ class UrlTitleSummaryTests {
             service.titleFetcher = htmlTitleFetcher
             val result =
                 eventGateway.process(
-                    message("check https://www.youtube.com/watch?v=jNDWnMfDnuw out")
+                    message("check https://www.youtube.com/watch?v=jNDWnMfDnuw out"),
                 )
             assertInstanceOf(OperationResult.Success::class.java, result)
             val payload = (result as OperationResult.Success).payload as String
@@ -83,7 +83,7 @@ class UrlTitleSummaryTests {
         testFetcher.setTitle("https://xyz.example.com/page2", "Another Unrelated Title")
         val result =
             eventGateway.process(
-                message("see https://abc.example.com/page1 and https://xyz.example.com/page2")
+                message("see https://abc.example.com/page1 and https://xyz.example.com/page2"),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
@@ -104,8 +104,8 @@ class UrlTitleSummaryTests {
         val result =
             eventGateway.process(
                 message(
-                    "https://kotlinlang.org/docs/coroutines is great https://kotlinlang.org/docs/coroutines"
-                )
+                    "https://kotlinlang.org/docs/coroutines is great https://kotlinlang.org/docs/coroutines",
+                ),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
@@ -130,7 +130,7 @@ class UrlTitleSummaryTests {
         // second URL has no title registered in the test fetcher
         val result =
             eventGateway.process(
-                message("https://abc.example.com/page1 and https://nope.example.com/missing")
+                message("https://abc.example.com/page1 and https://nope.example.com/missing"),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
@@ -151,7 +151,7 @@ class UrlTitleSummaryTests {
         testFetcher.setTitle("https://xyz.example.com/page2", "Just a moment...")
         val result =
             eventGateway.process(
-                message("see https://abc.example.com/page1 and https://xyz.example.com/page2")
+                message("see https://abc.example.com/page1 and https://xyz.example.com/page2"),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String

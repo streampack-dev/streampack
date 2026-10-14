@@ -121,7 +121,7 @@ class OperationConfigAdminTests {
         val result = eventGateway.process(buildMessage("operation"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue(
-            (result as OperationResult.Success).payload.toString().contains("Operation Admin")
+            (result as OperationResult.Success).payload.toString().contains("Operation Admin"),
         )
     }
 
@@ -172,7 +172,7 @@ class OperationConfigAdminTests {
     fun `operation set stores config value`() {
         val result =
             eventGateway.process(
-                buildMessage("operation set test-admin-op maxItems 50", Role.ADMIN)
+                buildMessage("operation set test-admin-op maxItems 50", Role.ADMIN),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
 
@@ -185,7 +185,7 @@ class OperationConfigAdminTests {
         val result = eventGateway.process(buildMessage("operation explode", Role.ADMIN))
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue(
-            (result as OperationResult.Error).message.contains("Unknown operation subcommand")
+            (result as OperationResult.Error).message.contains("Unknown operation subcommand"),
         )
     }
 
@@ -221,7 +221,7 @@ class OperationConfigAdminTests {
         val result = eventGateway.process(buildMessage("channel"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue(
-            (result as OperationResult.Success).payload.toString().contains("Channel Config")
+            (result as OperationResult.Success).payload.toString().contains("Channel Config"),
         )
     }
 
@@ -248,7 +248,7 @@ class OperationConfigAdminTests {
     @Test
     fun `channel disable with for clause targets specific provenance`() {
         eventGateway.process(
-            buildMessage("channel disable test-admin-op for irc://oftc/%23java", Role.ADMIN)
+            buildMessage("channel disable test-admin-op for irc://oftc/%23java", Role.ADMIN),
         )
         val config = configService.findConfig("irc://oftc/%23java", "test-admin-op")
         assertFalse(config!!.enabled)
@@ -300,7 +300,7 @@ class OperationConfigAdminTests {
                 buildMessage(
                     "channel set test-admin-op greeting hello there for irc://oftc/%23kotlin",
                     Role.ADMIN,
-                )
+                ),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
 
@@ -314,7 +314,9 @@ class OperationConfigAdminTests {
         val result = eventGateway.process(message)
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue(
-            (result as OperationResult.Error).message.contains("Cannot determine target provenance")
+            (result as OperationResult.Error)
+                .message
+                .contains("Cannot determine target provenance"),
         )
     }
 }

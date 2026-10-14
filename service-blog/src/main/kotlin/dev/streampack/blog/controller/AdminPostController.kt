@@ -294,7 +294,7 @@ class AdminPostController(
                         ProblemDetail.forStatusAndDetail(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "Unhandled request",
-                        )
+                        ),
                     )
             }
         }

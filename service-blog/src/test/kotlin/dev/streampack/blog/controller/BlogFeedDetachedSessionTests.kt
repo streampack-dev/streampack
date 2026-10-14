@@ -53,7 +53,7 @@ class BlogFeedDetachedSessionTests {
                     displayName = "Detached Feed Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         post =
             postRepository.saveAndFlush(
@@ -67,7 +67,7 @@ class BlogFeedDetachedSessionTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slug =
             slugRepository.saveAndFlush(
@@ -76,7 +76,7 @@ class BlogFeedDetachedSessionTests {
                     post = post!!,
                     canonical = true,
                     createdAt = now,
-                )
+                ),
             )
         entityManager.clear()
 

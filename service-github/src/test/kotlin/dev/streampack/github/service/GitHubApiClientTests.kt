@@ -176,7 +176,7 @@ class GitHubApiClientTests {
         }
 
         org.junit.jupiter.api.Assertions.assertThrows(
-            dev.streampack.forge.client.ForgeApiException::class.java
+            dev.streampack.forge.client.ForgeApiException::class.java,
         ) {
             apiClient.fetchIssues(apiUrl, "owner", "repo", null, 0)
         }

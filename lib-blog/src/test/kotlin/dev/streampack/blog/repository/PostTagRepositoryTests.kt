@@ -33,7 +33,7 @@ class PostTagRepositoryTests {
                     title = "Tagged Post",
                     markdownSource = "content",
                     renderedHtml = "<p>content</p>",
-                )
+                ),
             )
         testTag = tagRepository.save(Tag(name = "kotlin", slug = "kotlin"))
     }
@@ -66,7 +66,7 @@ class PostTagRepositoryTests {
                     title = "Another Post",
                     markdownSource = "other",
                     renderedHtml = "<p>other</p>",
-                )
+                ),
             )
         postTagRepository.save(PostTag(post = testPost, tag = testTag))
         postTagRepository.save(PostTag(post = otherPost, tag = testTag))

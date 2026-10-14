@@ -321,7 +321,7 @@ class ArticleOperationTests {
         val aliceDone = eventGateway.process(aliceMessage("done"))
         assertInstanceOf(OperationResult.Success::class.java, aliceDone)
         assertTrue(
-            ((aliceDone as OperationResult.Success).payload as String).contains("Alice Idea")
+            ((aliceDone as OperationResult.Success).payload as String).contains("Alice Idea"),
         )
 
         assertTrue(!timerService.hasActiveSession(aliceKey))
@@ -379,7 +379,7 @@ class ArticleOperationTests {
     fun `a fence outlasts any run of backticks in the excerpt`() {
         val quoted =
             ArticleOperation.quoteLog(
-                listOf(MessageLog(sender = "carol", content = "try ```kotlin fun x()``` there"))
+                listOf(MessageLog(sender = "carol", content = "try ```kotlin fun x()``` there")),
             )
 
         assertEquals("````text\n<carol> try ```kotlin fun x()``` there\n````", quoted)
@@ -438,7 +438,7 @@ class ArticleOperationTests {
                         ),
                     )
                     .setHeader(Provenance.ADDRESSED, true)
-                    .build()
+                    .build(),
             )
         // This may not be handled (different provenance means no active session in canHandle)
         // The key assertion is that it doesn't crash
@@ -465,13 +465,16 @@ class ArticleOperationTests {
         val enabled = eventGateway.process(aliceMessage("includeai"))
         assertInstanceOf(OperationResult.Success::class.java, enabled)
         assertTrue(
-            (enabled as OperationResult.Success).payload.toString().contains("AI summary enabled")
+            (enabled as OperationResult.Success).payload.toString().contains("AI summary enabled"),
         )
 
         val disabled = eventGateway.process(aliceMessage("noai"))
         assertInstanceOf(OperationResult.Success::class.java, disabled)
         assertTrue(
-            (disabled as OperationResult.Success).payload.toString().contains("AI summary disabled")
+            (disabled as OperationResult.Success)
+                .payload
+                .toString()
+                .contains("AI summary disabled"),
         )
     }
 
@@ -521,7 +524,7 @@ class ArticleOperationTests {
                     email = "binding@example.com",
                     displayName = "Bound User",
                     emailVerified = true,
-                )
+                ),
             )
         serviceBindingRepository.save(
             ServiceBinding(
@@ -529,7 +532,7 @@ class ArticleOperationTests {
                 protocol = Protocol.IRC,
                 serviceId = ircServiceId,
                 externalIdentifier = nick,
-            )
+            ),
         )
         eventGateway.process(ircMessage("""article "$ideaTitle"""", nick))
         eventGateway.process(ircMessage("content Body text for idea.", nick))
@@ -579,7 +582,7 @@ class ArticleOperationTests {
                     email = "casebinding-${UUID.randomUUID().toString().take(8)}@example.com",
                     displayName = "Case Bound User",
                     emailVerified = true,
-                )
+                ),
             )
         serviceBindingRepository.save(
             ServiceBinding(
@@ -587,7 +590,7 @@ class ArticleOperationTests {
                 protocol = Protocol.IRC,
                 serviceId = ircServiceId.uppercase(),
                 externalIdentifier = boundId,
-            )
+            ),
         )
 
         eventGateway.process(ircMessage("""article "$ideaTitle"""", nick))

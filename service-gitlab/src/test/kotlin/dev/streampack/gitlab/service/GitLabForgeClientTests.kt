@@ -111,7 +111,7 @@ class GitLabForgeClientTests {
     fun `api failures other than not-found are raised so polling can back off`() {
         stub("/api/v4/projects/group/project/issues", "", status = 500)
         org.junit.jupiter.api.Assertions.assertThrows(
-            dev.streampack.forge.client.ForgeApiException::class.java
+            dev.streampack.forge.client.ForgeApiException::class.java,
         ) {
             client.fetchIssuesSince(instance, "group/project", null, 0)
         }
@@ -146,7 +146,7 @@ class GitLabForgeClientTests {
                 WebhookEnvelope("Issue Hook", null, null),
                 "hook-secret",
                 ByteArray(0),
-            )
+            ),
         )
     }
 
@@ -165,7 +165,7 @@ class GitLabForgeClientTests {
         val issue =
             mapper.readTree(
                 """{"object_kind":"issue","project":{"id":1,"path_with_namespace":"g/p"},
-                    "object_attributes":{"iid":5,"title":"Broken","url":"https://gitlab.com/g/p/-/issues/5","action":"open"}}"""
+                    "object_attributes":{"iid":5,"title":"Broken","url":"https://gitlab.com/g/p/-/issues/5","action":"open"}}""",
             )
         val opened =
             assertInstanceOf(
@@ -177,13 +177,13 @@ class GitLabForgeClientTests {
 
         val closed =
             mapper.readTree(
-                """{"object_kind":"issue","object_attributes":{"iid":5,"title":"Broken","url":"u","action":"close"}}"""
+                """{"object_kind":"issue","object_attributes":{"iid":5,"title":"Broken","url":"u","action":"close"}}""",
             )
         assertNull(client.parseWebhookEvent(WebhookEnvelope("Issue Hook", null, "t"), closed))
 
         val mr =
             mapper.readTree(
-                """{"object_kind":"merge_request","object_attributes":{"iid":9,"title":"Fix it","url":"https://gitlab.com/g/p/-/merge_requests/9","action":"open"}}"""
+                """{"object_kind":"merge_request","object_attributes":{"iid":9,"title":"Fix it","url":"https://gitlab.com/g/p/-/merge_requests/9","action":"open"}}""",
             )
         val mrOpened =
             assertInstanceOf(
@@ -194,7 +194,7 @@ class GitLabForgeClientTests {
 
         val release =
             mapper.readTree(
-                """{"object_kind":"release","action":"create","tag":"v2.0.0","name":"Two","url":"https://gitlab.com/g/p/-/releases/v2.0.0"}"""
+                """{"object_kind":"release","action":"create","tag":"v2.0.0","name":"Two","url":"https://gitlab.com/g/p/-/releases/v2.0.0"}""",
             )
         val published =
             assertInstanceOf(
@@ -206,7 +206,7 @@ class GitLabForgeClientTests {
 
         val updated =
             mapper.readTree(
-                """{"object_kind":"release","action":"update","tag":"v2.0.0","name":"Two","url":"u"}"""
+                """{"object_kind":"release","action":"update","tag":"v2.0.0","name":"Two","url":"u"}""",
             )
         assertNull(client.parseWebhookEvent(WebhookEnvelope("Release Hook", null, "t"), updated))
     }

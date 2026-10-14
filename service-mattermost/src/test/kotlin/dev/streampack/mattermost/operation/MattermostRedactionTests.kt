@@ -11,7 +11,7 @@ class MattermostRedactionTests {
     fun `the connect token is redacted before the command is logged`() {
         val operation =
             MattermostAdminOperation(
-                Mockito.mock(dev.streampack.mattermost.service.MattermostService::class.java)
+                Mockito.mock(dev.streampack.mattermost.service.MattermostService::class.java),
             )
         val logged =
             IngressLoggingInterceptor.redact(

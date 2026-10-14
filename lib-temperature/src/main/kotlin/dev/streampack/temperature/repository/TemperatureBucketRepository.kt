@@ -24,7 +24,7 @@ interface TemperatureBucketRepository : JpaRepository<TemperatureBucket, UUID> {
 
     @Query(
         "SELECT DISTINCT bucket.subjectKey FROM TemperatureBucket bucket " +
-            "WHERE bucket.namespace = :namespace AND bucket.signal = :signal"
+            "WHERE bucket.namespace = :namespace AND bucket.signal = :signal",
     )
     fun findDistinctSubjectKeys(namespace: String, signal: String): List<String>
 

@@ -80,7 +80,7 @@ class PostControllerTests {
                     displayName = "Test Poster",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         verifiedUserToken = jwtService.generateToken(verifiedUser.toUserPrincipal())
 
@@ -92,7 +92,7 @@ class PostControllerTests {
                     displayName = "Unverified Poster",
                     emailVerified = false,
                     role = Role.USER,
-                )
+                ),
             )
         unverifiedUserToken = jwtService.generateToken(unverifiedUser.toUserPrincipal())
 
@@ -108,12 +108,12 @@ class PostControllerTests {
                     author = verifiedUser,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         slugPath = "2026/01/published-post"
         slugRepository.save(
-            Slug(path = slugPath, post = publishedPost, canonical = true, createdAt = now)
+            Slug(path = slugPath, post = publishedPost, canonical = true, createdAt = now),
         )
     }
 
@@ -144,10 +144,10 @@ class PostControllerTests {
                             status = PostStatus.APPROVED,
                             publishedAt = now.minus(index.toLong(), ChronoUnit.HOURS),
                             author = verifiedUser,
-                        )
+                        ),
                     )
                 slugRepository.save(
-                    Slug(path = "2026/01/popular-post-$index", post = post, canonical = true)
+                    Slug(path = "2026/01/popular-post-$index", post = post, canonical = true),
                 )
                 post
             }
@@ -372,14 +372,14 @@ class PostControllerTests {
     fun `POST derive-factoids authenticated returns the factoids mentioned and the links to none`() {
         val factoid =
             factoidRepository.save(
-                dev.streampack.factoid.entity.Factoid(selector = "flywheelia", updatedBy = "test")
+                dev.streampack.factoid.entity.Factoid(selector = "flywheelia", updatedBy = "test"),
             )
         factoidAttributeRepository.save(
             dev.streampack.factoid.entity.FactoidAttribute(
                 factoid = factoid,
                 attributeType = dev.streampack.factoid.model.FactoidAttributeType.TEXT,
                 attributeValue = "a made-up framework.",
-            )
+            ),
         )
         try {
             mockMvc
@@ -397,7 +397,7 @@ class PostControllerTests {
                 }
         } finally {
             factoidAttributeRepository.deleteAll(
-                factoidAttributeRepository.findByFactoidSelectorIgnoreCase("flywheelia")
+                factoidAttributeRepository.findByFactoidSelectorIgnoreCase("flywheelia"),
             )
             factoidRepository.delete(factoid)
         }
@@ -428,7 +428,7 @@ class PostControllerTests {
                     author = verifiedUser,
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
-                )
+                ),
             )
 
         mockMvc

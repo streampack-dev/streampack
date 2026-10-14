@@ -102,7 +102,7 @@ class PipelineFilterTests {
             SubscriptionEvents.wants(
                 withPipelines,
                 settled(pipeline(changeRequest = 1, outcome = PipelineOutcome.SUCCEEDED)),
-            )
+            ),
         )
         assertEquals(
             listOf(PipelineFilter(PipelineTarget.ChangeRequests, true)),

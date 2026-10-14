@@ -22,7 +22,7 @@ class IrcIdentityProviderTests {
     @BeforeEach
     fun setUp() {
         networkRepository.saveAndFlush(
-            IrcNetwork(name = "libera", host = "irc.libera.chat", nick = "nevet")
+            IrcNetwork(name = "libera", host = "irc.libera.chat", nick = "nevet"),
         )
     }
 

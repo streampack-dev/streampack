@@ -73,7 +73,7 @@ class PurgeErasedContentOperationTests {
                     displayName = "[deleted]",
                     status = UserStatus.ERASED,
                     role = Role.GUEST,
-                )
+                ),
             )
     }
 
@@ -99,7 +99,7 @@ class PurgeErasedContentOperationTests {
                     markdownSource = "bad content",
                     renderedHtml = "<p>bad content</p>",
                     author = sentinel,
-                )
+                ),
             )
         commentRepository.saveAndFlush(
             Comment(
@@ -107,7 +107,7 @@ class PurgeErasedContentOperationTests {
                 author = sentinel,
                 markdownSource = "bad comment",
                 renderedHtml = "<p>bad comment</p>",
-            )
+            ),
         )
 
         val result = eventGateway.process(purgeMessage(sentinel.id, adminUser))

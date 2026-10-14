@@ -22,8 +22,8 @@ class UserAwareControllerTests {
                     StreampackProperties.JwtProperties(
                         secret = "test-secret-value",
                         expirationHours = 12,
-                    )
-            )
+                    ),
+            ),
         )
 
     private val controller = TestUserAwareController(jwtService)

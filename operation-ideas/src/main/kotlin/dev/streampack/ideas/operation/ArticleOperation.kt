@@ -104,14 +104,14 @@ class ArticleOperation(
             val state = objectMapper.convertValue<IdeaSessionState>(existing)
             return OperationResult.Error(
                 "An idea session is already active: \"${state.title}\". " +
-                    "Use '{{ref:done}}' to save or '{{ref:cancel}}' to discard it first."
+                    "Use '{{ref:done}}' to save or '{{ref:cancel}}' to discard it first.",
             )
         }
 
         val title = parseTitle(args)
         if (title.isBlank()) {
             return OperationResult.Error(
-                "Title is required. Usage: '{{ref:article \"My Article Title\"}}' or '{{ref:article My Title}}'"
+                "Title is required. Usage: '{{ref:article \"My Article Title\"}}' or '{{ref:article My Title}}'",
             )
         }
 
@@ -137,7 +137,7 @@ class ArticleOperation(
             "Idea session started: \"$title\". " +
                 "Use '{{ref:content <text>}}' to add body paragraphs, " +
                 "'{{ref:includeai}}' to enable AI summary/tags, " +
-                "'{{ref:done}}' to save, or '{{ref:cancel}}' to discard."
+                "'{{ref:done}}' to save, or '{{ref:cancel}}' to discard.",
         )
     }
 
@@ -145,7 +145,7 @@ class ArticleOperation(
         val data =
             stateService.getState(userKey, IdeaSessionState.STATE_KEY)
                 ?: return OperationResult.Error(
-                    "No idea session in progress. Use '{{ref:article \"title\"}}' to start one."
+                    "No idea session in progress. Use '{{ref:article \"title\"}}' to start one.",
                 )
 
         if (text.isBlank()) {
@@ -165,7 +165,7 @@ class ArticleOperation(
         val count = updated.contentBlocks.size
         return OperationResult.Success(
             "Content block #$count added to \"${state.title}\". " +
-                "Use '{{ref:content <text>}}' to add more, or '{{ref:done}}' to save."
+                "Use '{{ref:content <text>}}' to add more, or '{{ref:done}}' to save.",
         )
     }
 
@@ -173,13 +173,13 @@ class ArticleOperation(
         val data =
             stateService.getState(userKey, IdeaSessionState.STATE_KEY)
                 ?: return OperationResult.Error(
-                    "No idea session in progress. Use '{{ref:article \"title\"}}' to start one."
+                    "No idea session in progress. Use '{{ref:article \"title\"}}' to start one.",
                 )
 
         val duration =
             parseDuration(args)
                 ?: return OperationResult.Error(
-                    "Invalid duration. Use a format like '10m', '30m', or '1h'."
+                    "Invalid duration. Use a format like '10m', '30m', or '1h'.",
                 )
 
         val maxDuration = Duration.ofMinutes(maxLogDurationMinutes)
@@ -194,7 +194,7 @@ class ArticleOperation(
 
         if (messages.isEmpty()) {
             return OperationResult.Error(
-                "No channel logs found for the last ${formatDuration(capped)}."
+                "No channel logs found for the last ${formatDuration(capped)}.",
             )
         }
 
@@ -212,7 +212,7 @@ class ArticleOperation(
 
         val count = updated.contentBlocks.size
         return OperationResult.Success(
-            "Added ${messages.size} log messages (last ${formatDuration(capped)}) as content block #$count."
+            "Added ${messages.size} log messages (last ${formatDuration(capped)}) as content block #$count.",
         )
     }
 
@@ -220,7 +220,7 @@ class ArticleOperation(
         val data =
             stateService.getState(userKey, IdeaSessionState.STATE_KEY)
                 ?: return OperationResult.Error(
-                    "No idea session in progress. Use '{{ref:article \"title\"}}' to start one."
+                    "No idea session in progress. Use '{{ref:article \"title\"}}' to start one.",
                 )
 
         val state = objectMapper.convertValue<IdeaSessionState>(data)
@@ -235,7 +235,7 @@ class ArticleOperation(
         return if (enabled) {
             OperationResult.Success(
                 "AI summary enabled for \"${state.title}\". " +
-                    "On '{{ref:done}}', a generated summary and suggested tags will be appended to the draft."
+                    "On '{{ref:done}}', a generated summary and suggested tags will be appended to the draft.",
             )
         } else {
             OperationResult.Success("AI summary disabled for \"${state.title}\".")
@@ -268,7 +268,7 @@ class ArticleOperation(
         val data =
             stateService.getState(userKey, IdeaSessionState.STATE_KEY)
                 ?: return OperationResult.Error(
-                    "No idea session in progress. Use '{{ref:article \"title\"}}' to start one."
+                    "No idea session in progress. Use '{{ref:article \"title\"}}' to start one.",
                 )
 
         val state = objectMapper.convertValue<IdeaSessionState>(data)
@@ -283,7 +283,7 @@ class ArticleOperation(
         val aiNote = aiResult.note?.let { " $it" } ?: ""
         return OperationResult.Success(
             "Idea saved as draft: \"${state.title}\" " +
-                "($blockCount content block${if (blockCount != 1) "s" else ""}).$aiNote"
+                "($blockCount content block${if (blockCount != 1) "s" else ""}).$aiNote",
         )
     }
 

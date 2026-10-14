@@ -39,7 +39,7 @@ class FindFactoidLinkMetadataOperationTests {
                 attributeType = FactoidAttributeType.TEXT,
                 attributeValue = "thing is a thing",
                 updatedBy = "test",
-            )
+            ),
         )
         factoidAttributeRepository.save(
             FactoidAttribute(
@@ -47,7 +47,7 @@ class FindFactoidLinkMetadataOperationTests {
                 attributeType = FactoidAttributeType.URLS,
                 attributeValue = "https://thing.com",
                 updatedBy = "test",
-            )
+            ),
         )
         factoidAttributeRepository.save(
             FactoidAttribute(
@@ -55,7 +55,7 @@ class FindFactoidLinkMetadataOperationTests {
                 attributeType = FactoidAttributeType.TAGS,
                 attributeValue = "docs, indieweb",
                 updatedBy = "test",
-            )
+            ),
         )
         factoidAttributeRepository.save(
             FactoidAttribute(
@@ -63,7 +63,7 @@ class FindFactoidLinkMetadataOperationTests {
                 attributeType = FactoidAttributeType.SEEALSO,
                 attributeValue = "webmention,indieweb",
                 updatedBy = "test",
-            )
+            ),
         )
 
         val message = MessageBuilder.withPayload(FindFactoidLinkMetadataRequest("thing")).build()

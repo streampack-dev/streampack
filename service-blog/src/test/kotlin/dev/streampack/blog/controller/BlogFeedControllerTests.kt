@@ -48,7 +48,7 @@ class BlogFeedControllerTests {
                     displayName = "Feed Author",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
 
         val post =
@@ -61,7 +61,7 @@ class BlogFeedControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(1, ChronoUnit.HOURS),
                     author = author,
-                )
+                ),
             )
 
         val publishedAt = post.publishedAt!!
@@ -77,7 +77,7 @@ class BlogFeedControllerTests {
                 renderedHtml = "<p>Draft</p>",
                 status = PostStatus.DRAFT,
                 author = author,
-            )
+            ),
         )
 
         // Approved system-style page should NOT appear in blog RSS entries
@@ -91,7 +91,7 @@ class BlogFeedControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(2, ChronoUnit.HOURS),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "about", post = pagePost, canonical = true))
     }
@@ -109,8 +109,8 @@ class BlogFeedControllerTests {
             content {
                 string(
                     org.hamcrest.Matchers.not(
-                        org.hamcrest.Matchers.containsString("<p>Feed content</p>")
-                    )
+                        org.hamcrest.Matchers.containsString("<p>Feed content</p>"),
+                    ),
                 )
             }
         }
@@ -127,8 +127,8 @@ class BlogFeedControllerTests {
             content {
                 string(
                     org.hamcrest.Matchers.not(
-                        org.hamcrest.Matchers.containsString("<p>Feed content</p>")
-                    )
+                        org.hamcrest.Matchers.containsString("<p>Feed content</p>"),
+                    ),
                 )
             }
         }
@@ -141,8 +141,8 @@ class BlogFeedControllerTests {
             content {
                 string(
                     org.hamcrest.Matchers.not(
-                        org.hamcrest.Matchers.containsString("Draft Feed Post")
-                    )
+                        org.hamcrest.Matchers.containsString("Draft Feed Post"),
+                    ),
                 )
             }
         }
@@ -155,13 +155,13 @@ class BlogFeedControllerTests {
             content {
                 string(
                     org.hamcrest.Matchers.not(
-                        org.hamcrest.Matchers.containsString(">About</title>")
-                    )
+                        org.hamcrest.Matchers.containsString(">About</title>"),
+                    ),
                 )
             }
             content {
                 string(
-                    org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("/posts/about"))
+                    org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("/posts/about")),
                 )
             }
         }
@@ -177,7 +177,7 @@ class BlogFeedControllerTests {
                     org.hamcrest.Matchers.anyOf(
                         org.hamcrest.Matchers.containsString("<description>"),
                         org.hamcrest.Matchers.containsString("<subtitle>"),
-                    )
+                    ),
                 )
             }
         }
@@ -198,15 +198,15 @@ class BlogFeedControllerTests {
                 content {
                     string(
                         org.hamcrest.Matchers.containsString(
-                            "https://foo.bytecode.news/posts/$slugPath"
-                        )
+                            "https://foo.bytecode.news/posts/$slugPath",
+                        ),
                     )
                 }
                 content {
                     string(
                         org.hamcrest.Matchers.not(
-                            org.hamcrest.Matchers.containsString("localhost:3001")
-                        )
+                            org.hamcrest.Matchers.containsString("localhost:3001"),
+                        ),
                     )
                 }
             }
@@ -222,15 +222,15 @@ class BlogFeedControllerTests {
                 content {
                     string(
                         org.hamcrest.Matchers.containsString(
-                            "http://localhost:3001/posts/$slugPath"
-                        )
+                            "http://localhost:3001/posts/$slugPath",
+                        ),
                     )
                 }
                 content {
                     string(
                         org.hamcrest.Matchers.not(
-                            org.hamcrest.Matchers.containsString("https://api.bytecode.news")
-                        )
+                            org.hamcrest.Matchers.containsString("https://api.bytecode.news"),
+                        ),
                     )
                 }
             }
@@ -252,7 +252,7 @@ class BlogFeedControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(30, ChronoUnit.MINUTES),
                     author = author,
-                )
+                ),
             )
         val publishedAt = postWithoutExcerpt.publishedAt!!
         val dateTime = publishedAt.atZone(ZoneOffset.UTC)
@@ -263,16 +263,16 @@ class BlogFeedControllerTests {
             status { isOk() }
             content {
                 string(
-                    org.hamcrest.Matchers.containsString("Derived summary body for feed fallback.")
+                    org.hamcrest.Matchers.containsString("Derived summary body for feed fallback."),
                 )
             }
             content {
                 string(
                     org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString(
-                            "<p>Derived summary body for feed fallback.</p>"
-                        )
-                    )
+                            "<p>Derived summary body for feed fallback.</p>",
+                        ),
+                    ),
                 )
             }
         }

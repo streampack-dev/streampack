@@ -106,7 +106,7 @@ class FeedTagService(
                 row ?: continue // decided by the vocabulary's own tables
                 feedTags.save(
                     decidedElsewhere(row, resolution, now)
-                        .copy(entries = entryCount, feeds = feedCount, lastSeen = now)
+                        .copy(entries = entryCount, feeds = feedCount, lastSeen = now),
                 )
                 continue
             }

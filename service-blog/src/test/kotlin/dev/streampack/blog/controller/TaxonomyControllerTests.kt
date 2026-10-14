@@ -66,7 +66,7 @@ class TaxonomyControllerTests {
                     displayName = "Taxonomy Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         val postOne =
@@ -79,7 +79,7 @@ class TaxonomyControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now(),
                     author = author,
-                )
+                ),
             )
         val postTwo =
             postRepository.save(
@@ -91,7 +91,7 @@ class TaxonomyControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now(),
                     author = author,
-                )
+                ),
             )
 
         val xyzTag = tagRepository.save(Tag(name = "xyz", slug = "xyz"))

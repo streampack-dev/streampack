@@ -59,7 +59,7 @@ class SecretDefaultsStartupGuardTests {
         val bad =
             SecretDefaultsStartupGuard(
                 StreampackProperties(
-                    jwt = StreampackProperties.JwtProperties(secret = "change-me")
+                    jwt = StreampackProperties.JwtProperties(secret = "change-me"),
                 ),
                 true,
             )
@@ -69,8 +69,8 @@ class SecretDefaultsStartupGuardTests {
                 StreampackProperties(
                     jwt =
                         StreampackProperties.JwtProperties(
-                            secret = "test-secret-that-is-at-least-256-bits-long!!"
-                        )
+                            secret = "test-secret-that-is-at-least-256-bits-long!!",
+                        ),
                 ),
                 true,
             )

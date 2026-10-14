@@ -50,7 +50,7 @@ class GitHubWebhookControllerTests {
     class CapturingConfig {
         @Bean
         fun capturingSubscriber(
-            @Qualifier("egressChannel") egressChannel: SubscribableChannel
+            @Qualifier("egressChannel") egressChannel: SubscribableChannel,
         ): CapturingSubscriber {
             val subscriber = CapturingSubscriber()
             egressChannel.subscribe(subscriber)
@@ -93,14 +93,14 @@ class GitHubWebhookControllerTests {
                     name = "repo",
                     deliveryMode = DeliveryMode.WEBHOOK,
                     webhookSecret = cipher.encrypt(secret),
-                )
+                ),
             )
         subscriptionRepository.save(
-            GitHubSubscription(repo = repo, destinationUri = "console:///local")
+            GitHubSubscription(repo = repo, destinationUri = "console:///local"),
         )
         enterprise =
             instanceRepository.save(
-                GitHubInstance(host = "ghe.example.com", apiUrl = "https://ghe.example.com/api/v3")
+                GitHubInstance(host = "ghe.example.com", apiUrl = "https://ghe.example.com/api/v3"),
             )
         val enterpriseRepo =
             repoRepository.save(
@@ -110,10 +110,10 @@ class GitHubWebhookControllerTests {
                     name = "repo",
                     deliveryMode = DeliveryMode.WEBHOOK,
                     webhookSecret = cipher.encrypt(enterpriseSecret),
-                )
+                ),
             )
         subscriptionRepository.save(
-            GitHubSubscription(repo = enterpriseRepo, destinationUri = "console:///enterprise")
+            GitHubSubscription(repo = enterpriseRepo, destinationUri = "console:///enterprise"),
         )
     }
 
@@ -359,7 +359,7 @@ class GitHubWebhookControllerTests {
             (result as OperationResult.Success)
                 .payload
                 .toString()
-                .contains("[owner/repo] Webhook ping received - setup verified.")
+                .contains("[owner/repo] Webhook ping received - setup verified."),
         )
     }
 
@@ -430,7 +430,7 @@ class GitHubWebhookControllerTests {
         assertEquals(0, capturingSubscriber.captured.size)
         assertTrue(
             output.out.contains(
-                "Ignoring GitHub webhook delivery for unknown repository owner/missing"
+                "Ignoring GitHub webhook delivery for unknown repository owner/missing",
             ),
             output.out,
         )

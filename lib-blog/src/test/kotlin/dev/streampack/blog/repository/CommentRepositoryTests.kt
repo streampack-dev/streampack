@@ -35,7 +35,7 @@ class CommentRepositoryTests {
                     username = "commenter",
                     email = "commenter@test.com",
                     displayName = "Test Commenter",
-                )
+                ),
             )
         testPost =
             postRepository.save(
@@ -43,7 +43,7 @@ class CommentRepositoryTests {
                     title = "Commented Post",
                     markdownSource = "content",
                     renderedHtml = "<p>content</p>",
-                )
+                ),
             )
     }
 
@@ -56,7 +56,7 @@ class CommentRepositoryTests {
                     author = testUser,
                     markdownSource = "Great post!",
                     renderedHtml = "<p>Great post!</p>",
-                )
+                ),
             )
         val found = commentRepository.findById(comment.id).orElse(null)
 
@@ -72,7 +72,7 @@ class CommentRepositoryTests {
                 author = testUser,
                 markdownSource = "Visible",
                 renderedHtml = "<p>Visible</p>",
-            )
+            ),
         )
         commentRepository.save(
             Comment(
@@ -81,7 +81,7 @@ class CommentRepositoryTests {
                 markdownSource = "Deleted",
                 renderedHtml = "<p>Deleted</p>",
                 deleted = true,
-            )
+            ),
         )
 
         val comments = commentRepository.findByPost(testPost.id)
@@ -98,7 +98,7 @@ class CommentRepositoryTests {
                 markdownSource = "Second",
                 renderedHtml = "<p>Second</p>",
                 createdAt = now.plus(1, ChronoUnit.HOURS),
-            )
+            ),
         )
         commentRepository.save(
             Comment(
@@ -107,7 +107,7 @@ class CommentRepositoryTests {
                 markdownSource = "First",
                 renderedHtml = "<p>First</p>",
                 createdAt = now,
-            )
+            ),
         )
 
         val comments = commentRepository.findByPost(testPost.id)
@@ -124,7 +124,7 @@ class CommentRepositoryTests {
                 author = testUser,
                 markdownSource = "Keep this",
                 renderedHtml = "<p>Keep this</p>",
-            )
+            ),
         )
         commentRepository.save(
             Comment(
@@ -133,7 +133,7 @@ class CommentRepositoryTests {
                 markdownSource = "Remove this",
                 renderedHtml = "<p>Remove this</p>",
                 deleted = true,
-            )
+            ),
         )
 
         val comments = commentRepository.findByAuthor(testUser.id)
@@ -150,7 +150,7 @@ class CommentRepositoryTests {
                     author = testUser,
                     markdownSource = "Parent",
                     renderedHtml = "<p>Parent</p>",
-                )
+                ),
             )
         val child =
             commentRepository.save(
@@ -160,7 +160,7 @@ class CommentRepositoryTests {
                     parentComment = parent,
                     markdownSource = "Reply",
                     renderedHtml = "<p>Reply</p>",
-                )
+                ),
             )
         val found = commentRepository.findById(child.id).orElse(null)
 
@@ -178,7 +178,7 @@ class CommentRepositoryTests {
                     author = testUser,
                     markdownSource = "Top level",
                     renderedHtml = "<p>Top level</p>",
-                )
+                ),
             )
         val found = commentRepository.findById(comment.id).orElse(null)
 

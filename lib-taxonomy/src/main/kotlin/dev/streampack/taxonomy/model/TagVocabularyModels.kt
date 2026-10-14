@@ -77,13 +77,13 @@ data class TagReviewEntry(
     @field:Schema(description = "When it was first written") val firstSeen: Instant,
     @field:Schema(
         description =
-            "What first wrote it: post, factoid, or rss (a feed tag promoted or created as a tag)"
+            "What first wrote it: post, factoid, or rss (a feed tag promoted or created as a tag)",
     )
     val source: String,
     @field:Schema(
         description =
             "PLURAL (a trailing-s pair with hintTags[0]), MISSING_COMMA (hintTags are the " +
-                "existing tags it's made of) or AI (only the AI near-miss found something)"
+                "existing tags it's made of) or AI (only the AI near-miss found something)",
     )
     val hintKind: TagHintKind,
     @field:Schema(description = "The existing tags the hint names") val hintTags: List<String>,
@@ -130,7 +130,7 @@ data class TagActionEntry(
 @Schema(
     description =
         "What an alias, split, keep or dismiss did, or, for a dry run, what an alias or split " +
-            "would do"
+            "would do",
 )
 data class TagChangeResult(
     @field:Schema(description = "The tag acted on") val tag: String,
@@ -148,13 +148,13 @@ data class TagAliasRequest(
 
 @Schema(description = "Alias a queued tag to an existing one")
 data class TagReviewAliasRequest(
-    @field:Schema(description = "The existing tag the queued tag means") val tag: String
+    @field:Schema(description = "The existing tag the queued tag means") val tag: String,
 )
 
 @Schema(description = "Split a tag into its parts")
 data class TagSplitRequest(
     @field:Schema(description = "The parts; the entry's hint tags when left out")
-    val parts: List<String>? = null
+    val parts: List<String>? = null,
 )
 
 @Schema(description = "A term for the stoplist") data class TagStopRequest(val term: String = "")

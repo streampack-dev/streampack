@@ -32,8 +32,8 @@ class AudioFormatTests {
         // A lone frame sync followed by junk isn't an MP3.
         assertNull(
             AudioFormat.sniff(
-                byteArrayOf(0xFF.toByte(), 0xFB.toByte(), 0x90.toByte(), 0) + ByteArray(600) { 7 }
-            )
+                byteArrayOf(0xFF.toByte(), 0xFB.toByte(), 0x90.toByte(), 0) + ByteArray(600) { 7 },
+            ),
         )
         // Ogg, but neither Opus nor Vorbis.
         val ogg = AudioFixtures.oggOpus()

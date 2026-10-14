@@ -61,7 +61,7 @@ class MediaNotConfiguredTests {
                     displayName = "Off Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         adminToken = jwtService.generateToken(admin.toUserPrincipal())
         val publishedAt = Instant.now().minus(1, ChronoUnit.HOURS)
@@ -74,7 +74,7 @@ class MediaNotConfiguredTests {
                     status = PostStatus.APPROVED,
                     publishedAt = publishedAt,
                     author = admin,
-                )
+                ),
             )
         val at = publishedAt.atZone(ZoneOffset.UTC)
         slugRepository.save(
@@ -82,7 +82,7 @@ class MediaNotConfiguredTests {
                 path = "${at.year}/${"%02d".format(at.monthValue)}/quiet-post",
                 post = post,
                 canonical = true,
-            )
+            ),
         )
         versionRepository.save(
             PostVersion(
@@ -92,7 +92,7 @@ class MediaNotConfiguredTests {
                 sourceHash = "a".repeat(64),
                 contentHash = "b".repeat(64),
                 storageKey = "ab/0190a1b2-0000-7000-8000-000000000000",
-            )
+            ),
         )
     }
 

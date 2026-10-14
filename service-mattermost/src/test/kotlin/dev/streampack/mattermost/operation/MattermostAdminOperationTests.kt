@@ -55,7 +55,7 @@ class MattermostAdminOperationTests {
     fun `mattermost connect with SUPER_ADMIN returns success`() {
         val result =
             eventGateway.process(
-                consoleMessage("mattermost connect work https://mattermost.example.com token-123")
+                consoleMessage("mattermost connect work https://mattermost.example.com token-123"),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
     }
@@ -67,7 +67,7 @@ class MattermostAdminOperationTests {
                 consoleMessage(
                     "mattermost connect work https://mattermost.example.com token-123",
                     regularUser,
-                )
+                ),
             )
         assertInstanceOf(OperationResult.Error::class.java, result)
     }
@@ -75,7 +75,7 @@ class MattermostAdminOperationTests {
     @Test
     fun `mattermost join after connect returns success`() {
         eventGateway.process(
-            consoleMessage("mattermost connect work https://mattermost.example.com token-123")
+            consoleMessage("mattermost connect work https://mattermost.example.com token-123"),
         )
         val result =
             eventGateway.process(consoleMessage("mattermost join work abc123channelid00000000000"))
@@ -91,7 +91,7 @@ class MattermostAdminOperationTests {
             (result as OperationResult.Success)
                 .payload
                 .toString()
-                .contains("Mattermost Admin Commands")
+                .contains("Mattermost Admin Commands"),
         )
     }
 

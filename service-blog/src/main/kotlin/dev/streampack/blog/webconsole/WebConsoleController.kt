@@ -114,7 +114,7 @@ class WebConsoleController(
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
-        content = [Content(schema = Schema(implementation = WebConsoleCommand::class))]
+        content = [Content(schema = Schema(implementation = WebConsoleCommand::class))],
     )
     @PostMapping(
         consumes = [MediaType.APPLICATION_JSON_VALUE],
@@ -162,7 +162,7 @@ class WebConsoleController(
                 .setHeader(Provenance.LIVE_AUTHORITY, true)
                 .setHeader(Provenance.REPORT_FAILURES, true)
                 .setHeader("nick", admin.username)
-                .build()
+                .build(),
         )
         return ResponseEntity.status(HttpStatus.ACCEPTED)
             .cacheControl(CacheControl.noStore())
@@ -193,7 +193,7 @@ class WebConsoleController(
                 Content(
                     mediaType = MediaType.TEXT_EVENT_STREAM_VALUE,
                     schema = Schema(implementation = WebConsoleResult::class),
-                )
+                ),
             ],
     )
     @ApiResponse(

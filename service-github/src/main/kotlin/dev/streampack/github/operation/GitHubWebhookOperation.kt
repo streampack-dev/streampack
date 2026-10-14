@@ -59,7 +59,7 @@ class GitHubWebhookOperation(
                     literals = listOf("github", "webhook"),
                     args = listOf(ownerRepo),
                 ),
-            )
+            ),
         )
 
     private val webhookBaseUrl =
@@ -103,12 +103,12 @@ class GitHubWebhookOperation(
                         ""
                     }
                 OperationResult.Success(
-                    "Webhook enabled for $name. Configure GitHub to POST to ${webhookUrl(instance)} with the provided secret.$note"
+                    "Webhook enabled for $name. Configure GitHub to POST to ${webhookUrl(instance)} with the provided secret.$note",
                 )
             }
             is WebhookEnableOutcome.RepoInactive ->
                 OperationResult.Error(
-                    "${outcome.ownerRepo} is inactive. Add or reactivate it first."
+                    "${outcome.ownerRepo} is inactive. Add or reactivate it first.",
                 )
             is WebhookEnableOutcome.InvalidRepo -> OperationResult.Error(outcome.reason)
             is WebhookEnableOutcome.NotConfigured -> OperationResult.Error(outcome.reason)

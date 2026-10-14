@@ -64,7 +64,7 @@ class SsrControllerTests {
                     displayName = "SSR Author",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
 
         publishedPost =
@@ -77,7 +77,7 @@ class SsrControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(1, ChronoUnit.HOURS),
                     author = author,
-                )
+                ),
             )
 
         val publishedAt = publishedPost.publishedAt!!
@@ -99,7 +99,7 @@ class SsrControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(1, ChronoUnit.HOURS),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "about", post = aboutPost, canonical = true))
         postCategoryRepository.save(PostCategory(post = aboutPost, category = pagesCategory))

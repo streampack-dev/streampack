@@ -36,7 +36,7 @@ class SoftDeleteCategoryOperation(private val categoryRepository: CategoryReposi
         logger.info("Category soft-deleted: {}", category.id)
 
         return OperationResult.Success(
-            ContentOperationConfirmation(id = category.id, message = "Category deleted")
+            ContentOperationConfirmation(id = category.id, message = "Category deleted"),
         )
     }
 }

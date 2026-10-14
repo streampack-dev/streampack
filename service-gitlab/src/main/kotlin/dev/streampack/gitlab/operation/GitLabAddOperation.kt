@@ -46,7 +46,7 @@ class GitLabAddOperation(private val subscriptionService: GitLabSubscriptionServ
                         literals = listOf("gitlab", "add"),
                         args = it,
                     )
-                }
+                },
         )
 
     override val priority: Int = 61
@@ -78,7 +78,7 @@ class GitLabAddOperation(private val subscriptionService: GitLabSubscriptionServ
                         "(${outcome.issueCount} issues, " +
                         "${outcome.changeRequestCount} MRs, " +
                         "${outcome.releaseCount} releases)" +
-                        tokenExternalizationNote(payload.token, outcome.project)
+                        tokenExternalizationNote(payload.token, outcome.project),
                 )
             is AddProjectOutcome.AlreadyExists ->
                 OperationResult.Success("Already watching ${outcome.project.displayName}")
@@ -100,7 +100,7 @@ class GitLabAddOperation(private val subscriptionService: GitLabSubscriptionServ
         /** The error every `gitlab` command gives for an `on <host>` that is not registered */
         fun unknownInstance(host: String?): OperationResult.Error =
             OperationResult.Error(
-                "No GitLab instance registered for $host. Register it with: gitlab instance add <url>"
+                "No GitLab instance registered for $host. Register it with: gitlab instance add <url>",
             )
     }
 }

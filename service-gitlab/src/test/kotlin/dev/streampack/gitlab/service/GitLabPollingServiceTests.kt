@@ -39,7 +39,7 @@ class GitLabPollingServiceTests {
     class CapturingEgressConfig {
         @Bean
         fun capturingEgressSubscriber(
-            @Qualifier("egressChannel") egressChannel: SubscribableChannel
+            @Qualifier("egressChannel") egressChannel: SubscribableChannel,
         ): CapturingEgressSubscriber {
             val subscriber = CapturingEgressSubscriber()
             egressChannel.subscribe(subscriber)
@@ -74,7 +74,7 @@ class GitLabPollingServiceTests {
         instanceRepository.save(
             store
                 .defaultInstance()
-                .copy(apiUrl = "http://localhost:${httpServer.address.port}/api/v4")
+                .copy(apiUrl = "http://localhost:${httpServer.address.port}/api/v4"),
         )
     }
 
@@ -98,14 +98,14 @@ class GitLabPollingServiceTests {
                     projectId = 100,
                     highestIssueNumber = 1,
                     highestMrNumber = 1,
-                )
+                ),
             )
         subscriptionRepository.save(
             GitLabSubscription(
                 project = project,
                 destinationUri =
                     Provenance(protocol = Protocol.CONSOLE, replyTo = "local").encode(),
-            )
+            ),
         )
         stub(
             "/api/v4/projects/group/project/issues",

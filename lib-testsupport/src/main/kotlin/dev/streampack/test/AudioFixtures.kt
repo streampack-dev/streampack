@@ -32,7 +32,7 @@ object AudioFixtures {
                 0,
                 0,
                 0,
-            )
+            ),
         )
         repeat(frames) { out.write(frame(fill)) }
         return out.toByteArray()
@@ -83,7 +83,7 @@ object AudioFixtures {
                 sequence = 1,
                 headerType = 0,
                 packet = ByteArray(padding.coerceAtMost(254)),
-            )
+            ),
         )
         out.write(
             oggPage(
@@ -91,7 +91,7 @@ object AudioFixtures {
                 sequence = 2,
                 headerType = 4,
                 packet = ByteArray(100),
-            )
+            ),
         )
         return out.toByteArray()
     }
@@ -108,7 +108,7 @@ object AudioFixtures {
                 sequence = 1,
                 headerType = 4,
                 packet = ByteArray(50),
-            )
+            ),
         )
         return out.toByteArray()
     }

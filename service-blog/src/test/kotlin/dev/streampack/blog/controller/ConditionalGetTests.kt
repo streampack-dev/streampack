@@ -94,7 +94,7 @@ class ConditionalGetTests {
                     displayName = "ETag Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         post = publish("ETag Post", path, tags = listOf("jvm"))
     }
@@ -124,7 +124,7 @@ class ConditionalGetTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(Slug(path = slug, post = p, canonical = true, createdAt = now))
         tags.forEach { t ->
@@ -145,7 +145,7 @@ class ConditionalGetTests {
                 author = author,
                 markdownSource = text,
                 renderedHtml = "<p>$text</p>",
-            )
+            ),
         )
 
     private fun etag(url: String, version: String? = null): String {
@@ -217,7 +217,7 @@ class ConditionalGetTests {
         assertChanged("/posts", tag).also { tag = etag("/posts") }
 
         postRepository.save(
-            second.copy(title = "Second, edited", updatedAt = Instant.now().plusSeconds(1))
+            second.copy(title = "Second, edited", updatedAt = Instant.now().plusSeconds(1)),
         )
         assertChanged("/posts", tag).also { tag = etag("/posts") }
 
@@ -248,7 +248,7 @@ class ConditionalGetTests {
         var tag = etag(url)
 
         postRepository.save(
-            post.copy(renderedHtml = "<p>new</p>", updatedAt = Instant.now().plusSeconds(1))
+            post.copy(renderedHtml = "<p>new</p>", updatedAt = Instant.now().plusSeconds(1)),
         )
         assertChanged(url, tag).also { tag = etag(url) }
 
@@ -257,7 +257,7 @@ class ConditionalGetTests {
         val comments = etag("$url/comments")
 
         commentRepository.save(
-            c.copy(renderedHtml = "<p>edited</p>", updatedAt = Instant.now().plusSeconds(2))
+            c.copy(renderedHtml = "<p>edited</p>", updatedAt = Instant.now().plusSeconds(2)),
         )
         assertChanged(url, tag).also { tag = etag(url) }
         assertChanged("$url/comments", comments)
@@ -283,7 +283,7 @@ class ConditionalGetTests {
         assertNotEquals(taxonomy, afterPost)
 
         postTagRepository.save(
-            PostTag(post = z, tag = tagRepository.save(Tag(name = "airships", slug = "airships")))
+            PostTag(post = z, tag = tagRepository.save(Tag(name = "airships", slug = "airships"))),
         )
         assertChanged("/taxonomy", afterPost)
     }

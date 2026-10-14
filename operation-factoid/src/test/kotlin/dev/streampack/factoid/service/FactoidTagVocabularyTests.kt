@@ -51,7 +51,7 @@ class FactoidTagVocabularyTests {
                     ),
                 )
                 .setHeader("nick", "testuser")
-                .build()
+                .build(),
         )
 
     private fun tagsOf(selector: String): String? =

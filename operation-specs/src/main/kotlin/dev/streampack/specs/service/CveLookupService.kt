@@ -93,7 +93,7 @@ class CveLookupService(
                     404 -> RecordLookup(null)
                     else ->
                         RecordLookup(
-                            parse("CVE.org", ok("CVE.org", response)) { parseRecord(id, it) }
+                            parse("CVE.org", ok("CVE.org", response)) { parseRecord(id, it) },
                         )
                 }
             }

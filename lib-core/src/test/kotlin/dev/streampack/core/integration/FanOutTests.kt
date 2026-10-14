@@ -117,7 +117,7 @@ class FanOutTests {
                         listOf(
                             MessageBuilder.withPayload("recurse-deeper")
                                 .setHeader(Provenance.HEADER, provenance)
-                                .build()
+                                .build(),
                         )
                     return FanOut(children)
                 }

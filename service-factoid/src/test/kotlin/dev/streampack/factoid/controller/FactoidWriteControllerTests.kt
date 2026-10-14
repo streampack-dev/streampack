@@ -59,7 +59,7 @@ class FactoidWriteControllerTests {
                     displayName = username,
                     emailVerified = true,
                     role = role,
-                )
+                ),
             )
         return jwtService.generateToken(user.toUserPrincipal())
     }
@@ -102,7 +102,7 @@ class FactoidWriteControllerTests {
         assertTrue(
             factoidService.findBySelector("spring").any {
                 it.attributeType == FactoidAttributeType.URLS
-            }
+            },
         )
 
         // Chat would read "x is y=z" as an assignment; a typed request never parses it.
@@ -164,7 +164,7 @@ class FactoidWriteControllerTests {
         assertTrue(
             factoidService.findBySelector("spring").none {
                 it.attributeType == FactoidAttributeType.URLS
-            }
+            },
         )
 
         mockMvc

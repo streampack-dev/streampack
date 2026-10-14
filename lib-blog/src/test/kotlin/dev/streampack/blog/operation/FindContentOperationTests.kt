@@ -77,7 +77,7 @@ class FindContentOperationTests {
                     displayName = "Test Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.save(
@@ -87,7 +87,7 @@ class FindContentOperationTests {
                     displayName = "Admin User",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         superAdmin =
             userRepository.save(
@@ -97,7 +97,7 @@ class FindContentOperationTests {
                     displayName = "Super Admin",
                     emailVerified = true,
                     role = Role.SUPER_ADMIN,
-                )
+                ),
             )
         otherUser =
             userRepository.save(
@@ -107,7 +107,7 @@ class FindContentOperationTests {
                     displayName = "Other User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         publishedPost =
@@ -120,10 +120,10 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(1, ChronoUnit.HOURS),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/published-post", post = publishedPost, canonical = true)
+            Slug(path = "2026/02/published-post", post = publishedPost, canonical = true),
         )
 
         draftPost =
@@ -135,7 +135,7 @@ class FindContentOperationTests {
                     excerpt = "Draft content",
                     status = PostStatus.DRAFT,
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/02/draft-post", post = draftPost, canonical = true))
 
@@ -149,10 +149,10 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.plus(7, ChronoUnit.DAYS),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/scheduled-post", post = scheduledPost, canonical = true)
+            Slug(path = "2026/02/scheduled-post", post = scheduledPost, canonical = true),
         )
 
         deletedPost =
@@ -166,10 +166,10 @@ class FindContentOperationTests {
                     publishedAt = now.minus(2, ChronoUnit.HOURS),
                     deleted = true,
                     author = author,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/deleted-post", post = deletedPost, canonical = true)
+            Slug(path = "2026/02/deleted-post", post = deletedPost, canonical = true),
         )
     }
 
@@ -198,7 +198,7 @@ class FindContentOperationTests {
     fun `FindBySlug for published post returns ContentDetail`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"))
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post")),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -222,7 +222,7 @@ class FindContentOperationTests {
     fun `FindBySlug for draft by non-author returns error`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/draft-post"), otherUser)
+                findMessage(FindContentRequest.FindBySlug("2026/02/draft-post"), otherUser),
             )
 
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -233,7 +233,7 @@ class FindContentOperationTests {
     fun `FindBySlug for draft by author returns ContentDetail`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/draft-post"), author)
+                findMessage(FindContentRequest.FindBySlug("2026/02/draft-post"), author),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -297,7 +297,7 @@ class FindContentOperationTests {
                         status = PostStatus.APPROVED,
                         publishedAt = now.minus(i.toLong(), ChronoUnit.HOURS),
                         author = author,
-                    )
+                    ),
                 )
             slugRepository.save(Slug(path = "2026/02/extra-post-$i", post = post, canonical = true))
         }
@@ -327,7 +327,7 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(2, ChronoUnit.HOURS),
                     author = author,
-                )
+                ),
             )
         val hotterPost =
             postRepository.save(
@@ -339,7 +339,7 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(3, ChronoUnit.HOURS),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/02/colder-post", post = colderPost, canonical = true))
         slugRepository.save(Slug(path = "2026/02/hotter-post", post = hotterPost, canonical = true))
@@ -381,7 +381,7 @@ class FindContentOperationTests {
     fun `anonymous user cannot see draft via FindBySlug`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/draft-post"), null)
+                findMessage(FindContentRequest.FindBySlug("2026/02/draft-post"), null),
             )
 
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -392,7 +392,7 @@ class FindContentOperationTests {
     fun `anonymous user cannot see scheduled post via FindBySlug`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/scheduled-post"), null)
+                findMessage(FindContentRequest.FindBySlug("2026/02/scheduled-post"), null),
             )
 
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -403,7 +403,7 @@ class FindContentOperationTests {
     fun `author can see scheduled post via FindBySlug`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/scheduled-post"), author)
+                findMessage(FindContentRequest.FindBySlug("2026/02/scheduled-post"), author),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -421,7 +421,7 @@ class FindContentOperationTests {
                     author = otherUser,
                     markdownSource = "Top comment",
                     renderedHtml = "<p>Top comment</p>",
-                )
+                ),
             )
         commentRepository.save(
             Comment(
@@ -430,7 +430,7 @@ class FindContentOperationTests {
                 markdownSource = "Nested reply",
                 renderedHtml = "<p>Nested reply</p>",
                 parentComment = topComment,
-            )
+            ),
         )
         commentRepository.save(
             Comment(
@@ -439,12 +439,12 @@ class FindContentOperationTests {
                 markdownSource = "Deleted comment",
                 renderedHtml = "<p>Deleted comment</p>",
                 deleted = true,
-            )
+            ),
         )
 
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"))
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post")),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -472,7 +472,7 @@ class FindContentOperationTests {
 
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"))
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post")),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -538,7 +538,7 @@ class FindContentOperationTests {
     fun `anonymous user does not receive markdownSource`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"))
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post")),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -550,7 +550,7 @@ class FindContentOperationTests {
     fun `other user does not receive markdownSource`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), otherUser)
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), otherUser),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -562,7 +562,7 @@ class FindContentOperationTests {
     fun `author does not receive markdownSource for own post`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), author)
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), author),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -574,7 +574,7 @@ class FindContentOperationTests {
     fun `admin receives markdownSource for any post`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), admin)
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), admin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -586,7 +586,7 @@ class FindContentOperationTests {
     fun `super admin receives markdownSource for any post`() {
         val result =
             eventGateway.process(
-                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), superAdmin)
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -688,7 +688,7 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(1, ChronoUnit.HOURS),
                     author = admin,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "about", post = aboutPost, canonical = true))
         postCategoryRepository.save(PostCategory(post = aboutPost, category = pagesCategory))
@@ -715,7 +715,7 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(1, ChronoUnit.HOURS),
                     author = admin,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "sidebar-page", post = sidebarPost, canonical = true))
         postCategoryRepository.save(PostCategory(post = sidebarPost, category = sidebarCategory))
@@ -748,7 +748,7 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(10, ChronoUnit.MINUTES),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/03/alias-only", post = post, canonical = false))
 
@@ -773,7 +773,7 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(10, ChronoUnit.MINUTES),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/03/id-only", post = post, canonical = false))
 
@@ -798,7 +798,7 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(10, ChronoUnit.MINUTES),
                     author = admin,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "alias-page", post = page, canonical = false))
         postCategoryRepository.save(PostCategory(post = page, category = pagesCategory))
@@ -824,7 +824,7 @@ class FindContentOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(30, ChronoUnit.MINUTES),
                     author = admin,
-                )
+                ),
             )
         postCategoryRepository.save(PostCategory(post = sidebarPost, category = sidebarCategory))
 

@@ -257,7 +257,7 @@ class AlterUserOperationTests {
     fun `text command changes email`() {
         val result =
             eventGateway.process(
-                textMessage("alter user regularuser email new@example.com", superAdmin)
+                textMessage("alter user regularuser email new@example.com", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -267,7 +267,7 @@ class AlterUserOperationTests {
     fun `text command changes displayname`() {
         val result =
             eventGateway.process(
-                textMessage("alter user regularuser displayname New Display Name", superAdmin)
+                textMessage("alter user regularuser displayname New Display Name", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)

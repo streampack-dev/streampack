@@ -73,7 +73,7 @@ class RefreshTokenServiceTests {
 
         assertNull(refreshTokenRepository.findByTokenHash(RefreshTokenService.sha256(rawToken)))
         assertNotNull(
-            refreshTokenRepository.findByTokenHash(RefreshTokenService.sha256(newRawToken))
+            refreshTokenRepository.findByTokenHash(RefreshTokenService.sha256(newRawToken)),
         )
     }
 

@@ -64,7 +64,7 @@ class WebConsoleFlowTests {
                         egress.send(
                             MessageBuilder.withPayload(OperationResult.Success("later") as Any)
                                 .setHeader(Provenance.HEADER, provenance)
-                                .build()
+                                .build(),
                         )
                     }
                     return OperationResult.Success("now")

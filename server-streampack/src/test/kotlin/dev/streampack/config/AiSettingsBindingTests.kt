@@ -58,7 +58,7 @@ class AiSettingsBindingTests {
                     "AI_TIMEOUT" to "20s",
                     "AI_MAX_RETRIES" to "0",
                     "AI_EFFORT" to "low",
-                )
+                ),
             )
         assertEquals("claude-sonnet-5-5", bound.model)
         assertEquals("claude-haiku-4-5", bound.moderationModel)
@@ -77,7 +77,7 @@ class AiSettingsBindingTests {
                     "STREAMPACK_AI_MODEL" to "claude-opus-5-5",
                     "AI_MODERATION_MODEL" to "claude-haiku-4-5",
                     "STREAMPACK_AI_MODERATION_MODEL" to "claude-sonnet-5-5",
-                )
+                ),
             )
         assertEquals("claude-opus-5-5", bound.model)
         assertEquals("claude-sonnet-5-5", bound.moderationModel)

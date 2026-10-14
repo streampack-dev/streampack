@@ -38,7 +38,7 @@ import org.springframework.test.web.servlet.post
             "streampack.webconsole.max-line=40",
             "streampack.webconsole.max-body=512",
             "CORS_ORIGINS=https://trusted.example",
-        ]
+        ],
 )
 class WebConsoleAccessTests {
     @Autowired lateinit var mockMvc: MockMvc
@@ -65,7 +65,7 @@ class WebConsoleAccessTests {
     }
 
     private fun post(
-        build: org.springframework.test.web.servlet.MockHttpServletRequestDsl.() -> Unit
+        build: org.springframework.test.web.servlet.MockHttpServletRequestDsl.() -> Unit,
     ) =
         mockMvc.post("/admin/console") {
             contentType = MediaType.APPLICATION_JSON

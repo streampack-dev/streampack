@@ -79,7 +79,7 @@ class TaxonomyController(
                         tags = emptyMap(),
                         categories = emptyMap(),
                         aggregate = emptyMap(),
-                    )
+                    ),
                 )
         }
     }

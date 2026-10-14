@@ -55,7 +55,7 @@ class RetractContentOperationTests {
                     displayName = "Retract Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         otherUser =
             userRepository.save(
@@ -65,7 +65,7 @@ class RetractContentOperationTests {
                     displayName = "Retract Other",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         draftPost =
@@ -79,10 +79,10 @@ class RetractContentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/draft-to-retract", post = draftPost, canonical = true)
+            Slug(path = "2026/02/draft-to-retract", post = draftPost, canonical = true),
         )
 
         approvedPost =
@@ -97,10 +97,10 @@ class RetractContentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/approved-cannot-retract", post = approvedPost, canonical = true)
+            Slug(path = "2026/02/approved-cannot-retract", post = approvedPost, canonical = true),
         )
     }
 

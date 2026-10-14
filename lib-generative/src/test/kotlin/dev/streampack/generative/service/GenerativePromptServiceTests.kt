@@ -65,7 +65,7 @@ class GenerativePromptServiceTests {
                 (fn [ctx]
                   (str "lane=" (:lane ctx) " title=" (:sourceTitle ctx)))
                 """
-                    .trimIndent()
+                    .trimIndent(),
             )
 
         val rendered =

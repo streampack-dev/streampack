@@ -112,7 +112,7 @@ class EditProfileOperationTests {
     fun `a display name is trimmed`() {
         val result =
             eventGateway.process(
-                editProfileMessage(EditProfileRequest(displayName = "  Spaced  "), user)
+                editProfileMessage(EditProfileRequest(displayName = "  Spaced  "), user),
             )
 
         val principal = (result as OperationResult.Success).payload as UserPrincipal

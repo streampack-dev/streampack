@@ -52,11 +52,11 @@ class GitLabManagementOperation(private val subscriptionService: GitLabSubscript
             ) {
                 is SubscriptionOutcome.Subscribed ->
                     OperationResult.Success(
-                        "Subscribed to ${outcome.project.displayName}${renderFilters(outcome.filters)}"
+                        "Subscribed to ${outcome.project.displayName}${renderFilters(outcome.filters)}",
                     )
                 is SubscriptionOutcome.FiltersUpdated ->
                     OperationResult.Success(
-                        "Updated ${outcome.project.displayName} filters to${renderFilters(outcome.filters)}"
+                        "Updated ${outcome.project.displayName} filters to${renderFilters(outcome.filters)}",
                     )
                 is SubscriptionOutcome.AlreadySubscribed ->
                     OperationResult.Success("Already subscribed to ${outcome.project.displayName}")
@@ -90,7 +90,7 @@ class GitLabManagementOperation(private val subscriptionService: GitLabSubscript
             subscriptions.joinToString(", ") {
                 it.project.displayName +
                     renderFilters(SubscriptionEvents.pipelineFilters(it.events))
-            }
+            },
         )
     }
 
@@ -100,7 +100,7 @@ class GitLabManagementOperation(private val subscriptionService: GitLabSubscript
                 is RemoveProjectOutcome.Removed ->
                     OperationResult.Success(
                         "Removed ${outcome.project.displayName} " +
-                            "(${outcome.subscriptionsDeactivated} subscriptions deactivated)"
+                            "(${outcome.subscriptionsDeactivated} subscriptions deactivated)",
                     )
                 is RemoveProjectOutcome.ProjectNotFound -> notFound(outcome.identifier, instance)
                 is RemoveProjectOutcome.AlreadyInactive ->
@@ -146,7 +146,7 @@ class GitLabManagementOperation(private val subscriptionService: GitLabSubscript
             }
         return OperationResult.Error(
             "Unknown filter '$bad'. Filters: pipelines, pipelines:default-branch, " +
-                "pipelines:branch:<name>, each optionally followed by :failed"
+                "pipelines:branch:<name>, each optionally followed by :failed",
         )
     }
 }

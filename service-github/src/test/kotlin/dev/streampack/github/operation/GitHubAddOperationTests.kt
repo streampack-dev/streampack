@@ -151,7 +151,7 @@ class GitHubAddOperationTests {
         val result = eventGateway.process(adminMessage("github add owner/repo"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue(
-            (result as OperationResult.Success).payload.toString().contains("Already watching")
+            (result as OperationResult.Success).payload.toString().contains("Already watching"),
         )
     }
 

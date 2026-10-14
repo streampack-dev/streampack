@@ -65,7 +65,7 @@ data class RssRatingGuessResponse(
     @field:Schema(
         description =
             "What the model judged the item on: CONTENT (the feed's full text), PAGE (the " +
-                "article page), SUMMARY or TITLE"
+                "article page), SUMMARY or TITLE",
     )
     val textSource: RssTextSource,
     @field:Schema(description = "The model that guessed; null when it wasn't recorded")
@@ -73,14 +73,15 @@ data class RssRatingGuessResponse(
     @field:Schema(
         description =
             "The first 12 hex characters of the SHA-256 of the rubric the guess was made with; " +
-                "null for guesses made before the rubric was recorded"
+                "null for guesses made before the rubric was recorded",
     )
     val rubric: String?,
     val guessedAt: Instant,
     @field:Schema(description = "The editor's rating; null when the item is unrated")
     val rating: RssRating?,
     @field:Schema(
-        description = "Whether the guess matches the editor's rating; null when the item is unrated"
+        description =
+            "Whether the guess matches the editor's rating; null when the item is unrated",
     )
     val agrees: Boolean?,
 )
@@ -129,7 +130,7 @@ data class RssRatingStatsResponse(
     @field:Schema(
         description =
             "The share of compared items whose guess matches the rating; null when none are " +
-                "compared"
+                "compared",
     )
     val agreement: Double?,
     val perClass: List<RssRatingClassAgreement>,

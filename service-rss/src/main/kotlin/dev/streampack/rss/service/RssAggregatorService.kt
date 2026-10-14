@@ -68,14 +68,14 @@ class RssAggregatorService(
                             itemCount = entryRepository.countByFeed(feed),
                             latestItemTimestamp = entryRepository.findLatestItemTimestamp(feed),
                         )
-                    }
+                    },
         )
 
     @Transactional
     fun recordAccess(id: UUID) {
         val entry = entryRepository.findById(id).orElse(null) ?: return
         entryRepository.save(
-            entry.copy(accessCount = entry.accessCount + 1, lastAccessedAt = Instant.now())
+            entry.copy(accessCount = entry.accessCount + 1, lastAccessedAt = Instant.now()),
         )
     }
 

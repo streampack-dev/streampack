@@ -60,13 +60,13 @@ class FeedTagOperation(private val feedTags: FeedTagService) :
                 action == "ignore" && argument.isNotEmpty() -> {
                     val entry = feedTags.ignore(argument, actor)
                     OperationResult.Success(
-                        "Feed tag '${entry.name}' is ignored: it's stoplisted from now on."
+                        "Feed tag '${entry.name}' is ignored: it's stoplisted from now on.",
                     )
                 }
                 action == "create" && argument.isNotEmpty() -> {
                     val entry = feedTags.create(argument, actor)
                     OperationResult.Success(
-                        "Feed tag '${entry.name}' is now the tag '${entry.tag}'."
+                        "Feed tag '${entry.name}' is now the tag '${entry.tag}'.",
                     )
                 }
                 else -> OperationResult.Success(describe(feedTags.get(rest)))
@@ -86,7 +86,7 @@ class FeedTagOperation(private val feedTags: FeedTagService) :
         val listed = page.tags.joinToString("; ") { "${it.name} (${it.entries}/${it.feeds})" }
         return OperationResult.Success(
             "${page.waitingCount} feed tag(s) waiting (entries/feeds; a tag at " +
-                "${page.promoteEntries}/${page.promoteFeeds}): $listed"
+                "${page.promoteEntries}/${page.promoteFeeds}): $listed",
         )
     }
 

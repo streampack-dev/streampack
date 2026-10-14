@@ -46,11 +46,11 @@ class MattermostSecretRefStartupGuard(
                     validationErrors.add(
                         "Mattermost server '${server.name}' token is stored as a literal; set " +
                             "$envKey (the value is in the database, or issue a new token) so it " +
-                            "can be externalized"
+                            "can be externalized",
                     )
                 } else {
                     serverRepository.save(
-                        server.copy(token = SecretRef.env(envKey), updatedAt = Instant.now())
+                        server.copy(token = SecretRef.env(envKey), updatedAt = Instant.now()),
                     )
                     migrationExports.add(envKey)
                 }
@@ -59,11 +59,11 @@ class MattermostSecretRefStartupGuard(
             val key = current.envKeyOrNull()
             if (key == null) {
                 validationErrors.add(
-                    "Mattermost server '${server.name}' token has invalid env reference '${current.asStoredValue()}'"
+                    "Mattermost server '${server.name}' token has invalid env reference '${current.asStoredValue()}'",
                 )
             } else if (secretLookup(key).isNullOrBlank()) {
                 validationErrors.add(
-                    "Mattermost server '${server.name}' token requires environment variable $key"
+                    "Mattermost server '${server.name}' token requires environment variable $key",
                 )
             }
         }
@@ -77,7 +77,7 @@ class MattermostSecretRefStartupGuard(
 
         printFailure(migrationExports, validationErrors)
         throw SilentStartupException(
-            "Mattermost token externalization required. Add env vars shown above and restart."
+            "Mattermost token externalization required. Add env vars shown above and restart.",
         )
     }
 

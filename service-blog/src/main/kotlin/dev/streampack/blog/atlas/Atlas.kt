@@ -173,7 +173,7 @@ class Atlas(
                             compareByDescending<AtlasPlaceResponse> {
                                     it.articleCount + it.factoidCount
                                 }
-                                .thenBy { it.tag }
+                                .thenBy { it.tag },
                         ) ?: return@mapNotNull null
                 val reach =
                     members.maxOf { hypot(it.x - region.x, it.y - region.y) + it.r } + REGION_PAD
@@ -193,7 +193,7 @@ class Atlas(
                         it.first.uncharted
                     }
                     .thenByDescending { it.second.size }
-                    .thenBy { it.first.name }
+                    .thenBy { it.first.name },
             )
         return AtlasResponse(
             regions = ordered.map { it.first },
@@ -352,7 +352,7 @@ internal class Catalog(val articles: List<AtlasArticle>, val factoids: List<Atla
         articles.forEach { a -> a.tags.forEach { out.getOrPut(it) { mutableListOf() } += a } }
         out.mapValues { (_, list) ->
             list.sortedWith(
-                compareByDescending<AtlasArticle> { it.publishedAt }.thenBy { it.title }
+                compareByDescending<AtlasArticle> { it.publishedAt }.thenBy { it.title },
             )
         }
     }

@@ -32,7 +32,7 @@ class RecordRssEntryAccessOperationTests {
     fun setUp() {
         val feed =
             feedRepository.save(
-                RssFeed(feedUrl = "https://bytecode.news/feed.xml", title = "bytecode.news")
+                RssFeed(feedUrl = "https://bytecode.news/feed.xml", title = "bytecode.news"),
             )
         entryId =
             entryRepository
@@ -42,7 +42,7 @@ class RecordRssEntryAccessOperationTests {
                         guid = "entry-1",
                         link = "https://bytecode.news/posts/entry-1",
                         title = "Entry 1",
-                    )
+                    ),
                 )
                 .id
     }
@@ -51,7 +51,7 @@ class RecordRssEntryAccessOperationTests {
     fun `record access request increments persisted usage`() {
         val result =
             eventGateway.process(
-                MessageBuilder.withPayload(RecordRssEntryAccessRequest(entryId)).build()
+                MessageBuilder.withPayload(RecordRssEntryAccessRequest(entryId)).build(),
             )
 
         assertEquals(OperationResult.NotHandled, result)

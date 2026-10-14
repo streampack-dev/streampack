@@ -56,7 +56,7 @@ class SearchCoverageTests {
                     displayName = "Search Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
     }
 
@@ -76,7 +76,7 @@ class SearchCoverageTests {
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now().minusSeconds(60),
                     author = author,
-                )
+                ),
             )
         tags.forEach { name ->
             val tag =
@@ -160,7 +160,7 @@ class SearchCoverageTests {
 
         postTagRepository.deleteByPost(p.id)
         postTagRepository.save(
-            PostTag(post = p, tag = tagRepository.save(Tag(name = "newtag", slug = "newtag")))
+            PostTag(post = p, tag = tagRepository.save(Tag(name = "newtag", slug = "newtag"))),
         )
         entityManager.flush()
         entityManager.clear()
@@ -173,7 +173,7 @@ class SearchCoverageTests {
     fun `editing the body updates what finds it`() {
         val p = post("Edited", body = "Originally about ant.")
         postRepository.save(
-            p.copy(markdownSource = "Now about gradle.", renderedHtml = "<p>Now about gradle.</p>")
+            p.copy(markdownSource = "Now about gradle.", renderedHtml = "<p>Now about gradle.</p>"),
         )
         entityManager.flush()
 
@@ -186,7 +186,7 @@ class SearchCoverageTests {
         // Plant a sentinel vector; only a rebuild would replace it.
         entityManager
             .createNativeQuery(
-                "UPDATE posts SET search_vector = to_tsvector('simple', 'sentinel') WHERE id = :id"
+                "UPDATE posts SET search_vector = to_tsvector('simple', 'sentinel') WHERE id = :id",
             )
             .setParameter("id", p.id)
             .executeUpdate()
@@ -195,7 +195,7 @@ class SearchCoverageTests {
         // What RecordPostAccessOperation does: save the whole entity with a new access count.
         val loaded = postRepository.findById(p.id).orElseThrow()
         postRepository.save(
-            loaded.copy(accessCount = loaded.accessCount + 1, lastAccessedAt = Instant.now())
+            loaded.copy(accessCount = loaded.accessCount + 1, lastAccessedAt = Instant.now()),
         )
         entityManager.flush()
 

@@ -103,7 +103,7 @@ class EditContentOperation(
                 categories = categoryNames,
                 markdownSource = updated.markdownSource,
                 versions = postVersionService.views(updated),
-            )
+            ),
         )
     }
 
@@ -125,7 +125,11 @@ class EditContentOperation(
             slugRepository.save(existingSlug.copy(canonical = true))
         } else {
             slugRepository.save(
-                dev.streampack.blog.entity.Slug(path = requestedSlug, post = post, canonical = true)
+                dev.streampack.blog.entity.Slug(
+                    path = requestedSlug,
+                    post = post,
+                    canonical = true,
+                ),
             )
         }
     }

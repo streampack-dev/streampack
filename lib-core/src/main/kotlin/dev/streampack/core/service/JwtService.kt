@@ -28,7 +28,7 @@ class JwtService(properties: StreampackProperties) {
                 io.jsonwebtoken.security.Keys.hmacShaKeyFor(hash)
             } else {
                 logger.warn(
-                    "No JWT secret configured (streampack.jwt.secret). Using generated key - tokens will not survive restart."
+                    "No JWT secret configured (streampack.jwt.secret). Using generated key - tokens will not survive restart.",
                 )
                 Jwts.SIG.HS256.key().build()
             }

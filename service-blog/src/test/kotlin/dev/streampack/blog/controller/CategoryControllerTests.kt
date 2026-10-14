@@ -57,7 +57,7 @@ class CategoryControllerTests {
     fun `GET categories includes parent name for child categories`() {
         val parent = categoryRepository.findByName("Kotlin")!!
         categoryRepository.save(
-            Category(name = "Kotlin Multiplatform", slug = "kotlin-multiplatform", parent = parent)
+            Category(name = "Kotlin Multiplatform", slug = "kotlin-multiplatform", parent = parent),
         )
 
         mockMvc.get("/categories").andExpect {

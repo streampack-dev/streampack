@@ -49,7 +49,7 @@ class SlackRepositoryTests {
                     name = "jvm-news-ch",
                     botToken = SecretRef.literal("xoxb-test"),
                     appToken = SecretRef.literal("xapp-test"),
-                )
+                ),
             )
         val channel = channelRepository.save(SlackChannel(workspace = workspace, name = "#java"))
 
@@ -67,11 +67,11 @@ class SlackRepositoryTests {
                     name = "jvm-news-cid",
                     botToken = SecretRef.literal("xoxb-test"),
                     appToken = SecretRef.literal("xapp-test"),
-                )
+                ),
             )
         val channel =
             channelRepository.save(
-                SlackChannel(workspace = workspace, name = "#java", channelId = "C0123456789")
+                SlackChannel(workspace = workspace, name = "#java", channelId = "C0123456789"),
             )
 
         val found = channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, "#java")
@@ -87,7 +87,7 @@ class SlackRepositoryTests {
                 botToken = SecretRef.literal("xoxb-test"),
                 appToken = SecretRef.literal("xapp-test"),
                 autoconnect = true,
-            )
+            ),
         )
         workspaceRepository.save(
             SlackWorkspace(
@@ -95,7 +95,7 @@ class SlackRepositoryTests {
                 botToken = SecretRef.literal("xoxb-test2"),
                 appToken = SecretRef.literal("xapp-test2"),
                 autoconnect = false,
-            )
+            ),
         )
 
         val autoWorkspaces = workspaceRepository.findByAutoconnectTrueAndDeletedFalse()
@@ -110,7 +110,7 @@ class SlackRepositoryTests {
                 name = "active-ws",
                 botToken = SecretRef.literal("xoxb-test"),
                 appToken = SecretRef.literal("xapp-test"),
-            )
+            ),
         )
         workspaceRepository.save(
             SlackWorkspace(
@@ -118,7 +118,7 @@ class SlackRepositoryTests {
                 botToken = SecretRef.literal("xoxb-test2"),
                 appToken = SecretRef.literal("xapp-test2"),
                 deleted = true,
-            )
+            ),
         )
 
         val active = workspaceRepository.findByDeletedFalse()
@@ -136,11 +136,11 @@ class SlackRepositoryTests {
                     name = "jvm-news-del",
                     botToken = SecretRef.literal("xoxb-test"),
                     appToken = SecretRef.literal("xapp-test"),
-                )
+                ),
             )
         channelRepository.save(SlackChannel(workspace = workspace, name = "#active-ch"))
         channelRepository.save(
-            SlackChannel(workspace = workspace, name = "#deleted-ch", deleted = true)
+            SlackChannel(workspace = workspace, name = "#deleted-ch", deleted = true),
         )
 
         val channels = channelRepository.findByWorkspaceAndDeletedFalse(workspace)
@@ -148,7 +148,7 @@ class SlackRepositoryTests {
         assertEquals("#active-ch", channels[0].name)
 
         assertNull(
-            channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, "#deleted-ch")
+            channelRepository.findByWorkspaceAndNameAndDeletedFalse(workspace, "#deleted-ch"),
         )
     }
 
@@ -184,14 +184,14 @@ class SlackRepositoryTests {
                     name = "jvm-news-uri",
                     botToken = SecretRef.literal("xoxb-test"),
                     appToken = SecretRef.literal("xapp-test"),
-                )
+                ),
             )
         val unresolved =
             channelRepository.save(SlackChannel(workspace = workspace, name = "#kotlin"))
         assertEquals(null, unresolved.provenanceUri())
         val channel =
             channelRepository.save(
-                SlackChannel(workspace = workspace, name = "#java", channelId = "C0JAVA0001")
+                SlackChannel(workspace = workspace, name = "#java", channelId = "C0JAVA0001"),
             )
         assertEquals("slack://jvm-news-uri/C0JAVA0001", channel.provenanceUri())
     }

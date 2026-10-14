@@ -41,20 +41,20 @@ class FindFactoidCatalogOperationTests {
                 attributeType = FactoidAttributeType.TEXT,
                 attributeValue = "a module system for Java.",
                 updatedBy = "test",
-            )
+            ),
         )
         attributeRepository.save(
             FactoidAttribute(
                 factoid = osgi,
                 attributeType = FactoidAttributeType.URLS,
                 attributeValue = "https://osgi.org",
-            )
+            ),
         )
         factoidRepository.save(Factoid(selector = "node", updatedBy = "test"))
 
         val result =
             eventGateway.process(
-                MessageBuilder.withPayload(FindFactoidCatalogRequest as Any).build()
+                MessageBuilder.withPayload(FindFactoidCatalogRequest as Any).build(),
             )
 
         val catalog =

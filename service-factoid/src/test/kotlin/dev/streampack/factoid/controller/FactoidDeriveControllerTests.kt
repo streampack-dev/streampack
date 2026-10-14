@@ -67,7 +67,7 @@ class FactoidDeriveControllerTests {
                     displayName = "writer",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         token = jwtService.generateToken(user.toUserPrincipal())
         factoidService.save(

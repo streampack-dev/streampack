@@ -61,7 +61,7 @@ class GitHubForgeStore(
         defaultToken: SecretRef?,
     ): GitHubInstance =
         instanceRepository.save(
-            GitHubInstance(host = host, apiUrl = apiUrl, defaultToken = defaultToken)
+            GitHubInstance(host = host, apiUrl = apiUrl, defaultToken = defaultToken),
         )
 
     override fun findProject(instance: GitHubInstance, ref: ForgeProjectRef): GitHubRepo? {
@@ -114,7 +114,7 @@ class GitHubForgeStore(
                 highestPrNumber = highestChangeRequestNumber,
                 lastPolledAt = polledAt,
                 nextPollAt = nextPollAt,
-            )
+            ),
         )
     }
 
@@ -129,7 +129,7 @@ class GitHubForgeStore(
                 highestIssueNumber = highestIssueNumber,
                 highestPrNumber = highestChangeRequestNumber,
                 lastPolledAt = polledAt,
-            )
+            ),
         )
 
     override fun deactivateProject(project: GitHubRepo): GitHubRepo =
@@ -140,7 +140,7 @@ class GitHubForgeStore(
 
     override fun saveRelease(project: GitHubRepo, release: ForgeReleaseInfo) {
         releaseRepository.save(
-            GitHubRelease(repo = project, tag = release.tag, name = release.name)
+            GitHubRelease(repo = project, tag = release.tag, name = release.name),
         )
     }
 
@@ -155,7 +155,7 @@ class GitHubForgeStore(
         destinationUri: String,
     ): GitHubSubscription =
         subscriptionRepository.save(
-            GitHubSubscription(repo = project, destinationUri = destinationUri)
+            GitHubSubscription(repo = project, destinationUri = destinationUri),
         )
 
     override fun setSubscriptionActive(
@@ -175,7 +175,7 @@ class GitHubForgeStore(
         val existing = pipelineRepository.findByRepoAndPipelineId(project, pipelineId)
         pipelineRepository.save(
             existing?.copy(lastStatus = outcome, updatedAt = Instant.now())
-                ?: GitHubPipeline(repo = project, pipelineId = pipelineId, lastStatus = outcome)
+                ?: GitHubPipeline(repo = project, pipelineId = pipelineId, lastStatus = outcome),
         )
     }
 
@@ -183,7 +183,7 @@ class GitHubForgeStore(
         subscriptionRepository.findByRepoAndActiveTrue(project)
 
     override fun findActiveSubscriptionsByDestination(
-        destinationUri: String
+        destinationUri: String,
     ): List<GitHubSubscription> =
         subscriptionRepository.findByDestinationUriAndActiveTrue(destinationUri)
 

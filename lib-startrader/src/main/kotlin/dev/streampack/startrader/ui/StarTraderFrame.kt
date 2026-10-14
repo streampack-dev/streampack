@@ -175,7 +175,7 @@ class StarTraderFrame(
                     state.planets.map { planet ->
                         // PriceEngine will be called during the first tick
                         planet
-                    }
+                    },
             )
         lastEventLogSize = 0
         eventLog.text = "Universe seeded with ${state.planets.size} planets\n"

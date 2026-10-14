@@ -51,7 +51,7 @@ class McpToolService(
                             "totalPages" to response.totalPages,
                             "totalCount" to response.totalCount,
                             "posts" to response.posts,
-                        )
+                        ),
                     )
                 }
             }
@@ -86,7 +86,7 @@ class McpToolService(
                             "tags" to detail.tags,
                             "categories" to detail.categories,
                             "renderedHtml" to detail.renderedHtml,
-                        )
+                        ),
                     )
                 }
             }
@@ -115,7 +115,7 @@ class McpToolService(
                             "accessCount" to it.accessCount,
                         )
                     },
-            )
+            ),
         )
     }
 
@@ -139,7 +139,7 @@ class McpToolService(
                             "accessCount" to it.accessCount,
                         )
                     },
-            )
+            ),
         )
     }
 
@@ -177,7 +177,7 @@ class McpToolService(
                 "see" to values[FactoidAttributeType.SEE],
                 "maven" to values[FactoidAttributeType.MAVEN],
                 "rawAttributes" to rawAttributes,
-            )
+            ),
         )
     }
 
@@ -193,7 +193,7 @@ class McpToolService(
                             "tags" to snapshot.tags,
                             "categories" to snapshot.categories,
                             "aggregate" to snapshot.aggregate,
-                        )
+                        ),
                     )
                 }
             }
@@ -244,7 +244,7 @@ class McpToolService(
                         "Do not use post URLs in 'seealso' — only factoid selectors belong there.",
                         "Leave ambiguous attributes for human review.",
                     ),
-            )
+            ),
         )
     }
 

@@ -83,7 +83,7 @@ class SecretScrubbingLoggingTests {
                 .setHeader(Provenance.HEADER, provenance)
                 .setHeader("nick", nick)
                 .setHeader(Provenance.SENDER_ID, nick)
-                .build()
+                .build(),
         )
     }
 

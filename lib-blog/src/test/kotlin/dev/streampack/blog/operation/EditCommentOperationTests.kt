@@ -58,7 +58,7 @@ class EditCommentOperationTests {
                     displayName = "Edit Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.save(
@@ -68,7 +68,7 @@ class EditCommentOperationTests {
                     displayName = "Edit Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         otherUser =
             userRepository.save(
@@ -78,7 +78,7 @@ class EditCommentOperationTests {
                     displayName = "Other User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         publishedPost =
@@ -93,7 +93,7 @@ class EditCommentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         recentComment =
@@ -105,7 +105,7 @@ class EditCommentOperationTests {
                     renderedHtml = "<p>Recent comment.</p>",
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         oldComment =
@@ -117,7 +117,7 @@ class EditCommentOperationTests {
                     renderedHtml = "<p>Old comment.</p>",
                     createdAt = now.minus(10, ChronoUnit.MINUTES),
                     updatedAt = now.minus(10, ChronoUnit.MINUTES),
-                )
+                ),
             )
 
         deletedComment =
@@ -130,7 +130,7 @@ class EditCommentOperationTests {
                     deleted = true,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
     }
 

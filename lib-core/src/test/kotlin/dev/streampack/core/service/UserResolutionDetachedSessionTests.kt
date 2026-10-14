@@ -34,7 +34,7 @@ class UserResolutionDetachedSessionTests {
                     username = "irc-detached-user",
                     email = "irc-detached-user@example.com",
                     displayName = "IRC Detached User",
-                )
+                ),
             )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -42,7 +42,7 @@ class UserResolutionDetachedSessionTests {
                 protocol = Protocol.IRC,
                 serviceId = "libera",
                 externalIdentifier = "detached@example.com",
-            )
+            ),
         )
 
         val principal =

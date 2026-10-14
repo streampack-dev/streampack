@@ -131,7 +131,7 @@ object AtlasLayout {
                 .filterKeys { it in byTag }
                 .entries
                 .sortedWith(
-                    compareByDescending<Map.Entry<String, Double>> { it.value }.thenBy { it.key }
+                    compareByDescending<Map.Entry<String, Double>> { it.value }.thenBy { it.key },
                 )
                 .firstOrNull()
                 ?.let { byTag.getValue(it.key) }
@@ -211,7 +211,7 @@ object AtlasLayout {
                 groups
                     .filter { g -> g.size < MIN_REGION && settled.none { it === g } }
                     .minWithOrNull(
-                        compareBy<List<String>> { it.size }.thenBy { index.getValue(it.first()) }
+                        compareBy<List<String>> { it.size }.thenBy { index.getValue(it.first()) },
                     ) ?: break
             val target =
                 groups
@@ -220,7 +220,7 @@ object AtlasLayout {
                     .filter { it.second > 0.0 }
                     .maxWithOrNull(
                         compareBy<Pair<MutableList<String>, Double>> { it.second }
-                            .thenByDescending { index.getValue(it.first.first()) }
+                            .thenByDescending { index.getValue(it.first.first()) },
                     )
                     ?.first
             if (target == null) {
@@ -235,7 +235,7 @@ object AtlasLayout {
                 .map { g -> g.sortedBy { index.getValue(it) } }
                 .sortedWith(
                     compareByDescending<List<String>> { it.size }
-                        .thenBy { index.getValue(it.first()) }
+                        .thenBy { index.getValue(it.first()) },
                 )
         return sorted to loners
     }

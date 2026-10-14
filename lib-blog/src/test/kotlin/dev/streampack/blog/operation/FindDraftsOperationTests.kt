@@ -59,7 +59,7 @@ class FindDraftsOperationTests {
                     displayName = "Drafts Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.save(
@@ -69,7 +69,7 @@ class FindDraftsOperationTests {
                     displayName = "Drafts Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         regularUser =
             userRepository.save(
@@ -79,7 +79,7 @@ class FindDraftsOperationTests {
                     displayName = "Drafts Regular",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         // Create three drafts
@@ -95,7 +95,7 @@ class FindDraftsOperationTests {
                         author = author,
                         createdAt = now.minus(i.toLong(), ChronoUnit.HOURS),
                         updatedAt = now.minus(i.toLong(), ChronoUnit.HOURS),
-                    )
+                    ),
                 )
             slugRepository.save(Slug(path = "2026/02/draft-$i", post = draft, canonical = true))
         }
@@ -113,10 +113,10 @@ class FindDraftsOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/approved-post-drafts", post = approved, canonical = true)
+            Slug(path = "2026/02/approved-post-drafts", post = approved, canonical = true),
         )
 
         // Create a soft-deleted draft (should not appear in drafts)
@@ -132,10 +132,10 @@ class FindDraftsOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/deleted-draft", post = deletedDraft, canonical = true)
+            Slug(path = "2026/02/deleted-draft", post = deletedDraft, canonical = true),
         )
     }
 

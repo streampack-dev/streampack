@@ -50,7 +50,7 @@ class SoftDeleteContentOperationTests {
                     displayName = "Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
 
         regularUser =
@@ -61,7 +61,7 @@ class SoftDeleteContentOperationTests {
                     displayName = "User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         post =
@@ -75,7 +75,7 @@ class SoftDeleteContentOperationTests {
                     author = regularUser,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
     }
 

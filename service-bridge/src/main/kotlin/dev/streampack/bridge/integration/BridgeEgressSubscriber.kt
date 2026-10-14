@@ -43,7 +43,7 @@ class BridgeEgressSubscriber(
             val targetProvenance = Provenance.decode(targetUri)
             val bridgedProvenance =
                 targetProvenance.copy(
-                    metadata = targetProvenance.metadata + (Provenance.BRIDGED to true)
+                    metadata = targetProvenance.metadata + (Provenance.BRIDGED to true),
                 )
             val egressMessage =
                 MessageBuilder.withPayload(OperationResult.Success(text) as Any)

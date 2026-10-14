@@ -83,7 +83,7 @@ class FindTaxonomySnapshotOperationTests {
                     displayName = "Taxonomy Operation Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         val postOne =
@@ -96,7 +96,7 @@ class FindTaxonomySnapshotOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now(),
                     author = author,
-                )
+                ),
             )
         val postTwo =
             postRepository.save(
@@ -108,7 +108,7 @@ class FindTaxonomySnapshotOperationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now(),
                     author = author,
-                )
+                ),
             )
 
         val xyzTag = tagRepository.save(Tag(name = "xyz", slug = "xyz"))

@@ -39,7 +39,7 @@ class LoggingEgressSubscriberTests {
 
                 override fun execute(message: Message<*>): OperationOutcome =
                     OperationResult.Success(
-                        (message.payload as String).removePrefix("echo ").trim()
+                        (message.payload as String).removePrefix("echo ").trim(),
                     )
             }
 
@@ -175,7 +175,7 @@ class LoggingEgressSubscriberTests {
     fun `a LoggingRequest is logged with its kind, and a message as a message`() {
         val prov = uniqueProvenance()
         eventGateway.process(
-            messageWith(LoggingRequest("* alice quit (bye)", MessageKind.QUIT), prov)
+            messageWith(LoggingRequest("* alice quit (bye)", MessageKind.QUIT), prov),
         )
         eventGateway.process(messageWith("* alice quit (bye)", prov))
 
@@ -194,7 +194,7 @@ class LoggingEgressSubscriberTests {
     /* Egress delivery happens on another thread, so the flag must be committed, not just flushed */
     @Test
     @org.springframework.transaction.annotation.Transactional(
-        propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED
+        propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED,
     )
     fun `a channel with logged=false is captured neither inbound nor outbound`() {
         val provenance = uniqueProvenance()

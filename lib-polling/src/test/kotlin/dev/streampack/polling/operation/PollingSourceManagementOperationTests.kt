@@ -111,10 +111,10 @@ class PollingSourceManagementOperationTests {
     @Test
     fun `unsubscribe command requires admin`() {
         assertFalse(
-            operation.canHandle("test unsubscribe foo", guestMessage("test unsubscribe foo"))
+            operation.canHandle("test unsubscribe foo", guestMessage("test unsubscribe foo")),
         )
         assertTrue(
-            operation.canHandle("test unsubscribe foo", adminMessage("test unsubscribe foo"))
+            operation.canHandle("test unsubscribe foo", adminMessage("test unsubscribe foo")),
         )
     }
 

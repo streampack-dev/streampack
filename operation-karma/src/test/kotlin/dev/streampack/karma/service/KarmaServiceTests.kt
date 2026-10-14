@@ -42,7 +42,7 @@ class KarmaServiceTests {
     fun `adjustKarma on different day creates new record`() {
         // Insert a record manually for yesterday
         repository.save(
-            KarmaRecord(subject = "kotlin", recordDate = LocalDate.now().minusDays(1), delta = 3)
+            KarmaRecord(subject = "kotlin", recordDate = LocalDate.now().minusDays(1), delta = 3),
         )
         karmaService.adjustKarma("kotlin", 1)
         val records = repository.findBySubject("kotlin")
@@ -62,7 +62,7 @@ class KarmaServiceTests {
                 subject = "oldtopic",
                 recordDate = LocalDate.now().minusDays(346),
                 delta = 2,
-            )
+            ),
         )
         val score = karmaService.getKarma("oldtopic")
         // exp(-0.002 * 346) ~= 0.5, so 2 * 0.5 = 1

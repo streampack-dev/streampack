@@ -53,7 +53,7 @@ class SecretScrubberTests {
                 "Bearer of bad news",
                 "-----BEGIN PUBLIC KEY-----",
                 "the token: it's fine",
-            ]
+            ],
     )
     fun `near misses are left alone`(text: String) {
         val result = scrubber.scrub(text)
@@ -92,7 +92,7 @@ class SecretScrubberTests {
                 "password: hunter2",
                 "my-password-is-hunter2",
                 "you can go HUNTER2 my Hunter2-ing hunter2",
-            ]
+            ],
     )
     fun `hunter2 is always a password`(text: String) {
         val result = scrubber.scrub(text)
@@ -176,9 +176,9 @@ class SecretScrubberTests {
                             SecretScrubbingProperties.ExtraPattern(
                                 kind = "internal-token",
                                 pattern = "\\bitk_[A-Za-z0-9]{8}\\b",
-                            )
-                        )
-                )
+                            ),
+                        ),
+                ),
             )
         val result = extra.scrub("use itk_abcd1234 for it")
         assertEquals("use [REDACTED:internal-token] for it", result.text)

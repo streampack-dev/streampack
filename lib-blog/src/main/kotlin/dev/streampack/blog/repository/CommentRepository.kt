@@ -14,17 +14,17 @@ interface CommentRepository : JpaRepository<Comment, UUID> {
     fun findByPost(postId: UUID): List<Comment>
 
     @Query(
-        "SELECT c FROM Comment c LEFT JOIN FETCH c.author WHERE c.post.id = :postId ORDER BY c.createdAt ASC"
+        "SELECT c FROM Comment c LEFT JOIN FETCH c.author WHERE c.post.id = :postId ORDER BY c.createdAt ASC",
     )
     fun findByPostWithAuthor(postId: UUID): List<Comment>
 
     @Query(
-        "SELECT c FROM Comment c LEFT JOIN FETCH c.author WHERE c.id = :id AND c.deleted = false"
+        "SELECT c FROM Comment c LEFT JOIN FETCH c.author WHERE c.id = :id AND c.deleted = false",
     )
     fun findActiveByIdWithAuthor(id: UUID): Comment?
 
     @Query(
-        "SELECT c FROM Comment c WHERE c.author.id = :authorId AND c.deleted = false ORDER BY c.createdAt DESC"
+        "SELECT c FROM Comment c WHERE c.author.id = :authorId AND c.deleted = false ORDER BY c.createdAt DESC",
     )
     fun findByAuthor(authorId: UUID): List<Comment>
 

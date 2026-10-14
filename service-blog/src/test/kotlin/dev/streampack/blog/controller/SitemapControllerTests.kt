@@ -49,7 +49,7 @@ class SitemapControllerTests {
                     displayName = "Sitemap Author",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
 
         val post =
@@ -62,7 +62,7 @@ class SitemapControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(1, ChronoUnit.HOURS),
                     author = author,
-                )
+                ),
             )
 
         val publishedAt = post.publishedAt!!
@@ -78,7 +78,7 @@ class SitemapControllerTests {
                 renderedHtml = "<p>Draft</p>",
                 status = PostStatus.DRAFT,
                 author = author,
-            )
+            ),
         )
     }
 
@@ -90,8 +90,8 @@ class SitemapControllerTests {
             content {
                 string(
                     org.hamcrest.Matchers.containsString(
-                        "http://www.sitemaps.org/schemas/sitemap/0.9"
-                    )
+                        "http://www.sitemaps.org/schemas/sitemap/0.9",
+                    ),
                 )
             }
             content { string(org.hamcrest.Matchers.containsString(slugPath)) }

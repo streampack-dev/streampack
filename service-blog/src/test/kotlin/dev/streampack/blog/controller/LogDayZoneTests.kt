@@ -41,7 +41,7 @@ class LogDayZoneTests {
                 visible = true,
                 logged = true,
                 active = true,
-            )
+            ),
         )
         line("late on the thirteenth", "2026-10-14T03:00:00Z")
         line("early on the fourteenth", "2026-10-14T05:00:00Z")
@@ -54,7 +54,7 @@ class LogDayZoneTests {
                 sender = "alice",
                 content = content,
                 timestamp = Instant.parse(at),
-            )
+            ),
         )
 
     @Test

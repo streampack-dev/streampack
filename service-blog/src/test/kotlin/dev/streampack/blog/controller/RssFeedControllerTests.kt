@@ -47,7 +47,7 @@ class RssFeedControllerTests {
                     displayName = "RSS Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         val now = Instant.now()
@@ -61,7 +61,7 @@ class RssFeedControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(1, ChronoUnit.HOURS),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/02/rss-test-post", post = post, canonical = true))
     }
@@ -98,11 +98,11 @@ class RssFeedControllerTests {
         assertTrue(result.contains("<title>bytecode.news</title>"))
         assertTrue(
             result.contains(
-                "<description>JVM ecosystem news and community content</description>"
-            ) || result.contains("<subtitle>JVM ecosystem news and community content</subtitle>")
+                "<description>JVM ecosystem news and community content</description>",
+            ) || result.contains("<subtitle>JVM ecosystem news and community content</subtitle>"),
         )
         assertTrue(
-            result.contains("<language>en-us</language>") || result.contains("xml:lang=\"en-us\"")
+            result.contains("<language>en-us</language>") || result.contains("xml:lang=\"en-us\""),
         )
     }
 

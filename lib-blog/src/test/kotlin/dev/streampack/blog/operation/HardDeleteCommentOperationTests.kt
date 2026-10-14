@@ -58,7 +58,7 @@ class HardDeleteCommentOperationTests {
                     displayName = "HD Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.save(
@@ -68,7 +68,7 @@ class HardDeleteCommentOperationTests {
                     displayName = "HD Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         regularUser =
             userRepository.save(
@@ -78,7 +78,7 @@ class HardDeleteCommentOperationTests {
                     displayName = "HD Regular",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         publishedPost =
@@ -93,7 +93,7 @@ class HardDeleteCommentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         commentToRemove =
@@ -105,7 +105,7 @@ class HardDeleteCommentOperationTests {
                     renderedHtml = "<p>Comment to remove.</p>",
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
     }
 
@@ -156,7 +156,7 @@ class HardDeleteCommentOperationTests {
                     renderedHtml = "<p>Child comment.</p>",
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
-                )
+                ),
             )
 
         val request = HardDeleteCommentRequest(commentToRemove.id)

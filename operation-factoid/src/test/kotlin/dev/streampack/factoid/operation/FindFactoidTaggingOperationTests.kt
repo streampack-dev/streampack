@@ -38,7 +38,7 @@ class FindFactoidTaggingOperationTests {
                 factoid = factoid,
                 attributeType = FactoidAttributeType.TAGS,
                 attributeValue = tags,
-            )
+            ),
         )
     }
 
@@ -50,7 +50,7 @@ class FindFactoidTaggingOperationTests {
 
         val result =
             eventGateway.process(
-                MessageBuilder.withPayload(FindFactoidTaggingRequest as Any).build()
+                MessageBuilder.withPayload(FindFactoidTaggingRequest as Any).build(),
             )
 
         val tagging =

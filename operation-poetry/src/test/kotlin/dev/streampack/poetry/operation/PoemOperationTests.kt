@@ -147,9 +147,9 @@ class PoemOperationTests {
         val typedMessage =
             MessageBuilder.withPayload(
                     PoemAnalysisRequest(
-                        "A short poem\nWith two lines\nAnd a third for good measure"
+                        "A short poem\nWith two lines\nAnd a third for good measure",
                     )
-                        as Any
+                        as Any,
                 )
                 .setHeader(Provenance.HEADER, provenance())
                 .build()

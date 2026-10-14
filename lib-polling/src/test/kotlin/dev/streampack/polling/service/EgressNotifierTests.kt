@@ -23,7 +23,7 @@ class EgressNotifierTests {
     class CapturingConfig {
         @Bean
         fun capturingSubscriber(
-            @Qualifier("egressChannel") egressChannel: SubscribableChannel
+            @Qualifier("egressChannel") egressChannel: SubscribableChannel,
         ): CapturingSubscriber {
             val subscriber = CapturingSubscriber()
             egressChannel.subscribe(subscriber)

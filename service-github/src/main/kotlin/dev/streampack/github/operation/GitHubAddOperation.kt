@@ -47,7 +47,7 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
                         literals = listOf("github", "add"),
                         args = it,
                     )
-                }
+                },
         )
 
     override val priority: Int = 55
@@ -80,7 +80,7 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
                         "(${outcome.issueCount} issues, " +
                         "${outcome.changeRequestCount} PRs, " +
                         "${outcome.releaseCount} releases)" +
-                        tokenExternalizationNote(payload.token, outcome.project)
+                        tokenExternalizationNote(payload.token, outcome.project),
                 )
             is AddProjectOutcome.AlreadyExists ->
                 OperationResult.Success("Already watching ${outcome.project.displayName}")
@@ -106,7 +106,7 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
         /** The error every `github` command gives for an `on <host>` that is not registered */
         fun unknownInstance(host: String?): OperationResult.Error =
             OperationResult.Error(
-                "No GitHub instance registered for $host. Register it with: github instance add <url>"
+                "No GitHub instance registered for $host. Register it with: github instance add <url>",
             )
     }
 }

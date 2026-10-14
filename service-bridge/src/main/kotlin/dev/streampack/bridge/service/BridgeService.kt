@@ -81,7 +81,7 @@ class BridgeService(private val pairRepository: BridgePairRepository) {
                     firstUri = normalizedSourceUri,
                     secondUri = normalizedTargetUri,
                     copyFirstToSecond = true,
-                )
+                ),
             )
         logger.info("Created bridge pair: {} -> {}", normalizedSourceUri, normalizedTargetUri)
         return CopyResult.Success(pair)

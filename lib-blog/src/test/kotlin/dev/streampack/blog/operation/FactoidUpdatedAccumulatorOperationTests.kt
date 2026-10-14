@@ -62,7 +62,7 @@ class FactoidUpdatedAccumulatorOperationTests {
                         Provenance.HEADER,
                         Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local"),
                     )
-                    .build()
+                    .build(),
             )
 
         assertEquals(OperationResult.NotHandled, result)

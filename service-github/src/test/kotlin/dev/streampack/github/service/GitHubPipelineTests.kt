@@ -60,7 +60,7 @@ class GitHubPipelineTests {
     class CapturingConfig {
         @Bean
         fun capturingPipelineSubscriber(
-            @Qualifier("egressChannel") egressChannel: SubscribableChannel
+            @Qualifier("egressChannel") egressChannel: SubscribableChannel,
         ): Capturing {
             val subscriber = Capturing()
             egressChannel.subscribe(subscriber)
@@ -75,7 +75,7 @@ class GitHubPipelineTests {
 
         override fun deliver(result: OperationResult, provenance: Provenance) {
             captured.add(
-                (result as OperationResult.Success).payload.toString() to provenance.encode()
+                (result as OperationResult.Success).payload.toString() to provenance.encode(),
             )
         }
     }
@@ -198,7 +198,7 @@ class GitHubPipelineTests {
                 lastPolledAt = lastPolled,
                 deliveryMode = DeliveryMode.WEBHOOK,
                 webhookSecret = cipher.encrypt(secret),
-            )
+            ),
         )
 
     @Test
@@ -212,8 +212,8 @@ class GitHubPipelineTests {
         val updated =
             eventGateway.process(
                 adminMessage(
-                    "github subscribe owner/repo pipelines:failed pipelines:branch:develop"
-                )
+                    "github subscribe owner/repo pipelines:failed pipelines:branch:develop",
+                ),
             )
         val text = assertInstanceOf(OperationResult.Success::class.java, updated).payload.toString()
         assertTrue(
@@ -237,7 +237,7 @@ class GitHubPipelineTests {
         assertTrue(
             assertInstanceOf(OperationResult.Error::class.java, bad)
                 .message
-                .contains("pipelines:sometimes")
+                .contains("pipelines:sometimes"),
         )
 
         val listing = eventGateway.process(adminMessage("github subscriptions"))
@@ -265,7 +265,7 @@ class GitHubPipelineTests {
             listOf(
                 dev.streampack.forge.subscription.PipelineFilter.parse("pipelines")!!,
                 dev.streampack.forge.subscription.PipelineFilter.parse(
-                    "pipelines:default-branch"
+                    "pipelines:default-branch",
                 )!!,
             ),
         )
@@ -288,7 +288,7 @@ class GitHubPipelineTests {
         val toOther = capturing.captured.filter { it.second == other }.map { it.first }
         assertEquals(
             listOf(
-                "[owner/repo] PR #12 workflow 'CI' FAILED (unit-tests) - https://github.com/owner/repo/actions/runs/1"
+                "[owner/repo] PR #12 workflow 'CI' FAILED (unit-tests) - https://github.com/owner/repo/actions/runs/1",
             ),
             toChannel,
         )
@@ -346,7 +346,7 @@ class GitHubPipelineTests {
         assertEquals(
             listOf(
                 "[owner/repo] PR #21 workflow 'CI' FAILED (unit-tests) - https://github.com/owner/repo/actions/runs/77" to
-                    channel
+                    channel,
             ),
             capturing.captured.toList(),
         )

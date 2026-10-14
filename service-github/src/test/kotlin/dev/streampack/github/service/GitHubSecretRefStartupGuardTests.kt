@@ -27,7 +27,7 @@ class GitHubSecretRefStartupGuardTests {
         assertEquals(
             "GITHUB_GHE_EXAMPLE_COM_OWNER_REPO_TOKEN",
             GitHubSecretRefStartupGuard.envKeyFor(
-                GitHubRepo(instance = ghe, owner = "owner", name = "repo")
+                GitHubRepo(instance = ghe, owner = "owner", name = "repo"),
             ),
         )
         assertEquals(
@@ -73,7 +73,7 @@ class GitHubSecretRefStartupGuardTests {
         assertEquals(
             "GITHUB_STREAMPACK_DEV_STREAMPACK_TOKEN",
             GitHubSecretRefStartupGuard.envKeyFor(
-                GitHubRepo(owner = "streampack-dev", name = "streampack")
+                GitHubRepo(owner = "streampack-dev", name = "streampack"),
             ),
         )
     }

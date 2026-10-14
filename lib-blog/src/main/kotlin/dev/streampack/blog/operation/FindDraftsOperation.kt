@@ -38,7 +38,7 @@ class FindDraftsOperation(
             summaries.listing(
                 pageResult,
                 (message.headers[Provenance.HEADER] as? Provenance)?.user,
-            )
+            ),
         )
     }
 }

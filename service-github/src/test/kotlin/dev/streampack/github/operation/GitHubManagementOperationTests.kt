@@ -141,7 +141,7 @@ class GitHubManagementOperationTests {
         val dupe = eventGateway.process(ircMessage("github subscribe owner/repo"))
         assertInstanceOf(OperationResult.Success::class.java, dupe)
         assertTrue(
-            (dupe as OperationResult.Success).payload.toString().contains("Already subscribed")
+            (dupe as OperationResult.Success).payload.toString().contains("Already subscribed"),
         )
 
         val unsub = eventGateway.process(ircMessage("github unsubscribe owner/repo"))
@@ -260,7 +260,7 @@ class GitHubManagementOperationTests {
         addRepo("owner", "repo")
         val result =
             eventGateway.process(
-                consoleMessage("github subscribe owner/repo to irc://libera/%23java")
+                consoleMessage("github subscribe owner/repo to irc://libera/%23java"),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals("Subscribed to owner/repo", (result as OperationResult.Success).payload)
@@ -281,10 +281,10 @@ class GitHubManagementOperationTests {
         addRepo("owner", "repo-one")
         addRepo("owner", "repo-two")
         eventGateway.process(
-            consoleMessage("github subscribe owner/repo-one to irc://libera/%23java")
+            consoleMessage("github subscribe owner/repo-one to irc://libera/%23java"),
         )
         eventGateway.process(
-            consoleMessage("github subscribe owner/repo-two to irc://libera/%23java")
+            consoleMessage("github subscribe owner/repo-two to irc://libera/%23java"),
         )
 
         val result =

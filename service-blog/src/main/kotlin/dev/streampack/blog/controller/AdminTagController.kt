@@ -96,7 +96,7 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
                 else
                     runCatching { TagReviewStatus.valueOf(status.uppercase()) }.getOrNull()
                         ?: return@asAdmin badRequest(
-                            "status is all, open, aliased, split, kept or dismissed"
+                            "status is all, open, aliased, split, kept or dismissed",
                         )
             if (page < 0) return@asAdmin badRequest("The page can't be negative.")
             if (size < 1 || size > MAX_SIZE)
@@ -162,7 +162,7 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
             val tag = curation.reviewTag(id)
             ResponseEntity.ok(
                 if (dryRun) curation.previewAlias(tag, request.tag, admin.username)
-                else curation.alias(tag, request.tag, admin.username)
+                else curation.alias(tag, request.tag, admin.username),
             )
         }
 
@@ -201,7 +201,7 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
             val tag = curation.reviewTag(id)
             ResponseEntity.ok(
                 if (dryRun) curation.previewSplit(tag, request?.parts, admin.username)
-                else curation.split(tag, request?.parts, admin.username)
+                else curation.split(tag, request?.parts, admin.username),
             )
         }
 
@@ -297,7 +297,7 @@ class AdminTagController(private val curation: TagCuration, jwtService: JwtServi
             if (request.alias.isBlank()) return@asAdmin badRequest("alias is required")
             ResponseEntity.ok(
                 if (dryRun) curation.previewAlias(request.alias, request.tag, admin.username)
-                else curation.alias(request.alias, request.tag, admin.username)
+                else curation.alias(request.alias, request.tag, admin.username),
             )
         }
 

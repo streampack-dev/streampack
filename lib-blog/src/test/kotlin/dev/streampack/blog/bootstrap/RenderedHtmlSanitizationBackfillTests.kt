@@ -37,7 +37,7 @@ class RenderedHtmlSanitizationBackfillTests {
                     email = "backfill-author@example.com",
                     emailVerified = true,
                     displayName = "Backfill Author",
-                )
+                ),
             )
         val hostile =
             postRepository.save(
@@ -50,7 +50,7 @@ class RenderedHtmlSanitizationBackfillTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         val clean =
             postRepository.save(
@@ -63,7 +63,7 @@ class RenderedHtmlSanitizationBackfillTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         val hostileComment =
             commentRepository.save(
@@ -74,7 +74,7 @@ class RenderedHtmlSanitizationBackfillTests {
                     renderedHtml = "<p><img src=\"x\" onerror=\"steal()\"></p>",
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         backfill.run(DefaultApplicationArguments())

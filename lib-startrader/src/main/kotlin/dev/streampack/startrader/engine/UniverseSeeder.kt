@@ -94,7 +94,7 @@ class UniverseSeeder(private val random: Random = Random()) {
                     z = z,
                     production = planetConfig.production,
                     population = planetConfig.population,
-                )
+                ),
             )
         }
 
@@ -116,7 +116,7 @@ class UniverseSeeder(private val random: Random = Random()) {
                         planets[j].x,
                         planets[j].y,
                         planets[j].z,
-                    )
+                    ),
                 )
             }
         }

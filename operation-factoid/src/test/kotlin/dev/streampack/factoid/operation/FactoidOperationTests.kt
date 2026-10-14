@@ -648,8 +648,8 @@ class FactoidOperationTests {
         eventGateway.process(
             msg(
                 "8ball=<reply>(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)" +
-                    "|It's (unclear|unknowable))."
-            )
+                    "|It's (unclear|unknowable)).",
+            ),
         )
         val validResults =
             setOf(
@@ -689,8 +689,8 @@ class FactoidOperationTests {
         eventGateway.process(
             msg(
                 "8ball=<reply>(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)" +
-                    "|It's (unclear|unknowable))."
-            )
+                    "|It's (unclear|unknowable)).",
+            ),
         )
         val result = eventGateway.process(msg("8ball.literal"))
         assertSuccess(
@@ -754,7 +754,7 @@ class FactoidOperationTests {
         // (it might match a factoid named "tag" or return NotHandled)
         assertTrue(
             result !is OperationResult.Success ||
-                !(result.payload as String).startsWith("Factoids tagged")
+                !(result.payload as String).startsWith("Factoids tagged"),
         )
     }
 

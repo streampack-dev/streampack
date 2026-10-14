@@ -64,7 +64,7 @@ class BlogNotificationService(
                     "Your comment on \"${post.title}\" received a new reply."
                 } else {
                     "Your post \"${post.title}\" received a new comment."
-                }
+                },
             )
             appendLine()
             appendLine("URL: ${buildPostUrl(slugPath)}")

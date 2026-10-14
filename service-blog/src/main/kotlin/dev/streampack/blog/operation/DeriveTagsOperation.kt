@@ -104,7 +104,7 @@ class DeriveTagsOperation(
         val rawTags =
             if (structuredTags.isEmpty() && !rawResponse.isNullOrBlank()) {
                 logger.info(
-                    "DeriveTagsOperation: structured response empty, trying raw parse fallback"
+                    "DeriveTagsOperation: structured response empty, trying raw parse fallback",
                 )
                 parseTags(rawResponse)
             } else {
@@ -118,7 +118,7 @@ class DeriveTagsOperation(
                 rawResponse?.take(400),
             )
             return OperationResult.Error(
-                "Failed to derive tags: AI response had no parsable tag candidates"
+                "Failed to derive tags: AI response had no parsable tag candidates",
             )
         }
 
@@ -130,7 +130,7 @@ class DeriveTagsOperation(
                 candidateTags,
             )
             return OperationResult.Error(
-                "Failed to derive tags: suggestions were low-confidence after filtering"
+                "Failed to derive tags: suggestions were low-confidence after filtering",
             )
         }
 
@@ -245,7 +245,7 @@ class DeriveTagsOperation(
                     tag to score
                 }
                 .sortedWith(
-                    compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first }
+                    compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first },
                 )
 
         val selected = mutableListOf<String>()

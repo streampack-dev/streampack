@@ -75,7 +75,7 @@ class DictionaryOperationTests {
         assertTrue(payload.contains("lasting for a very short time."))
         assertTrue(
             payload.contains(
-                "Source: https://en.wiktionary.org/wiki/ephemeral (Wiktionary, CC BY-SA 3.0)"
+                "Source: https://en.wiktionary.org/wiki/ephemeral (Wiktionary, CC BY-SA 3.0)",
             ),
             payload,
         )
@@ -97,7 +97,7 @@ class DictionaryOperationTests {
         assertTrue(payload.contains("lasting only for a short time."), payload)
         assertTrue(
             payload.contains(
-                "Source: https://en.wiktionary.org/wiki/transient (Wiktionary, CC BY-SA 3.0)"
+                "Source: https://en.wiktionary.org/wiki/transient (Wiktionary, CC BY-SA 3.0)",
             ),
             payload,
         )

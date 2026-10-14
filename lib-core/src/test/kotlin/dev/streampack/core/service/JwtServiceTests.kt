@@ -18,7 +18,7 @@ class JwtServiceTests {
                 StreampackProperties.JwtProperties(
                     secret = secret,
                     expirationHours = expirationHours,
-                )
+                ),
         )
 
     private val jwtService =

@@ -31,7 +31,7 @@ data class PostVersionView(
     @Schema(
         description =
             "Whether it was made from the post as it is now: false once the post's markdown has " +
-                "been edited since it was attached"
+                "been edited since it was attached",
     )
     val current: Boolean,
     @Schema(description = "When it was first attached") val createdAt: Instant,

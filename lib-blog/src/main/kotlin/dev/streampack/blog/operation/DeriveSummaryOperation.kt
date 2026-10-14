@@ -38,7 +38,7 @@ class DeriveSummaryOperation(
 
         aiSummary(title, markdown, message)?.let {
             return OperationResult.Success(
-                DeriveSummaryResponse(it, DeriveSummaryResponse.SOURCE_AI)
+                DeriveSummaryResponse(it, DeriveSummaryResponse.SOURCE_AI),
             )
         }
         val summary = markdownRenderingService.excerpt(markdown).ifBlank { title }

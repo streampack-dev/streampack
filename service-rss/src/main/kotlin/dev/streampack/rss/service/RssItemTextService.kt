@@ -110,7 +110,7 @@ class RssItemTextService(
                 source = if (page != null) RssTextSource.PAGE else RssTextSource.NONE,
                 content = page?.let { EntryContent.cut(it, EntryContent.MAX_LENGTH) },
                 storedAt = now,
-            )
+            ),
         )
     }
 

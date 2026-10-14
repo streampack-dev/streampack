@@ -41,7 +41,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
         [
             "streampack.gitlab.webhook-base-url=https://hooks.example.com",
             "GITLAB_INSTANCE_GITLAB_EXAMPLE_COM_TOKEN=glpat-instance-default",
-        ]
+        ],
 )
 @ResetDatabaseBeforeEach
 @Import(TestSecurityConfiguration::class)
@@ -165,7 +165,7 @@ class GitLabOperationTests {
         )
         val added =
             eventGateway.process(
-                adminMessage("gitlab instance add https://gitlab.example.com glpat-literal")
+                adminMessage("gitlab instance add https://gitlab.example.com glpat-literal"),
             )
         val addedPayload =
             assertInstanceOf(OperationResult.Success::class.java, added).payload.toString()
@@ -189,9 +189,9 @@ class GitLabOperationTests {
                 apiUrl = apiUrl(),
                 defaultToken =
                     dev.streampack.core.model.SecretRef.env(
-                        "GITLAB_INSTANCE_GITLAB_EXAMPLE_COM_TOKEN"
+                        "GITLAB_INSTANCE_GITLAB_EXAMPLE_COM_TOKEN",
                     ),
-            )
+            ),
         )
 
         val hosted = eventGateway.process(adminMessage("gitlab add group/project"))
@@ -224,7 +224,7 @@ class GitLabOperationTests {
                     eventGateway.process(adminMessage("gitlab add x/y on nowhere.example.com")),
                 )
                 .message
-                .contains("nowhere.example.com")
+                .contains("nowhere.example.com"),
         )
         assertTrue(
             assertInstanceOf(
@@ -232,12 +232,12 @@ class GitLabOperationTests {
                     eventGateway.process(adminMessage("gitlab add noslash")),
                 )
                 .message
-                .contains("group/project")
+                .contains("group/project"),
         )
 
         val subscribed =
             eventGateway.process(
-                adminMessage("gitlab subscribe other/project on gitlab.example.com")
+                adminMessage("gitlab subscribe other/project on gitlab.example.com"),
             )
         assertEquals(
             "Subscribed to gitlab.example.com other/project",
@@ -274,7 +274,7 @@ class GitLabOperationTests {
             assertInstanceOf(OperationResult.Success::class.java, removed).payload.toString()
         assertTrue(
             removedPayload.contains(
-                "Removed gitlab.example.com other/project (1 subscriptions deactivated)"
+                "Removed gitlab.example.com other/project (1 subscriptions deactivated)",
             ),
             removedPayload,
         )
@@ -302,11 +302,11 @@ class GitLabOperationTests {
                 GitLabInstance(
                     host = "gitlab.example.com",
                     apiUrl = "https://gitlab.example.com/api/v4",
-                )
+                ),
             )
         val private =
             eventGateway.process(
-                adminMessage("gitlab webhook private team/app on gitlab.example.com")
+                adminMessage("gitlab webhook private team/app on gitlab.example.com"),
             )
         val privatePayload =
             assertInstanceOf(OperationResult.Success::class.java, private).payload.toString()

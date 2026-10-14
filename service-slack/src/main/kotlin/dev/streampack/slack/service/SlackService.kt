@@ -42,7 +42,7 @@ class SlackService(
                             botToken = SecretRef.literal(botToken),
                             appToken = SecretRef.literal(appToken),
                             updatedAt = Instant.now(),
-                        )
+                        ),
                     )
                     .also { logger.info("Updated credentials for Slack workspace '{}'", name) }
             } else if (existing != null) {
@@ -63,7 +63,7 @@ class SlackService(
                                 name = name,
                                 botToken = SecretRef.parse(botToken!!),
                                 appToken = SecretRef.parse(appToken!!),
-                            )
+                            ),
                     )
                     .also { logger.info("Registered Slack workspace '{}'", name) }
             }
@@ -125,7 +125,7 @@ class SlackService(
                     name = name,
                     channelId = ref.id,
                     updatedAt = Instant.now(),
-                )
+                ),
             )
         channelControlService.getOrCreateOptions(saved.provenanceUri()!!, private = ref.isPrivate)
         logger.info("Registered '{}' ({}) on '{}'", name, ref.id, workspaceName)
@@ -228,7 +228,7 @@ class SlackService(
             workspaceRepository.findByNameAndDeletedFalse(name)
                 ?: return "Error: Workspace '$name' not found"
         workspaceRepository.save(
-            workspace.copy(signalCharacter = signalCharacter, updatedAt = Instant.now())
+            workspace.copy(signalCharacter = signalCharacter, updatedAt = Instant.now()),
         )
         connectionManager.ifAvailable { it.updateSignal(name, signalCharacter) }
         return if (signalCharacter != null) {

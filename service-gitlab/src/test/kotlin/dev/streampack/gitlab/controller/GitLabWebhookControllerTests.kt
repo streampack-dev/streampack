@@ -43,7 +43,7 @@ class GitLabWebhookControllerTests {
     class CapturingConfig {
         @Bean
         fun capturingSubscriber(
-            @Qualifier("egressChannel") egressChannel: SubscribableChannel
+            @Qualifier("egressChannel") egressChannel: SubscribableChannel,
         ): CapturingSubscriber {
             val subscriber = CapturingSubscriber()
             egressChannel.subscribe(subscriber)
@@ -84,17 +84,17 @@ class GitLabWebhookControllerTests {
                     projectId = 100,
                     deliveryMode = DeliveryMode.WEBHOOK,
                     webhookSecret = cipher.encrypt(secret),
-                )
+                ),
             )
         subscriptionRepository.save(
-            GitLabSubscription(project = hosted, destinationUri = "console:///local")
+            GitLabSubscription(project = hosted, destinationUri = "console:///local"),
         )
         selfHosted =
             instanceRepository.save(
                 GitLabInstance(
                     host = "gitlab.example.com",
                     apiUrl = "https://gitlab.example.com/api/v4",
-                )
+                ),
             )
         val self =
             projectRepository.save(
@@ -104,10 +104,10 @@ class GitLabWebhookControllerTests {
                     projectId = null,
                     deliveryMode = DeliveryMode.WEBHOOK,
                     webhookSecret = cipher.encrypt(selfSecret),
-                )
+                ),
             )
         subscriptionRepository.save(
-            GitLabSubscription(project = self, destinationUri = "console:///self")
+            GitLabSubscription(project = self, destinationUri = "console:///self"),
         )
     }
 
@@ -198,7 +198,7 @@ class GitLabWebhookControllerTests {
             (result as OperationResult.Success)
                 .payload
                 .toString()
-                .contains("[gitlab.example.com team/app] New issue #1")
+                .contains("[gitlab.example.com team/app] New issue #1"),
         )
 
         mockMvc

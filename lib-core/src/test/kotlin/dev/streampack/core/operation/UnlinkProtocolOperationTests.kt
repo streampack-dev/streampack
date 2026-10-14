@@ -200,7 +200,7 @@ class UnlinkProtocolOperationTests {
     fun `text command unlinks protocol identity`() {
         val result =
             eventGateway.process(
-                textMessage("unlink user regularuser irc ircservice regularuser_irc", superAdmin)
+                textMessage("unlink user regularuser irc ircservice regularuser_irc", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -214,7 +214,7 @@ class UnlinkProtocolOperationTests {
     fun `text command with invalid protocol is not handled`() {
         val result =
             eventGateway.process(
-                textMessage("unlink user regularuser BOGUS ircservice nick", superAdmin)
+                textMessage("unlink user regularuser BOGUS ircservice nick", superAdmin),
             )
 
         assertInstanceOf(OperationResult.NotHandled::class.java, result)

@@ -11,7 +11,7 @@ class ConfigLoader {
 
     /** Load simulation config from classpath resource */
     fun load(
-        resourcePath: String = "universe-config.json"
+        resourcePath: String = "universe-config.json",
     ): dev.streampack.startrader.config.SimulationConfig {
         val stream =
             javaClass.classLoader.getResourceAsStream(resourcePath)

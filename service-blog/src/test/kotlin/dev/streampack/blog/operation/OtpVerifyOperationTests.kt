@@ -52,7 +52,7 @@ class OtpVerifyOperationTests {
         expiresAt: Instant = Instant.now().plusSeconds(300),
     ): OneTimeCode {
         return oneTimeCodeRepository.saveAndFlush(
-            OneTimeCode(recipient = email, code = code, expiresAt = expiresAt)
+            OneTimeCode(recipient = email, code = code, expiresAt = expiresAt),
         )
     }
 
@@ -155,7 +155,7 @@ class OtpVerifyOperationTests {
                 code = "444444",
                 expiresAt = Instant.now().plusSeconds(300),
                 usedAt = Instant.now().minusSeconds(30),
-            )
+            ),
         )
 
         val result = eventGateway.process(verifyMessage("user@example.com", "444444"))

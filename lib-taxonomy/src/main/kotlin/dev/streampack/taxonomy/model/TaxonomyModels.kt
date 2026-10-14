@@ -12,7 +12,7 @@ data class TaxonomySnapshot(
     @field:Schema(
         description =
             "Published posts carrying each tag: approved, published by now, not deleted and not in a " +
-                "hidden category. Matches the totalCount of GET /posts?tag=."
+                "hidden category. Matches the totalCount of GET /posts?tag=.",
     )
     val tags: Map<String, Long>,
     @field:Schema(description = "Posts in each category.") val categories: Map<String, Long>,

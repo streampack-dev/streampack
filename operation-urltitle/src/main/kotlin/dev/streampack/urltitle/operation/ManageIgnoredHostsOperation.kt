@@ -46,7 +46,7 @@ class ManageIgnoredHostsOperation(private val urlTitleService: UrlTitleService) 
                     }
                     if (commands.size < 2) {
                         return OperationResult.Error(
-                            "Usage: url ignore add <host | *.host | host/path>"
+                            "Usage: url ignore add <host | *.host | host/path>",
                         )
                     }
                     val entry = urlTitleService.addIgnoredHost(commands[1])
@@ -58,19 +58,19 @@ class ManageIgnoredHostsOperation(private val urlTitleService: UrlTitleService) 
                     }
                     if (commands.size < 2) {
                         return OperationResult.Error(
-                            "Usage: url ignore delete <host | *.host | host/path>"
+                            "Usage: url ignore delete <host | *.host | host/path>",
                         )
                     }
                     val entry =
                         urlTitleService.deleteIgnoredHost(commands[1])
                             ?: return OperationResult.Error(
-                                "${commands[1]} is not in the ignored hosts."
+                                "${commands[1]} is not in the ignored hosts.",
                             )
                     OperationResult.Success("Removed $entry from ignored hosts.")
                 }
                 else ->
                     OperationResult.Error(
-                        "Unknown subcommand: ${commands[0]}. Use list, add, or delete."
+                        "Unknown subcommand: ${commands[0]}. Use list, add, or delete.",
                     )
             }
         } catch (e: IllegalArgumentException) {

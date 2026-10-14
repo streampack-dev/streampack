@@ -52,7 +52,7 @@ class AdminPostControllerTests {
                     displayName = "Post Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         adminToken = jwtService.generateToken(adminUser.toUserPrincipal())
 
@@ -64,7 +64,7 @@ class AdminPostControllerTests {
                     displayName = "Regular User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         regularUserToken = jwtService.generateToken(regularUser.toUserPrincipal())
 
@@ -79,10 +79,10 @@ class AdminPostControllerTests {
                     author = regularUser,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/draft-for-admin", post = draftPost, canonical = true)
+            Slug(path = "2026/02/draft-for-admin", post = draftPost, canonical = true),
         )
     }
 
@@ -112,7 +112,7 @@ class AdminPostControllerTests {
                 author = regularUser,
                 createdAt = Instant.now(),
                 updatedAt = Instant.now(),
-            )
+            ),
         )
 
         mockMvc
@@ -165,7 +165,7 @@ class AdminPostControllerTests {
                 author = regularUser,
                 createdAt = Instant.now(),
                 updatedAt = Instant.now(),
-            )
+            ),
         )
 
     @Test
@@ -291,7 +291,7 @@ class AdminPostControllerTests {
                     author = regularUser,
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/02/taken", post = other, canonical = true))
 
@@ -372,13 +372,13 @@ class AdminPostControllerTests {
             slugRepository
                 .findByPost(draftPost.id)
                 .single { it.path == "2026/02/draft-for-admin" }
-                .canonical
+                .canonical,
         )
         assertTrue(
             slugRepository
                 .findByPost(draftPost.id)
                 .single { it.path == "2026/02/admin-edited" }
-                .canonical
+                .canonical,
         )
     }
 
@@ -395,7 +395,7 @@ class AdminPostControllerTests {
                     author = regularUser,
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/02/occupied", post = otherPost, canonical = true))
 
@@ -443,7 +443,7 @@ class AdminPostControllerTests {
     @Test
     fun `PUT admin edit can promote an existing slug alias to canonical`() {
         slugRepository.save(
-            Slug(path = "2026/02/previous-title", post = draftPost, canonical = false)
+            Slug(path = "2026/02/previous-title", post = draftPost, canonical = false),
         )
 
         mockMvc
@@ -462,13 +462,13 @@ class AdminPostControllerTests {
             slugRepository
                 .findByPost(draftPost.id)
                 .single { it.path == "2026/02/draft-for-admin" }
-                .canonical
+                .canonical,
         )
         assertTrue(
             slugRepository
                 .findByPost(draftPost.id)
                 .single { it.path == "2026/02/previous-title" }
-                .canonical
+                .canonical,
         )
     }
 

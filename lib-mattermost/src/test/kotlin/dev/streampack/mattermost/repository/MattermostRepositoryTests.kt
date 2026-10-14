@@ -26,7 +26,7 @@ class MattermostRepositoryTests {
                     name = "work",
                     baseUrl = "https://mattermost.example.com",
                     token = SecretRef.literal("token-123"),
-                )
+                ),
             )
 
         val channel =
@@ -37,7 +37,7 @@ class MattermostRepositoryTests {
                     channelId = "abc123channelid00000000000",
                     teamId = "teamid00000000000000000000",
                     channelType = "O",
-                )
+                ),
             )
 
         val foundServer = serverRepository.findByNameAndDeletedFalse("work")

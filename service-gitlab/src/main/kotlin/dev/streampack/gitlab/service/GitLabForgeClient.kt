@@ -137,7 +137,7 @@ class GitLabForgeClient(private val apiClient: GitLabApiClient) : ForgeClient {
                         tag = root.path("tag").asString(""),
                         name = root.path("name").asString(null),
                         url = root.path("url").asString(""),
-                    )
+                    ),
                 )
             }
             else -> null

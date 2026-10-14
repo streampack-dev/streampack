@@ -40,7 +40,7 @@ class GitHubPollingServiceTests {
     class CapturingEgressConfig {
         @Bean
         fun capturingEgressSubscriber(
-            @Qualifier("egressChannel") egressChannel: SubscribableChannel
+            @Qualifier("egressChannel") egressChannel: SubscribableChannel,
         ): CapturingEgressSubscriber {
             val subscriber = CapturingEgressSubscriber()
             egressChannel.subscribe(subscriber)
@@ -103,13 +103,13 @@ class GitHubPollingServiceTests {
                 highestIssueNumber = highestIssue,
                 highestPrNumber = highestPr,
                 lastPolledAt = Instant.now().minusSeconds(3600),
-            )
+            ),
         )
     }
 
     private fun subscribeRepo(repo: GitHubRepo, destinationUri: String): GitHubSubscription {
         return subscriptionRepository.save(
-            GitHubSubscription(repo = repo, destinationUri = destinationUri)
+            GitHubSubscription(repo = repo, destinationUri = destinationUri),
         )
     }
 
@@ -340,7 +340,7 @@ class GitHubPollingServiceTests {
                     name = "inactive",
                     active = false,
                     lastPolledAt = Instant.now().minusSeconds(3600),
-                )
+                ),
             )
         subscribeRepo(repo, Provenance(protocol = Protocol.CONSOLE, replyTo = "local").encode())
 

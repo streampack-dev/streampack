@@ -42,7 +42,11 @@ class FindCommentsOperation(
         logger.debug("Found {} comments for post {}", allComments.size, post.id)
 
         return OperationResult.Success(
-            CommentThreadResponse(postId = post.id, comments = tree, totalActiveCount = activeCount)
+            CommentThreadResponse(
+                postId = post.id,
+                comments = tree,
+                totalActiveCount = activeCount,
+            ),
         )
     }
 

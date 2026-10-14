@@ -49,12 +49,12 @@ class FeedSubscriptionsNoSessionTests {
                 RssFeed(
                     feedUrl = "https://example.com/$channel/feed.xml",
                     title = "No Session Feed",
-                )
+                ),
             )
         feed = saved
         subscription =
             subscriptionRepository.save(
-                RssFeedSubscription(feed = saved, destinationUri = destination)
+                RssFeedSubscription(feed = saved, destinationUri = destination),
             )
 
         val provenance =
@@ -74,7 +74,7 @@ class FeedSubscriptionsNoSessionTests {
             eventGateway.process(
                 MessageBuilder.withPayload("feed subscriptions")
                     .setHeader(Provenance.HEADER, provenance)
-                    .build()
+                    .build(),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)

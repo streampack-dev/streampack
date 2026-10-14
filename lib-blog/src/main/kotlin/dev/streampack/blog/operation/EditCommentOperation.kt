@@ -61,7 +61,7 @@ class EditCommentOperation(
                     markdownSource = payload.markdownSource,
                     renderedHtml = renderedHtml,
                     updatedAt = now,
-                )
+                ),
             )
         val updated =
             commentRepository.findActiveByIdWithAuthor(saved.id)
@@ -76,7 +76,7 @@ class EditCommentOperation(
                 authorDisplayName = updated.author.displayName,
                 renderedHtml = updated.renderedHtml,
                 createdAt = updated.createdAt,
-            )
+            ),
         )
     }
 }

@@ -23,5 +23,5 @@ data class ModerationPurgeRequest(
 
 /** Dismissing a report as not abuse, with an optional note for the record. */
 data class ModerationDismissRequest(
-    @field:Schema(description = "Why, for the record") val note: String? = null
+    @field:Schema(description = "Why, for the record") val note: String? = null,
 )

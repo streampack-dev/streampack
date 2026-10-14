@@ -46,7 +46,7 @@ class SoftDeleteCategoryOperationTests {
                     displayName = "Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         regularUser =
             userRepository.save(
@@ -56,7 +56,7 @@ class SoftDeleteCategoryOperationTests {
                     displayName = "User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         category = categoryRepository.save(Category(name = "ToDelete", slug = "to-delete"))
     }

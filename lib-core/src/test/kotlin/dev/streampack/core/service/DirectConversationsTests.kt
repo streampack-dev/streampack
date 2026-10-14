@@ -37,8 +37,8 @@ class DirectConversationsTests {
         assertTrue(conversations.isDirect(provenance(Protocol.DISCORD, "123456789012345678", null)))
         assertFalse(
             conversations.isDirect(
-                provenance(Protocol.DISCORD, "123456789012345678/Guild/#general")
-            )
+                provenance(Protocol.DISCORD, "123456789012345678/Guild/#general"),
+            ),
         )
     }
 
@@ -49,8 +49,8 @@ class DirectConversationsTests {
         assertFalse(conversations.isDirect(provenance(Protocol.SLACK, "C0123ABCD")))
         assertTrue(
             conversations.isDirect(
-                provenance(Protocol.SLACK, "C0123ABCD", metadata = mapOf("channelType" to "mpim"))
-            )
+                provenance(Protocol.SLACK, "C0123ABCD", metadata = mapOf("channelType" to "mpim")),
+            ),
         )
     }
 
@@ -60,15 +60,15 @@ class DirectConversationsTests {
         for (type in listOf("D", "G")) {
             assertTrue(
                 conversations.isDirect(
-                    provenance(Protocol.MATTERMOST, id, metadata = mapOf("channelType" to type))
-                )
+                    provenance(Protocol.MATTERMOST, id, metadata = mapOf("channelType" to type)),
+                ),
             )
         }
         for (type in listOf("O", "P")) {
             assertFalse(
                 conversations.isDirect(
-                    provenance(Protocol.MATTERMOST, id, metadata = mapOf("channelType" to type))
-                )
+                    provenance(Protocol.MATTERMOST, id, metadata = mapOf("channelType" to type)),
+                ),
             )
         }
     }
@@ -81,8 +81,8 @@ class DirectConversationsTests {
                     object : DirectConversationDetector {
                         override fun isDirect(provenance: Provenance) =
                             provenance.replyTo == "secret-room"
-                    }
-                )
+                    },
+                ),
             )
         assertTrue(withDetector.isDirect(provenance(Protocol.MATTERMOST, "secret-room")))
         assertFalse(withDetector.isDirect(provenance(Protocol.MATTERMOST, "town-square")))

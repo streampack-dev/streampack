@@ -57,7 +57,7 @@ class SlackChannelIdTests {
 
     private fun options(channelId: String) =
         optionsRepository.findByProvenanceUriAndDeletedFalse(
-            Provenance(Protocol.SLACK, "jvm-news", replyTo = channelId).encode()
+            Provenance(Protocol.SLACK, "jvm-news", replyTo = channelId).encode(),
         )
 
     @Test
@@ -148,7 +148,7 @@ class SlackChannelIdTests {
     fun `the migration moves settings kept by name onto the channel's id`() {
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
         channelRepository.save(
-            SlackChannel(workspace = workspace, name = "#java", channelId = "C0JAVA0001")
+            SlackChannel(workspace = workspace, name = "#java", channelId = "C0JAVA0001"),
         )
         channelRepository.flush()
         channelControlService.setFlag("slack://jvm-news/%23java", "automute", true)
@@ -156,7 +156,7 @@ class SlackChannelIdTests {
 
         jdbc.execute(
             ClassPathResource("db/migration/V54__slack_channel_options_by_id.sql")
-                .getContentAsString(Charsets.UTF_8)
+                .getContentAsString(Charsets.UTF_8),
         )
 
         assertTrue(channelControlService.getOptions("slack://jvm-news/C0JAVA0001")!!.automute)

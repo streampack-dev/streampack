@@ -53,9 +53,9 @@ class AdminRssTagControllerTests {
                         displayName = name,
                         emailVerified = true,
                         role = role,
-                    )
+                    ),
                 )
-                .toUserPrincipal()
+                .toUserPrincipal(),
         )
 
     @BeforeEach
@@ -69,14 +69,14 @@ class AdminRssTagControllerTests {
                     feedUrl = "https://a.example/feed.xml",
                     siteUrl = "https://a.example",
                     title = "A",
-                )
+                ),
             )
         val synd =
             parse(
                 rss(
                     "https://a.example",
                     mapOf("1" to listOf("Java", "Golang", "Rumour", "Helidon")),
-                )
+                ),
             )
         val entry =
             entries.save(
@@ -85,7 +85,7 @@ class AdminRssTagControllerTests {
                     guid = "https://a.example/1",
                     link = "https://a.example/1",
                     title = "One",
-                )
+                ),
             )
         feedTags.record(listOf(entry to synd.entries.single()))
     }

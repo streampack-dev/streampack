@@ -55,7 +55,7 @@ class ApproveContentOperationTests {
                     displayName = "Approve Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.save(
@@ -65,7 +65,7 @@ class ApproveContentOperationTests {
                     displayName = "Approve Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
 
         draftPost =
@@ -79,10 +79,10 @@ class ApproveContentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/draft-for-approval", post = draftPost, canonical = true)
+            Slug(path = "2026/02/draft-for-approval", post = draftPost, canonical = true),
         )
 
         approvedPost =
@@ -97,10 +97,10 @@ class ApproveContentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/already-approved", post = approvedPost, canonical = true)
+            Slug(path = "2026/02/already-approved", post = approvedPost, canonical = true),
         )
     }
 

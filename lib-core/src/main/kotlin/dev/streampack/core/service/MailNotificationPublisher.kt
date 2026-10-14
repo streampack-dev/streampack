@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 // @lat: [[operations#User-Facing Operations#Blog Notifications#Delivery Semantics]]
 @Service
 class MailNotificationPublisher(
-    @Qualifier("egressChannel") private val egressChannel: MessageChannel
+    @Qualifier("egressChannel") private val egressChannel: MessageChannel,
 ) {
     private val logger = LoggerFactory.getLogger(MailNotificationPublisher::class.java)
 

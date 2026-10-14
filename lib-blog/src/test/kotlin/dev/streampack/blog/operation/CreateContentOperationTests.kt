@@ -84,7 +84,7 @@ class CreateContentOperationTests {
                     displayName = "Test Writer",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         unverifiedUser =
             userRepository.save(
@@ -94,7 +94,7 @@ class CreateContentOperationTests {
                     displayName = "New User",
                     emailVerified = false,
                     role = Role.USER,
-                )
+                ),
             )
         adminUser =
             userRepository.save(
@@ -104,7 +104,7 @@ class CreateContentOperationTests {
                     displayName = "Editor",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         superAdminUser =
             userRepository.save(
@@ -114,7 +114,7 @@ class CreateContentOperationTests {
                     displayName = "Owner",
                     emailVerified = true,
                     role = Role.SUPER_ADMIN,
-                )
+                ),
             )
     }
 
@@ -323,14 +323,14 @@ class CreateContentOperationTests {
             createMessage(
                 CreateContentRequest("First", "Content.", tags = listOf("c")),
                 verifiedUser,
-            )
+            ),
         )
         val result =
             eventGateway.process(
                 createMessage(
                     CreateContentRequest("Second", "Content.", tags = listOf("c#")),
                     verifiedUser,
-                )
+                ),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -406,10 +406,10 @@ class CreateContentOperationTests {
                 (message as OperationResult.Success).payload.toString()
             }
         assertTrue(
-            bodies.also { logger.info(it.joinToString("\n")) }.all { it.contains("Needs Review") }
+            bodies.also { logger.info(it.joinToString("\n")) }.all { it.contains("Needs Review") },
         )
         assertTrue(
-            bodies.all { it.contains("http://localhost:3001/posts/$yearMonth/needs-review") }
+            bodies.all { it.contains("http://localhost:3001/posts/$yearMonth/needs-review") },
         )
     }
 
@@ -430,7 +430,7 @@ class CreateContentOperationTests {
                 (message as OperationResult.Success).payload.toString()
             }
         assertTrue(
-            bodies.all { it.contains("http://localhost:3001/posts/$yearMonth/anonymous-draft") }
+            bodies.all { it.contains("http://localhost:3001/posts/$yearMonth/anonymous-draft") },
         )
     }
 

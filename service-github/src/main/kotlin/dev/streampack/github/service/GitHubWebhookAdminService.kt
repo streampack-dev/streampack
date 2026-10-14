@@ -62,7 +62,7 @@ class GitHubWebhookAdminService(
                     deliveryMode = DeliveryMode.WEBHOOK,
                     webhookSecret = encrypted,
                     webhookConfiguredAt = Instant.now(),
-                )
+                ),
             )
         return WebhookEnableOutcome.Enabled(updated, secret)
     }

@@ -61,7 +61,7 @@ import org.springframework.test.web.servlet.post
             // The scheduled pass never runs during these tests; they run passes themselves
             "streampack.rss.rating.first-guess-delay=P30D",
             "streampack.generative.prompt-dir=\${java.io.tmpdir}/streampack-rss-rubric-tests",
-        ]
+        ],
 )
 @AutoConfigureMockMvc
 @ResetDatabaseBeforeEach
@@ -176,7 +176,7 @@ class RssRatingGuessServiceTests {
                 title = "Item $n",
                 summary = summary,
                 createdAt = receivedAt,
-            )
+            ),
         )
 
     private fun content(entry: RssEntry, text: String) =
@@ -201,7 +201,7 @@ class RssRatingGuessServiceTests {
             ai.calls[0]
                 .system
                 .startsWith(
-                    RssRatingGuessService.defaultRubric() + "\n\n" + RssRatingGuessService.ANSWER
+                    RssRatingGuessService.defaultRubric() + "\n\n" + RssRatingGuessService.ANSWER,
                 ),
             ai.calls[0].system,
         )
@@ -349,7 +349,7 @@ class RssRatingGuessServiceTests {
                     ItemGuess(items[1].id.toString(), "FASCINATING", 0.9, "Bad label."),
                     ItemGuess(items[1].id.toString(), "RATES", 1.5, "Bad confidence."),
                     ItemGuess(unknown, "RATES", 0.9, "Invented."),
-                )
+                ),
             )
         }
 
@@ -450,9 +450,9 @@ class RssRatingGuessServiceTests {
                             displayName = name,
                             emailVerified = true,
                             role = role,
-                        )
+                        ),
                     )
-                    .toUserPrincipal()
+                    .toUserPrincipal(),
             )
         mockMvc
             .post("/admin/rss/rating-guesses/run") {

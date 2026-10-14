@@ -167,7 +167,7 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
                     return null
                 }
                 ForgeEvent.IssueOpened(
-                    ForgeItem(event.issue.number, event.issue.title, event.issue.htmlUrl)
+                    ForgeItem(event.issue.number, event.issue.title, event.issue.htmlUrl),
                 )
             }
             "pull_request" -> {
@@ -181,7 +181,7 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
                         event.pullRequest.number,
                         event.pullRequest.title,
                         event.pullRequest.htmlUrl,
-                    )
+                    ),
                 )
             }
             "release" -> {
@@ -191,7 +191,7 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
                     return null
                 }
                 ForgeEvent.ReleasePublished(
-                    ForgeReleaseInfo(event.release.tagName, null, event.release.htmlUrl)
+                    ForgeReleaseInfo(event.release.tagName, null, event.release.htmlUrl),
                 )
             }
             "workflow_run" -> parseWorkflowRun(root, path)

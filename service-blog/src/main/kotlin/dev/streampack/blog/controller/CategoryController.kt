@@ -30,8 +30,8 @@ class CategoryController(
         content =
             [
                 Content(
-                    array = ArraySchema(schema = Schema(implementation = CategorySummary::class))
-                )
+                    array = ArraySchema(schema = Schema(implementation = CategorySummary::class)),
+                ),
             ],
     )
     @GetMapping("/categories", produces = ["application/json"])

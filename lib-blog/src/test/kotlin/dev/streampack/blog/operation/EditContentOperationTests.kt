@@ -68,7 +68,7 @@ class EditContentOperationTests {
                     displayName = "Edit Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.save(
@@ -78,7 +78,7 @@ class EditContentOperationTests {
                     displayName = "Edit Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         otherUser =
             userRepository.save(
@@ -88,7 +88,7 @@ class EditContentOperationTests {
                     displayName = "Edit Other",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         draftPost =
@@ -102,10 +102,10 @@ class EditContentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/original-draft-title", post = draftPost, canonical = true)
+            Slug(path = "2026/02/original-draft-title", post = draftPost, canonical = true),
         )
 
         approvedPost =
@@ -120,10 +120,10 @@ class EditContentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/approved-post", post = approvedPost, canonical = true)
+            Slug(path = "2026/02/approved-post", post = approvedPost, canonical = true),
         )
     }
 
@@ -275,7 +275,7 @@ class EditContentOperationTests {
             editMessage(
                 EditContentRequest(post.id, post.title, post.markdownSource, slug = slug),
                 admin,
-            )
+            ),
         )
 
     @Test

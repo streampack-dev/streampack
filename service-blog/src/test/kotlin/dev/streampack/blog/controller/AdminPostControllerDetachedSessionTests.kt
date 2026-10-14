@@ -52,7 +52,7 @@ class AdminPostControllerDetachedSessionTests {
                     displayName = "Detached Edit Post Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.saveAndFlush(
@@ -62,7 +62,7 @@ class AdminPostControllerDetachedSessionTests {
                     displayName = "Detached Edit Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         val token = jwtService.generateToken(admin!!.toUserPrincipal())
         post =
@@ -76,7 +76,7 @@ class AdminPostControllerDetachedSessionTests {
                     author = postAuthor,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         entityManager.clear()
 
@@ -105,7 +105,7 @@ class AdminPostControllerDetachedSessionTests {
                     displayName = "Detached Approve Post Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.saveAndFlush(
@@ -115,7 +115,7 @@ class AdminPostControllerDetachedSessionTests {
                     displayName = "Detached Approve Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         val token = jwtService.generateToken(admin!!.toUserPrincipal())
         post =
@@ -129,7 +129,7 @@ class AdminPostControllerDetachedSessionTests {
                     author = postAuthor,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         entityManager.clear()
 

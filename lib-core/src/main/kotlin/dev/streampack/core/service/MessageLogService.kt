@@ -163,7 +163,7 @@ class MessageLogService(private val repository: MessageLogRepository) {
                     content = content,
                     direct = direct,
                     kind = kind,
-                )
+                ),
             )
         } catch (e: Exception) {
             logger.error("Failed to log {} message for {}: {}", direction, provenanceUri, e.message)

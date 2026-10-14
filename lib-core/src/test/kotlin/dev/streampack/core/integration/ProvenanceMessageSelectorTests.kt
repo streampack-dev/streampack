@@ -59,7 +59,7 @@ class ProvenanceMessageSelectorTests {
                         replyTo = "oftc/#java",
                     ),
                 )
-                .build()
+                .build(),
         )
 
         // Send a MAILTO message with no authority
@@ -69,7 +69,7 @@ class ProvenanceMessageSelectorTests {
                     Provenance.HEADER,
                     Provenance(protocol = Protocol.MAILTO, replyTo = "user@example.com"),
                 )
-                .build()
+                .build(),
         )
 
         // IRC "ircservice" got exactly one message with the right payload

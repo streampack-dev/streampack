@@ -44,7 +44,7 @@ class CreateCategoryOperationTests {
                     displayName = "Cat Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         regularUser =
             userRepository.save(
@@ -54,7 +54,7 @@ class CreateCategoryOperationTests {
                     displayName = "Cat User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
     }
 

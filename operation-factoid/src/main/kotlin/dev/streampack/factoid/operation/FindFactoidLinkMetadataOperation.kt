@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
 /** Returns shared factoid link metadata for a selector via the operation pipeline. */
 @Component
 class FindFactoidLinkMetadataOperation(
-    private val factoidAttributeRepository: FactoidAttributeRepository
+    private val factoidAttributeRepository: FactoidAttributeRepository,
 ) : TypedOperation<FindFactoidLinkMetadataRequest>(FindFactoidLinkMetadataRequest::class) {
 
     override fun handle(
@@ -39,19 +39,19 @@ class FindFactoidLinkMetadataOperation(
                 urls = byType.attributeValues(FactoidAttributeType.URLS),
                 tags = byType.attributeValues(FactoidAttributeType.TAGS),
                 seeAlso = byType.attributeValues(FactoidAttributeType.SEEALSO),
-            )
+            ),
         )
     }
 
     private fun Map<FactoidAttributeType, FactoidAttribute>.attributeValue(
-        type: FactoidAttributeType
+        type: FactoidAttributeType,
     ): String? {
         val value = this[type]?.attributeValue?.trim().orEmpty()
         return value.ifBlank { null }
     }
 
     private fun Map<FactoidAttributeType, FactoidAttribute>.attributeValues(
-        type: FactoidAttributeType
+        type: FactoidAttributeType,
     ): List<String> =
         this[type]
             ?.attributeValue

@@ -36,7 +36,7 @@ class SecretDefaultsStartupGuard(
             SecretPlaceholders.isPlaceholder(trimmed) ->
                 errors.add(
                     "streampack.jwt.secret (JWT_SECRET) is set to the placeholder '$trimmed'. " +
-                        "Anyone with the source can forge tokens with this value."
+                        "Anyone with the source can forge tokens with this value.",
                 )
             trimmed.isBlank() && enforceExternalSecrets ->
                 errors.add("streampack.jwt.secret (JWT_SECRET) is required and is not set.")

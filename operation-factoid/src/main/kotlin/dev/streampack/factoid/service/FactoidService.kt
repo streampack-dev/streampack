@@ -81,7 +81,7 @@ class FactoidService(
                         updatedBy = updatedBy,
                         createdAt = now,
                         updatedAt = now,
-                    )
+                    ),
                 )
             }
 
@@ -97,7 +97,7 @@ class FactoidService(
                     attributeValue = stored,
                     updatedBy = updatedBy,
                     updatedAt = now,
-                )
+                ),
             )
         } else {
             factoidAttributeRepository.save(
@@ -108,7 +108,7 @@ class FactoidService(
                     updatedBy = updatedBy,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         }
         return SaveResult.Ok

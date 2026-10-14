@@ -107,6 +107,6 @@ data class RssProperties(
                 "w3.org",
                 "ietf.org",
                 "rfc-editor.org",
-            )
+            ),
     )
 }

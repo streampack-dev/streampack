@@ -91,8 +91,8 @@ class DeriveTagsOperationTests {
                         tags = mapOf("java" to 5),
                         categories = emptyMap(),
                         aggregate = mapOf("java" to 5),
-                    )
-                )
+                    ),
+                ),
             )
         val operation =
             DeriveTagsOperation(
@@ -121,14 +121,14 @@ class DeriveTagsOperationTests {
                         tags = mapOf("java" to 10, "loom" to 3),
                         categories = emptyMap(),
                         aggregate = mapOf("java" to 10, "loom" to 3),
-                    )
-                )
+                    ),
+                ),
             )
         val operation =
             DeriveTagsOperation(
                 eventGateway,
                 providerWithAi(
-                    StubAiService(structured = null, raw = """{"tags":["java","loom","design"]}""")
+                    StubAiService(structured = null, raw = """{"tags":["java","loom","design"]}"""),
                 ),
                 TagNames::normalize,
             )
@@ -154,14 +154,14 @@ class DeriveTagsOperationTests {
                         tags = mapOf("java" to 10),
                         categories = emptyMap(),
                         aggregate = mapOf("java" to 10),
-                    )
-                )
+                    ),
+                ),
             )
         val operation =
             DeriveTagsOperation(
                 eventGateway,
                 providerWithAi(
-                    StubAiService(structured = null, raw = "```json\n{\"tags\":[\"java\"]}\n```")
+                    StubAiService(structured = null, raw = "```json\n{\"tags\":[\"java\"]}\n```"),
                 ),
                 TagNames::normalize,
             )
@@ -184,7 +184,7 @@ class DeriveTagsOperationTests {
             DeriveTagsOperation(
                 StubEventGateway(OperationResult.NotHandled),
                 providerWithAi(
-                    StubAiService(structured = null, raw = """{"tags":["design","tools"]}""")
+                    StubAiService(structured = null, raw = """{"tags":["design","tools"]}"""),
                 ),
                 TagNames::normalize,
             )
@@ -212,8 +212,8 @@ class DeriveTagsOperationTests {
                         tags = mapOf("java" to 5, "kotlin" to 4),
                         categories = emptyMap(),
                         aggregate = mapOf("java" to 5, "kotlin" to 4),
-                    )
-                )
+                    ),
+                ),
             )
         val operation =
             DeriveTagsOperation(
@@ -222,7 +222,7 @@ class DeriveTagsOperationTests {
                     StubAiService(
                         structured = mapOf("tags" to listOf("java", "kotlin")),
                         raw = """{"tags":["tools","design"]}""",
-                    )
+                    ),
                 ),
                 TagNames::normalize,
             )
@@ -248,14 +248,14 @@ class DeriveTagsOperationTests {
                         tags = mapOf("java" to 5, "state management" to 2),
                         categories = emptyMap(),
                         aggregate = mapOf("java" to 5, "state management" to 2),
-                    )
-                )
+                    ),
+                ),
             )
         val operation =
             DeriveTagsOperation(
                 eventGateway,
                 providerWithAi(
-                    StubAiService(structured = null, raw = " #Java, _ignore, state management ")
+                    StubAiService(structured = null, raw = " #Java, _ignore, state management "),
                 ),
                 TagNames::normalize,
             )
@@ -302,7 +302,7 @@ class DeriveTagsOperationTests {
     }
 
     private class StubEventGateway(
-        private val result: OperationResult = OperationResult.NotHandled
+        private val result: OperationResult = OperationResult.NotHandled,
     ) : EventGateway {
         override fun process(message: Message<*>): OperationResult = result
 

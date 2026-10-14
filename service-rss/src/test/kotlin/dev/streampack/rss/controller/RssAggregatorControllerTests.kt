@@ -40,7 +40,7 @@ class RssAggregatorControllerTests {
                     siteUrl = "https://bytecode.news",
                     title = "bytecode.news",
                     active = true,
-                )
+                ),
             )
         val spring =
             feedRepository.save(
@@ -49,7 +49,7 @@ class RssAggregatorControllerTests {
                     siteUrl = "https://spring.io",
                     title = "Spring Blog",
                     active = true,
-                )
+                ),
             )
         val inactive =
             feedRepository.save(
@@ -58,7 +58,7 @@ class RssAggregatorControllerTests {
                     siteUrl = "https://inactive.example.com",
                     title = "Inactive Feed",
                     active = false,
-                )
+                ),
             )
 
         bytecodeSpringId =
@@ -71,7 +71,7 @@ class RssAggregatorControllerTests {
                         title = "Spring Signals",
                         summary = "What changed in Spring this week.",
                         publishedAt = Instant.parse("2026-04-16T12:00:00Z"),
-                    )
+                    ),
                 )
                 .id
         entryRepository.save(
@@ -81,7 +81,7 @@ class RssAggregatorControllerTests {
                 link = "https://bytecode.news/posts/kotlin-roundup",
                 title = "Kotlin Roundup",
                 publishedAt = Instant.parse("2026-04-15T12:00:00Z"),
-            )
+            ),
         )
         bytecodeUndatedId =
             entryRepository
@@ -92,7 +92,7 @@ class RssAggregatorControllerTests {
                         link = "https://bytecode.news/posts/no-published-date",
                         title = "No Published Date",
                         createdAt = Instant.parse("2026-04-18T13:00:00Z"),
-                    )
+                    ),
                 )
                 .id
         entryRepository.save(
@@ -102,7 +102,7 @@ class RssAggregatorControllerTests {
                 link = "https://spring.io/blog/2026/04/17/spring-release",
                 title = "Spring Release Notes",
                 publishedAt = Instant.parse("2026-04-17T12:00:00Z"),
-            )
+            ),
         )
         entryRepository.save(
             RssEntry(
@@ -111,7 +111,7 @@ class RssAggregatorControllerTests {
                 link = "https://inactive.example.com/ignored",
                 title = "Should Not Appear",
                 publishedAt = Instant.parse("2026-04-18T12:00:00Z"),
-            )
+            ),
         )
     }
 

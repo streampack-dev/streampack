@@ -171,7 +171,7 @@ class TagVocabulary(
                 source = source,
                 hintKind = hint.kind,
                 hintTags = hint.tags,
-            )
+            ),
         )
     }
 

@@ -163,18 +163,18 @@ class SignalScorer(private val properties: ModerationProperties) {
                 "\\b(i'?ll|i will|i'?m going to|i'?m gonna|im gonna|gonna|going to)\\s+" +
                     "((?:\\S+\\s+){0,2}?)" +
                     "(kill|hurt|stab|shoot|murder|rape|strangle|choke|punch|smash)" +
-                    "\\s+(\\S+)"
+                    "\\s+(\\S+)",
             )
         private val EMAIL = Regex("[\\w.+-]+@[\\w-]+(\\.[\\w-]+)*\\.[a-z]{2,}")
         private val PHONE =
             Regex(
                 "(?<![\\w.])(\\(?\\d{3}\\)?[ .-]\\d{3}[ .-]\\d{4}|\\+\\d{1,3}[ .-]?\\d[\\d .-]{7,}\\d)" +
-                    "(?![\\w.])"
+                    "(?![\\w.])",
             )
         private val STREET_ADDRESS =
             Regex(
                 "\\b\\d{1,5}\\s+(?:[a-z]+\\s+){1,3}" +
-                    "(street|st|avenue|ave|road|rd|boulevard|blvd|lane|ln|drive|court)\\b"
+                    "(street|st|avenue|ave|road|rd|boulevard|blvd|lane|ln|drive|court)\\b",
             )
         private val LINK = Regex("https?://([^/\\s:?#]+)")
 

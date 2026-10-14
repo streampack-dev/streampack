@@ -74,7 +74,7 @@ class LinkedSiteSubscriptionOperationTests {
                             pageUrl,
                             "https://blog.example/posts/2026/10/p",
                         )
-                            as Any
+                            as Any,
                     )
                     .setHeader(
                         Provenance.HEADER,
@@ -84,7 +84,7 @@ class LinkedSiteSubscriptionOperationTests {
                             replyTo = "outgoing-links",
                         ),
                     )
-                    .build()
+                    .build(),
             )
         return (result as OperationResult.Success).payload as LinkedSiteSubscription
     }

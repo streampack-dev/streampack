@@ -87,7 +87,7 @@ class AdminRssTagController(private val feedTags: FeedTagService, jwtService: Jw
                 else
                     runCatching { FeedTagStatus.valueOf(status.uppercase()) }.getOrNull()
                         ?: return@asAdmin badRequest(
-                            "status is all, waiting, promoted, created, mapped or ignored"
+                            "status is all, waiting, promoted, created, mapped or ignored",
                         )
             if (page < 0) return@asAdmin badRequest("The page can't be negative.")
             if (size < 1 || size > MAX_SIZE)

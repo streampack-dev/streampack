@@ -63,7 +63,8 @@ class TagNamesTests {
 
     @ParameterizedTest(name = "[{0}] is already clean")
     @ValueSource(
-        strings = ["spring boot", "java", "c#", "ai agents", "jvm", "c++", "kotlin", "_idea", "日本語"]
+        strings =
+            ["spring boot", "java", "c#", "ai agents", "jvm", "c++", "kotlin", "_idea", "日本語"],
     )
     fun `clean tags normalize to themselves`(tag: String) {
         assertEquals(tag, TagNames.normalize(tag))

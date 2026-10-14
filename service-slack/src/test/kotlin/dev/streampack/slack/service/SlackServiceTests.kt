@@ -75,7 +75,7 @@ class SlackServiceTests {
 
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel!!.provenanceUri()!!
+                channel!!.provenanceUri()!!,
             )
         assertNotNull(options)
         assertFalse(options!!.autojoin)
@@ -99,7 +99,7 @@ class SlackServiceTests {
             channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, "C0JAVA0001")!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()!!
+                channel.provenanceUri()!!,
             )
         assertTrue(options!!.autojoin)
     }
@@ -126,7 +126,7 @@ class SlackServiceTests {
             channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, "C0JAVA0001")!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()!!
+                channel.provenanceUri()!!,
             )
         assertTrue(options!!.automute)
     }
@@ -143,7 +143,7 @@ class SlackServiceTests {
             channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, "C0JAVA0001")!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()!!
+                channel.provenanceUri()!!,
             )
         assertFalse(options!!.visible)
     }
@@ -160,7 +160,7 @@ class SlackServiceTests {
             channelRepository.findByWorkspaceAndChannelIdAndDeletedFalse(workspace, "C0JAVA0001")!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()!!
+                channel.provenanceUri()!!,
             )
         assertFalse(options!!.logged)
     }

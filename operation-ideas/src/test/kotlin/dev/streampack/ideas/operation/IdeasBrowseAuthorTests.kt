@@ -61,7 +61,7 @@ class IdeasBrowseAuthorTests {
                         username = "ideas-author-$suffix",
                         email = "ideas-author-$suffix@example.com",
                         displayName = "Idea Author",
-                    )
+                    ),
                 )
                 .also { created += it }
         val tag =
@@ -76,7 +76,7 @@ class IdeasBrowseAuthorTests {
                         renderedHtml = "<p>Body</p>",
                         status = PostStatus.DRAFT,
                         author = author,
-                    )
+                    ),
                 )
                 .also { created += it }
         created += postTagRepository.save(PostTag(post = post, tag = tag))
@@ -101,7 +101,7 @@ class IdeasBrowseAuthorTests {
                         ),
                     )
                     .setHeader(Provenance.ADDRESSED, true)
-                    .build()
+                    .build(),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result, result.toString())

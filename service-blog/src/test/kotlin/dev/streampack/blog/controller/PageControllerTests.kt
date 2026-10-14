@@ -51,7 +51,7 @@ class PageControllerTests {
                     displayName = "Page Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
 
         val pagesCategory =
@@ -68,7 +68,7 @@ class PageControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = now.minus(1, ChronoUnit.HOURS),
                     author = admin,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "about", post = aboutPost, canonical = true))
         postCategoryRepository.save(PostCategory(post = aboutPost, category = pagesCategory))

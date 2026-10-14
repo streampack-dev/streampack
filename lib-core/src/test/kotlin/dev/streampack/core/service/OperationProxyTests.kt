@@ -69,7 +69,7 @@ class OperationProxyTests {
     @Transactional(readOnly = true)
     class TransactionalTranslatingOperation :
         TranslatingOperation<TransactionalTranslatingRequest>(
-            TransactionalTranslatingRequest::class
+            TransactionalTranslatingRequest::class,
         ) {
         override val priority = 1
 

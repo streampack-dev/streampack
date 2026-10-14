@@ -225,7 +225,7 @@ class PostController(
     @ApiResponse(responseCode = "202", description = "Access tracking accepted")
     @PostMapping("/posts/{id}/access")
     fun recordPostAccess(
-        @Parameter(description = "Post UUIDv7") @PathVariable id: UUID
+        @Parameter(description = "Post UUIDv7") @PathVariable id: UUID,
     ): ResponseEntity<Void> {
         eventGateway.send(MessageBuilder.withPayload(RecordPostAccessRequest(id)).build())
         return ResponseEntity.accepted().build()
@@ -540,7 +540,7 @@ class PostController(
                         ProblemDetail.forStatusAndDetail(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "Unhandled request",
-                        )
+                        ),
                     )
             }
         }
@@ -574,7 +574,7 @@ class PostController(
                         ProblemDetail.forStatusAndDetail(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "Unhandled request",
-                        )
+                        ),
                     )
             }
         }

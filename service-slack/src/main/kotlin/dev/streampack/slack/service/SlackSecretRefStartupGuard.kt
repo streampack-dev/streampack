@@ -80,7 +80,7 @@ class SlackSecretRefStartupGuard(
 
         printFailure(migrationExports, validationErrors)
         throw SilentStartupException(
-            "Slack secret externalization required. Add env vars shown above and restart."
+            "Slack secret externalization required. Add env vars shown above and restart.",
         )
     }
 

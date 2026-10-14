@@ -21,7 +21,7 @@ interface RssEntryRepository : JpaRepository<RssEntry, UUID>, JpaSpecificationEx
     fun findWithFeedByIdIn(@Param("ids") ids: Collection<UUID>): List<RssEntry>
 
     @Query(
-        "select max(coalesce(entry.publishedAt, entry.createdAt)) from RssEntry entry where entry.feed = :feed"
+        "select max(coalesce(entry.publishedAt, entry.createdAt)) from RssEntry entry where entry.feed = :feed",
     )
     fun findLatestItemTimestamp(@Param("feed") feed: RssFeed): Instant?
 }

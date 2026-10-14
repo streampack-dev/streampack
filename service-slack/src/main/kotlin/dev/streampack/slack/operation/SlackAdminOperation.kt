@@ -52,7 +52,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
             "status" -> handleStatus(tokens.drop(1))
             else ->
                 OperationResult.Error(
-                    "Unknown Slack subcommand '$subcommand'. Use 'slack' for available commands."
+                    "Unknown Slack subcommand '$subcommand'. Use 'slack' for available commands.",
                 )
         }
     }
@@ -105,7 +105,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
     private fun handleAutojoin(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: slack autojoin <workspace> <#channel|id> <true|false>"
+                "Usage: slack autojoin <workspace> <#channel|id> <true|false>",
             )
         }
         val enabled =
@@ -131,7 +131,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
     private fun handleAutomute(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: slack automute <workspace> <#channel|id> <true|false>"
+                "Usage: slack automute <workspace> <#channel|id> <true|false>",
             )
         }
         val enabled =
@@ -143,7 +143,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
     private fun handleVisible(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: slack visible <workspace> <#channel|id> <true|false>"
+                "Usage: slack visible <workspace> <#channel|id> <true|false>",
             )
         }
         val enabled =
@@ -155,7 +155,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
     private fun handleLogged(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: slack logged <workspace> <#channel|id> <true|false>"
+                "Usage: slack logged <workspace> <#channel|id> <true|false>",
             )
         }
         val enabled =
@@ -167,7 +167,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
     private fun handleModerated(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: slack moderated <workspace> <#channel|id> <true|false>"
+                "Usage: slack moderated <workspace> <#channel|id> <true|false>",
             )
         }
         val enabled =
@@ -179,7 +179,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
     private fun handleSignal(args: List<String>): OperationResult {
         if (args.isEmpty()) {
             return OperationResult.Error(
-                "Usage: slack signal <name> [character]  (omit character to reset)"
+                "Usage: slack signal <name> [character]  (omit character to reset)",
             )
         }
         val signalChar = args.getOrNull(1)

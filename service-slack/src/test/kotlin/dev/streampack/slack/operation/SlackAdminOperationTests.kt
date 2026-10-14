@@ -63,7 +63,7 @@ class SlackAdminOperationTests {
     fun `slack connect without SUPER_ADMIN returns error`() {
         val result =
             eventGateway.process(
-                slackMessage("slack connect jvm-news xoxb-test xapp-test", regularUser)
+                slackMessage("slack connect jvm-news xoxb-test xapp-test", regularUser),
             )
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue((result as OperationResult.Error).message.contains("SUPER_ADMIN"))
@@ -103,7 +103,7 @@ class SlackAdminOperationTests {
         val result = eventGateway.process(slackMessage("slack"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue(
-            (result as OperationResult.Success).payload.toString().contains("Slack Admin Commands")
+            (result as OperationResult.Success).payload.toString().contains("Slack Admin Commands"),
         )
     }
 

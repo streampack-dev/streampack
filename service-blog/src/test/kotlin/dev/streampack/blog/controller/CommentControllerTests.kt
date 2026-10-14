@@ -69,7 +69,7 @@ class CommentControllerTests {
                     displayName = "Test Commenter",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         verifiedUserToken = jwtService.generateToken(verifiedUser.toUserPrincipal())
 
@@ -81,7 +81,7 @@ class CommentControllerTests {
                     displayName = "Unverified User",
                     emailVerified = false,
                     role = Role.USER,
-                )
+                ),
             )
         unverifiedUserToken = jwtService.generateToken(unverifiedUser.toUserPrincipal())
 
@@ -93,7 +93,7 @@ class CommentControllerTests {
                     displayName = "Other User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         otherUserToken = jwtService.generateToken(otherUser.toUserPrincipal())
 
@@ -109,12 +109,12 @@ class CommentControllerTests {
                     author = verifiedUser,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         slugPath = "2026/01/test-post"
         slugRepository.save(
-            Slug(path = slugPath, post = publishedPost, canonical = true, createdAt = now)
+            Slug(path = slugPath, post = publishedPost, canonical = true, createdAt = now),
         )
     }
 
@@ -128,7 +128,7 @@ class CommentControllerTests {
                 author = verifiedUser,
                 markdownSource = "A comment.",
                 renderedHtml = "<p>A comment.</p>",
-            )
+            ),
         )
 
         mockMvc.get("/posts/$slugPath/comments").andExpect {
@@ -184,7 +184,7 @@ class CommentControllerTests {
                     author = verifiedUser,
                     markdownSource = "Parent comment.",
                     renderedHtml = "<p>Parent comment.</p>",
-                )
+                ),
             )
 
         mockMvc
@@ -273,7 +273,7 @@ class CommentControllerTests {
                     renderedHtml = "<p>Original.</p>",
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
-                )
+                ),
             )
 
         mockMvc
@@ -300,7 +300,7 @@ class CommentControllerTests {
                     renderedHtml = "<p>Old comment.</p>",
                     createdAt = Instant.now().minus(10, ChronoUnit.MINUTES),
                     updatedAt = Instant.now().minus(10, ChronoUnit.MINUTES),
-                )
+                ),
             )
 
         mockMvc
@@ -326,7 +326,7 @@ class CommentControllerTests {
                     renderedHtml = "<p>A comment.</p>",
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
-                )
+                ),
             )
 
         mockMvc
@@ -352,7 +352,7 @@ class CommentControllerTests {
                     renderedHtml = "<p>A comment.</p>",
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
-                )
+                ),
             )
 
         mockMvc
