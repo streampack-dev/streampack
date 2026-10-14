@@ -2,6 +2,7 @@
 package dev.streampack.irc.service
 
 import dev.streampack.core.model.SecretRef
+import dev.streampack.core.model.SecretRequirement
 import dev.streampack.core.service.SilentStartupException
 import dev.streampack.irc.entity.IrcNetwork
 import dev.streampack.irc.repository.IrcNetworkRepository
@@ -82,5 +83,34 @@ class IrcSecretRefStartupGuardTests {
 
         guard.enforce { key -> if (key == "IRC_LIBERA_SASL_PASSWORD") "secret" else null }
         Mockito.verify(repository, Mockito.never()).save(Mockito.any())
+    }
+
+    @Test
+    fun `lists what the next start needs, by variable, as the startup check judges it`() {
+        val network =
+            IrcNetwork(
+                name = "libera",
+                host = "irc.libera.chat",
+                nick = "nevet",
+                saslAccount = SecretRef.literal("acct"),
+                saslPassword = SecretRef.env("IRC_LIBERA_SASL_PASSWORD"),
+            )
+        Mockito.`when`(repository.findByDeletedFalse()).thenReturn(listOf(network))
+
+        assertEquals(
+            listOf(
+                SecretRequirement(
+                    "IRC_LIBERA_SASL_ACCOUNT",
+                    "IRC network 'libera' SASL account",
+                    SecretRequirement.State.STORED_IN_DATABASE,
+                ),
+                SecretRequirement(
+                    "IRC_LIBERA_SASL_PASSWORD",
+                    "IRC network 'libera' SASL password",
+                    SecretRequirement.State.NOT_SET,
+                ),
+            ),
+            guard.secretRequirements(),
+        )
     }
 }

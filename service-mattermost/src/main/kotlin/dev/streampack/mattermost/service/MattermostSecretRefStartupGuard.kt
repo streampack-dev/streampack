@@ -2,7 +2,9 @@
 package dev.streampack.mattermost.service
 
 import dev.streampack.core.model.SecretRef
+import dev.streampack.core.model.SecretRequirement
 import dev.streampack.core.service.SecretRefEnvironment
+import dev.streampack.core.service.SecretRequirementSource
 import dev.streampack.core.service.SilentStartupException
 import dev.streampack.mattermost.entity.MattermostServer
 import dev.streampack.mattermost.repository.MattermostServerRepository
@@ -24,7 +26,7 @@ class MattermostSecretRefStartupGuard(
     private val serverRepository: MattermostServerRepository,
     private val springEnvironment: Environment,
     @Value("\${streampack.security.enforce-external-secrets:true}") private val enforce: Boolean,
-) : InitializingBean {
+) : InitializingBean, SecretRequirementSource {
     private val logger = org.slf4j.LoggerFactory.getLogger(javaClass)
 
     override fun afterPropertiesSet() {
@@ -80,6 +82,17 @@ class MattermostSecretRefStartupGuard(
             "Mattermost token externalization required. Add env vars shown above and restart.",
         )
     }
+
+    /** The variables the next start needs, judged as [enforce] judges them (#209). */
+    override fun secretRequirements(): List<SecretRequirement> =
+        serverRepository.findByDeletedFalse().mapNotNull { server ->
+            SecretRequirement.of(
+                server.token,
+                envKeyFor(server),
+                "Mattermost server '${server.name}' token",
+                { key -> System.getenv(key) ?: springEnvironment.getProperty(key) },
+            )
+        }
 
     private fun printFailure(migrationExports: List<String>, validationErrors: List<String>) {
         System.err.println("============================================================")

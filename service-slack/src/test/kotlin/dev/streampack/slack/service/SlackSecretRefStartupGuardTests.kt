@@ -2,6 +2,7 @@
 package dev.streampack.slack.service
 
 import dev.streampack.core.model.SecretRef
+import dev.streampack.core.model.SecretRequirement
 import dev.streampack.core.service.SilentStartupException
 import dev.streampack.slack.entity.SlackWorkspace
 import dev.streampack.slack.repository.SlackWorkspaceRepository
@@ -86,5 +87,24 @@ class SlackSecretRefStartupGuardTests {
             }
         }
         Mockito.verify(repository, Mockito.never()).save(Mockito.any())
+    }
+
+    @Test
+    fun `lists what the next start needs, by variable, as the startup check judges it`() {
+        val workspace =
+            SlackWorkspace(
+                name = "acme",
+                botToken = SecretRef.literal("xoxb"),
+                appToken = SecretRef.env("SLACK_ACME_APP_TOKEN"),
+            )
+        Mockito.`when`(repository.findByDeletedFalse()).thenReturn(listOf(workspace))
+
+        assertEquals(
+            listOf(
+                "SLACK_ACME_BOT_TOKEN" to SecretRequirement.State.STORED_IN_DATABASE,
+                "SLACK_ACME_APP_TOKEN" to SecretRequirement.State.NOT_SET,
+            ),
+            guard.secretRequirements().map { it.variable to it.state },
+        )
     }
 }
