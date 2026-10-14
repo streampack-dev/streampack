@@ -30,7 +30,7 @@ class CalendarDayOperation(private val calendarService: CalendarService) :
             is CommandMatchResult.InvalidArgument -> {
                 val command = displayName(result.patternName)
                 OperationResult.Error(
-                        "Unknown calendar: ${result.token}. Use '${result.patternName} list' to see available calendars."
+                        "Unknown calendar: ${result.token}. Use '${result.patternName} list' to see available calendars.",
                     )
                     .also {
                         logger.debug("{} command invalid calendar '{}'", command, result.token)
@@ -67,7 +67,7 @@ class CalendarDayOperation(private val calendarService: CalendarService) :
             OperationResult.Success("$prefix is $formatted ($displayName)")
         } else {
             OperationResult.Error(
-                "Unknown calendar: $target. Use '$command list' to see available calendars."
+                "Unknown calendar: $target. Use '$command list' to see available calendars.",
             )
         }
     }
@@ -92,7 +92,7 @@ class CalendarDayOperation(private val calendarService: CalendarService) :
                     args = listOf(targetArg),
                 ),
                 CommandPattern(name = "tomorrow", literals = listOf("tomorrow")),
-            )
+            ),
         )
     }
 }

@@ -28,7 +28,7 @@
         <testcontainersVersion>2.0.5</testcontainersVersion>
         <springdocVersion>3.1.1</springdocVersion>
         <surefireVersion>3.6.0</surefireVersion>
-        <spotlessVersion>3.10.3</spotlessVersion>
+        <spotlessVersion>3.10.4</spotlessVersion>
         <jacocoVersion>0.8.15</jacocoVersion>
         <jjwtVersion>0.13.0</jjwtVersion>
         <greenmailVersion>2.1.14</greenmailVersion>

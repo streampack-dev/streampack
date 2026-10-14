@@ -37,7 +37,7 @@ class SoftDeleteContentOperation(private val postRepository: PostRepository) :
         logger.info("Post soft-deleted: {}", post.id)
 
         return OperationResult.Success(
-            ContentOperationConfirmation(id = post.id, message = "Post deleted")
+            ContentOperationConfirmation(id = post.id, message = "Post deleted"),
         )
     }
 }

@@ -73,7 +73,7 @@ class AtlasControllerTests {
                     Provenance(protocol = Protocol.CONSOLE, serviceId = "test", replyTo = "local"),
                 )
                 .setHeader("nick", "tester")
-                .build()
+                .build(),
         )
     }
 
@@ -100,7 +100,7 @@ class AtlasControllerTests {
                     publishedAt = publishedAt,
                     deleted = deleted,
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/10/$slug", post = post, canonical = true))
         tagNames.forEach { postTagRepository.save(PostTag(post = post, tag = tag(it))) }
@@ -118,7 +118,7 @@ class AtlasControllerTests {
                     displayName = "Atlas Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         post("one", "java", "spring", "jvm")
         post("two", "java", "spring")
@@ -135,7 +135,7 @@ class AtlasControllerTests {
             PostCategory(
                 post = page,
                 category = categoryRepository.save(Category(name = "_pages", slug = "pages")),
-            )
+            ),
         )
         teach("auth=who you are")
         teach("auth.tags=auth,http")
@@ -187,9 +187,9 @@ class AtlasControllerTests {
                         displayName = role.name,
                         emailVerified = true,
                         role = role,
-                    )
+                    ),
                 )
-                .toUserPrincipal()
+                .toUserPrincipal(),
         )
 
     @Test

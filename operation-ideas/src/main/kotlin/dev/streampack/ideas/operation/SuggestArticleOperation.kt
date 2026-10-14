@@ -77,7 +77,7 @@ class SuggestArticleOperation(
                     return if (result.certificateInvalid) {
                         OperationResult.Error(
                             "TLS certificate validation failed for $url. " +
-                                "Warning: the source certificate is invalid or untrusted."
+                                "Warning: the source certificate is invalid or untrusted.",
                         )
                     } else {
                         OperationResult.Error("Could not fetch source URL: ${result.message}")
@@ -150,7 +150,7 @@ class SuggestArticleOperation(
                     }
                 val aiSuffix = aiAttempt.note?.let { " $it" } ?: ""
                 OperationResult.Success(
-                    "Suggested draft saved from ${fetched.finalUrl}.$warningSuffix$aiSuffix"
+                    "Suggested draft saved from ${fetched.finalUrl}.$warningSuffix$aiSuffix",
                 )
             }
             is OperationResult.Error -> {
@@ -169,7 +169,7 @@ class SuggestArticleOperation(
             aiServiceProvider.ifAvailable
                 ?: return AiDraftAttempt(null, "AI unavailable; used extraction fallback.").also {
                     logger.info(
-                        "SuggestArticleOperation: AI unavailable; using extraction fallback"
+                        "SuggestArticleOperation: AI unavailable; using extraction fallback",
                     )
                 }
 
@@ -210,7 +210,7 @@ class SuggestArticleOperation(
                         )
                         .also {
                             logger.info(
-                                "SuggestArticleOperation: structured AI response missing summary; using fallback"
+                                "SuggestArticleOperation: structured AI response missing summary; using fallback",
                             )
                         }
             val parsedTags = structured.tags.mapNotNull(::normalizeTag).distinct().take(5)
@@ -227,7 +227,7 @@ class SuggestArticleOperation(
                 ?: return AiDraftAttempt(null, "AI returned no response; used extraction fallback.")
                     .also {
                         logger.info(
-                            "SuggestArticleOperation: AI returned no response; using fallback"
+                            "SuggestArticleOperation: AI returned no response; using fallback",
                         )
                     }
         val parsed =
@@ -253,7 +253,7 @@ class SuggestArticleOperation(
                         )
                         .also {
                             logger.info(
-                                "SuggestArticleOperation: JSON fallback missing summary; using fallback"
+                                "SuggestArticleOperation: JSON fallback missing summary; using fallback",
                             )
                         }
             val parsedTags =
@@ -318,8 +318,8 @@ class SuggestArticleOperation(
                         name = "suggest",
                         literals = listOf("suggest"),
                         args = listOf(CommandArgSpec("url", HttpUrlArgType)),
-                    )
-                )
+                    ),
+                ),
             )
     }
 }

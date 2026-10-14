@@ -13,7 +13,7 @@ class HtmlTitleFetcherTests {
         HtmlTitleFetcher(
             object : PageFetcher {
                 override fun fetch(url: String): String? = html
-            }
+            },
         )
 
     /** Map-based fetcher: returns the value whose key is a substring of the requested URL */
@@ -22,7 +22,7 @@ class HtmlTitleFetcherTests {
             object : PageFetcher {
                 override fun fetch(url: String): String? =
                     responses.entries.firstOrNull { url.contains(it.key) }?.value
-            }
+            },
         )
 
     @Test
@@ -136,7 +136,7 @@ class HtmlTitleFetcherTests {
                             certificateInvalid = true,
                             warnings = listOf("TLS certificate validation failed"),
                         )
-                }
+                },
             )
 
         val result = fetcher.fetchTitleResult("https://badcert.example.com")

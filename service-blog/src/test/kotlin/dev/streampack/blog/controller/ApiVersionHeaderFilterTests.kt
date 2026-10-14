@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.get
         [
             "streampack.api.version.current=2026-03-10",
             "streampack.api.version.supported=2026-03-10,2026-04-01",
-        ]
+        ],
 )
 @AutoConfigureMockMvc
 @ResetDatabaseBeforeEach

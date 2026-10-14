@@ -35,7 +35,7 @@ interface FactoidAttributeRepository : JpaRepository<FactoidAttribute, UUID> {
            OR LOWER(fa.attributeValue) LIKE :term
            OR LOWER(fa.updatedBy) LIKE :term
         ORDER BY f.selector
-        """
+        """,
     )
     fun searchForTerm(@Param("term") term: String): List<String>
 

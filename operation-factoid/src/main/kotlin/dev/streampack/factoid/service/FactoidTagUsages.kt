@@ -35,7 +35,7 @@ class FactoidTagUsages(private val attributes: FactoidAttributeRepository) : Tag
                     attributeValue = rewritten.joinToString(","),
                     updatedBy = actor,
                     updatedAt = Instant.now(),
-                )
+                ),
             )
             changed++
         }

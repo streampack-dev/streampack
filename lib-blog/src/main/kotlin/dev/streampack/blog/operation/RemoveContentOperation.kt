@@ -38,7 +38,7 @@ class RemoveContentOperation(
         logger.info("Post permanently removed: {}", payload.id)
 
         return OperationResult.Success(
-            ContentOperationConfirmation(id = payload.id, message = "Post permanently removed")
+            ContentOperationConfirmation(id = payload.id, message = "Post permanently removed"),
         )
     }
 }

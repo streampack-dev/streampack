@@ -63,7 +63,7 @@ class SuggestTagsHeuristicOperation(
                 .filter { (token, count) -> count >= 2 && token !in STOPWORDS }
                 .map { it.key }
                 .take(40)
-                .toList()
+                .toList(),
         )
 
         val scored =
@@ -82,7 +82,7 @@ class SuggestTagsHeuristicOperation(
                 }
                 .filter { it.second > 0 }
                 .sortedWith(
-                    compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first }
+                    compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first },
                 )
         val selected =
             selectSignificantTags(
@@ -95,7 +95,7 @@ class SuggestTagsHeuristicOperation(
         // Candidates come from raw text too (`load-testing`): suggest each in the shape it's stored
         // in.
         return OperationResult.Success(
-            SuggestTagsResponse(selected.mapNotNull(::normalizeTag).distinct())
+            SuggestTagsResponse(selected.mapNotNull(::normalizeTag).distinct()),
         )
     }
 

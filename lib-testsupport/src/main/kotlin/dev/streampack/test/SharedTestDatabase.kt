@@ -44,7 +44,7 @@ class SharedTestDatabaseEnvironmentPostProcessor : EnvironmentPostProcessor, Ord
                     "spring.datasource.username" to database.username,
                     "spring.datasource.password" to database.password,
                 ),
-            )
+            ),
         )
     }
 
@@ -105,7 +105,7 @@ object SharedTestDatabase {
                             }
                         }
                     }
-                }
+                },
             )
         val url = "jdbc:postgresql://${container.host}:${container.firstMappedPort}/$name"
         return Database(url, container.username, container.password)

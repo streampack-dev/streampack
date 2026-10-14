@@ -39,7 +39,7 @@ class ServiceAdminOperation(private val configService: OperationConfigService) :
             "disable" -> handleDisable(tokens.drop(1))
             else ->
                 OperationResult.Error(
-                    "Unknown service subcommand '$subcommand'. Use 'service' for available commands."
+                    "Unknown service subcommand '$subcommand'. Use 'service' for available commands.",
                 )
         }
     }
@@ -49,7 +49,7 @@ class ServiceAdminOperation(private val configService: OperationConfigService) :
         val name = args[0]
         configService.setEnabled("", "service:$name", true)
         return OperationResult.Success(
-            "Service '$name' marked enabled. Restart required to take effect."
+            "Service '$name' marked enabled. Restart required to take effect.",
         )
     }
 
@@ -58,7 +58,7 @@ class ServiceAdminOperation(private val configService: OperationConfigService) :
         val name = args[0]
         configService.setEnabled("", "service:$name", false)
         return OperationResult.Success(
-            "Service '$name' marked disabled. Restart required to take effect."
+            "Service '$name' marked disabled. Restart required to take effect.",
         )
     }
 

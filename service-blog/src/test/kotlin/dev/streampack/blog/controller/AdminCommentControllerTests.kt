@@ -54,7 +54,7 @@ class AdminCommentControllerTests {
                     displayName = "Comment Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         adminToken = jwtService.generateToken(adminUser.toUserPrincipal())
 
@@ -66,7 +66,7 @@ class AdminCommentControllerTests {
                     displayName = "Regular Commenter",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         regularUserToken = jwtService.generateToken(regularUser.toUserPrincipal())
 
@@ -82,7 +82,7 @@ class AdminCommentControllerTests {
                     author = regularUser,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
     }
 
@@ -95,7 +95,7 @@ class AdminCommentControllerTests {
                 renderedHtml = "<p>A comment to delete.</p>",
                 createdAt = Instant.now(),
                 updatedAt = Instant.now(),
-            )
+            ),
         )
     }
 

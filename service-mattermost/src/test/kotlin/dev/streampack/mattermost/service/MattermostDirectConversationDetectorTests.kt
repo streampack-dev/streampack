@@ -26,7 +26,7 @@ class MattermostDirectConversationDetectorTests {
                     name = channelId,
                     channelId = channelId,
                     channelType = type,
-                )
+                ),
             )
     }
 

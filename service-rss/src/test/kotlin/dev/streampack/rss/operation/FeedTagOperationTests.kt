@@ -47,7 +47,7 @@ class FeedTagOperationTests {
             parse(rss("https://a.example", mapOf("1" to listOf("Golang", "Rumour", "Helidon"))))
         val entry =
             entries.save(
-                RssEntry(feed = feed, guid = "https://a.example/1", link = "l", title = "One")
+                RssEntry(feed = feed, guid = "https://a.example/1", link = "l", title = "One"),
             )
         feedTags.record(listOf(entry to synd.entries.single()))
     }

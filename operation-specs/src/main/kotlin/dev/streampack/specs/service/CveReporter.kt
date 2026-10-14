@@ -52,7 +52,7 @@ class CveReporter(private val lookup: CveLookupService, private val properties: 
                     Ecosystem.entries
                         .flatMap { it.prefixes.take(1) }
                         .joinToString(", ") { "$it:" } +
-                    "."
+                    ".",
             )
         }
 
@@ -83,7 +83,7 @@ class CveReporter(private val lookup: CveLookupService, private val properties: 
                         "$id was rejected: ",
                         record.description ?: "no reason given",
                         " ${record.url}",
-                    )
+                    ),
                 )
             "RESERVED" -> Answer("$id is reserved, and not yet published. ${record.url}")
             else -> Answer(publishedLine(record), "${id.lowercase()}.url" to record.url)
@@ -112,21 +112,21 @@ class CveReporter(private val lookup: CveLookupService, private val properties: 
             0 ->
                 Answer(
                     "No Maven artifact is named $name; ask by group:artifact, or with an ecosystem " +
-                        "prefix such as npm:$name."
+                        "prefix such as npm:$name.",
                 )
             1 ->
                 Answer(
                     packageLine(
                         PackageRef(Ecosystem.MAVEN, artifacts.single().coordinates),
                         version,
-                    )
+                    ),
                 )
             else -> {
                 val shown = artifacts.take(LIST_LIMIT).joinToString(", ") { it.coordinates }
                 val more = more(artifacts.size - LIST_LIMIT)
                 Answer(
                     "$name is the artifactId of ${artifacts.size} Maven artifacts: $shown$more; " +
-                        "ask again with group:artifact."
+                        "ask again with group:artifact.",
                 )
             }
         }

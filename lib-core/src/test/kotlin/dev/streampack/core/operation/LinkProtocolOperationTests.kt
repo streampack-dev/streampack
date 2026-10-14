@@ -254,7 +254,7 @@ class LinkProtocolOperationTests {
     fun `text command links protocol identity`() {
         val result =
             eventGateway.process(
-                textMessage("link user regularuser irc ircservice regularuser_irc", superAdmin)
+                textMessage("link user regularuser irc ircservice regularuser_irc", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -268,7 +268,7 @@ class LinkProtocolOperationTests {
     fun `text command is case-insensitive for protocol`() {
         val result =
             eventGateway.process(
-                textMessage("link user regularuser DISCORD jvm-community regular#1234", superAdmin)
+                textMessage("link user regularuser DISCORD jvm-community regular#1234", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -282,7 +282,7 @@ class LinkProtocolOperationTests {
     fun `text command with invalid protocol is not handled`() {
         val result =
             eventGateway.process(
-                textMessage("link user regularuser BOGUS ircservice nick", superAdmin)
+                textMessage("link user regularuser BOGUS ircservice nick", superAdmin),
             )
 
         assertInstanceOf(OperationResult.NotHandled::class.java, result)
@@ -300,7 +300,7 @@ class LinkProtocolOperationTests {
     fun `text command requires super admin`() {
         val result =
             eventGateway.process(
-                textMessage("link user regularuser irc ircservice nick", regularUser)
+                textMessage("link user regularuser irc ircservice nick", regularUser),
             )
 
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -311,7 +311,7 @@ class LinkProtocolOperationTests {
     fun `text command with nonexistent user returns error`() {
         val result =
             eventGateway.process(
-                textMessage("link user nobody irc ircservice nobody_irc", superAdmin)
+                textMessage("link user nobody irc ircservice nobody_irc", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -353,7 +353,7 @@ class LinkProtocolOperationTests {
     fun `capitalized link command prefix is accepted`() {
         val result =
             eventGateway.process(
-                textMessage("Link user regularuser irc ircservice regularuser_caps", superAdmin)
+                textMessage("Link user regularuser irc ircservice regularuser_caps", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)

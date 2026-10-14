@@ -296,7 +296,7 @@ class TagCuration(
                 aiConfidence = confidence,
                 aiReason = reason,
                 aiModel = model,
-            )
+            ),
         )
     }
 
@@ -348,7 +348,7 @@ class TagCuration(
                 detail = detail,
                 actor = actor,
                 actedAt = now(),
-            )
+            ),
         )
     }
 

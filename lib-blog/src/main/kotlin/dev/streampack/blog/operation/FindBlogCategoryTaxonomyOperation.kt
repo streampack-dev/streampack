@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 /** Provides blog category counts for taxonomy aggregation. */
 @Component
 class FindBlogCategoryTaxonomyOperation(
-    private val postCategoryRepository: PostCategoryRepository
+    private val postCategoryRepository: PostCategoryRepository,
 ) : TypedOperation<FindBlogCategoryTaxonomyRequest>(FindBlogCategoryTaxonomyRequest::class) {
 
     override fun handle(

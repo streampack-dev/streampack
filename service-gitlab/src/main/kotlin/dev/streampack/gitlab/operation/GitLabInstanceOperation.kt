@@ -47,7 +47,7 @@ class GitLabInstanceOperation(private val subscriptionService: GitLabSubscriptio
                     name = "gitlab_instance_list",
                     literals = listOf("gitlab", "instance", "list"),
                 ),
-            )
+            ),
         )
 
     override val priority: Int = 60
@@ -86,11 +86,11 @@ class GitLabInstanceOperation(private val subscriptionService: GitLabSubscriptio
                 OperationResult.Success(
                     "Added GitLab instance ${outcome.instance.host} (${outcome.instance.apiUrl})." +
                         " Register projects with: gitlab add group/project on ${outcome.instance.host}" +
-                        tokenExternalizationNote(request.token, outcome.instance)
+                        tokenExternalizationNote(request.token, outcome.instance),
                 )
             is AddInstanceOutcome.AlreadyExists ->
                 OperationResult.Success(
-                    "Already registered: ${outcome.instance.host} (${outcome.instance.apiUrl})"
+                    "Already registered: ${outcome.instance.host} (${outcome.instance.apiUrl})",
                 )
             is AddInstanceOutcome.Invalid ->
                 OperationResult.Error("Invalid instance ${outcome.host}: ${outcome.reason}")

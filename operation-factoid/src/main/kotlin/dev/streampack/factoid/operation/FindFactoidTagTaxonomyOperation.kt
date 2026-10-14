@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 /** Provides factoid tag counts for taxonomy aggregation. */
 @Component
 class FindFactoidTagTaxonomyOperation(
-    private val factoidAttributeRepository: FactoidAttributeRepository
+    private val factoidAttributeRepository: FactoidAttributeRepository,
 ) : TypedOperation<FindFactoidTagTaxonomyRequest>(FindFactoidTagTaxonomyRequest::class) {
 
     override fun handle(

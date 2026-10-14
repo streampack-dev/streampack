@@ -217,7 +217,7 @@ class MarkdownRenderingServiceTests {
         )
         assertTrue(
             Regex(
-                    """<svg[^>]*class="adm-icon"[^>]*aria-hidden="true"|<svg[^>]*aria-hidden="true"[^>]*class="adm-icon""""
+                    """<svg[^>]*class="adm-icon"[^>]*aria-hidden="true"|<svg[^>]*aria-hidden="true"[^>]*class="adm-icon"""",
                 )
                 .containsMatchIn(result),
             result,
@@ -245,8 +245,8 @@ class MarkdownRenderingServiceTests {
         val result = rendererWithResolver.render("See [[thing]] now.")
         assertTrue(
             result.contains(
-                "<a href=\"https://thing.com\" title=\"thing is a thing, of course, of course\">thing</a>"
-            )
+                "<a href=\"https://thing.com\" title=\"thing is a thing, of course, of course\">thing</a>",
+            ),
         )
     }
 
@@ -270,7 +270,7 @@ class MarkdownRenderingServiceTests {
 
         val result = rendererWithResolver.render("See [[thing]] now.")
         assertTrue(
-            result.contains("<a href=\"https://thing.com\" title=\"thing is a thing\">thing</a>")
+            result.contains("<a href=\"https://thing.com\" title=\"thing is a thing\">thing</a>"),
         )
         assertTrue(!result.contains("&lt;reply&gt;"))
     }
@@ -312,7 +312,7 @@ class MarkdownRenderingServiceTests {
     fun `data image sources are removed`() {
         val result =
             markdownRenderingService.render(
-                "![img](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)"
+                "![img](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)",
             )
         assertFalse(result.contains("data:"), result)
     }
@@ -321,7 +321,7 @@ class MarkdownRenderingServiceTests {
     fun `http https and relative link targets are preserved`() {
         val result =
             markdownRenderingService.render(
-                "[a](https://example.com/x) [b](http://example.com) [c](/local/path) [d](#section)"
+                "[a](https://example.com/x) [b](http://example.com) [c](/local/path) [d](#section)",
             )
         assertTrue(result.contains("href=\"https://example.com/x\""), result)
         assertTrue(result.contains("href=\"http://example.com\""), result)
@@ -333,7 +333,7 @@ class MarkdownRenderingServiceTests {
     fun `http and relative image sources are preserved`() {
         val result =
             markdownRenderingService.render(
-                "![remote](https://example.com/a.png) ![local](/images/b.png)"
+                "![remote](https://example.com/a.png) ![local](/images/b.png)",
             )
         assertTrue(result.contains("src=\"https://example.com/a.png\""), result)
         assertTrue(result.contains("src=\"/images/b.png\""), result)

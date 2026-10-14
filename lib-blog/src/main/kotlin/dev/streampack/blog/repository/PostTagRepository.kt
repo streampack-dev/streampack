@@ -40,7 +40,7 @@ interface PostTagRepository : JpaRepository<PostTag, UUID> {
           AND SUBSTRING(LOWER(pt.tag.name), 1, 1) <> '_'
         GROUP BY LOWER(pt.tag.name)
         ORDER BY COUNT(pt.id) DESC, LOWER(pt.tag.name) ASC
-        """
+        """,
     )
     /**
      * Tag usage across published posts: approved, published by [now], not deleted and not in a
@@ -64,7 +64,7 @@ interface PostTagRepository : JpaRepository<PostTag, UUID> {
             WHERE pc.post = pt.post AND pc.category.name LIKE '\_%' ESCAPE '\'
           )
           AND SUBSTRING(LOWER(pt.tag.name), 1, 1) <> '_'
-        """
+        """,
     )
     /**
      * Each published post's tags, a row per post and tag, counted by the same rules as

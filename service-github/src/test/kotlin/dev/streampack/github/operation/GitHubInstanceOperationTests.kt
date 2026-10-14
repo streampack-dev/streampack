@@ -133,7 +133,7 @@ class GitHubInstanceOperationTests {
             assertInstanceOf(OperationResult.Success::class.java, again)
                 .payload
                 .toString()
-                .contains("Already")
+                .contains("Already"),
         )
     }
 
@@ -142,8 +142,8 @@ class GitHubInstanceOperationTests {
         val result =
             eventGateway.process(
                 adminMessage(
-                    "github instance add https://ghe.example.com/api/v3 ghp_literal_default"
-                )
+                    "github instance add https://ghe.example.com/api/v3 ghp_literal_default",
+                ),
             )
         val payload =
             assertInstanceOf(OperationResult.Success::class.java, result).payload.toString()
@@ -159,8 +159,8 @@ class GitHubInstanceOperationTests {
         val result =
             eventGateway.process(
                 adminMessage(
-                    "github instance add https://ghe.example.com env://GITHUB_NOT_SET_ANYWHERE"
-                )
+                    "github instance add https://ghe.example.com env://GITHUB_NOT_SET_ANYWHERE",
+                ),
             )
         val error = assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue(error.message.contains("GITHUB_NOT_SET_ANYWHERE"), error.message)
@@ -179,9 +179,9 @@ class GitHubInstanceOperationTests {
                 apiUrl = "${localApiUrl()}/api/v3",
                 defaultToken =
                     dev.streampack.core.model.SecretRef.env(
-                        "GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN"
+                        "GITHUB_INSTANCE_GHE_EXAMPLE_COM_TOKEN",
                     ),
-            )
+            ),
         )
 
         val hosted = eventGateway.process(adminMessage("github add owner/repo"))
@@ -189,7 +189,7 @@ class GitHubInstanceOperationTests {
             assertInstanceOf(OperationResult.Success::class.java, hosted)
                 .payload
                 .toString()
-                .contains("Watching owner/repo")
+                .contains("Watching owner/repo"),
         )
         val enterprise =
             eventGateway.process(adminMessage("github add owner/repo on ghe.example.com"))
@@ -226,7 +226,7 @@ class GitHubInstanceOperationTests {
         val seen = mutableListOf<String?>()
         stubRepo("/api/v3", "owner", "repo", seen)
         instanceRepository.save(
-            GitHubInstance(host = "ghe.example.com", apiUrl = "${localApiUrl()}/api/v3")
+            GitHubInstance(host = "ghe.example.com", apiUrl = "${localApiUrl()}/api/v3"),
         )
         eventGateway.process(adminMessage("github add owner/repo on ghe.example.com"))
 
@@ -242,8 +242,8 @@ class GitHubInstanceOperationTests {
         val explicit =
             eventGateway.process(
                 adminMessage(
-                    "github subscribe owner/repo on ghe.example.com to irc://libera/%23java"
-                )
+                    "github subscribe owner/repo on ghe.example.com to irc://libera/%23java",
+                ),
             )
         assertInstanceOf(OperationResult.Success::class.java, explicit)
 

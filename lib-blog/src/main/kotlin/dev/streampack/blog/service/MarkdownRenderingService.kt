@@ -168,7 +168,7 @@ class MarkdownRenderingService(
             // Recover common Java generic patterns flattened by upstream text extraction.
             .replace(
                 Regex(
-                    "\\b([A-Za-z_][A-Za-z0-9_]*)\\s+([A-Z])\\s+extends\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\2\\b"
+                    "\\b([A-Za-z_][A-Za-z0-9_]*)\\s+([A-Z])\\s+extends\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\2\\b",
                 ),
                 "$1<$2> extends $3<$2>",
             )

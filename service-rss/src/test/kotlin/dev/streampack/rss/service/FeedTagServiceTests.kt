@@ -80,7 +80,7 @@ class FeedTagServiceTests {
                 val existing = entries.findByFeedAndGuidIn(feed, listOf(s.uri)).firstOrNull()
                 (existing
                     ?: entries.save(
-                        RssEntry(feed = feed, guid = s.uri, link = s.link, title = s.title)
+                        RssEntry(feed = feed, guid = s.uri, link = s.link, title = s.title),
                     )) to s
             }
         feedTags.record(window, at)
@@ -99,9 +99,9 @@ class FeedTagServiceTests {
                         rss(
                             "https://a.example",
                             mapOf(
-                                "1" to listOf("Java", "K8s", "Uncategorized", "Featured", "_idea")
+                                "1" to listOf("Java", "K8s", "Uncategorized", "Featured", "_idea"),
                             ),
-                        )
+                        ),
                     ),
                 )
                 .single()
@@ -148,7 +148,7 @@ class FeedTagServiceTests {
                     rss(
                         "https://a.example",
                         (1..5).associate { "$it" to listOf("Quarkus") },
-                    )
+                    ),
                 ),
             )
         val row = waiting.findById("quarkus").orElseThrow()
@@ -177,7 +177,7 @@ class FeedTagServiceTests {
                     rss(
                         "https://b.example",
                         mapOf("1" to listOf("quarkus"), "2" to listOf("Quarkus")),
-                    )
+                    ),
                 ),
                 later,
             )
@@ -211,7 +211,7 @@ class FeedTagServiceTests {
                 rss(
                     "https://a.example",
                     mapOf("1" to listOf("Compiler"), "2" to listOf("compiler")),
-                )
+                ),
             ),
         )
         poll(b, parse(rss("https://b.example", mapOf("1" to listOf("compiler")))))
@@ -256,7 +256,7 @@ class FeedTagServiceTests {
         val a = feed("https://a.example")
         val entry =
             entries.save(
-                RssEntry(feed = a, guid = "https://a.example/1", link = "x", title = "Old")
+                RssEntry(feed = a, guid = "https://a.example/1", link = "x", title = "Old"),
             )
         assertEquals(emptyList<String>(), tagsOf(entry).categories)
 

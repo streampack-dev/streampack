@@ -41,7 +41,7 @@ import org.springframework.messaging.Message
         [
             "streampack.blog.base-url=https://blog.example",
             "streampack.blog.outgoing.retry-delay=0s",
-        ]
+        ],
 )
 class OutgoingLinksServiceTests {
     /** Stands in for the RSS reader, keeping what it was asked. */
@@ -61,7 +61,7 @@ class OutgoingLinksServiceTests {
         ): OperationOutcome {
             requests += payload
             return OperationResult.Success(
-                LinkedSiteSubscription(LinkedSiteSubscription.Outcome.NO_FEED)
+                LinkedSiteSubscription(LinkedSiteSubscription.Outcome.NO_FEED),
             )
         }
     }
@@ -148,10 +148,10 @@ class OutgoingLinksServiceTests {
                     status = status,
                     publishedAt = publishedAt,
                     metadata = metadata,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/10/outgoing-${UUID.randomUUID()}", post = saved, canonical = true)
+            Slug(path = "2026/10/outgoing-${UUID.randomUUID()}", post = saved, canonical = true),
         )
         created += saved
         return saved
@@ -176,7 +176,7 @@ class OutgoingLinksServiceTests {
                     "http://10.0.0.1/internal",
                     "https://blog.example/posts/2026/10/ours",
                     "https://pudl.blog.example/elsewhere",
-                )
+                ),
             )
         val source = "https://blog.example/posts/${slugRepository.findCanonical(post.id)!!.path}"
 
@@ -207,7 +207,7 @@ class OutgoingLinksServiceTests {
             (reload(post).metadata["linksCheckedThrough"] as Number).toLong(),
         )
         assertFalse(
-            postRepository.findOutgoingLinksDue(Instant.now(), 1000).any { it.id == post.id }
+            postRepository.findOutgoingLinksDue(Instant.now(), 1000).any { it.id == post.id },
         )
     }
 
@@ -217,13 +217,13 @@ class OutgoingLinksServiceTests {
         val post =
             postRepository.save(
                 post(links("$base/plain"))
-                    .copy(updatedAt = Instant.parse("2026-10-01T00:00:00.000600Z"))
+                    .copy(updatedAt = Instant.parse("2026-10-01T00:00:00.000600Z")),
             )
 
         service.handle(reload(post))
 
         assertFalse(
-            postRepository.findOutgoingLinksDue(Instant.now(), 1000).any { it.id == post.id }
+            postRepository.findOutgoingLinksDue(Instant.now(), 1000).any { it.id == post.id },
         )
     }
 
@@ -239,10 +239,10 @@ class OutgoingLinksServiceTests {
                     .copy(
                         renderedHtml = links("$base/wm-page", "$base/pb-page"),
                         updatedAt = Instant.now().plusSeconds(1),
-                    )
+                    ),
             )
         assertTrue(
-            postRepository.findOutgoingLinksDue(Instant.now(), 1000).any { it.id == post.id }
+            postRepository.findOutgoingLinksDue(Instant.now(), 1000).any { it.id == post.id },
         )
         service.handle(edited)
 
@@ -263,7 +263,7 @@ class OutgoingLinksServiceTests {
         assertFalse(scheduled.id in now)
         assertTrue(
             scheduled.id in
-                postRepository.findOutgoingLinksDue(later.plusSeconds(1), 1000).map { it.id }
+                postRepository.findOutgoingLinksDue(later.plusSeconds(1), 1000).map { it.id },
         )
     }
 

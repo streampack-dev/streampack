@@ -200,7 +200,7 @@ class DeriveFactoidOperation(
         return FactoidCatalog(
             factoidRepository.findAll().map {
                 FactoidCatalogEntry(it.selector, texts[it.selector.lowercase()])
-            }
+            },
         )
     }
 
@@ -238,7 +238,7 @@ class DeriveFactoidOperation(
         appendLine()
         appendLine(
             "Candidates for seeAlso (existing factoids the writing mentions): " +
-                candidates.ifEmpty { listOf("(none)") }.joinToString(", ")
+                candidates.ifEmpty { listOf("(none)") }.joinToString(", "),
         )
         if (context.isNotBlank()) {
             appendLine()

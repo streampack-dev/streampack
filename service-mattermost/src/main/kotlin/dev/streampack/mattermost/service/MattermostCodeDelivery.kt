@@ -26,7 +26,7 @@ class MattermostCodeDelivery(
 
     @Autowired
     constructor(
-        connectionManager: MattermostConnectionManager
+        connectionManager: MattermostConnectionManager,
     ) : this(
         { name -> connectionManager.getAdapter(name) },
         { connectionManager.connectedServerNames() },

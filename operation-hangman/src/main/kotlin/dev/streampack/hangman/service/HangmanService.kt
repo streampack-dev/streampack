@@ -25,7 +25,7 @@ class HangmanService(
             logger.debug("Rejected blocked word, retrying")
         }
         throw IllegalStateException(
-            "Could not find a non-blocked word after $MAX_ATTEMPTS attempts"
+            "Could not find a non-blocked word after $MAX_ATTEMPTS attempts",
         )
     }
 

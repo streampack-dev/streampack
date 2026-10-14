@@ -38,7 +38,7 @@ class HardDeleteCommentOperation(
         logger.info("Comment permanently removed: {}", payload.id)
 
         return OperationResult.Success(
-            ContentOperationConfirmation(id = payload.id, message = "Comment permanently removed")
+            ContentOperationConfirmation(id = payload.id, message = "Comment permanently removed"),
         )
     }
 }

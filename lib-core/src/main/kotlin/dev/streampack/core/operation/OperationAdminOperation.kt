@@ -46,7 +46,7 @@ class OperationAdminOperation(
             "set" -> handleSet(tokens.drop(1))
             else ->
                 OperationResult.Error(
-                    "Unknown operation subcommand '$subcommand'. Use 'operation' for available commands."
+                    "Unknown operation subcommand '$subcommand'. Use 'operation' for available commands.",
                 )
         }
     }
@@ -56,7 +56,7 @@ class OperationAdminOperation(
         val group = args[0]
         if (!isKnownGroup(group)) {
             return OperationResult.Error(
-                "Unknown operation group '$group'. Known groups: ${knownGroups()}"
+                "Unknown operation group '$group'. Known groups: ${knownGroups()}",
             )
         }
         configService.setEnabled("", group, true)
@@ -68,7 +68,7 @@ class OperationAdminOperation(
         val group = args[0]
         if (!isKnownGroup(group)) {
             return OperationResult.Error(
-                "Unknown operation group '$group'. Known groups: ${knownGroups()}"
+                "Unknown operation group '$group'. Known groups: ${knownGroups()}",
             )
         }
         configService.setEnabled("", group, false)
@@ -83,7 +83,7 @@ class OperationAdminOperation(
         val value = args.drop(2).joinToString(" ")
         if (!isKnownGroup(group)) {
             return OperationResult.Error(
-                "Unknown operation group '$group'. Known groups: ${knownGroups()}"
+                "Unknown operation group '$group'. Known groups: ${knownGroups()}",
             )
         }
         configService.setConfigValue("", group, key, value)

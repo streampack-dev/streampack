@@ -257,7 +257,7 @@ class AdminUserControllerTests {
                 displayName = "[deleted]",
                 role = Role.GUEST,
                 status = UserStatus.ERASED,
-            )
+            ),
         )
 
         mockMvc
@@ -280,7 +280,7 @@ class AdminUserControllerTests {
                 displayName = "[deleted]",
                 role = Role.GUEST,
                 status = UserStatus.ERASED,
-            )
+            ),
         )
 
         mockMvc

@@ -198,7 +198,7 @@ class CommentController(
                         ProblemDetail.forStatusAndDetail(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "Unhandled request",
-                        )
+                        ),
                     )
             }
         }
@@ -232,7 +232,7 @@ class CommentController(
                         ProblemDetail.forStatusAndDetail(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "Unhandled request",
-                        )
+                        ),
                     )
             }
         }

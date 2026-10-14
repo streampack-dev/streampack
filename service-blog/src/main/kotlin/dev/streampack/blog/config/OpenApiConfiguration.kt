@@ -24,8 +24,8 @@ class OpenApiConfiguration {
                             "Includes blog, authentication, and related site endpoints. " +
                             "Advisory version headers are supported: clients may send " +
                             "'Accept-Version' and responses include 'Content-Version' and " +
-                            "resolved 'Accept-Version'."
-                    )
+                            "resolved 'Accept-Version'.",
+                    ),
             )
             .components(
                 Components()
@@ -35,6 +35,6 @@ class OpenApiConfiguration {
                             .type(SecurityScheme.Type.HTTP)
                             .scheme("bearer")
                             .bearerFormat("JWT"),
-                    )
+                    ),
             )
 }

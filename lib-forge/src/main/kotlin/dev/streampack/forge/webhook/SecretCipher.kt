@@ -44,13 +44,13 @@ open class SecretCipher(
             System.err.println("============================================================")
             System.err.println(
                 "- $propertyDescription is set to the placeholder '$configured'. " +
-                    "Stored webhook secrets would be decryptable by anyone."
+                    "Stored webhook secrets would be decryptable by anyone.",
             )
             System.err.println("Set it to a long random value, or leave it unset if $kindLabel")
             System.err.println("webhook delivery is not used.")
             System.err.println("============================================================")
             throw SilentStartupException(
-                "$kindLabel webhook secret key configuration rejected. See messages above."
+                "$kindLabel webhook secret key configuration rejected. See messages above.",
             )
         }
         key =

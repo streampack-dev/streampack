@@ -26,7 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest
             "streampack.rss.batch-size=2",
             "streampack.rss.poll-interval=PT1H",
             "streampack.rss.max-backoff=PT4H",
-        ]
+        ],
 )
 class RssDueBatchPollingTests {
     @Autowired lateinit var pollingService: RssFeedPollingService
@@ -76,7 +76,7 @@ class RssDueBatchPollingTests {
                 title = path,
                 nextPollAt = dueAt,
                 pollFailures = failures,
-            )
+            ),
         )
     }
 
@@ -112,7 +112,7 @@ class RssDueBatchPollingTests {
                     feedUrl = "$baseUrl/dead.xml",
                     title = "dead",
                     nextPollAt = now.minusSeconds(1),
-                )
+                ),
             )
 
         pollingService.pollDue(now)

@@ -85,7 +85,7 @@ class RssSubscriptionService(
                     /* Just fetched: the first poll is one interval out, like any other */
                     nextPollAt =
                         PollSchedule.afterSuccess(Instant.now(), rssProperties.pollInterval),
-                )
+                ),
             )
 
         // Seed all current entries to establish the baseline, with their own tags (#139)
@@ -179,7 +179,7 @@ class RssSubscriptionService(
             subscriptionRepository.save(existing.copy(active = true))
         } else {
             subscriptionRepository.save(
-                RssFeedSubscription(feed = feed, destinationUri = destinationUri)
+                RssFeedSubscription(feed = feed, destinationUri = destinationUri),
             )
         }
         logger.info("Subscribed {} to feed \"{}\"", destinationUri, feed.title)

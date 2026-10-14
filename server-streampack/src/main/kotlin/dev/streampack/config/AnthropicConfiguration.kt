@@ -25,7 +25,7 @@ class AnthropicConfiguration {
     fun anthropicChatModel(properties: AiProperties): ChatModel? {
         if (properties.apiKey.isBlank()) {
             logger.warn(
-                "streampack.ai.enabled=true but no API key configured; AI provider disabled"
+                "streampack.ai.enabled=true but no API key configured; AI provider disabled",
             )
             return null
         }

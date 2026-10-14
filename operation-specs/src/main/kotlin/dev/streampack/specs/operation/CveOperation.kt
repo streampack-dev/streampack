@@ -89,7 +89,7 @@ class CveOperation(
                                 CommandArgSpec("version", StringArgType),
                             ),
                     ),
-                )
+                ),
             )
     }
 }

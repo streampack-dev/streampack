@@ -234,7 +234,7 @@ class RssRatingGuessService(
                     textSource = asked.getValue(id),
                     guessedAt = now,
                     rubric = rubricHash,
-                )
+                ),
             )
             stored++
         }

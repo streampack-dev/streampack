@@ -110,7 +110,7 @@ class RssRatingService(
         val previous = current?.rating
         val saved =
             ratings.save(
-                RssItemRating(itemId = itemId, rating = rating, ratedBy = admin, ratedAt = now)
+                RssItemRating(itemId = itemId, rating = rating, ratedBy = admin, ratedAt = now),
             )
         history.save(
             RssItemRatingHistory(
@@ -119,7 +119,7 @@ class RssRatingService(
                 previous = previous,
                 actedBy = admin,
                 actedAt = now,
-            )
+            ),
         )
         return saved.toResponse()
     }
@@ -137,7 +137,7 @@ class RssRatingService(
                 previous = current.rating,
                 actedBy = admin,
                 actedAt = now,
-            )
+            ),
         )
         return true
     }
@@ -356,7 +356,8 @@ class RssRatingService(
         val same = cb.equal(r.get<UUID>("itemId"), root.get<UUID>("id"))
         sub.select(r.get("itemId"))
         sub.where(
-            if (rating == null) same else cb.and(same, cb.equal(r.get<RssRating>("rating"), rating))
+            if (rating == null) same
+            else cb.and(same, cb.equal(r.get<RssRating>("rating"), rating)),
         )
         return sub
     }

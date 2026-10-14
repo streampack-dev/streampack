@@ -41,7 +41,7 @@ class RssFeedPollingServiceTests {
     class CapturingEgressConfig {
         @Bean
         fun capturingEgressSubscriber(
-            @Qualifier("egressChannel") egressChannel: SubscribableChannel
+            @Qualifier("egressChannel") egressChannel: SubscribableChannel,
         ): CapturingEgressSubscriber {
             val subscriber = CapturingEgressSubscriber()
             egressChannel.subscribe(subscriber)
@@ -93,21 +93,21 @@ class RssFeedPollingServiceTests {
                 feedUrl = "$baseUrl$path",
                 title = title,
                 lastFetchedAt = Instant.now().minusSeconds(3600),
-            )
+            ),
         )
     }
 
     private fun seedEntries(feed: RssFeed, guids: List<String>) {
         guids.forEach { guid ->
             entryRepository.save(
-                RssEntry(feed = feed, guid = guid, link = guid, title = "Existing: $guid")
+                RssEntry(feed = feed, guid = guid, link = guid, title = "Existing: $guid"),
             )
         }
     }
 
     private fun subscribeFeed(feed: RssFeed, destinationUri: String): RssFeedSubscription {
         return subscriptionRepository.save(
-            RssFeedSubscription(feed = feed, destinationUri = destinationUri)
+            RssFeedSubscription(feed = feed, destinationUri = destinationUri),
         )
     }
 
@@ -325,7 +325,7 @@ class RssFeedPollingServiceTests {
                     title = "Inactive Feed",
                     active = false,
                     lastFetchedAt = Instant.now().minusSeconds(3600),
-                )
+                ),
             )
 
         httpServer.createContext("/inactive.xml") { exchange ->

@@ -184,7 +184,7 @@ class AdminUserController(
                     ProblemDetail.forStatusAndDetail(
                         HttpStatus.FORBIDDEN,
                         "Insufficient privileges",
-                    )
+                    ),
                 )
         }
         val users = userRepository.findByStatus(status).map { it.toUserPrincipal() }
@@ -235,7 +235,7 @@ class AdminUserController(
                         ProblemDetail.forStatusAndDetail(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "Unhandled request",
-                        )
+                        ),
                     )
             }
         }

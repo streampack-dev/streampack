@@ -117,7 +117,7 @@ class SpecsOperation(
                         literals = listOf("pep"),
                         args = listOf(CommandArgSpec("identifier", PositiveIntArgType)),
                     ),
-                )
+                ),
             )
     }
 }

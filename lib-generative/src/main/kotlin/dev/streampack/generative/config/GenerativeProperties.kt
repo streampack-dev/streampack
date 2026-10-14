@@ -30,5 +30,5 @@ data class GenerativeProperties(
      *
      * before the caller-provided classpath fallback is used.
      */
-    val promptDir: String = ""
+    val promptDir: String = "",
 )

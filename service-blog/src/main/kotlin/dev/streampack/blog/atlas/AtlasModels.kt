@@ -38,7 +38,7 @@ enum class PinKind(@get:JsonValue val value: String) {
 
 @Schema(
     description =
-        "The Atlas: a map of the site's tags, grouped into regions by how they're used together."
+        "The Atlas: a map of the site's tags, grouped into regions by how they're used together.",
 )
 data class AtlasResponse(
     @field:Schema(description = "The regions, biggest first, the Uncharted region (id 0) last.")
@@ -46,14 +46,14 @@ data class AtlasResponse(
     @field:Schema(
         description =
             "Every tag in use, each with its region and position, in region order and then biggest first. " +
-                "A stored tag no longer used is left out but keeps its position for when it's back."
+                "A stored tag no longer used is left out but keeps its position for when it's back.",
     )
     val places: List<AtlasPlaceResponse>,
     @field:Schema(description = "The world the map spans, with a margin and room for region names.")
     val bounds: AtlasBounds,
     @field:Schema(
         description =
-            "When the oldest place was laid out: the last full layout. Null for an empty map."
+            "When the oldest place was laid out: the last full layout. Null for an empty map.",
     )
     val laidOutAt: Instant? = null,
 )
@@ -67,13 +67,13 @@ data class AtlasRegionResponse(
     val id: Int,
     @field:Schema(
         description =
-            "The region's two biggest tags when laid out, joined by \" · \"; \"Uncharted\" for id 0."
+            "The region's two biggest tags when laid out, joined by \" · \"; \"Uncharted\" for id 0.",
     )
     val name: String,
     val x: Double,
     val y: Double,
     @field:Schema(
-        description = "How far the region reaches: its outermost place's mark, and a margin."
+        description = "How far the region reaches: its outermost place's mark, and a margin.",
     )
     val r: Double,
     @field:Schema(description = "True for the region of tags tied to nothing (id 0).")
@@ -93,7 +93,7 @@ data class AtlasPlaceResponse(
     val factoidCount: Long,
     val kind: PlaceKind,
     @field:Schema(
-        description = "The mark's radius, in world units: 4 + 2.6·√(articles + factoids)."
+        description = "The mark's radius, in world units: 4 + 2.6·√(articles + factoids).",
     )
     val r: Double,
     @field:Schema(description = "The label's font size, in pixels: 10 + √size, at most 20.")
@@ -103,7 +103,7 @@ data class AtlasPlaceResponse(
     @field:Schema(
         description =
             "The newest articles and the factoids (by name) found here, at most 8 of each, each " +
-                "placed around the mark. GET /atlas/places/{tag} lists them all."
+                "placed around the mark. GET /atlas/places/{tag} lists them all.",
     )
     val pins: List<AtlasPin>,
 )

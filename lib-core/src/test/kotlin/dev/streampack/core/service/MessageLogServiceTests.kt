@@ -140,11 +140,11 @@ class MessageLogServiceTests {
         assertTrue(
             messageLogService.findRecentMessagesBySender("alice", "irc://", 1000).none {
                 it.provenanceUri == uri
-            }
+            },
         )
         assertTrue(repository.findAll().none { it.provenanceUri == uri })
         assertTrue(
-            repository.findByProvenanceUriOrderByTimestampDesc(uri, PageRequest.of(0, 10)).isEmpty
+            repository.findByProvenanceUriOrderByTimestampDesc(uri, PageRequest.of(0, 10)).isEmpty,
         )
     }
 
@@ -196,7 +196,7 @@ class MessageLogServiceTests {
         assertTrue(
             messageLogService.findRecentMessagesBySender("troll", "irc://", 1000).none {
                 it.provenanceUri == uri
-            }
+            },
         )
         assertTrue(repository.findAll().none { it.provenanceUri == uri && it.sender == "troll" })
 

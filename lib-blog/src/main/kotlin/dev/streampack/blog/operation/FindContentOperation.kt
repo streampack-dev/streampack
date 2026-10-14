@@ -106,7 +106,7 @@ class FindContentOperation(
                 page = pageResult.number,
                 totalPages = pageResult.totalPages,
                 totalCount = pageResult.totalElements,
-            )
+            ),
         )
     }
 
@@ -132,14 +132,14 @@ class FindContentOperation(
                 page = ranking.page,
                 totalPages = ranking.totalPages,
                 totalCount = ranking.totalCount,
-            )
+            ),
         )
     }
 
     private fun searchPublished(query: String, page: Int, size: Int): OperationResult {
         if (query.isBlank()) {
             return OperationResult.Success(
-                ContentListResponse(posts = emptyList(), page = 0, totalPages = 0, totalCount = 0)
+                ContentListResponse(posts = emptyList(), page = 0, totalPages = 0, totalCount = 0),
             )
         }
 
@@ -150,7 +150,7 @@ class FindContentOperation(
             toSummaries(
                 pageResult.content.map { post ->
                     postRepository.findActiveByIdWithAuthor(post.id) ?: post
-                }
+                },
             )
 
         return OperationResult.Success(
@@ -159,7 +159,7 @@ class FindContentOperation(
                 page = pageResult.number,
                 totalPages = pageResult.totalPages,
                 totalCount = pageResult.totalElements,
-            )
+            ),
         )
     }
 
@@ -176,7 +176,7 @@ class FindContentOperation(
                 page = pageResult.number,
                 totalPages = pageResult.totalPages,
                 totalCount = pageResult.totalElements,
-            )
+            ),
         )
     }
 
@@ -189,7 +189,7 @@ class FindContentOperation(
                     page = page,
                     totalPages = 0,
                     totalCount = 0,
-                )
+                ),
             )
         }
         val now = Instant.now()
@@ -205,7 +205,7 @@ class FindContentOperation(
                 page = pageResult.number,
                 totalPages = pageResult.totalPages,
                 totalCount = pageResult.totalElements,
-            )
+            ),
         )
     }
 

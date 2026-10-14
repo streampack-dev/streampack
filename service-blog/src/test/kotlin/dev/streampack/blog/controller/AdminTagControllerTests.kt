@@ -82,7 +82,7 @@ class AdminTagControllerTests {
                 override fun retag(from: String, to: List<String>, actor: String): Int {
                     if (from != "boom") return 0
                     jdbc.update(
-                        "INSERT INTO tag_stop (term, created_by, created_at) VALUES ('evidence', 'x', now())"
+                        "INSERT INTO tag_stop (term, created_by, created_at) VALUES ('evidence', 'x', now())",
                     )
                     error("boom")
                 }
@@ -97,7 +97,7 @@ class AdminTagControllerTests {
                 displayName = role.name,
                 emailVerified = true,
                 role = role,
-            )
+            ),
         )
 
     private fun post(slug: String, vararg tags: String): Post {
@@ -110,7 +110,7 @@ class AdminTagControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = java.time.Instant.now().minusSeconds(60),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/10/$slug", post = post, canonical = true))
         vocabulary.acceptTags(tags.toList(), "post").forEach {
@@ -129,7 +129,7 @@ class AdminTagControllerTests {
                     Provenance(protocol = Protocol.CONSOLE, serviceId = "test", replyTo = "local"),
                 )
                 .setHeader("nick", "tester")
-                .build()
+                .build(),
         )
 
     private fun factoidTags(selector: String): String? =
@@ -401,13 +401,13 @@ class AdminTagControllerTests {
         mapOf(
             "post_tags" to
                 jdbc.queryForList(
-                    "SELECT post_id::text, tag_id::text FROM post_tags ORDER BY 1, 2"
+                    "SELECT post_id::text, tag_id::text FROM post_tags ORDER BY 1, 2",
                 ),
             "tags" to jdbc.queryForList("SELECT id::text, name, slug FROM tags ORDER BY name"),
             "factoid tags" to
                 jdbc.queryForList(
                     "SELECT id::text, attribute_value, updated_at FROM factoid_attributes " +
-                        "WHERE attribute_type = 'TAGS' ORDER BY 1"
+                        "WHERE attribute_type = 'TAGS' ORDER BY 1",
                 ),
             "tag_review" to
                 jdbc.queryForList("SELECT tag, status, acted_by FROM tag_review ORDER BY tag"),
@@ -548,7 +548,7 @@ class AdminTagControllerTests {
                     header("Authorization", "Bearer $adminToken")
                     contentType = MediaType.APPLICATION_JSON
                     content = """{"tag":"compilers"}"""
-                }
+                },
             )
         assertThat(preview).containsExactly("compiler", listOf("compilers"), 2, 1)
         assertThat(snapshot()).isEqualTo(before)
@@ -562,7 +562,7 @@ class AdminTagControllerTests {
                     header("Authorization", "Bearer $adminToken")
                     contentType = MediaType.APPLICATION_JSON
                     content = """{"tag":"compilers","alias":null}"""
-                }
+                },
             )
         assertThat(real).isEqualTo(preview)
         assertThat(tagsOfPost(one)).containsExactly("compilers", "java")
@@ -600,7 +600,7 @@ class AdminTagControllerTests {
             changeOf(
                 mockMvc.post("/admin/tags/review/$id/split?dryRun=true") {
                     header("Authorization", "Bearer $adminToken")
-                }
+                },
             )
         assertThat(preview).containsExactly("java kotlin", listOf("java", "kotlin"), 2, 1)
         assertThat(snapshot()).isEqualTo(before)
@@ -610,7 +610,7 @@ class AdminTagControllerTests {
             changeOf(
                 mockMvc.post("/admin/tags/review/$id/split") {
                     header("Authorization", "Bearer $adminToken")
-                }
+                },
             )
         assertThat(real).isEqualTo(preview)
         assertThat(tagsOfPost(one)).containsExactly("java", "kotlin")
@@ -630,7 +630,7 @@ class AdminTagControllerTests {
                     header("Authorization", "Bearer $adminToken")
                     contentType = MediaType.APPLICATION_JSON
                     content = """{"alias":"K8s","tag":"kubernetes"}"""
-                }
+                },
             )
         assertThat(preview).containsExactly("k8s", listOf("kubernetes"), 2, 1)
         assertThat(snapshot()).isEqualTo(before)
@@ -642,7 +642,7 @@ class AdminTagControllerTests {
                     header("Authorization", "Bearer $adminToken")
                     contentType = MediaType.APPLICATION_JSON
                     content = """{"alias":"K8s","tag":"kubernetes"}"""
-                }
+                },
             )
         assertThat(real).isEqualTo(preview)
         assertThat(tagsOfPost(one)).containsExactly("kubernetes")

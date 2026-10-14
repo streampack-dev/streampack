@@ -86,7 +86,7 @@ class RssSubscriptionServiceTests {
         assertEquals(
             listOf(
                 "Feed \"Dev Build\" ($baseUrl/dev.xml): its site link looks wrong: " +
-                    "http://localhost:3000 (a local host)"
+                    "http://localhost:3000 (a local host)",
             ),
             appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage },
         )

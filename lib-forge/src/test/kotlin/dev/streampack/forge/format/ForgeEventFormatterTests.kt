@@ -55,7 +55,7 @@ class ForgeEventFormatterTests {
                 ForgeKind.GITHUB,
                 "owner/repo",
                 ForgeEvent.ReleasePublished(
-                    ForgeReleaseInfo("v1.2.0", "Name", "https://example.com/rel")
+                    ForgeReleaseInfo("v1.2.0", "Name", "https://example.com/rel"),
                 ),
             ),
         )

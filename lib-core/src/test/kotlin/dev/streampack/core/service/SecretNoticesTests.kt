@@ -98,7 +98,7 @@ class SecretNoticesTests {
         assertEquals(
             "#jvm",
             notices.channelLabel(
-                Provenance(protocol = Protocol.SLACK, serviceId = "w", replyTo = "C0JVM")
+                Provenance(protocol = Protocol.SLACK, serviceId = "w", replyTo = "C0JVM"),
             ),
         )
         assertEquals(
@@ -109,13 +109,13 @@ class SecretNoticesTests {
                     serviceId = "1",
                     replyTo = "123/guild/#general",
                     metadata = mapOf("channelName" to "general"),
-                )
+                ),
             ),
         )
         assertEquals(
             "the channel",
             notices.channelLabel(
-                Provenance(protocol = Protocol.SLACK, serviceId = "w", replyTo = "C0X")
+                Provenance(protocol = Protocol.SLACK, serviceId = "w", replyTo = "C0X"),
             ),
         )
     }

@@ -272,7 +272,7 @@ class LogController(
                 totalCount = found.totalElements,
                 totalPages = found.totalPages,
                 hits = hits,
-            )
+            ),
         )
     }
 
@@ -354,7 +354,7 @@ class LogController(
                     "none" -> setOf(MessageKind.MESSAGE)
                     else ->
                         return Result.failure(
-                            IllegalArgumentException("events is all or none, not '$events'.")
+                            IllegalArgumentException("events is all or none, not '$events'."),
                         )
                 }
             val names = kinds?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }
@@ -365,8 +365,8 @@ class LogController(
                         IllegalArgumentException(
                             "Unknown kind '$name'; the kinds are " +
                                 MessageKind.entries.joinToString(", ") +
-                                "."
-                        )
+                                ".",
+                        ),
                     )
             }
             return Result.success(byEvents intersect byKinds.toSet())

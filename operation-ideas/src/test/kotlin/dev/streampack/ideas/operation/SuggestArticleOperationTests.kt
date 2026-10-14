@@ -35,7 +35,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.messaging.support.MessageBuilder
 
 @SpringBootTest(
-    properties = ["streampack.generative.prompt-dir=/tmp/streampack-ideas-prompt-tests"]
+    properties = ["streampack.generative.prompt-dir=/tmp/streampack-ideas-prompt-tests"],
 )
 @Import(SuggestArticleOperationTests.TestConfig::class)
 class SuggestArticleOperationTests {
@@ -83,7 +83,7 @@ class SuggestArticleOperationTests {
                     displayName = "Suggest Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
 
         regularUser =
@@ -94,7 +94,7 @@ class SuggestArticleOperationTests {
                     displayName = "Suggest User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
     }
 
@@ -102,7 +102,7 @@ class SuggestArticleOperationTests {
     fun `admin suggest creates draft with mandatory source url`() {
         val result =
             eventGateway.process(
-                messageFor(adminUser.toUserPrincipal(), "suggest https://good.example/article")
+                messageFor(adminUser.toUserPrincipal(), "suggest https://good.example/article"),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -146,7 +146,7 @@ class SuggestArticleOperationTests {
     fun `non-admin cannot use suggest`() {
         val result =
             eventGateway.process(
-                messageFor(regularUser.toUserPrincipal(), "suggest https://good.example/article")
+                messageFor(regularUser.toUserPrincipal(), "suggest https://good.example/article"),
             )
 
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -159,7 +159,7 @@ class SuggestArticleOperationTests {
     fun `suggest rejects non-http schemes`() {
         val result =
             eventGateway.process(
-                messageFor(adminUser.toUserPrincipal(), "suggest ftp://example.com/article")
+                messageFor(adminUser.toUserPrincipal(), "suggest ftp://example.com/article"),
             )
 
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -171,7 +171,7 @@ class SuggestArticleOperationTests {
     fun `suggest reports certificate warning on invalid tls`() {
         val result =
             eventGateway.process(
-                messageFor(adminUser.toUserPrincipal(), "suggest https://badcert.example/article")
+                messageFor(adminUser.toUserPrincipal(), "suggest https://badcert.example/article"),
             )
 
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -184,7 +184,7 @@ class SuggestArticleOperationTests {
     fun `suggest warns when final source remains http`() {
         val result =
             eventGateway.process(
-                messageFor(adminUser.toUserPrincipal(), "suggest http://plain.example/article")
+                messageFor(adminUser.toUserPrincipal(), "suggest http://plain.example/article"),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -203,7 +203,7 @@ class SuggestArticleOperationTests {
 
         val result =
             eventGateway.process(
-                messageFor(adminUser.toUserPrincipal(), "suggest https://good.example/article")
+                messageFor(adminUser.toUserPrincipal(), "suggest https://good.example/article"),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -241,7 +241,7 @@ class SuggestArticleOperationTests {
                                 extractedText = "This content was served over plain HTTP.",
                                 warnings =
                                     listOf(
-                                        "Warning: source resolved to plain HTTP without TLS (no HTTPS redirect observed)."
+                                        "Warning: source resolved to plain HTTP without TLS (no HTTPS redirect observed).",
                                     ),
                             )
 
@@ -270,7 +270,7 @@ class SuggestArticleOperationTests {
 
     class NoopChatModel : org.springframework.ai.chat.model.ChatModel {
         override fun call(
-            prompt: org.springframework.ai.chat.prompt.Prompt
+            prompt: org.springframework.ai.chat.prompt.Prompt,
         ): org.springframework.ai.chat.model.ChatResponse {
             throw UnsupportedOperationException()
         }

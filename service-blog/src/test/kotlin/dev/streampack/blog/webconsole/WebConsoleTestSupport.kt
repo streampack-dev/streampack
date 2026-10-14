@@ -34,7 +34,7 @@ class WebConsoleTestSupport(
                 displayName = name.replaceFirstChar { it.uppercase() },
                 emailVerified = true,
                 role = role,
-            )
+            ),
         )
 
     fun token(user: User): String = jwtService.generateToken(user.toUserPrincipal())

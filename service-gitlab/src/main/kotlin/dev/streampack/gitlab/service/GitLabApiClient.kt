@@ -40,13 +40,13 @@ class GitLabApiClient(properties: GitLabProperties) {
                 JdkClientHttpRequestFactory(
                         HttpClient.newBuilder()
                             .connectTimeout(
-                                Duration.ofSeconds(properties.connectTimeoutSeconds.toLong())
+                                Duration.ofSeconds(properties.connectTimeoutSeconds.toLong()),
                             )
-                            .build()
+                            .build(),
                     )
                     .apply {
                         setReadTimeout(Duration.ofSeconds(properties.readTimeoutSeconds.toLong()))
-                    }
+                    },
             )
             .build()
 

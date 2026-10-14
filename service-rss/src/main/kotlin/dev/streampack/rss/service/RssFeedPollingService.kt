@@ -48,7 +48,7 @@ class RssFeedPollingService(
             source.copy(
                 nextPollAt = PollSchedule.afterSuccess(now, rssProperties.pollInterval),
                 pollFailures = 0,
-            )
+            ),
         )
     }
 
@@ -64,7 +64,7 @@ class RssFeedPollingService(
                         rssProperties.maxBackoff,
                     ),
                 pollFailures = failures,
-            )
+            ),
         )
     }
 
@@ -118,7 +118,7 @@ class RssFeedPollingService(
         feedTags.record(
             fetchedEntries.mapNotNull { entry ->
                 byGuid[entry.uri ?: entry.link]?.let { it to entry }
-            }
+            },
         )
 
         val fetched = feedRepository.save(feed.copy(lastFetchedAt = Instant.now()))

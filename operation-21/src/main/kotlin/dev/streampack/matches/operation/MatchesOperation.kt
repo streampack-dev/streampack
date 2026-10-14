@@ -44,7 +44,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             is CommandMatchResult.InvalidArgument ->
                 if (parsed.patternName == "take" && parsed.argumentName == "count") {
                     OperationResult.Error(
-                        "Please specify a number between 1 and 3. Usage: {{ref:21 take <1-3>}}"
+                        "Please specify a number between 1 and 3. Usage: {{ref:21 take <1-3>}}",
                     )
                 } else {
                     unknownCommand()
@@ -53,7 +53,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             is CommandMatchResult.MissingArguments ->
                 if (parsed.patternName == "take") {
                     OperationResult.Error(
-                        "Please specify a number between 1 and 3. Usage: {{ref:21 take <1-3>}}"
+                        "Please specify a number between 1 and 3. Usage: {{ref:21 take <1-3>}}",
                     )
                 } else {
                     unknownCommand()
@@ -70,7 +70,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             val state = objectMapper.convertValue<MatchesGameState>(existing)
             return OperationResult.Error(
                 "A game is already in progress with ${state.remaining} matches remaining. " +
-                    "Use '{{ref:21 concede}}' to give up, or '{{ref:21 take <1-3>}}' to continue."
+                    "Use '{{ref:21 concede}}' to give up, or '{{ref:21 take <1-3>}}' to continue.",
             )
         }
         val state = MatchesGameState(remaining = MatchesGameState.INITIAL_MATCHES)
@@ -82,7 +82,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         return OperationResult.Success(
             "A new game of 21 Matches begins! There are ${MatchesGameState.INITIAL_MATCHES} matches on the table. " +
                 "Take 1, 2, or 3 matches each turn. Whoever is forced to take the last match loses. " +
-                "Use '{{ref:21 take <1-3>}}' to play."
+                "Use '{{ref:21 take <1-3>}}' to play.",
         )
     }
 
@@ -94,14 +94,14 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         val existing = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         if (existing == null) {
             return OperationResult.Error(
-                "No game in progress. Use '{{ref:21 matches}}' to start a new game."
+                "No game in progress. Use '{{ref:21 matches}}' to start a new game.",
             )
         }
 
         val state = objectMapper.convertValue<MatchesGameState>(existing)
         if (playerTake > state.remaining) {
             return OperationResult.Error(
-                "There are only ${state.remaining} matches remaining. You cannot take $playerTake."
+                "There are only ${state.remaining} matches remaining. You cannot take $playerTake.",
             )
         }
 
@@ -132,7 +132,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             objectMapper.convertValue<Map<String, Any>>(MatchesGameState(remaining = afterBot)),
         )
         return OperationResult.Success(
-            "$reaction $consideration, I take $botTake. There are $afterBot matches remaining."
+            "$reaction $consideration, I take $botTake. There are $afterBot matches remaining.",
         )
     }
 
@@ -147,7 +147,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
 
     private fun unknownCommand(): OperationResult.Error =
         OperationResult.Error(
-            "Unknown command. Usage: {{ref:21 matches}} | {{ref:21 take <1-3>}} | {{ref:21 concede}}"
+            "Unknown command. Usage: {{ref:21 matches}} | {{ref:21 take <1-3>}} | {{ref:21 concede}}",
         )
 
     companion object {
@@ -161,7 +161,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
                         args = listOf(CommandArgSpec("count", IntRangeArgType(1..3))),
                     ),
                     CommandPattern(name = "concede", literals = listOf("21", "concede")),
-                )
+                ),
             )
         val REACTIONS =
             listOf(

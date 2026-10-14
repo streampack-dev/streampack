@@ -209,7 +209,7 @@ class UrlTitleServiceTests {
                 "Forbidden — nginx",
                 "Are you a robot?",
                 "Log in | Some App",
-            ]
+            ],
     )
     fun `sign-in and bot-check titles are suppressed`(title: String) {
         assertTrue(service.isSuppressedTitle(title), "expected suppression of '$title'")
@@ -224,7 +224,7 @@ class UrlTitleServiceTests {
                 "Login-free tools · Blog",
                 "Coroutines | Kotlin",
                 "Forbidden Planet (1956) | IMDb fan page | Reviews",
-            ]
+            ],
     )
     fun `ordinary titles are not suppressed`(title: String) {
         assertFalse(service.isSuppressedTitle(title), "unexpected suppression of '$title'")

@@ -53,7 +53,7 @@ class LogControllerTests {
                     displayName = "Logs Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         adminToken = jwtService.generateToken(admin.toUserPrincipal())
 
@@ -65,7 +65,7 @@ class LogControllerTests {
                     displayName = "Logs User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         userToken = jwtService.generateToken(regular.toUserPrincipal())
 
@@ -75,7 +75,7 @@ class LogControllerTests {
                 visible = true,
                 logged = true,
                 active = true,
-            )
+            ),
         )
         optionsRepository.save(
             ChannelControlOptions(
@@ -83,7 +83,7 @@ class LogControllerTests {
                 visible = false,
                 logged = true,
                 active = true,
-            )
+            ),
         )
 
         messageLogService.logInbound(visibleProv, "alice", "Visible hello")
@@ -96,7 +96,7 @@ class LogControllerTests {
                 visible = true,
                 logged = true,
                 active = true,
-            )
+            ),
         )
         messageLogService.logInbound("irc://libera/alice", "alice", "DM hello")
     }
@@ -113,7 +113,7 @@ class LogControllerTests {
             }
             jsonPath("$.provenances[*].provenanceUri") {
                 value(
-                    org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem("irc://libera/alice"))
+                    org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem("irc://libera/alice")),
                 )
             }
         }
@@ -409,7 +409,7 @@ class LogControllerTests {
                             "* ada joined #visible",
                             "ada visible remark",
                             "* ada quit (visible exit)",
-                        )
+                        ),
                     )
                 }
                 jsonPath("$.entries[*].kind") {
@@ -523,9 +523,9 @@ class LogControllerTests {
                                         org.hamcrest.Matchers.anyOf(
                                             org.hamcrest.Matchers.containsString("direct"),
                                             org.hamcrest.Matchers.containsString("joined"),
-                                        )
-                                    )
-                                )
+                                        ),
+                                    ),
+                                ),
                             )
                         }
                     }
@@ -545,9 +545,9 @@ class LogControllerTests {
                                         org.hamcrest.Matchers.anyOf(
                                             org.hamcrest.Matchers.containsString("direct"),
                                             org.hamcrest.Matchers.containsString("joined"),
-                                        )
-                                    )
-                                )
+                                        ),
+                                    ),
+                                ),
                             )
                         }
                     }

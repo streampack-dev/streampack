@@ -52,7 +52,7 @@ class IrcService(
                             saslAccount = saslAccount?.let { SecretRef.literal(it) },
                             saslPassword = saslPassword?.let { SecretRef.literal(it) },
                             updatedAt = Instant.now(),
-                        )
+                        ),
                     )
                     .also { logger.info("Updated credentials for IRC network '{}'", name) }
             } else if (existing != null) {
@@ -77,7 +77,7 @@ class IrcService(
                                 nick = nick!!,
                                 saslAccount = saslAccount?.let { SecretRef.literal(it) },
                                 saslPassword = saslPassword?.let { SecretRef.literal(it) },
-                            )
+                            ),
                     )
                     .also { logger.info("Registered IRC network '{}'", name) }
             }
@@ -224,7 +224,7 @@ class IrcService(
             networkRepository.findByNameAndDeletedFalse(name)
                 ?: return "Error: Network '$name' not found"
         networkRepository.save(
-            network.copy(signalCharacter = signalCharacter, updatedAt = Instant.now())
+            network.copy(signalCharacter = signalCharacter, updatedAt = Instant.now()),
         )
         connectionManager.ifAvailable { it.updateSignal(name, signalCharacter) }
         return if (signalCharacter != null) {

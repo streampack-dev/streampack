@@ -252,7 +252,7 @@ class PostVersionService(
             TransactionSynchronizationManager.registerSynchronization(
                 object : TransactionSynchronization {
                     override fun afterCommit() = delete()
-                }
+                },
             )
         } else {
             delete()
@@ -293,18 +293,18 @@ class PostVersionService(
         val accepted = AudioFormat.entries.flatMap { it.accepts }.toSet()
         if (declared !in AudioFormat.UNSPECIFIED && declared !in accepted) {
             throw UnsupportedTypeException(
-                "$declared isn't accepted; upload ${AudioFormat.ACCEPTED.joinToString()}"
+                "$declared isn't accepted; upload ${AudioFormat.ACCEPTED.joinToString()}",
             )
         }
         val format =
             AudioFormat.sniff(head)
                 ?: throw UnsupportedTypeException(
                     "The file isn't audio of an accepted type " +
-                        "(${AudioFormat.ACCEPTED.joinToString()})"
+                        "(${AudioFormat.ACCEPTED.joinToString()})",
                 )
         if (declared !in AudioFormat.UNSPECIFIED && declared !in format.accepts) {
             throw UnsupportedTypeException(
-                "The file was sent as $declared but its content is ${format.mediaType}"
+                "The file was sent as $declared but its content is ${format.mediaType}",
             )
         }
         return format
@@ -328,7 +328,7 @@ class PostVersionService(
             HexFormat.of()
                 .formatHex(
                     MessageDigest.getInstance("SHA-256")
-                        .digest(post.markdownSource.toByteArray(Charsets.UTF_8))
+                        .digest(post.markdownSource.toByteArray(Charsets.UTF_8)),
                 )
     }
 }

@@ -52,7 +52,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
             "status" -> handleStatus(tokens.drop(1))
             else ->
                 OperationResult.Error(
-                    "Unknown IRC subcommand '$subcommand'. Use 'irc' for available commands."
+                    "Unknown IRC subcommand '$subcommand'. Use 'irc' for available commands.",
                 )
         }
     }
@@ -60,7 +60,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
     private fun handleConnect(args: List<String>): OperationResult {
         if (args.isEmpty() || args.size == 2) {
             return OperationResult.Error(
-                "Usage: irc connect <name> [<host> <nick> [saslAccount] [saslPassword]]"
+                "Usage: irc connect <name> [<host> <nick> [saslAccount] [saslPassword]]",
             )
         }
         val name = args[0]
@@ -216,7 +216,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
     private fun handleSignal(args: List<String>): OperationResult {
         if (args.isEmpty()) {
             return OperationResult.Error(
-                "Usage: irc signal <name> [character]  (omit character to reset)"
+                "Usage: irc signal <name> [character]  (omit character to reset)",
             )
         }
         val signalChar = args.getOrNull(1)

@@ -32,7 +32,7 @@ class PostRepositoryTests {
     fun setUp() {
         testUser =
             userRepository.save(
-                User(username = "author", email = "author@test.com", displayName = "Test Author")
+                User(username = "author", email = "author@test.com", displayName = "Test Author"),
             )
     }
 
@@ -45,7 +45,7 @@ class PostRepositoryTests {
                     markdownSource = "# Hello",
                     renderedHtml = "<h1>Hello</h1>",
                     author = testUser,
-                )
+                ),
             )
         val found = postRepository.findById(post.id).orElse(null)
 
@@ -60,7 +60,7 @@ class PostRepositoryTests {
     fun `UUIDv7 generated on save`() {
         val post =
             postRepository.save(
-                Post(title = "UUID Test", markdownSource = "test", renderedHtml = "<p>test</p>")
+                Post(title = "UUID Test", markdownSource = "test", renderedHtml = "<p>test</p>"),
             )
 
         assertNotEquals(UUID(0, 0), post.id)
@@ -78,7 +78,7 @@ class PostRepositoryTests {
                 status = PostStatus.APPROVED,
                 publishedAt = now.minus(1, ChronoUnit.HOURS),
                 author = testUser,
-            )
+            ),
         )
 
         val results = postRepository.findPublished(now)
@@ -97,7 +97,7 @@ class PostRepositoryTests {
                 renderedHtml = "<p>draft</p>",
                 status = PostStatus.DRAFT,
                 author = testUser,
-            )
+            ),
         )
         // Deleted approved post
         postRepository.save(
@@ -109,7 +109,7 @@ class PostRepositoryTests {
                 publishedAt = now.minus(1, ChronoUnit.HOURS),
                 deleted = true,
                 author = testUser,
-            )
+            ),
         )
         // Scheduled future post
         postRepository.save(
@@ -120,7 +120,7 @@ class PostRepositoryTests {
                 status = PostStatus.APPROVED,
                 publishedAt = now.plus(1, ChronoUnit.DAYS),
                 author = testUser,
-            )
+            ),
         )
 
         val results = postRepository.findPublished(now)
@@ -139,7 +139,7 @@ class PostRepositoryTests {
                 publishedAt = now.plus(2, ChronoUnit.HOURS),
                 sortOrder = 10,
                 author = testUser,
-            )
+            ),
         )
         postRepository.save(
             Post(
@@ -150,7 +150,7 @@ class PostRepositoryTests {
                 publishedAt = now.minus(2, ChronoUnit.HOURS),
                 sortOrder = 0,
                 author = testUser,
-            )
+            ),
         )
 
         val results = postRepository.findPublished(now.plus(3, ChronoUnit.HOURS))
@@ -170,7 +170,7 @@ class PostRepositoryTests {
                 publishedAt = now.minus(1, ChronoUnit.DAYS),
                 sortOrder = -100,
                 author = testUser,
-            )
+            ),
         )
         postRepository.save(
             Post(
@@ -181,7 +181,7 @@ class PostRepositoryTests {
                 publishedAt = now,
                 sortOrder = 0,
                 author = testUser,
-            )
+            ),
         )
 
         val results = postRepository.findPublished(now.plus(1, ChronoUnit.HOURS))
@@ -198,7 +198,7 @@ class PostRepositoryTests {
                 renderedHtml = "<p>draft content</p>",
                 status = PostStatus.DRAFT,
                 author = testUser,
-            )
+            ),
         )
         postRepository.save(
             Post(
@@ -208,7 +208,7 @@ class PostRepositoryTests {
                 status = PostStatus.APPROVED,
                 publishedAt = Instant.now(),
                 author = testUser,
-            )
+            ),
         )
 
         val drafts = postRepository.findDrafts()
@@ -227,7 +227,7 @@ class PostRepositoryTests {
                 status = PostStatus.APPROVED,
                 publishedAt = now.plus(7, ChronoUnit.DAYS),
                 author = testUser,
-            )
+            ),
         )
         postRepository.save(
             Post(
@@ -237,7 +237,7 @@ class PostRepositoryTests {
                 status = PostStatus.APPROVED,
                 publishedAt = now.minus(1, ChronoUnit.HOURS),
                 author = testUser,
-            )
+            ),
         )
 
         val scheduled = postRepository.findScheduled(now)
@@ -253,7 +253,7 @@ class PostRepositoryTests {
                 markdownSource = "content",
                 renderedHtml = "<p>content</p>",
                 author = testUser,
-            )
+            ),
         )
         postRepository.save(
             Post(
@@ -262,7 +262,7 @@ class PostRepositoryTests {
                 renderedHtml = "<p>deleted</p>",
                 author = testUser,
                 deleted = true,
-            )
+            ),
         )
 
         val results = postRepository.findByAuthor(testUser.id)
@@ -279,7 +279,7 @@ class PostRepositoryTests {
                     markdownSource = "active",
                     renderedHtml = "<p>active</p>",
                     author = testUser,
-                )
+                ),
             )
 
         val found = postRepository.findActiveById(post.id)
@@ -297,7 +297,7 @@ class PostRepositoryTests {
                     renderedHtml = "<p>deleted</p>",
                     author = testUser,
                     deleted = true,
-                )
+                ),
             )
 
         val found = postRepository.findActiveById(post.id)
@@ -313,7 +313,7 @@ class PostRepositoryTests {
                     markdownSource = "anon",
                     renderedHtml = "<p>anon</p>",
                     author = null,
-                )
+                ),
             )
         val found = postRepository.findById(post.id).orElse(null)
 
@@ -331,7 +331,7 @@ class PostRepositoryTests {
                     markdownSource = "See [[thing]] for details.",
                     renderedHtml = "<p>See [[thing]] for details.</p>",
                     author = testUser,
-                )
+                ),
             )
         postRepository.save(
             Post(
@@ -339,7 +339,7 @@ class PostRepositoryTests {
                 markdownSource = "Completely unrelated text.",
                 renderedHtml = "<p>Completely unrelated text.</p>",
                 author = testUser,
-            )
+            ),
         )
 
         val results = postRepository.findCandidatesByMarkdownContaining("thing")
@@ -356,7 +356,7 @@ class PostRepositoryTests {
                 renderedHtml = "<p>See [[thing]] for details.</p>",
                 deleted = true,
                 author = testUser,
-            )
+            ),
         )
 
         val results = postRepository.findCandidatesByMarkdownContaining("thing")

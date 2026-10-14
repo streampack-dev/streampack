@@ -102,7 +102,7 @@ class LiveAuthorityTests {
                 displayName = "Someone",
                 role = role,
                 status = status,
-            )
+            ),
         )
 
     private fun message(

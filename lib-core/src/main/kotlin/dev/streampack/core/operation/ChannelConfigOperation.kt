@@ -48,7 +48,7 @@ class ChannelConfigOperation(
             "set" -> handleSet(tokens.drop(1), provenance)
             else ->
                 OperationResult.Error(
-                    "Unknown channel subcommand '$subcommand'. Use 'channel' for available commands."
+                    "Unknown channel subcommand '$subcommand'. Use 'channel' for available commands.",
                 )
         }
     }
@@ -60,12 +60,12 @@ class ChannelConfigOperation(
         val pattern = extractPattern(args.drop(1), provenance) ?: return missingProvenance()
         if (!isKnownGroup(group)) {
             return OperationResult.Error(
-                "Unknown operation group '$group'. Known groups: ${knownGroups()}"
+                "Unknown operation group '$group'. Known groups: ${knownGroups()}",
             )
         }
         configService.setEnabled(pattern, group, true)
         return OperationResult.Success(
-            "Operation group '$group' enabled for '${pattern.ifEmpty { "(global)" }}'."
+            "Operation group '$group' enabled for '${pattern.ifEmpty { "(global)" }}'.",
         )
     }
 
@@ -76,12 +76,12 @@ class ChannelConfigOperation(
         val pattern = extractPattern(args.drop(1), provenance) ?: return missingProvenance()
         if (!isKnownGroup(group)) {
             return OperationResult.Error(
-                "Unknown operation group '$group'. Known groups: ${knownGroups()}"
+                "Unknown operation group '$group'. Known groups: ${knownGroups()}",
             )
         }
         configService.setEnabled(pattern, group, false)
         return OperationResult.Success(
-            "Operation group '$group' disabled for '${pattern.ifEmpty { "(global)" }}'."
+            "Operation group '$group' disabled for '${pattern.ifEmpty { "(global)" }}'.",
         )
     }
 
@@ -93,7 +93,7 @@ class ChannelConfigOperation(
         val group = args[0]
         if (!isKnownGroup(group)) {
             return OperationResult.Error(
-                "Unknown operation group '$group'. Known groups: ${knownGroups()}"
+                "Unknown operation group '$group'. Known groups: ${knownGroups()}",
             )
         }
 
@@ -115,7 +115,7 @@ class ChannelConfigOperation(
 
         configService.setConfigValue(pattern, group, key, value)
         return OperationResult.Success(
-            "Set '$key' = '$value' for group '$group' at '${pattern.ifEmpty { "(global)" }}'."
+            "Set '$key' = '$value' for group '$group' at '${pattern.ifEmpty { "(global)" }}'.",
         )
     }
 
@@ -133,7 +133,7 @@ class ChannelConfigOperation(
         }
         val target = pattern.ifEmpty { "(global)" }
         return OperationResult.Success(
-            "Resolved config for '$target':\n${lines.joinToString("\n")}"
+            "Resolved config for '$target':\n${lines.joinToString("\n")}",
         )
     }
 

@@ -54,8 +54,8 @@ class DeriveFactoidsOperationTests {
                                 FactoidCatalogEntry("spring", "a Java application framework."),
                                 FactoidCatalogEntry("osgi", "a module system for Java."),
                                 FactoidCatalogEntry("node", null),
-                            )
-                        )
+                            ),
+                        ),
                     )
             }
     }
@@ -82,7 +82,7 @@ class DeriveFactoidsOperationTests {
                         user = user,
                     ),
                 )
-                .build()
+                .build(),
         )
     }
 
@@ -97,7 +97,7 @@ class DeriveFactoidsOperationTests {
                 """
                 Gradle and Eclipse, then Spring Boot on Spring. Gradle again.
                 """
-                    .trimIndent()
+                    .trimIndent(),
             )
 
         assertEquals(
@@ -130,7 +130,7 @@ class DeriveFactoidsOperationTests {
 
                 See [the Eclipse site](https://eclipse.org) and Spring.
                 """
-                    .trimIndent()
+                    .trimIndent(),
             )
 
         assertEquals(listOf("spring"), found.mentions.map { it.selector })
@@ -150,7 +150,7 @@ class DeriveFactoidsOperationTests {
     fun `links to factoids that don't exist, in both forms, once each`() {
         val found =
             response(
-                "Uses [[aho-corasick]] and [[Aho Corasick matching|aho-corasick]] and [[gradle]] and [[node]]."
+                "Uses [[aho-corasick]] and [[Aho Corasick matching|aho-corasick]] and [[gradle]] and [[node]].",
             )
 
         assertEquals(listOf(MissingFactoid("aho-corasick", "aho-corasick")), found.missing)

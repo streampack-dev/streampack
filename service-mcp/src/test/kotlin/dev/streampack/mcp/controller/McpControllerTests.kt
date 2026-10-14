@@ -47,7 +47,7 @@ class McpControllerTests {
                     publishedAt = now.minusSeconds(60),
                     createdAt = now.minusSeconds(120),
                     updatedAt = now.minusSeconds(60),
-                )
+                ),
             )
         val draft =
             postRepository.save(
@@ -59,14 +59,14 @@ class McpControllerTests {
                     status = PostStatus.DRAFT,
                     createdAt = now.minusSeconds(90),
                     updatedAt = now.minusSeconds(90),
-                )
+                ),
             )
 
         slugRepository.save(
-            Slug(path = "2026/03/visible-mcp-post", post = published, canonical = true)
+            Slug(path = "2026/03/visible-mcp-post", post = published, canonical = true),
         )
         slugRepository.save(
-            Slug(path = "2026/03/hidden-draft-post", post = draft, canonical = true)
+            Slug(path = "2026/03/hidden-draft-post", post = draft, canonical = true),
         )
 
         factoidService.save(

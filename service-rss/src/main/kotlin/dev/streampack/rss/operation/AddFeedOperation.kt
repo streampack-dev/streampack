@@ -36,7 +36,7 @@ class AddFeedOperation(private val feedService: RssSubscriptionService) :
         return when (val outcome = feedService.addFeed(payload.url)) {
             is AddFeedOutcome.Added ->
                 OperationResult.Success(
-                    "Added feed \"${outcome.feed.title}\" with ${outcome.entryCount} entries"
+                    "Added feed \"${outcome.feed.title}\" with ${outcome.entryCount} entries",
                 )
             is AddFeedOutcome.AlreadyExists ->
                 OperationResult.Success("Feed \"${outcome.feed.title}\" already exists")

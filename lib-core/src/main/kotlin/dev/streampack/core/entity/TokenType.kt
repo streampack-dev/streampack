@@ -3,5 +3,5 @@ package dev.streampack.core.entity
 
 /** Types of verification tokens issued to users */
 enum class TokenType {
-    EMAIL_VERIFICATION
+    EMAIL_VERIFICATION,
 }

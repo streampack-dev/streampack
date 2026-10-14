@@ -60,7 +60,7 @@ import tools.jackson.databind.json.JsonMapper
             "streampack.blog.podcast.category=Technology/Tech News",
             "streampack.blog.podcast.owner-name=Ops",
             "streampack.blog.podcast.owner-email=ops@example.com",
-        ]
+        ],
 )
 @AutoConfigureMockMvc
 @ResetDatabaseBeforeEach
@@ -96,7 +96,7 @@ class PostVersionControllerTests {
                     displayName = "Voice Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         adminToken = jwtService.generateToken(admin.toUserPrincipal())
         val user =
@@ -107,7 +107,7 @@ class PostVersionControllerTests {
                     displayName = "Listener",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         userToken = jwtService.generateToken(user.toUserPrincipal())
 
@@ -122,7 +122,7 @@ class PostVersionControllerTests {
                     renderedHtml = "<p>Not yet.</p>",
                     status = PostStatus.DRAFT,
                     author = admin,
-                )
+                ),
             )
         val at = spoken.publishedAt!!.atZone(ZoneOffset.UTC)
         spokenPath = "${at.year}/${"%02d".format(at.monthValue)}/spoken-post"
@@ -139,7 +139,7 @@ class PostVersionControllerTests {
                     status = PostStatus.APPROVED,
                     publishedAt = publishedAt,
                     author = admin,
-                )
+                ),
             )
         val at = publishedAt.atZone(ZoneOffset.UTC)
         slugRepository.save(
@@ -147,7 +147,7 @@ class PostVersionControllerTests {
                 path = "${at.year}/${"%02d".format(at.monthValue)}/$slug",
                 post = post,
                 canonical = true,
-            )
+            ),
         )
         return post
     }
@@ -431,7 +431,7 @@ class PostVersionControllerTests {
         assertFalse(
             FeedXml(mockMvc.get("/podcast.xml").andReturn().response.contentAsString)
                 .text("/rss/channel")
-                .contains("Spoken Post")
+                .contains("Spoken Post"),
         )
     }
 
@@ -493,7 +493,7 @@ class PostVersionControllerTests {
         upload(spoken.id, AudioFixtures.mp3()).andExpect { status { isCreated() } }
 
         System.out.println(
-            "DEBUGBODY " + mockMvc.get("/posts").andReturn().response.contentAsString
+            "DEBUGBODY " + mockMvc.get("/posts").andReturn().response.contentAsString,
         )
         mockMvc.get("/posts").andExpect {
             status { isOk() }

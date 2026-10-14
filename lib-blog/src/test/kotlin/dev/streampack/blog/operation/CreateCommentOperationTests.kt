@@ -92,7 +92,7 @@ class CreateCommentOperationTests {
                     displayName = "Test Commenter",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         unverifiedUser =
             userRepository.save(
@@ -102,7 +102,7 @@ class CreateCommentOperationTests {
                     displayName = "Unverified User",
                     emailVerified = false,
                     role = Role.USER,
-                )
+                ),
             )
         replyUser =
             userRepository.save(
@@ -112,7 +112,7 @@ class CreateCommentOperationTests {
                     displayName = "Reply User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         publishedPost =
@@ -127,10 +127,10 @@ class CreateCommentOperationTests {
                     author = verifiedUser,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/03/test-post", post = publishedPost, canonical = true)
+            Slug(path = "2026/03/test-post", post = publishedPost, canonical = true),
         )
     }
 
@@ -176,7 +176,7 @@ class CreateCommentOperationTests {
                     author = verifiedUser,
                     markdownSource = "Parent comment.",
                     renderedHtml = "<p>Parent comment.</p>",
-                )
+                ),
             )
 
         val request = CreateCommentRequest(publishedPost.id, parentComment.id, "This is a reply.")
@@ -257,7 +257,7 @@ class CreateCommentOperationTests {
                     markdownSource = "Deleted parent.",
                     renderedHtml = "<p>Deleted parent.</p>",
                     deleted = true,
-                )
+                ),
             )
 
         val request = CreateCommentRequest(publishedPost.id, deletedParent.id, "A reply.")
@@ -281,7 +281,7 @@ class CreateCommentOperationTests {
                     author = verifiedUser,
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
-                )
+                ),
             )
         val commentOnOtherPost =
             commentRepository.save(
@@ -290,7 +290,7 @@ class CreateCommentOperationTests {
                     author = verifiedUser,
                     markdownSource = "Comment on other post.",
                     renderedHtml = "<p>Comment on other post.</p>",
-                )
+                ),
             )
 
         val request =
@@ -347,7 +347,7 @@ class CreateCommentOperationTests {
                     author = verifiedUser,
                     markdownSource = "Parent comment.",
                     renderedHtml = "<p>Parent comment.</p>",
-                )
+                ),
             )
 
         val request = CreateCommentRequest(publishedPost.id, parentComment.id, "This is a reply.")
@@ -384,7 +384,7 @@ class CreateCommentOperationTests {
                     emailVerified = true,
                     role = Role.USER,
                     status = UserStatus.SUSPENDED,
-                )
+                ),
             )
         val suspendedPost =
             postRepository.save(
@@ -398,10 +398,10 @@ class CreateCommentOperationTests {
                     author = suspendedAuthor,
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/03/suspended-post", post = suspendedPost, canonical = true)
+            Slug(path = "2026/03/suspended-post", post = suspendedPost, canonical = true),
         )
 
         val request = CreateCommentRequest(suspendedPost.id, null, "A comment.")

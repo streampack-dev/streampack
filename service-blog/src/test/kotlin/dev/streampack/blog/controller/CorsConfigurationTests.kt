@@ -21,7 +21,7 @@ class CorsConfigurationTests {
     fun `default CORS origins include localhost and bytecode`() {
         val config =
             corsConfigurationSource.getCorsConfiguration(
-                org.springframework.mock.web.MockHttpServletRequest()
+                org.springframework.mock.web.MockHttpServletRequest(),
             )!!
         val origins = config.allowedOrigins!!
         assertTrue(origins.contains("http://localhost:3000"))
@@ -40,7 +40,7 @@ class CustomCorsConfigurationTests {
     fun `CORS origins are configurable via env var`() {
         val config =
             corsConfigurationSource.getCorsConfiguration(
-                org.springframework.mock.web.MockHttpServletRequest()
+                org.springframework.mock.web.MockHttpServletRequest(),
             )!!
         val origins = config.allowedOrigins!!
         assertEquals(2, origins.size)

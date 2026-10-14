@@ -20,7 +20,7 @@ class RenderedHtmlSanitizerTests {
     fun `removes script tags and event handler attributes`() {
         val result =
             sanitizer.sanitize(
-                "<p onclick=\"steal()\">hi</p><script>alert(1)</script><img src=\"/x.png\" onerror=\"steal()\">"
+                "<p onclick=\"steal()\">hi</p><script>alert(1)</script><img src=\"/x.png\" onerror=\"steal()\">",
             )
         assertFalse(result.contains("script"), result)
         assertFalse(result.contains("onclick"), result)
@@ -33,7 +33,7 @@ class RenderedHtmlSanitizerTests {
     fun `removes iframes objects and style attributes`() {
         val result =
             sanitizer.sanitize(
-                "<iframe src=\"https://evil.example\"></iframe><p style=\"position:fixed\">x</p><object data=\"a\"></object>"
+                "<iframe src=\"https://evil.example\"></iframe><p style=\"position:fixed\">x</p><object data=\"a\"></object>",
             )
         assertFalse(result.contains("iframe"), result)
         assertFalse(result.contains("style="), result)
@@ -86,10 +86,11 @@ class RenderedHtmlSanitizerTests {
 
         assertTrue(
             kept("<svg class=\"adm-icon\"><use xlink:href=\"#adm-note\"></use></svg>")
-                .contains("#adm-note")
+                .contains("#adm-note"),
         )
         assertTrue(
-            kept("<svg class=\"adm-icon\"><use href=\"#adm-tip\"></use></svg>").contains("#adm-tip")
+            kept("<svg class=\"adm-icon\"><use href=\"#adm-tip\"></use></svg>")
+                .contains("#adm-tip"),
         )
         for (bad in
             listOf(
@@ -110,7 +111,7 @@ class RenderedHtmlSanitizerTests {
             RenderedHtmlSanitizer()
                 .sanitize(
                     "<input type=\"checkbox\" aria-label=\"Done\" disabled>" +
-                        "<svg class=\"adm-icon\" aria-hidden=\"true\"></svg>"
+                        "<svg class=\"adm-icon\" aria-hidden=\"true\"></svg>",
                 )
         assertTrue(result.contains("aria-label=\"Done\""), result)
         assertTrue(result.contains("aria-hidden=\"true\""), result)

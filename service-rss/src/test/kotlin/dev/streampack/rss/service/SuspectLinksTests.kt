@@ -36,7 +36,7 @@ class SuspectLinksTests {
                 "javascript:alert(1)",
                 "/blog/relative",
                 "not a url at all",
-            ]
+            ],
     )
     fun `development, private and non-web links look wrong`(url: String) {
         assertNotNull(SuspectLinks.check(url), url)
@@ -55,7 +55,7 @@ class SuspectLinksTests {
                 "https://[2001:4860:4860::8888]/",
                 "https://999.1.1.1/",
                 "https://my_blog.example.com/post",
-            ]
+            ],
     )
     fun `public web links look fine`(url: String) {
         assertNull(SuspectLinks.check(url), url)
@@ -114,7 +114,7 @@ class SuspectLinksTests {
                 "https://f.example/rss",
                 "https://f.example/",
                 listOf("https://f.example/a"),
-            )
+            ),
         )
         assertNull(SuspectLinks.warning("F", "https://f.example/rss", null, listOf()))
     }

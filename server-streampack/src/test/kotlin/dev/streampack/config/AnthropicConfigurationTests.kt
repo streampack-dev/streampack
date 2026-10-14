@@ -34,7 +34,7 @@ class AnthropicConfigurationTests {
                     apiKey = "sk-ant-test",
                     model = "claude-sonnet-4-5-20250929",
                     maxTokens = 777,
-                )
+                ),
             )
         val anthropic = assertInstanceOf(AnthropicChatModel::class.java, model)
         val options = assertInstanceOf(AnthropicChatOptions::class.java, anthropic.defaultOptions)
@@ -57,7 +57,7 @@ class AnthropicConfigurationTests {
                     apiKey = "sk-ant-test",
                     timeout = java.time.Duration.ofSeconds(20),
                     maxRetries = 0,
-                )
+                ),
             )
         val options =
             assertInstanceOf(
@@ -72,7 +72,7 @@ class AnthropicConfigurationTests {
     fun `thinking is adaptive when asked for`() {
         val model =
             configuration.anthropicChatModel(
-                AiProperties(enabled = true, apiKey = "sk-ant-test", thinking = true)
+                AiProperties(enabled = true, apiKey = "sk-ant-test", thinking = true),
             )
         val options =
             assertInstanceOf(
@@ -142,7 +142,7 @@ class AnthropicConfigurationTests {
                             .chatOptions(properties, properties.model)
                             .mutate()
                             .baseUrl("http://127.0.0.1:${server.address.port}")
-                            .build()
+                            .build(),
                     )
                     .build()
             val ai =
@@ -165,7 +165,7 @@ class AnthropicConfigurationTests {
                     maxTokens = 777,
                     maxRetries = 0,
                     effort = "low",
-                )
+                ),
             )
 
         assertEquals("claude-opus-5-5", general["model"].asText())
@@ -190,7 +190,7 @@ class AnthropicConfigurationTests {
                     apiKey = "sk-ant-test",
                     maxRetries = 0,
                     thinking = true,
-                )
+                ),
             )
         assertEquals("adaptive", general["thinking"]?.get("type")?.asText())
         assertNull(moderation["thinking"])

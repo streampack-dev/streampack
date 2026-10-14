@@ -102,7 +102,7 @@ class OperationConfigService(
                     provenancePattern = "",
                     operationGroup = "service:$name",
                     enabled = enabled,
-                )
+                ),
             )
             logger.info("Seeded service config: service:{} = {}", name, enabled)
         }
@@ -139,7 +139,7 @@ class OperationConfigService(
             repository.findByProvenancePatternAndOperationGroup(provenancePattern, operationGroup)
         if (existing != null) return existing
         return repository.save(
-            OperationConfig(provenancePattern = provenancePattern, operationGroup = operationGroup)
+            OperationConfig(provenancePattern = provenancePattern, operationGroup = operationGroup),
         )
     }
 }

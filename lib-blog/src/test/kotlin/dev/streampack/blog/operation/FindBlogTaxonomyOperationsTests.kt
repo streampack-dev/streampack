@@ -64,7 +64,7 @@ class FindBlogTaxonomyOperationsTests {
                     displayName = "Taxonomy Blog Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         val postOne =
@@ -77,7 +77,7 @@ class FindBlogTaxonomyOperationsTests {
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now(),
                     author = author,
-                )
+                ),
             )
         val postTwo =
             postRepository.save(
@@ -89,7 +89,7 @@ class FindBlogTaxonomyOperationsTests {
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now(),
                     author = author,
-                )
+                ),
             )
 
         val xyzTag = tagRepository.save(Tag(name = "xyz", slug = "xyz"))
@@ -142,7 +142,7 @@ class FindBlogTaxonomyOperationsTests {
                     publishedAt = publishedAt,
                     author = author,
                     deleted = deleted,
-                )
+                ),
             )
         val now = Instant.now()
         val shared = tagRepository.save(Tag(name = "shared", slug = "shared"))

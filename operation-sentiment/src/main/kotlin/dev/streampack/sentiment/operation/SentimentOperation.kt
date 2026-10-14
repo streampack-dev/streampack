@@ -67,7 +67,7 @@ class SentimentOperation(
         val target = runCatching { Provenance.decode(payload.targetUri) }.getOrNull()
         if (target != null && directConversations.isDirect(target)) {
             return OperationResult.Error(
-                "Sentiment is for channels: say which, as sentiment #channel"
+                "Sentiment is for channels: say which, as sentiment #channel",
             )
         }
 
@@ -79,7 +79,7 @@ class SentimentOperation(
             messageLogService.findLatestMessages(payload.targetUri, windowStart, now, 100)
         if (messages.isEmpty()) {
             return OperationResult.Error(
-                "No recent messages found for ${label(target, payload.targetUri)}"
+                "No recent messages found for ${label(target, payload.targetUri)}",
             )
         }
 
@@ -213,7 +213,7 @@ class SentimentOperation(
                         args = listOf(CommandArgSpec("target", StringArgType)),
                     ),
                     CommandPattern(name = "sentiment-here", literals = listOf("sentiment")),
-                )
+                ),
             )
     }
 }

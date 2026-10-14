@@ -211,7 +211,7 @@ class CreateUserOperationTests {
     fun `text command creates user`() {
         val result =
             eventGateway.process(
-                textMessage("create user newuser newuser@example.com NewUser", superAdmin)
+                textMessage("create user newuser newuser@example.com NewUser", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -225,7 +225,7 @@ class CreateUserOperationTests {
     fun `text command creates user with role`() {
         val result =
             eventGateway.process(
-                textMessage("create user newadmin newadmin@example.com NewAdmin admin", superAdmin)
+                textMessage("create user newadmin newadmin@example.com NewAdmin admin", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -237,7 +237,7 @@ class CreateUserOperationTests {
     fun `text command with hyphenated role normalizes correctly`() {
         val result =
             eventGateway.process(
-                textMessage("create user newsa newsa@example.com NewSA super-admin", superAdmin)
+                textMessage("create user newsa newsa@example.com NewSA super-admin", superAdmin),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -252,7 +252,7 @@ class CreateUserOperationTests {
                 textMessage(
                     "create user newuser2 newuser2@example.com NewUser bogusrole",
                     superAdmin,
-                )
+                ),
             )
 
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -272,7 +272,7 @@ class CreateUserOperationTests {
     fun `text command requires super admin`() {
         val result =
             eventGateway.process(
-                textMessage("create user newuser newuser@example.com NewUser", regularUser)
+                textMessage("create user newuser newuser@example.com NewUser", regularUser),
             )
 
         assertInstanceOf(OperationResult.Error::class.java, result)

@@ -56,7 +56,7 @@ class GitLabPipelineTests {
     class CapturingConfig {
         @Bean
         fun capturingPipelineSubscriber(
-            @Qualifier("egressChannel") egressChannel: SubscribableChannel
+            @Qualifier("egressChannel") egressChannel: SubscribableChannel,
         ): Capturing {
             val subscriber = Capturing()
             egressChannel.subscribe(subscriber)
@@ -71,7 +71,7 @@ class GitLabPipelineTests {
 
         override fun deliver(result: OperationResult, provenance: Provenance) {
             captured.add(
-                (result as OperationResult.Success).payload.toString() to provenance.encode()
+                (result as OperationResult.Success).payload.toString() to provenance.encode(),
             )
         }
     }
@@ -119,7 +119,7 @@ class GitLabPipelineTests {
         instanceRepository.save(
             store
                 .defaultInstance()
-                .copy(apiUrl = "http://localhost:${httpServer.address.port}/api/v4")
+                .copy(apiUrl = "http://localhost:${httpServer.address.port}/api/v4"),
         )
         stub(
             "/api/v4/projects/group/project",
@@ -162,7 +162,7 @@ class GitLabPipelineTests {
                 lastPolledAt = Instant.now().minusSeconds(3600),
                 deliveryMode = DeliveryMode.WEBHOOK,
                 webhookSecret = cipher.encrypt(secret),
-            )
+            ),
         )
 
     @Test
@@ -264,7 +264,7 @@ class GitLabPipelineTests {
         assertEquals(
             listOf(
                 "[group/project] MR !7 pipeline succeeded (2m05s) - https://gitlab.com/group/project/-/pipelines/9" to
-                    channel
+                    channel,
             ),
             capturing.captured.toList(),
         )
@@ -317,7 +317,7 @@ class GitLabPipelineTests {
             assertInstanceOf(OperationResult.Success::class.java, listed)
                 .payload
                 .toString()
-                .contains("group/project [pipelines]")
+                .contains("group/project [pipelines]"),
         )
     }
 }

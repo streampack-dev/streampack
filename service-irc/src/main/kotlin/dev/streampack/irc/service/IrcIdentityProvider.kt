@@ -29,7 +29,7 @@ class IrcIdentityProvider(private val networkRepository: IrcNetworkRepository) :
         val atIndex = externalIdentifier.indexOf('@')
         if (atIndex < 0) {
             return IdentityResolution.Invalid(
-                "IRC identifier must be in ident@host format, got: $externalIdentifier"
+                "IRC identifier must be in ident@host format, got: $externalIdentifier",
             )
         }
         val identPart = externalIdentifier.substring(0, atIndex)

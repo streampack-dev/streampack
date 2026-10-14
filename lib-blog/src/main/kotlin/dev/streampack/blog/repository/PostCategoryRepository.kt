@@ -14,7 +14,7 @@ interface PostCategoryRepository : JpaRepository<PostCategory, UUID> {
     fun findByPost(postId: UUID): List<PostCategory>
 
     @Query(
-        "SELECT pc.category.name FROM PostCategory pc WHERE pc.post.id = :postId ORDER BY pc.category.name"
+        "SELECT pc.category.name FROM PostCategory pc WHERE pc.post.id = :postId ORDER BY pc.category.name",
     )
     fun findNamesByPost(postId: UUID): List<String>
 
@@ -35,7 +35,7 @@ interface PostCategoryRepository : JpaRepository<PostCategory, UUID> {
           AND SUBSTRING(LOWER(pc.category.name), 1, 1) <> '_'
         GROUP BY LOWER(pc.category.name)
         ORDER BY COUNT(pc.id) DESC, LOWER(pc.category.name) ASC
-        """
+        """,
     )
     fun findCategoryCounts(): List<NameCountProjection>
 }

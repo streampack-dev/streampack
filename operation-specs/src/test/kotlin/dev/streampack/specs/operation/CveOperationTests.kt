@@ -85,7 +85,7 @@ class CveOperationTests {
             assertTrue(payload.startsWith("CVE-2021-44228 (critical 10.0): Apache Log4j2"), payload)
             assertTrue(
                 payload.endsWith(
-                    " Published 2021-12-10. https://www.cve.org/CVERecord?id=CVE-2021-44228"
+                    " Published 2021-12-10. https://www.cve.org/CVERecord?id=CVE-2021-44228",
                 ),
                 payload,
             )
@@ -405,7 +405,7 @@ class CveOperationTests {
 
         // A kept search, an alias and coordinates still answer.
         assertTrue(
-            reply("cve snakeyaml-engine").startsWith("org.yaml:snakeyaml-engine: none known")
+            reply("cve snakeyaml-engine").startsWith("org.yaml:snakeyaml-engine: none known"),
         )
         assertTrue(reply("cve h2").startsWith("com.h2database:h2: none known"))
         assertTrue(reply("cve io.netty:netty-codec-http").startsWith("io.netty:netty-codec-http:"))

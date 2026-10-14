@@ -38,7 +38,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
             "streampack.webconsole.heartbeat=100ms",
             "streampack.webconsole.queue-events=5",
             "streampack.webconsole.max-event-bytes=2048",
-        ]
+        ],
 )
 class WebConsoleStreamTests {
     @Autowired lateinit var mockMvc: MockMvc

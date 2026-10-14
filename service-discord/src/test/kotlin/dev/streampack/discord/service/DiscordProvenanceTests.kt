@@ -41,7 +41,7 @@ class DiscordProvenanceTests {
         assertEquals(
             "222222222222222222",
             DiscordProvenance.channelIdOrNull(
-                "222222222222222222/Old Server/old-category/#old-name"
+                "222222222222222222/Old Server/old-category/#old-name",
             ),
         )
     }

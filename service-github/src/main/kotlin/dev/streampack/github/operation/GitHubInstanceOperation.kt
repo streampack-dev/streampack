@@ -48,7 +48,7 @@ class GitHubInstanceOperation(private val subscriptionService: GitHubSubscriptio
                     name = "github_instance_list",
                     literals = listOf("github", "instance", "list"),
                 ),
-            )
+            ),
         )
 
     override val priority: Int = 54
@@ -87,11 +87,11 @@ class GitHubInstanceOperation(private val subscriptionService: GitHubSubscriptio
                 OperationResult.Success(
                     "Added GitHub instance ${outcome.instance.host} (${outcome.instance.apiUrl})." +
                         " Register repositories with: github add owner/repo on ${outcome.instance.host}" +
-                        tokenExternalizationNote(request.token, outcome.instance)
+                        tokenExternalizationNote(request.token, outcome.instance),
                 )
             is AddInstanceOutcome.AlreadyExists ->
                 OperationResult.Success(
-                    "Already registered: ${outcome.instance.host} (${outcome.instance.apiUrl})"
+                    "Already registered: ${outcome.instance.host} (${outcome.instance.apiUrl})",
                 )
             is AddInstanceOutcome.Invalid ->
                 OperationResult.Error("Invalid instance ${outcome.host}: ${outcome.reason}")

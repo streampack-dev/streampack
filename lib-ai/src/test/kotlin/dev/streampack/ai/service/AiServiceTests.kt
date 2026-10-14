@@ -44,7 +44,10 @@ class AiServiceTests {
 
     private fun thinking(text: String) =
         Generation(
-            AssistantMessage.builder().content(text).properties(mapOf("signature" to "sig")).build()
+            AssistantMessage.builder()
+                .content(text)
+                .properties(mapOf("signature" to "sig"))
+                .build(),
         )
 
     private fun text(text: String) = Generation(AssistantMessage(text))

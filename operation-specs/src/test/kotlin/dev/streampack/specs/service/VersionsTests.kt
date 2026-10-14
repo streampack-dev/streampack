@@ -140,7 +140,7 @@ class VersionsTests {
         assertEquals(5.3, Cvss.baseScore("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"))
         assertEquals(0.0, Cvss.baseScore("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N"))
         assertNull(
-            Cvss.baseScore("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:L/SA:N")
+            Cvss.baseScore("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:L/SA:N"),
         )
         assertNull(Cvss.baseScore("AV:N/AC:L/Au:N/C:P/I:P/A:P"))
     }

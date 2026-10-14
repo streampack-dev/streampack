@@ -52,14 +52,14 @@ class MentionSenderTests {
             "https://site.example/a/wm",
             sender.webmentionEndpoint(
                 page(
-                    """<html><body><a rel="webmention" href="wm">x</a><link rel="webmention" href="/later"></body></html>"""
-                )
+                    """<html><body><a rel="webmention" href="wm">x</a><link rel="webmention" href="/later"></body></html>""",
+                ),
             ),
         )
         assertEquals(
             "https://site.example/e",
             sender.webmentionEndpoint(
-                page("""<html><head><link rel="nofollow webmention" href="/e"></head></html>""")
+                page("""<html><head><link rel="nofollow webmention" href="/e"></head></html>"""),
             ),
         )
     }
@@ -69,7 +69,7 @@ class MentionSenderTests {
         assertEquals(
             "https://site.example/a/post",
             sender.webmentionEndpoint(
-                page("""<html><head><link rel="webmention" href=""></head></html>""")
+                page("""<html><head><link rel="webmention" href=""></head></html>"""),
             ),
         )
     }
@@ -94,7 +94,7 @@ class MentionSenderTests {
         assertEquals(
             "https://site.example/xmlrpc.php",
             sender.pingbackServer(
-                page("""<html><head><link rel="pingback" href="/xmlrpc.php"></head></html>""")
+                page("""<html><head><link rel="pingback" href="/xmlrpc.php"></head></html>"""),
             ),
         )
     }

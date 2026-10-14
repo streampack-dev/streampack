@@ -104,8 +104,12 @@ class ChannelNeutralOtpTests {
         val request =
             eventGateway.process(
                 message(
-                    OtpRequest(channel = CodeChannel.MATTERMOST, server = "work", address = "Alice")
-                )
+                    OtpRequest(
+                        channel = CodeChannel.MATTERMOST,
+                        server = "work",
+                        address = "Alice",
+                    ),
+                ),
             )
         assertInstanceOf(OperationResult.Success::class.java, request)
         assertEquals(1, fake.delivered.size)
@@ -120,8 +124,8 @@ class ChannelNeutralOtpTests {
                         server = "work",
                         address = "alice",
                         code = code,
-                    )
-                )
+                    ),
+                ),
             )
         val login =
             assertInstanceOf(OperationResult.Success::class.java, verify).payload as LoginResponse
@@ -134,8 +138,8 @@ class ChannelNeutralOtpTests {
         /* Second login converges onto the same account */
         eventGateway.process(
             message(
-                OtpRequest(channel = CodeChannel.MATTERMOST, server = "work", address = "alice")
-            )
+                OtpRequest(channel = CodeChannel.MATTERMOST, server = "work", address = "alice"),
+            ),
         )
         val again =
             eventGateway.process(
@@ -145,8 +149,8 @@ class ChannelNeutralOtpTests {
                         server = "work",
                         address = "alice",
                         code = fake.delivered.last().second,
-                    )
-                )
+                    ),
+                ),
             )
         assertEquals(
             user.id,
@@ -166,8 +170,8 @@ class ChannelNeutralOtpTests {
                         channel = CodeChannel.MATTERMOST,
                         server = "work",
                         address = "mallory",
-                    )
-                )
+                    ),
+                ),
             )
         val unknownServer =
             eventGateway.process(
@@ -176,14 +180,14 @@ class ChannelNeutralOtpTests {
                         channel = CodeChannel.MATTERMOST,
                         server = "elsewhere",
                         address = "alice",
-                    )
-                )
+                    ),
+                ),
             )
         val known =
             eventGateway.process(
                 message(
-                    OtpRequest(channel = CodeChannel.MATTERMOST, server = "work", address = "bob")
-                )
+                    OtpRequest(channel = CodeChannel.MATTERMOST, server = "work", address = "bob"),
+                ),
             )
         val texts =
             listOf(unknownUser, unknownServer, known).map {
@@ -200,7 +204,7 @@ class ChannelNeutralOtpTests {
     @Test
     fun `a code issued on one channel cannot verify another`() {
         eventGateway.process(
-            message(OtpRequest(channel = CodeChannel.MATTERMOST, server = "work", address = "bob"))
+            message(OtpRequest(channel = CodeChannel.MATTERMOST, server = "work", address = "bob")),
         )
         val code = fake.delivered.single().second
         val wrong =
@@ -218,8 +222,8 @@ class ChannelNeutralOtpTests {
                         server = "work",
                         address = "mallory",
                         code = "123456",
-                    )
-                )
+                    ),
+                ),
             )
         assertInstanceOf(OperationResult.Error::class.java, result)
     }

@@ -43,9 +43,9 @@ class ModerationLogZoneTests {
                             displayName = "zonekeeper",
                             emailVerified = true,
                             role = Role.ADMIN,
-                        )
+                        ),
                     )
-                    .toUserPrincipal()
+                    .toUserPrincipal(),
             )
         for ((content, at) in
             listOf(
@@ -58,7 +58,7 @@ class ModerationLogZoneTests {
                     sender = "bob",
                     content = content,
                     timestamp = Instant.parse(at),
-                )
+                ),
             )
         }
     }

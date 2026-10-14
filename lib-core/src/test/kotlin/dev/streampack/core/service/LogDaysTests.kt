@@ -62,7 +62,9 @@ class LogDaysTests {
         val e =
             assertThrows<SilentStartupException> {
                 LogDays(
-                    StreampackProperties(logs = StreampackProperties.LogsProperties("Mars/Olympus"))
+                    StreampackProperties(
+                        logs = StreampackProperties.LogsProperties("Mars/Olympus"),
+                    ),
                 )
             }
         assertTrue(e.message!!.contains("STREAMPACK_LOG_ZONE"), e.message)

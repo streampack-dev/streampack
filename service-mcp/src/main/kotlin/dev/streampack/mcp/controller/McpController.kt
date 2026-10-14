@@ -89,7 +89,7 @@ class McpController(private val toolService: McpToolService) {
                         properties =
                             mapOf(
                                 "postRef" to
-                                    schema("string", "UUID, YYYY/MM/slug, or full post URL")
+                                    schema("string", "UUID, YYYY/MM/slug, or full post URL"),
                             ),
                         required = listOf("postRef"),
                     ),
@@ -128,7 +128,7 @@ class McpController(private val toolService: McpToolService) {
                         description =
                             "Get command syntax and examples for creating factoids outside MCP.",
                     ),
-                )
+                ),
         )
 
     private fun handleToolCall(id: Any?, params: Map<String, Any?>?): Any {

@@ -75,7 +75,7 @@ class GitHubWebhookController(
             ],
     )
     @PostMapping(
-        consumes = [MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_FORM_URLENCODED_VALUE]
+        consumes = [MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_FORM_URLENCODED_VALUE],
     )
     fun receive(
         @RequestHeader("X-Hub-Signature-256", required = false) signature: String?,

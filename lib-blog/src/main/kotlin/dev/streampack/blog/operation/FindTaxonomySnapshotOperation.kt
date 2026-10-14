@@ -51,7 +51,7 @@ class FindTaxonomySnapshotOperation(private val eventGateway: EventGateway) :
                 categories = categories,
                 aggregate = aggregate,
                 factoidTags = factoidTagCounts,
-            )
+            ),
         )
     }
 

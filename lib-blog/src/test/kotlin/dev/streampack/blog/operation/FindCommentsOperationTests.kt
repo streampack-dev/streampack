@@ -57,7 +57,7 @@ class FindCommentsOperationTests {
                     displayName = "Find Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.save(
@@ -67,7 +67,7 @@ class FindCommentsOperationTests {
                     displayName = "Find Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         otherUser =
             userRepository.save(
@@ -77,7 +77,7 @@ class FindCommentsOperationTests {
                     displayName = "Find Other",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         publishedPost =
@@ -92,7 +92,7 @@ class FindCommentsOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
     }
 
@@ -129,7 +129,7 @@ class FindCommentsOperationTests {
                     renderedHtml = "<p>Parent.</p>",
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         commentRepository.save(
             Comment(
@@ -140,7 +140,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>Child.</p>",
                 createdAt = now.plusMillis(100),
                 updatedAt = now.plusMillis(100),
-            )
+            ),
         )
 
         val request = FindCommentsRequest(publishedPost.id)
@@ -166,7 +166,7 @@ class FindCommentsOperationTests {
                 deleted = true,
                 createdAt = now,
                 updatedAt = now,
-            )
+            ),
         )
 
         val response = findComments(publishedPost.id, author)
@@ -191,7 +191,7 @@ class FindCommentsOperationTests {
                     deleted = true,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         commentRepository.save(
             Comment(
@@ -202,7 +202,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>Child of deleted.</p>",
                 createdAt = now.plusMillis(100),
                 updatedAt = now.plusMillis(100),
-            )
+            ),
         )
 
         val response = findComments(publishedPost.id, author)
@@ -239,7 +239,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>Second.</p>",
                 createdAt = now.plusMillis(200),
                 updatedAt = now.plusMillis(200),
-            )
+            ),
         )
         commentRepository.save(
             Comment(
@@ -249,7 +249,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>First.</p>",
                 createdAt = now.plusMillis(100),
                 updatedAt = now.plusMillis(100),
-            )
+            ),
         )
 
         val response = findComments(publishedPost.id, author)
@@ -268,7 +268,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>Recent.</p>",
                 createdAt = now,
                 updatedAt = now,
-            )
+            ),
         )
 
         val response = findComments(publishedPost.id, author)
@@ -286,7 +286,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>Old.</p>",
                 createdAt = now.minus(10, ChronoUnit.MINUTES),
                 updatedAt = now.minus(10, ChronoUnit.MINUTES),
-            )
+            ),
         )
 
         val response = findComments(publishedPost.id, admin)
@@ -305,7 +305,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>Not yours.</p>",
                 createdAt = now,
                 updatedAt = now,
-            )
+            ),
         )
 
         val response = findComments(publishedPost.id, otherUser)
@@ -324,7 +324,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>Expired.</p>",
                 createdAt = now.minus(10, ChronoUnit.MINUTES),
                 updatedAt = now.minus(10, ChronoUnit.MINUTES),
-            )
+            ),
         )
 
         val response = findComments(publishedPost.id, author)
@@ -343,7 +343,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>Active.</p>",
                 createdAt = now,
                 updatedAt = now,
-            )
+            ),
         )
         commentRepository.save(
             Comment(
@@ -354,7 +354,7 @@ class FindCommentsOperationTests {
                 deleted = true,
                 createdAt = now.plusMillis(100),
                 updatedAt = now.plusMillis(100),
-            )
+            ),
         )
 
         val response = findComments(publishedPost.id, author)
@@ -373,7 +373,7 @@ class FindCommentsOperationTests {
                 renderedHtml = "<p>Public comment.</p>",
                 createdAt = now,
                 updatedAt = now,
-            )
+            ),
         )
 
         val response = findComments(publishedPost.id, null)

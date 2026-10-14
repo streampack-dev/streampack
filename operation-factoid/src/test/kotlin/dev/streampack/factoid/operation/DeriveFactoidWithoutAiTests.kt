@@ -41,7 +41,7 @@ class DeriveFactoidWithoutAiTests {
                             user = user,
                         ),
                     )
-                    .build()
+                    .build(),
             )
 
         assertEquals(

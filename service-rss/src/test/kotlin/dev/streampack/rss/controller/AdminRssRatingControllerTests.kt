@@ -102,9 +102,9 @@ class AdminRssRatingControllerTests {
                         displayName = name,
                         emailVerified = true,
                         role = role,
-                    )
+                    ),
                 )
-                .toUserPrincipal()
+                .toUserPrincipal(),
         )
 
     @BeforeEach
@@ -118,7 +118,7 @@ class AdminRssRatingControllerTests {
                     feedUrl = "https://a.example/feed.xml",
                     siteUrl = "https://a.example",
                     title = "A",
-                )
+                ),
             )
         val base = Instant.parse("2026-10-01T00:00:00Z")
         items =
@@ -131,7 +131,7 @@ class AdminRssRatingControllerTests {
                         title = "Item $n",
                         summary = "About item $n",
                         publishedAt = base.plus(Duration.ofHours(n.toLong())),
-                    )
+                    ),
                 )
             }
     }
@@ -162,7 +162,7 @@ class AdminRssRatingControllerTests {
                 textSource = RssTextSource.CONTENT,
                 guessedAt = guessedAt,
                 rubric = rubric,
-            )
+            ),
         )
 
     @Test
@@ -320,7 +320,7 @@ class AdminRssRatingControllerTests {
                     guid = "https://a.example/odd",
                     link = "https://a.example/odd",
                     title = "=HYPERLINK(\"x\"), a \"quoted\" title",
-                )
+                ),
             )
         rate(item(1), "RATES")
         rate(odd.id, "MIGHT")
@@ -355,19 +355,19 @@ class AdminRssRatingControllerTests {
         val one = lines[2]
         assertTrue(
             one.startsWith(
-                "${item(1)},A,Item 1,https://a.example/1,2026-10-01T01:00:00Z,RATES,rateadmin,"
+                "${item(1)},A,Item 1,https://a.example/1,2026-10-01T01:00:00Z,RATES,rateadmin,",
             ),
             one,
         )
         assertTrue(
             one.endsWith(
-                ",DULL,0.25,Because 1,test-model,content,2026-10-02T00:00:00Z,0123456789ab"
+                ",DULL,0.25,Because 1,test-model,content,2026-10-02T00:00:00Z,0123456789ab",
             ),
             one,
         )
         assertTrue(
             lines[3].startsWith(
-                "${item(2)},A,Item 2,https://a.example/2,2026-10-01T02:00:00Z,,,,RATES,0.8,"
+                "${item(2)},A,Item 2,https://a.example/2,2026-10-01T02:00:00Z,,,,RATES,0.8,",
             ),
             lines[3],
         )

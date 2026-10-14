@@ -57,7 +57,7 @@ class CommandParserTests {
                     literals = listOf("boolean", "help"),
                     summary = "Show boolean command help",
                 ),
-            )
+            ),
         )
 
     private val matcher =
@@ -73,7 +73,7 @@ class CommandParserTests {
                             CommandArgSpec("content", StringArgType),
                         ),
                 ),
-            )
+            ),
         )
 
     @Test
@@ -143,7 +143,7 @@ class CommandParserTests {
                         args = listOf(CommandArgSpec("target", StringArgType)),
                     ),
                     CommandPattern(name = "today", literals = listOf("today")),
-                )
+                ),
             )
 
         val result = overloaded.match("today")
@@ -165,10 +165,10 @@ class CommandParserTests {
                                 CommandArgSpec(
                                     "target",
                                     ChoiceArgType(setOf("list", "gregorian", "hebrew")),
-                                )
+                                ),
                             ),
-                    )
-                )
+                    ),
+                ),
             )
 
         val valid = choiceMatcher.match("today hebrew")
@@ -187,8 +187,8 @@ class CommandParserTests {
                         name = "rfc",
                         literals = listOf("rfc"),
                         args = listOf(CommandArgSpec("identifier", PositiveIntArgType)),
-                    )
-                )
+                    ),
+                ),
             )
 
         assertInstanceOf(CommandMatchResult.Match::class.java, intMatcher.match("rfc 2812"))
@@ -205,8 +205,8 @@ class CommandParserTests {
                         name = "take",
                         literals = listOf("21", "take"),
                         args = listOf(CommandArgSpec("count", IntRangeArgType(1..3))),
-                    )
-                )
+                    ),
+                ),
             )
 
         assertInstanceOf(CommandMatchResult.Match::class.java, rangeMatcher.match("21 take 1"))
@@ -230,8 +230,8 @@ class CommandParserTests {
                         name = "suggest",
                         literals = listOf("suggest"),
                         args = listOf(CommandArgSpec("url", HttpUrlArgType)),
-                    )
-                )
+                    ),
+                ),
             )
 
         assertInstanceOf(

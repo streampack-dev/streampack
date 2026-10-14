@@ -53,7 +53,7 @@ class UserRepositoryTests {
     @Test
     fun `find by username`() {
         userRepository.save(
-            User(username = "findme", email = "findme@test.com", displayName = "Find Me")
+            User(username = "findme", email = "findme@test.com", displayName = "Find Me"),
         )
         val found = userRepository.findByUsername("findme")
 
@@ -69,7 +69,7 @@ class UserRepositoryTests {
     @Test
     fun `find by email`() {
         userRepository.save(
-            User(username = "emailtest", email = "specific@test.com", displayName = "Email Test")
+            User(username = "emailtest", email = "specific@test.com", displayName = "Email Test"),
         )
         val found = userRepository.findByEmail("specific@test.com")
 
@@ -80,7 +80,7 @@ class UserRepositoryTests {
     @Test
     fun `status-based filtering excludes erased users`() {
         userRepository.save(
-            User(username = "active", email = "active@test.com", displayName = "Active User")
+            User(username = "active", email = "active@test.com", displayName = "Active User"),
         )
         userRepository.save(
             User(
@@ -88,7 +88,7 @@ class UserRepositoryTests {
                 email = "erased@test.com",
                 displayName = "Erased User",
                 status = UserStatus.ERASED,
-            )
+            ),
         )
         val activeUsers = userRepository.findActive()
 
@@ -104,7 +104,7 @@ class UserRepositoryTests {
                 email = "admins@test.com",
                 displayName = "Admin One",
                 role = Role.ADMIN,
-            )
+            ),
         )
         userRepository.save(
             User(
@@ -112,7 +112,7 @@ class UserRepositoryTests {
                 email = "",
                 displayName = "Super One",
                 role = Role.SUPER_ADMIN,
-            )
+            ),
         )
         userRepository.save(
             User(
@@ -121,7 +121,7 @@ class UserRepositoryTests {
                 displayName = "Suspended Admin",
                 role = Role.ADMIN,
                 status = UserStatus.SUSPENDED,
-            )
+            ),
         )
         userRepository.save(
             User(
@@ -129,7 +129,7 @@ class UserRepositoryTests {
                 email = "user@test.com",
                 displayName = "Regular User",
                 role = Role.USER,
-            )
+            ),
         )
 
         val emails = userRepository.findDistinctActiveAdminEmailAddresses()
@@ -146,7 +146,7 @@ class UserRepositoryTests {
                     email = "principal@test.com",
                     displayName = "Principal Test",
                     role = Role.ADMIN,
-                )
+                ),
             )
         val principal = saved.toUserPrincipal()
 
@@ -159,13 +159,13 @@ class UserRepositoryTests {
     @Test
     fun `unique username constraint`() {
         userRepository.save(
-            User(username = "unique", email = "first@test.com", displayName = "First")
+            User(username = "unique", email = "first@test.com", displayName = "First"),
         )
         userRepository.flush()
 
         assertThrows(Exception::class.java) {
             userRepository.save(
-                User(username = "unique", email = "second@test.com", displayName = "Second")
+                User(username = "unique", email = "second@test.com", displayName = "Second"),
             )
             userRepository.flush()
         }

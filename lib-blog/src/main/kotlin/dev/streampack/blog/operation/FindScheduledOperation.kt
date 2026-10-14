@@ -42,7 +42,7 @@ class FindScheduledOperation(
             summaries.listing(
                 pageResult,
                 (message.headers[Provenance.HEADER] as? Provenance)?.user,
-            )
+            ),
         )
     }
 }

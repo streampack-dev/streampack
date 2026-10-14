@@ -123,7 +123,7 @@ class ModerationReviewServiceTests {
                 )
                 .setHeader(Provenance.ADDRESSED, false)
                 .setHeader("nick", nick)
-                .build()
+                .build(),
         )
     }
 
@@ -282,7 +282,7 @@ class ModerationReviewServiceTests {
                     Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = channel),
                 )
                 .setHeader("nick", nick)
-                .build()
+                .build(),
         )
     }
 

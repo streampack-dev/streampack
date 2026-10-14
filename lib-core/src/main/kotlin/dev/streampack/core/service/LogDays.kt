@@ -40,7 +40,7 @@ class LogDays(val zone: ZoneId) {
             } catch (e: DateTimeException) {
                 throw SilentStartupException(
                     "STREAMPACK_LOG_ZONE (streampack.logs.zone) is '$value', which is not a " +
-                        "timezone. Use an IANA zone such as America/New_York, or UTC."
+                        "timezone. Use an IANA zone such as America/New_York, or UTC.",
                 )
             }
     }

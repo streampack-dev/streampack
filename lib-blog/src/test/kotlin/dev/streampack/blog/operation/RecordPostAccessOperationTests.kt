@@ -39,7 +39,7 @@ class RecordPostAccessOperationTests {
                         renderedHtml = "<p>Tracked markdown.</p>",
                         excerpt = "Tracked markdown.",
                         status = PostStatus.APPROVED,
-                    )
+                    ),
                 )
                 .id
     }
@@ -48,7 +48,7 @@ class RecordPostAccessOperationTests {
     fun `record post access request increments persisted usage`() {
         val result =
             eventGateway.process(
-                MessageBuilder.withPayload(RecordPostAccessRequest(postId)).build()
+                MessageBuilder.withPayload(RecordPostAccessRequest(postId)).build(),
             )
 
         assertEquals(OperationResult.NotHandled, result)

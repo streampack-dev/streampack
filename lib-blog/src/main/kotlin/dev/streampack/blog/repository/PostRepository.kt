@@ -14,17 +14,17 @@ import org.springframework.transaction.annotation.Transactional
 /** Queries for blog post retrieval by visibility state */
 interface PostRepository : JpaRepository<Post, UUID> {
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC"
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
     )
     fun findPublished(now: Instant): List<Post>
 
     @Query(
-        "SELECT p FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.DRAFT AND p.deleted = false"
+        "SELECT p FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.DRAFT AND p.deleted = false",
     )
     fun findDrafts(): List<Post>
 
     @Query(
-        "SELECT p FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt > :now ORDER BY p.publishedAt ASC"
+        "SELECT p FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt > :now ORDER BY p.publishedAt ASC",
     )
     fun findScheduled(now: Instant): List<Post>
 
@@ -36,18 +36,18 @@ interface PostRepository : JpaRepository<Post, UUID> {
 
     /** Candidate posts whose markdown mentions the supplied term, for exact follow-up matching. */
     @Query(
-        "SELECT p FROM Post p WHERE p.deleted = false AND LOWER(p.markdownSource) LIKE LOWER(CONCAT('%', :term, '%'))"
+        "SELECT p FROM Post p WHERE p.deleted = false AND LOWER(p.markdownSource) LIKE LOWER(CONCAT('%', :term, '%'))",
     )
     fun findCandidatesByMarkdownContaining(term: String): List<Post>
 
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.title = :title AND p.deleted = false"
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.title = :title AND p.deleted = false",
     )
     fun findByTitleWithAuthor(title: String): Post?
 
     /** Published posts with eagerly loaded authors for RSS feed generation */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC"
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
     )
     fun findRecentPublishedWithAuthor(now: Instant, pageable: Pageable): List<Post>
 
@@ -77,13 +77,13 @@ interface PostRepository : JpaRepository<Post, UUID> {
 
     /** Single published post by slug in a specific category */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT s FROM Slug s WHERE s.post = p AND s.path = :slugPath) AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName)"
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT s FROM Slug s WHERE s.post = p AND s.path = :slugPath) AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName)",
     )
     fun findByCategoryAndSlug(categoryName: String, slugPath: String, now: Instant): Post?
 
     /** Single published post by slug in any system category (name starts with _) */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT s FROM Slug s WHERE s.post = p AND s.path = :slugPath) AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\')"
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT s FROM Slug s WHERE s.post = p AND s.path = :slugPath) AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\')",
     )
     fun findBySystemCategoryAndSlug(slugPath: String, now: Instant): Post?
 
@@ -127,7 +127,7 @@ interface PostRepository : JpaRepository<Post, UUID> {
      * loaded, so a caller outside a transaction can read them.
      */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.DRAFT AND p.deleted = false AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND pt.tag.name = :tagName) ORDER BY p.createdAt ASC"
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.DRAFT AND p.deleted = false AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND pt.tag.name = :tagName) ORDER BY p.createdAt ASC",
     )
     fun findDraftsTaggedWithAuthor(tagName: String): List<Post>
 

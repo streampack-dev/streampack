@@ -89,7 +89,7 @@ class CreateContentOperation(
                     author = user,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         val tagNames = assignTags(post, payload.tags ?: emptyList())
@@ -124,7 +124,7 @@ class CreateContentOperation(
                 createdAt = post.createdAt,
                 tags = tagNames,
                 categories = categoryNames,
-            )
+            ),
         )
     }
 

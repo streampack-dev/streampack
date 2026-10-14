@@ -147,7 +147,7 @@ object Versions {
         for (i in 0 until maxOf(coreA.size, coreB.size)) {
             val result =
                 (coreA.getOrNull(i) ?: BigInteger.ZERO).compareTo(
-                    coreB.getOrNull(i) ?: BigInteger.ZERO
+                    coreB.getOrNull(i) ?: BigInteger.ZERO,
                 )
             if (result != 0) return result
         }

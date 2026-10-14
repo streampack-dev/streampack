@@ -62,7 +62,7 @@ class ForgetFactoidOperation(private val factoidService: FactoidService) :
                 OperationResult.Error("Factoid '${result.selector}' is locked.")
             is FactoidService.DeleteResult.NotFound ->
                 OperationResult.Error(
-                    "No ${type.name.lowercase()} attribute found for '$selector'."
+                    "No ${type.name.lowercase()} attribute found for '$selector'.",
                 )
         }
     }

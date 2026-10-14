@@ -44,7 +44,7 @@ class RssOpmlServiceTests {
                 siteUrl = "https://example.com",
                 title = "Example Feed",
                 active = true,
-            )
+            ),
         )
         feedRepository.save(
             RssFeed(
@@ -52,7 +52,7 @@ class RssOpmlServiceTests {
                 siteUrl = "https://inactive.example.com",
                 title = "Inactive Feed",
                 active = false,
-            )
+            ),
         )
 
         val xml = opmlService.exportFeedsAsOpml()
@@ -83,7 +83,7 @@ class RssOpmlServiceTests {
                   </body>
                 </opml>
                 """
-                    .trimIndent()
+                    .trimIndent(),
             )
 
         assertEquals(1, summary.added)
@@ -112,7 +112,7 @@ class RssOpmlServiceTests {
                 $baseUrl/two.xml
                 maybe later
                 """
-                    .trimIndent()
+                    .trimIndent(),
             )
 
         assertEquals(2, summary.added)

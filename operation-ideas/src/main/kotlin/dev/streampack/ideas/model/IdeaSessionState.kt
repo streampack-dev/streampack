@@ -40,7 +40,7 @@ data class IdeaSessionState(
                         append("\n")
                     }
                     append(
-                        "\n_Review before publishing. This section is machine-generated and can be edited or removed._"
+                        "\n_Review before publishing. This section is machine-generated and can be edited or removed._",
                     )
                 }
             } else {

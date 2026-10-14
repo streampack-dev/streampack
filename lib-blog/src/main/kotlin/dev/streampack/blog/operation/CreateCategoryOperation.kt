@@ -61,7 +61,7 @@ class CreateCategoryOperation(
                 name = category.name,
                 slug = category.slug,
                 parentName = parent?.name,
-            )
+            ),
         )
     }
 }

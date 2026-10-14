@@ -100,7 +100,7 @@ class TagCleanupMigrationTests {
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now().minusSeconds(60),
                     author = author,
-                )
+                ),
             )
         slugRepository.save(Slug(path = "2026/10/$key", post = post, canonical = true))
         tags.forEach {
@@ -177,7 +177,7 @@ class TagCleanupMigrationTests {
                     Provenance(protocol = Protocol.CONSOLE, serviceId = "test", replyTo = "local"),
                 )
                 .setHeader("nick", "tester")
-                .build()
+                .build(),
         )
 
     private fun cleanup(): List<String> = dataSource.connection.use { V72__tag_cleanup.cleanup(it) }
@@ -186,10 +186,10 @@ class TagCleanupMigrationTests {
     private fun snapshot(): List<Any> =
         listOf(
             names(
-                "SELECT p.title || ':' || t.name FROM post_tags pt JOIN posts p ON p.id = pt.post_id JOIN tags t ON t.id = pt.tag_id ORDER BY 1"
+                "SELECT p.title || ':' || t.name FROM post_tags pt JOIN posts p ON p.id = pt.post_id JOIN tags t ON t.id = pt.tag_id ORDER BY 1",
             ),
             names(
-                "SELECT f.selector || '=' || fa.attribute_value || '@' || fa.updated_at FROM factoid_attributes fa JOIN factoids f ON f.id = fa.factoid_id ORDER BY 1"
+                "SELECT f.selector || '=' || fa.attribute_value || '@' || fa.updated_at FROM factoid_attributes fa JOIN factoids f ON f.id = fa.factoid_id ORDER BY 1",
             ),
             names("SELECT id || name || slug FROM tags ORDER BY 1"),
             names("SELECT alias || tag_id FROM tag_alias ORDER BY 1"),
@@ -208,7 +208,7 @@ class TagCleanupMigrationTests {
                     displayName = "Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         // Posts: every old tag on a post, some beside their kept tag, and the keepers.
         post("p1", "content-extraction", "jakarta-ee", "anti-pattern", "java")
@@ -258,7 +258,7 @@ class TagCleanupMigrationTests {
         factoid("keep", keepers.joinToString(","))
 
         jdbc.update(
-            "INSERT INTO atlas_region (id, name, x, y) VALUES (1, 'r', 0, 0) ON CONFLICT DO NOTHING"
+            "INSERT INTO atlas_region (id, name, x, y) VALUES (1, 'r', 0, 0) ON CONFLICT DO NOTHING",
         )
         place("load-testing", 1.0, 1.0) // its kept tag has no place: moves
         place("compilers", 2.0, 2.0) // its kept tag has one: dropped
@@ -316,8 +316,8 @@ class TagCleanupMigrationTests {
         assertThat(tagsOf("p7")).containsExactly("formal languages")
         assertThat(
                 names(
-                    "SELECT post_id || '/' || tag_id FROM post_tags GROUP BY post_id, tag_id HAVING count(*) > 1"
-                )
+                    "SELECT post_id || '/' || tag_id FROM post_tags GROUP BY post_id, tag_id HAVING count(*) > 1",
+                ),
             )
             .isEmpty()
 
@@ -353,7 +353,7 @@ class TagCleanupMigrationTests {
         val aliases =
             jdbc
                 .queryForList(
-                    "SELECT a.alias, t.name FROM tag_alias a JOIN tags t ON t.id = a.tag_id"
+                    "SELECT a.alias, t.name FROM tag_alias a JOIN tags t ON t.id = a.tag_id",
                 )
                 .associate { it["alias"] as String to it["name"] as String }
         assertThat(aliases).isEqualTo(V72__tag_cleanup.MERGES.toMap())

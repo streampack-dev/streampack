@@ -88,7 +88,7 @@ class SimulationEngine(
             if (abs(delta) > 1.0) {
                 val direction = if (delta > 0) "+" else ""
                 supplyChanges.add(
-                    "${commodity.displayName} ${direction}${String.format("%.0f", delta)}"
+                    "${commodity.displayName} ${direction}${String.format("%.0f", delta)}",
                 )
             }
         }
@@ -110,7 +110,7 @@ class SimulationEngine(
             // Only log if there's meaningful spread
             if (maxPrice > basePrice * 1.5 || minPrice < basePrice * 0.7) {
                 priceExtremes.add(
-                    "${commodity.displayName}: ${String.format("%.0f", minPrice)} (${minPlanet.name}) - ${String.format("%.0f", maxPrice)} (${maxPlanet.name})"
+                    "${commodity.displayName}: ${String.format("%.0f", minPrice)} (${minPlanet.name}) - ${String.format("%.0f", maxPrice)} (${maxPlanet.name})",
                 )
             }
         }
@@ -153,7 +153,7 @@ class SimulationEngine(
 
             val action = if (change > 0) "added" else "removed"
             eventLog.add(
-                "Tick ${state.tickCount + 1}: $action ${String.format("%.1f", abs(change))} ${delta.commodity.displayName} at ${delta.planet}"
+                "Tick ${state.tickCount + 1}: $action ${String.format("%.1f", abs(change))} ${delta.commodity.displayName} at ${delta.planet}",
             )
         }
 

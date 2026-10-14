@@ -75,7 +75,7 @@ class GitHubSecretRefStartupGuard(
 
         printFailure(migrationExports, validationErrors)
         throw SilentStartupException(
-            "GitHub token externalization required. Add env vars shown above and restart."
+            "GitHub token externalization required. Add env vars shown above and restart.",
         )
     }
 
@@ -95,7 +95,7 @@ class GitHubSecretRefStartupGuard(
             if (lookup(envKey).isNullOrBlank()) {
                 validationErrors.add(
                     "$description is stored as a literal; set $envKey (the value is in the " +
-                        "database, or issue a new token) so it can be externalized"
+                        "database, or issue a new token) so it can be externalized",
                 )
             } else {
                 externalize(envKey)
@@ -107,7 +107,7 @@ class GitHubSecretRefStartupGuard(
         val key = current.envKeyOrNull()
         if (key == null) {
             validationErrors.add(
-                "$description has invalid env reference '${current.asStoredValue()}'"
+                "$description has invalid env reference '${current.asStoredValue()}'",
             )
         } else if (active && lookup(key).isNullOrBlank()) {
             validationErrors.add("$description requires environment variable $key")

@@ -63,7 +63,7 @@ class GitLabForgeStore(
         defaultToken: SecretRef?,
     ): GitLabInstance =
         instanceRepository.save(
-            GitLabInstance(host = host, apiUrl = apiUrl, defaultToken = defaultToken)
+            GitLabInstance(host = host, apiUrl = apiUrl, defaultToken = defaultToken),
         )
 
     /** Numeric id first (survives renames), then the path (covers private-mode registrations) */
@@ -120,7 +120,7 @@ class GitLabForgeStore(
                 highestMrNumber = highestChangeRequestNumber,
                 lastPolledAt = polledAt,
                 nextPollAt = nextPollAt,
-            )
+            ),
         )
     }
 
@@ -135,7 +135,7 @@ class GitLabForgeStore(
                 highestIssueNumber = highestIssueNumber,
                 highestMrNumber = highestChangeRequestNumber,
                 lastPolledAt = polledAt,
-            )
+            ),
         )
 
     override fun deactivateProject(project: GitLabProject): GitLabProject =
@@ -148,7 +148,7 @@ class GitLabForgeStore(
                 deliveryMode = DeliveryMode.WEBHOOK,
                 webhookSecret = encryptedSecret,
                 webhookConfiguredAt = Instant.now(),
-            )
+            ),
         )
 
     override fun knownReleaseTags(project: GitLabProject, tags: List<String>): Set<String> =
@@ -156,7 +156,7 @@ class GitLabForgeStore(
 
     override fun saveRelease(project: GitLabProject, release: ForgeReleaseInfo) {
         releaseRepository.save(
-            GitLabRelease(project = project, tag = release.tag, name = release.name)
+            GitLabRelease(project = project, tag = release.tag, name = release.name),
         )
     }
 
@@ -171,7 +171,7 @@ class GitLabForgeStore(
         destinationUri: String,
     ): GitLabSubscription =
         subscriptionRepository.save(
-            GitLabSubscription(project = project, destinationUri = destinationUri)
+            GitLabSubscription(project = project, destinationUri = destinationUri),
         )
 
     override fun setSubscriptionActive(
@@ -195,7 +195,7 @@ class GitLabForgeStore(
         val existing = pipelineRepository.findByProjectAndPipelineId(project, pipelineId)
         pipelineRepository.save(
             existing?.copy(lastStatus = outcome, updatedAt = Instant.now())
-                ?: GitLabPipeline(project = project, pipelineId = pipelineId, lastStatus = outcome)
+                ?: GitLabPipeline(project = project, pipelineId = pipelineId, lastStatus = outcome),
         )
     }
 
@@ -203,7 +203,7 @@ class GitLabForgeStore(
         subscriptionRepository.findByProjectAndActiveTrue(project)
 
     override fun findActiveSubscriptionsByDestination(
-        destinationUri: String
+        destinationUri: String,
     ): List<GitLabSubscription> =
         subscriptionRepository.findByDestinationUriAndActiveTrue(destinationUri)
 }

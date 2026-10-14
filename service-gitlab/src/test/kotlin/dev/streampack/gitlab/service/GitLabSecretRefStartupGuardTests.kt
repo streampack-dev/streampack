@@ -35,7 +35,7 @@ class GitLabSecretRefStartupGuardTests {
         assertEquals(
             "GITLAB_GITLAB_EXAMPLE_COM_GROUP_PROJECT_TOKEN",
             GitLabSecretRefStartupGuard.envKeyFor(
-                GitLabProject(instance = self, fullPath = "group/project")
+                GitLabProject(instance = self, fullPath = "group/project"),
             ),
         )
         assertEquals(

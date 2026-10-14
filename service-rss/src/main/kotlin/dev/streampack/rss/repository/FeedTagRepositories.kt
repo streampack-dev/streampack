@@ -65,7 +65,7 @@ interface RssFeedTagRepository : JpaRepository<RssFeedTag, String> {
         SELECT t FROM RssFeedTag t
         WHERE (:status IS NULL OR t.status = :status)
         ORDER BY t.entries DESC, t.feeds DESC, t.lastSeen DESC, t.name
-        """
+        """,
     )
     fun findPage(status: FeedTagStatus?, pageable: Pageable): List<RssFeedTag>
 

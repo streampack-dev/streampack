@@ -19,8 +19,8 @@ class LogChannelPathsTests {
                     override val protocol = Protocol.MATTERMOST
 
                     override fun name(provenance: Provenance) = mattermostNames[provenance.replyTo]
-                }
-            )
+                },
+            ),
         )
 
     private val primate = "irc://libera/%23primate"

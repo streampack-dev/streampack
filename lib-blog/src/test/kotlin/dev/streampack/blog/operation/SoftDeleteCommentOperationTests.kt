@@ -57,7 +57,7 @@ class SoftDeleteCommentOperationTests {
                     displayName = "SD Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.save(
@@ -67,7 +67,7 @@ class SoftDeleteCommentOperationTests {
                     displayName = "SD Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         regularUser =
             userRepository.save(
@@ -77,7 +77,7 @@ class SoftDeleteCommentOperationTests {
                     displayName = "SD Regular",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         publishedPost =
@@ -92,7 +92,7 @@ class SoftDeleteCommentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         activeComment =
@@ -104,7 +104,7 @@ class SoftDeleteCommentOperationTests {
                     renderedHtml = "<p>Active comment.</p>",
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
 
         deletedComment =
@@ -117,7 +117,7 @@ class SoftDeleteCommentOperationTests {
                     deleted = true,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
     }
 

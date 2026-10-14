@@ -62,7 +62,7 @@ class RemoveContentOperationTests {
                     displayName = "Remove Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         admin =
             userRepository.save(
@@ -72,7 +72,7 @@ class RemoveContentOperationTests {
                     displayName = "Remove Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         regularUser =
             userRepository.save(
@@ -82,7 +82,7 @@ class RemoveContentOperationTests {
                     displayName = "Remove Regular",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
 
         postToRemove =
@@ -97,10 +97,10 @@ class RemoveContentOperationTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/post-to-remove", post = postToRemove, canonical = true)
+            Slug(path = "2026/02/post-to-remove", post = postToRemove, canonical = true),
         )
         commentRepository.save(
             Comment(
@@ -108,7 +108,7 @@ class RemoveContentOperationTests {
                 author = author,
                 markdownSource = "A comment",
                 renderedHtml = "<p>A comment</p>",
-            )
+            ),
         )
 
         softDeletedPost =
@@ -123,10 +123,10 @@ class RemoveContentOperationTests {
                     deleted = true,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slugRepository.save(
-            Slug(path = "2026/02/soft-deleted-post", post = softDeletedPost, canonical = true)
+            Slug(path = "2026/02/soft-deleted-post", post = softDeletedPost, canonical = true),
         )
     }
 

@@ -84,8 +84,8 @@ class DictionaryOperation(
                         name = "define",
                         literals = listOf("define"),
                         args = listOf(CommandArgSpec("word", StringArgType)),
-                    )
-                )
+                    ),
+                ),
             )
     }
 }

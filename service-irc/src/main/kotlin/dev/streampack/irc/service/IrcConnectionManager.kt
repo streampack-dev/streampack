@@ -98,7 +98,7 @@ class IrcConnectionManager(
             val rampDown =
                 ircProperties.sendDelayRampDownFactor.coerceAtMost(1.0).coerceAtLeast(0.1)
             client.setMessageSendingQueueSupplier(
-                AdaptiveDelaySender.getSupplier(minDelayMs, maxDelayMs, rampUp, rampDown)
+                AdaptiveDelaySender.getSupplier(minDelayMs, maxDelayMs, rampUp, rampDown),
             )
             logger.info(
                 "Configured adaptive IRC send delay for '{}' (min={}ms, max={}ms, up={}, down={})",

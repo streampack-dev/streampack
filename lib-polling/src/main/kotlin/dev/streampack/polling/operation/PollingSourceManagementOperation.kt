@@ -100,7 +100,7 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
                 val uri = trimmed.substring("$prefix subscriptions for ".length).trim()
                 if (uri.isBlank()) {
                     return OperationResult.Error(
-                        "Usage: $commandPrefix subscriptions for <provenance-uri>"
+                        "Usage: $commandPrefix subscriptions for <provenance-uri>",
                     )
                 }
                 uri
@@ -114,7 +114,7 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
     private fun handleSubscribe(remainder: String, message: Message<*>): OperationOutcome {
         if (remainder.isBlank()) {
             return OperationResult.Error(
-                "Usage: $commandPrefix subscribe <identifier> [to <provenance-uri>]"
+                "Usage: $commandPrefix subscribe <identifier> [to <provenance-uri>]",
             )
         }
         val parsed = parseIdentifierAndTarget(remainder, message)
@@ -135,7 +135,7 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
     private fun handleUnsubscribe(remainder: String, message: Message<*>): OperationOutcome {
         if (remainder.isBlank()) {
             return OperationResult.Error(
-                "Usage: $commandPrefix unsubscribe <identifier> [to <provenance-uri>]"
+                "Usage: $commandPrefix unsubscribe <identifier> [to <provenance-uri>]",
             )
         }
         val (identifier, destinationUri) =

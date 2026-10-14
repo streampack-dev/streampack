@@ -124,7 +124,7 @@ class DeleteAccountOperationTests {
                     markdownSource = "content",
                     renderedHtml = "<p>content</p>",
                     author = author,
-                )
+                ),
             )
 
         // Create a comment by the target user
@@ -134,7 +134,7 @@ class DeleteAccountOperationTests {
                 author = author,
                 markdownSource = "comment",
                 renderedHtml = "<p>comment</p>",
-            )
+            ),
         )
 
         val result = eventGateway.process(deleteMessage(asUser = regularUser))

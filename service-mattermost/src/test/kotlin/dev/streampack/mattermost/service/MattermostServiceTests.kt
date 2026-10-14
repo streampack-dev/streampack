@@ -58,7 +58,7 @@ class MattermostServiceTests {
 
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel!!.provenanceUri()
+                channel!!.provenanceUri(),
             )
         assertNotNull(options)
         assertFalse(options!!.autojoin)
@@ -89,7 +89,7 @@ class MattermostServiceTests {
             )!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()
+                channel.provenanceUri(),
             )
         assertTrue(options!!.automute)
     }
@@ -109,7 +109,7 @@ class MattermostServiceTests {
             )!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()
+                channel.provenanceUri(),
             )
         assertFalse(options!!.visible)
     }
@@ -129,7 +129,7 @@ class MattermostServiceTests {
             )!!
         val options =
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
-                channel.provenanceUri()
+                channel.provenanceUri(),
             )
         assertFalse(options!!.logged)
     }
@@ -223,7 +223,7 @@ class MattermostServiceTests {
             channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
                 channelRepository
                     .findByServerAndChannelIdAndDeletedFalse(server, id)!!
-                    .provenanceUri()
+                    .provenanceUri(),
             )!!
         assertFalse(options("priv0000000000000000000000").visible)
         assertFalse(options("priv0000000000000000000000").logged)

@@ -85,7 +85,7 @@ class BridgeOperationTests {
                 firstUri = console,
                 secondUri = "irc://a/%23one",
                 copyFirstToSecond = true,
-            )
+            ),
         )
         val copied = java.util.concurrent.CopyOnWriteArrayList<Provenance>()
         val watcher =
@@ -100,7 +100,7 @@ class BridgeOperationTests {
                 MessageBuilder.withPayload("bridge")
                     .setHeader(Provenance.HEADER, Provenance.decode(console).copy(user = adminUser))
                     .setHeader(Provenance.ADDRESSED, true)
-                    .build()
+                    .build(),
             )
         } finally {
             egressChannel.unsubscribe(watcher)
@@ -119,7 +119,7 @@ class BridgeOperationTests {
     fun `bridge copy requires admin role`() {
         val result =
             eventGateway.process(
-                addressedMessage("bridge copy irc://a/%23one irc://b/%23two", user = regularUser)
+                addressedMessage("bridge copy irc://a/%23one irc://b/%23two", user = regularUser),
             )
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue((result as OperationResult.Error).message.contains("ADMIN"))
@@ -129,7 +129,7 @@ class BridgeOperationTests {
     fun `bridge copy creates one-way bridge`() {
         val result =
             eventGateway.process(
-                addressedMessage("bridge copy irc://a/%23one irc://b/%23two", user = adminUser)
+                addressedMessage("bridge copy irc://a/%23one irc://b/%23two", user = adminUser),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload.toString()
@@ -158,11 +158,11 @@ class BridgeOperationTests {
         assertEquals(
             listOf(target),
             bridgeService.getCopyTargets(
-                "discord://1256590312177012806/222222222222222222/renamed/other/%23changed"
+                "discord://1256590312177012806/222222222222222222/renamed/other/%23changed",
             ),
         )
         assertTrue(
-            bridgeService.getCopyTargets("discord://1256590312177012806/%23general").isEmpty()
+            bridgeService.getCopyTargets("discord://1256590312177012806/%23general").isEmpty(),
         )
     }
 
@@ -172,7 +172,7 @@ class BridgeOperationTests {
 
         val result =
             eventGateway.process(
-                addressedMessage("bridge copy irc://b/%23two irc://a/%23one", user = adminUser)
+                addressedMessage("bridge copy irc://b/%23two irc://a/%23one", user = adminUser),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
 
@@ -189,7 +189,7 @@ class BridgeOperationTests {
 
         val result =
             eventGateway.process(
-                addressedMessage("bridge copy irc://c/%23three irc://b/%23two", user = adminUser)
+                addressedMessage("bridge copy irc://c/%23three irc://b/%23two", user = adminUser),
             )
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
@@ -200,7 +200,7 @@ class BridgeOperationTests {
     fun `bridge copy rejects self-bridge`() {
         val result =
             eventGateway.process(
-                addressedMessage("bridge copy irc://a/%23one irc://a/%23one", user = adminUser)
+                addressedMessage("bridge copy irc://a/%23one irc://a/%23one", user = adminUser),
             )
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue((result as OperationResult.Error).message.contains("itself"))
@@ -213,7 +213,7 @@ class BridgeOperationTests {
 
         val result =
             eventGateway.process(
-                addressedMessage("bridge remove irc://a/%23one irc://b/%23two", user = adminUser)
+                addressedMessage("bridge remove irc://a/%23one irc://b/%23two", user = adminUser),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
 
@@ -228,7 +228,7 @@ class BridgeOperationTests {
 
         val result =
             eventGateway.process(
-                addressedMessage("bridge remove irc://a/%23one irc://b/%23two", user = adminUser)
+                addressedMessage("bridge remove irc://a/%23one irc://b/%23two", user = adminUser),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
 
@@ -257,7 +257,7 @@ class BridgeOperationTests {
             (result as OperationResult.Success)
                 .payload
                 .toString()
-                .contains("No bridge pairs configured")
+                .contains("No bridge pairs configured"),
         )
     }
 
@@ -425,7 +425,7 @@ class BridgeOperationTests {
         val result = eventGateway.process(addressedMessage("bridge info", user = regularUser))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue(
-            (result as OperationResult.Success).payload.toString().contains("No bridge configured")
+            (result as OperationResult.Success).payload.toString().contains("No bridge configured"),
         )
     }
 

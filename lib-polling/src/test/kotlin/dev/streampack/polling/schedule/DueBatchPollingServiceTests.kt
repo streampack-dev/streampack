@@ -38,7 +38,7 @@ class DueBatchPollingServiceTests {
                     nextPollAt =
                         PollSchedule.afterFailure(now, interval, failures, Duration.ofDays(1)),
                     failures = failures,
-                )
+                ),
             )
         }
 

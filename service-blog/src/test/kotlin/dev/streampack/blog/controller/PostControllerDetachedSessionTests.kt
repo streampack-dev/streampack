@@ -77,7 +77,7 @@ class PostControllerDetachedSessionTests {
                     displayName = "Detached Session Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         post =
             postRepository.saveAndFlush(
@@ -91,7 +91,7 @@ class PostControllerDetachedSessionTests {
                     author = author,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slug =
             slugRepository.saveAndFlush(
@@ -100,13 +100,13 @@ class PostControllerDetachedSessionTests {
                     post = post!!,
                     canonical = true,
                     createdAt = now,
-                )
+                ),
             )
         tag = tagRepository.saveAndFlush(Tag(name = "detached-tag", slug = "detached-tag"))
         postTag = postTagRepository.saveAndFlush(PostTag(post = post!!, tag = tag!!))
         category =
             categoryRepository.saveAndFlush(
-                Category(name = "Detached Category", slug = "detached-category")
+                Category(name = "Detached Category", slug = "detached-category"),
             )
         postCategory =
             postCategoryRepository.saveAndFlush(PostCategory(post = post!!, category = category!!))

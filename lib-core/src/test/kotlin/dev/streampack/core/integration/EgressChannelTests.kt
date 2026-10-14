@@ -46,7 +46,7 @@ class EgressChannelTests {
 
                 override fun execute(message: Message<*>): OperationOutcome =
                     OperationResult.Success(
-                        (message.payload as String).removePrefix("echo ").trim()
+                        (message.payload as String).removePrefix("echo ").trim(),
                     )
             }
 

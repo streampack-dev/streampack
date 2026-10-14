@@ -76,7 +76,7 @@ class FactoidUpdatedPostRerenderTickListenerTests {
                     renderedHtml = originalHtml,
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now().minusSeconds(60),
-                )
+                ),
             )
 
         resolver.put("thing", "updated factoid text")
@@ -88,7 +88,7 @@ class FactoidUpdatedPostRerenderTickListenerTests {
         factoidUpdateBuffer.record("thing")
 
         listener.onTick(
-            Instant.now().plus(FactoidUpdatedPostRerenderTickListener.RERENDER_INTERVAL)
+            Instant.now().plus(FactoidUpdatedPostRerenderTickListener.RERENDER_INTERVAL),
         )
 
         entityManager.flush()
@@ -109,7 +109,7 @@ class FactoidUpdatedPostRerenderTickListenerTests {
                     renderedHtml = originalHtml,
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now().minusSeconds(60),
-                )
+                ),
             )
 
         resolver.put("thing", "updated factoid text")
@@ -121,7 +121,7 @@ class FactoidUpdatedPostRerenderTickListenerTests {
         factoidUpdateBuffer.record("thing")
 
         listener.onTick(
-            Instant.now().plus(FactoidUpdatedPostRerenderTickListener.RERENDER_INTERVAL)
+            Instant.now().plus(FactoidUpdatedPostRerenderTickListener.RERENDER_INTERVAL),
         )
 
         entityManager.flush()

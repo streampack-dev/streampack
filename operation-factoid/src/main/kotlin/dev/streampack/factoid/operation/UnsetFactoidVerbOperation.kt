@@ -39,7 +39,7 @@ class UnsetFactoidVerbOperation(private val factoidService: FactoidService) :
         }
         if (!payload.attribute.mutable) {
             return OperationResult.Error(
-                "Attribute '${payload.attribute.name.lowercase()}' cannot be unset."
+                "Attribute '${payload.attribute.name.lowercase()}' cannot be unset.",
             )
         }
 
@@ -48,13 +48,13 @@ class UnsetFactoidVerbOperation(private val factoidService: FactoidService) :
         ) {
             is FactoidService.DeleteResult.Ok ->
                 OperationResult.Success(
-                    "ok, unset ${payload.attribute.name.lowercase()} on ${payload.selector}."
+                    "ok, unset ${payload.attribute.name.lowercase()} on ${payload.selector}.",
                 )
             is FactoidService.DeleteResult.Locked ->
                 OperationResult.Error("Factoid '${result.selector}' is locked.")
             is FactoidService.DeleteResult.NotFound ->
                 OperationResult.Error(
-                    "No ${payload.attribute.name.lowercase()} attribute found for '${payload.selector}'."
+                    "No ${payload.attribute.name.lowercase()} attribute found for '${payload.selector}'.",
                 )
         }
     }

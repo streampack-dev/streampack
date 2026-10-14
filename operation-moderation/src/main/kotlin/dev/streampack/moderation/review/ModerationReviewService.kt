@@ -123,7 +123,7 @@ class ModerationReviewService(
                     windowEnd = excerpt.lastOrNull()?.timestamp ?: now,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         logger.info(
             "Moderation report {} for {} in {}: signals {}, verdict {}",
@@ -155,7 +155,7 @@ class ModerationReviewService(
                 .filter { log[it].content in signalLines }
                 .sortedWith(
                     compareByDescending<Int> { signalLines.getValue(log[it].content).weight }
-                        .thenByDescending { it }
+                        .thenByDescending { it },
                 )
                 .take(properties.reviewLines)
         val recent =

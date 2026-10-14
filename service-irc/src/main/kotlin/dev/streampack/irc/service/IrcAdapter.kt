@@ -483,7 +483,7 @@ class IrcAdapter(
         Thread.startVirtualThread {
             try {
                 eventGateway.send(
-                    loggingEvent(networkName, client.nick, channelName, content, actor, kind)
+                    loggingEvent(networkName, client.nick, channelName, content, actor, kind),
                 )
             } catch (e: Exception) {
                 logger.error("Error dispatching logging event on {}: {}", networkName, e.message)

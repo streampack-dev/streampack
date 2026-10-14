@@ -129,7 +129,10 @@ class AdminRssOpmlController(private val opmlService: RssOpmlService, jwtService
     private fun unauthorized(): ResponseEntity<ProblemDetail> =
         ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(
-                ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Authentication required")
+                ProblemDetail.forStatusAndDetail(
+                    HttpStatus.UNAUTHORIZED,
+                    "Authentication required",
+                ),
             )
 
     private fun forbidden(): ResponseEntity<ProblemDetail> =
@@ -138,6 +141,6 @@ class AdminRssOpmlController(private val opmlService: RssOpmlService, jwtService
                 ProblemDetail.forStatusAndDetail(
                     HttpStatus.FORBIDDEN,
                     "Insufficient privileges: requires ADMIN",
-                )
+                ),
             )
 }

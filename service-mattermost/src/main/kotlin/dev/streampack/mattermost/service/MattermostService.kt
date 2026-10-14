@@ -38,7 +38,7 @@ class MattermostService(
                         baseUrl = normalizeBaseUrl(baseUrl),
                         token = SecretRef.parse(token),
                         updatedAt = Instant.now(),
-                    )
+                    ),
                 )
             } else if (existing != null) {
                 existing
@@ -57,7 +57,7 @@ class MattermostService(
                             name = name,
                             baseUrl = normalizeBaseUrl(baseUrl!!),
                             token = SecretRef.parse(token!!),
-                        )
+                        ),
                 )
             }
 
@@ -137,7 +137,7 @@ class MattermostService(
                         channelId = channel.id,
                         teamId = channel.teamId,
                         channelType = channel.type,
-                    )
+                    ),
             )
         val private = channel.type != null && channel.type != "O"
         channelControlService.getOrCreateOptions(persisted.provenanceUri(), private = private)
@@ -278,7 +278,7 @@ class MattermostService(
             serverRepository.findByNameAndDeletedFalse(name)
                 ?: return "Error: Server '$name' not found"
         serverRepository.save(
-            server.copy(signalCharacter = signalCharacter, updatedAt = Instant.now())
+            server.copy(signalCharacter = signalCharacter, updatedAt = Instant.now()),
         )
         connectionManager.ifAvailable { it.updateSignal(name, signalCharacter) }
         return if (signalCharacter != null) {
@@ -335,7 +335,7 @@ class MattermostService(
                 "Channel '$cleaned' is registered on several teams; use the id: " +
                     byName.joinToString(", ") {
                         "${it.channelId}${it.teamId?.let { t -> " (team $t)" } ?: ""}"
-                    }
+                    },
             )
         }
         return byName.firstOrNull()

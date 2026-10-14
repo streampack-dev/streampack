@@ -37,7 +37,7 @@ class SoftDeleteCommentOperation(private val commentRepository: CommentRepositor
         logger.info("Comment soft-deleted: {}", comment.id)
 
         return OperationResult.Success(
-            ContentOperationConfirmation(id = comment.id, message = "Comment deleted")
+            ContentOperationConfirmation(id = comment.id, message = "Comment deleted"),
         )
     }
 }

@@ -45,7 +45,7 @@ class AdminCategoryControllerTests {
                     displayName = "Category Admin",
                     emailVerified = true,
                     role = Role.ADMIN,
-                )
+                ),
             )
         adminToken = jwtService.generateToken(adminUser.toUserPrincipal())
 
@@ -57,7 +57,7 @@ class AdminCategoryControllerTests {
                     displayName = "Regular User",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         regularUserToken = jwtService.generateToken(regularUser.toUserPrincipal())
     }

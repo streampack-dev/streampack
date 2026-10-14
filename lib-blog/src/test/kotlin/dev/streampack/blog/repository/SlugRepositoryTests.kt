@@ -26,7 +26,11 @@ class SlugRepositoryTests {
     fun setUp() {
         testPost =
             postRepository.save(
-                Post(title = "Test Post", markdownSource = "# Test", renderedHtml = "<h1>Test</h1>")
+                Post(
+                    title = "Test Post",
+                    markdownSource = "# Test",
+                    renderedHtml = "<h1>Test</h1>",
+                ),
             )
     }
 
@@ -59,14 +63,14 @@ class SlugRepositoryTests {
     fun `unique constraint on path`() {
         val otherPost =
             postRepository.save(
-                Post(title = "Other Post", markdownSource = "other", renderedHtml = "<p>other</p>")
+                Post(title = "Other Post", markdownSource = "other", renderedHtml = "<p>other</p>"),
             )
         slugRepository.save(Slug(path = "2026/02/test-post", post = testPost, canonical = true))
         slugRepository.flush()
 
         assertThrows(Exception::class.java) {
             slugRepository.save(
-                Slug(path = "2026/02/test-post", post = otherPost, canonical = false)
+                Slug(path = "2026/02/test-post", post = otherPost, canonical = false),
             )
             slugRepository.flush()
         }

@@ -74,7 +74,7 @@ class SlugGenerationServiceTests {
     fun `duplicate title produces suffixed slug`() {
         val post =
             postRepository.save(
-                Post(title = "Test", markdownSource = "md", renderedHtml = "<p>md</p>")
+                Post(title = "Test", markdownSource = "md", renderedHtml = "<p>md</p>"),
             )
         slugRepository.save(Slug(path = "2026/02/hello-world", post = post, canonical = true))
         slugRepository.flush()
@@ -87,7 +87,7 @@ class SlugGenerationServiceTests {
     fun `multiple collisions increment suffix`() {
         val post =
             postRepository.save(
-                Post(title = "Test", markdownSource = "md", renderedHtml = "<p>md</p>")
+                Post(title = "Test", markdownSource = "md", renderedHtml = "<p>md</p>"),
             )
         slugRepository.save(Slug(path = "2026/02/hello-world", post = post, canonical = true))
         slugRepository.save(Slug(path = "2026/02/hello-world-2", post = post, canonical = false))
@@ -114,7 +114,7 @@ class SlugGenerationServiceTests {
     fun `bare slug handles collision with suffix`() {
         val post =
             postRepository.save(
-                Post(title = "Test", markdownSource = "md", renderedHtml = "<p>md</p>")
+                Post(title = "Test", markdownSource = "md", renderedHtml = "<p>md</p>"),
             )
         slugRepository.save(Slug(path = "about", post = post, canonical = true))
         slugRepository.flush()

@@ -148,14 +148,14 @@ class SecretScrubber(properties: SecretScrubbingProperties = SecretScrubbingProp
                     // A pasted key may arrive a line at a time (IRC); the header alone is caught
                     Regex(
                         "-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY(?: BLOCK)?-----[\\s\\S]*?" +
-                            "(?:-----END (?:[A-Z0-9]+ )*PRIVATE KEY(?: BLOCK)?-----|\\z)"
+                            "(?:-----END (?:[A-Z0-9]+ )*PRIVATE KEY(?: BLOCK)?-----|\\z)",
                     ),
                 ),
                 SecretPattern(
                     "github-token",
                     "a GitHub token",
                     Regex(
-                        "$START(?:gh[pousr]_[A-Za-z0-9]{36,255}|github_pat_[A-Za-z0-9_]{22,255})$END"
+                        "$START(?:gh[pousr]_[A-Za-z0-9]{36,255}|github_pat_[A-Za-z0-9_]{22,255})$END",
                     ),
                 ),
                 SecretPattern(
@@ -167,14 +167,14 @@ class SecretScrubber(properties: SecretScrubbingProperties = SecretScrubbingProp
                     "slack-webhook",
                     "a Slack webhook URL",
                     Regex(
-                        "https://hooks\\.slack\\.com/(?:services|workflows|triggers)/[A-Za-z0-9/_\\-]+"
+                        "https://hooks\\.slack\\.com/(?:services|workflows|triggers)/[A-Za-z0-9/_\\-]+",
                     ),
                 ),
                 SecretPattern(
                     "slack-token",
                     "a Slack token",
                     Regex(
-                        "$START(?:xox[abposr]-[A-Za-z0-9\\-]{10,}|xapp-\\d-[A-Za-z0-9\\-]{10,})$END"
+                        "$START(?:xox[abposr]-[A-Za-z0-9\\-]{10,}|xapp-\\d-[A-Za-z0-9\\-]{10,})$END",
                     ),
                 ),
                 SecretPattern(
@@ -213,7 +213,7 @@ class SecretScrubber(properties: SecretScrubbingProperties = SecretScrubbingProp
                     "a Discord webhook URL",
                     Regex(
                         "https://(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com/api/webhooks/" +
-                            "\\d+/[A-Za-z0-9_\\-]+"
+                            "\\d+/[A-Za-z0-9_\\-]+",
                     ),
                 ),
                 SecretPattern(
@@ -221,7 +221,7 @@ class SecretScrubber(properties: SecretScrubbingProperties = SecretScrubbingProp
                     "a JSON web token",
                     Regex(
                         "${START}eyJ[A-Za-z0-9_\\-]{10,}\\.eyJ[A-Za-z0-9_\\-]{10,}" +
-                            "\\.[A-Za-z0-9_\\-]{10,}$END"
+                            "\\.[A-Za-z0-9_\\-]{10,}$END",
                     ),
                 ),
                 SecretPattern(
@@ -230,7 +230,7 @@ class SecretScrubber(properties: SecretScrubbingProperties = SecretScrubbingProp
                     // The first part is the bot's id in base64, which starts M, N or O
                     Regex(
                         "$START[MNO][A-Za-z0-9_\\-]{23,27}\\.[A-Za-z0-9_\\-]{6,7}" +
-                            "\\.[A-Za-z0-9_\\-]{27,40}$END"
+                            "\\.[A-Za-z0-9_\\-]{27,40}$END",
                     ),
                 ),
                 SecretPattern(
@@ -260,7 +260,7 @@ class SecretScrubber(properties: SecretScrubbingProperties = SecretScrubbingProp
                     // DB_PASSWORD=…, "api_key": "…", token: … — the key may carry a prefix
                     Regex(
                         "(?i)(?<![A-Za-z0-9])(?:[A-Za-z0-9]+[_.\\-])*(?:$ASSIGNMENT_KEYS)" +
-                            "[\"']?\\s*[:=]\\s*[\"']?([^\\s\"'`,;&<>]+)"
+                            "[\"']?\\s*[:=]\\s*[\"']?([^\\s\"'`,;&<>]+)",
                     ),
                     group = 1,
                     accept = { looksRandom(it) },

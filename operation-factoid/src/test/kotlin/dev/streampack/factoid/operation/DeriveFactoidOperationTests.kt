@@ -106,7 +106,7 @@ class DeriveFactoidOperationTests {
                 factoid = saved,
                 attributeType = FactoidAttributeType.TEXT,
                 attributeValue = text,
-            )
+            ),
         )
         tags?.let {
             attributeRepository.save(
@@ -114,7 +114,7 @@ class DeriveFactoidOperationTests {
                     factoid = saved,
                     attributeType = FactoidAttributeType.TAGS,
                     attributeValue = it,
-                )
+                ),
             )
         }
     }
@@ -143,7 +143,7 @@ class DeriveFactoidOperationTests {
                         user = user,
                     ),
                 )
-                .build()
+                .build(),
         )
     }
 
@@ -187,7 +187,7 @@ class DeriveFactoidOperationTests {
             ai.prompts
                 .single()
                 .contains(
-                    "Candidates for seeAlso (existing factoids the writing mentions): osgi, felix"
+                    "Candidates for seeAlso (existing factoids the writing mentions): osgi, felix",
                 ),
             ai.prompts.single(),
         )

@@ -232,7 +232,7 @@ class V72__tag_cleanup : BaseJavaMigration() {
                             if (aliased) "alias added" else null,
                             place,
                         )
-                        .joinToString(", ")
+                        .joinToString(", "),
             )
         }
 
@@ -269,7 +269,7 @@ class V72__tag_cleanup : BaseJavaMigration() {
             totalPosts += posts
             changed(
                 "$term removed: $posts posts, $factoidsChanged factoids, $places places" +
-                    if (stopped) ", stoplisted as '$key'" else ""
+                    if (stopped) ", stoplisted as '$key'" else "",
             )
         }
 

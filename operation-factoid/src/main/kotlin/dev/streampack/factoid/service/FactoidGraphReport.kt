@@ -75,7 +75,7 @@ class FactoidGraphReportService(
         val linksOf = selectors.associateWith { s -> seeAlso(s).map { it.lowercase() }.toSet() }
         val catalog =
             FactoidCatalog(
-                selectors.map { FactoidCatalogEntry(it, value(it, FactoidAttributeType.TEXT)) }
+                selectors.map { FactoidCatalogEntry(it, value(it, FactoidAttributeType.TEXT)) },
             )
         val matcher = FactoidMatcher(catalog, stopwords)
 

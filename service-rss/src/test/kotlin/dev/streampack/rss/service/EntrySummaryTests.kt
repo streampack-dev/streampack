@@ -16,8 +16,8 @@ class EntrySummaryTests {
             .build(
                 StringReader(
                     """<?xml version="1.0"?><rss version="2.0"><channel><title>F</title>
-                    <link>http://example.com</link><description>d</description>$item</channel></rss>"""
-                )
+                    <link>http://example.com</link><description>d</description>$item</channel></rss>""",
+                ),
             )
             .entries
             .single()
@@ -27,8 +27,8 @@ class EntrySummaryTests {
             .build(
                 StringReader(
                     """<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><title>F</title>
-                    <id>urn:f</id><updated>2026-01-01T00:00:00Z</updated>$entry</feed>"""
-                )
+                    <id>urn:f</id><updated>2026-01-01T00:00:00Z</updated>$entry</feed>""",
+                ),
             )
             .entries
             .single()
@@ -39,7 +39,7 @@ class EntrySummaryTests {
             rssEntry(
                 """<item><title>T</title><link>http://e/1</link><description><![CDATA[
                 <p>Hello <b>world</b> &amp; more.</p>
-                <p>Second   paragraph.</p>]]></description></item>"""
+                <p>Second   paragraph.</p>]]></description></item>""",
             )
 
         assertEquals("Hello world & more. Second paragraph.", EntrySummary.of(entry))
@@ -50,14 +50,14 @@ class EntrySummaryTests {
         val summarised =
             atomEntry(
                 """<entry><title>T</title><id>urn:1</id><updated>2026-01-01T00:00:00Z</updated>
-                <summary>The short version.</summary><content type="html">&lt;p&gt;The long version.&lt;/p&gt;</content></entry>"""
+                <summary>The short version.</summary><content type="html">&lt;p&gt;The long version.&lt;/p&gt;</content></entry>""",
             )
         assertEquals("The short version.", EntrySummary.of(summarised))
 
         val contentOnly =
             atomEntry(
                 """<entry><title>T</title><id>urn:2</id><updated>2026-01-01T00:00:00Z</updated>
-                <content type="html">&lt;p&gt;Only the &lt;em&gt;content&lt;/em&gt;.&lt;/p&gt;</content></entry>"""
+                <content type="html">&lt;p&gt;Only the &lt;em&gt;content&lt;/em&gt;.&lt;/p&gt;</content></entry>""",
             )
         assertEquals("Only the content.", EntrySummary.of(contentOnly))
     }
@@ -65,22 +65,22 @@ class EntrySummaryTests {
     @Test
     fun `nothing to say is no summary`() {
         assertNull(
-            EntrySummary.of(rssEntry("<item><title>T</title><link>http://e/1</link></item>"))
+            EntrySummary.of(rssEntry("<item><title>T</title><link>http://e/1</link></item>")),
         )
         assertNull(
             EntrySummary.of(
                 rssEntry(
-                    "<item><title>T</title><link>http://e/1</link><description>  <p> </p> </description></item>"
-                )
-            )
+                    "<item><title>T</title><link>http://e/1</link><description>  <p> </p> </description></item>",
+                ),
+            ),
         )
         // A description that only repeats the title says nothing more.
         assertNull(
             EntrySummary.of(
                 rssEntry(
-                    "<item><title>Same words</title><link>http://e/1</link><description>Same words</description></item>"
-                )
-            )
+                    "<item><title>Same words</title><link>http://e/1</link><description>Same words</description></item>",
+                ),
+            ),
         )
     }
 
@@ -90,8 +90,8 @@ class EntrySummaryTests {
         val summary =
             EntrySummary.of(
                 rssEntry(
-                    "<item><title>T</title><link>http://e/1</link><description>$words</description></item>"
-                )
+                    "<item><title>T</title><link>http://e/1</link><description>$words</description></item>",
+                ),
             )!!
 
         assertTrue(summary.length <= EntrySummary.MAX_LENGTH, "${summary.length}")

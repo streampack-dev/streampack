@@ -64,7 +64,7 @@ class CommentControllerDetachedSessionTests {
                     displayName = "Detached Comment Post Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         commenter =
             userRepository.saveAndFlush(
@@ -74,7 +74,7 @@ class CommentControllerDetachedSessionTests {
                     displayName = "Detached Commenter",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         val token = jwtService.generateToken(commenter!!.toUserPrincipal())
         post =
@@ -89,7 +89,7 @@ class CommentControllerDetachedSessionTests {
                     author = postAuthor,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         slug =
             slugRepository.saveAndFlush(
@@ -98,7 +98,7 @@ class CommentControllerDetachedSessionTests {
                     post = post!!,
                     canonical = true,
                     createdAt = now,
-                )
+                ),
             )
         entityManager.clear()
 
@@ -125,7 +125,7 @@ class CommentControllerDetachedSessionTests {
                     displayName = "Detached Edit Comment Post Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         commenter =
             userRepository.saveAndFlush(
@@ -135,7 +135,7 @@ class CommentControllerDetachedSessionTests {
                     displayName = "Detached Edit Commenter",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
         val token = jwtService.generateToken(commenter!!.toUserPrincipal())
         post =
@@ -150,7 +150,7 @@ class CommentControllerDetachedSessionTests {
                     author = postAuthor,
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         comment =
             commentRepository.saveAndFlush(
@@ -161,7 +161,7 @@ class CommentControllerDetachedSessionTests {
                     renderedHtml = "<p>Original comment.</p>",
                     createdAt = now,
                     updatedAt = now,
-                )
+                ),
             )
         entityManager.clear()
 

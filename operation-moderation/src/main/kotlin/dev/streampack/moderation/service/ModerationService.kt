@@ -212,7 +212,7 @@ class ModerationService(
                 actor = actor.username,
                 actorId = actor.id,
                 actedAt = now,
-            )
+            ),
         )
 
     private fun find(id: UUID): ModerationReport =

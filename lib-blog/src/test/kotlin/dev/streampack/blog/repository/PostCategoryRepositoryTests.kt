@@ -32,7 +32,7 @@ class PostCategoryRepositoryTests {
                     title = "Categorized Post",
                     markdownSource = "content",
                     renderedHtml = "<p>content</p>",
-                )
+                ),
             )
         testCategory = categoryRepository.save(Category(name = "JVM", slug = "jvm"))
     }
@@ -65,7 +65,7 @@ class PostCategoryRepositoryTests {
                     title = "Another Post",
                     markdownSource = "other",
                     renderedHtml = "<p>other</p>",
-                )
+                ),
             )
         postCategoryRepository.save(PostCategory(post = testPost, category = testCategory))
         postCategoryRepository.save(PostCategory(post = otherPost, category = testCategory))

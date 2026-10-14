@@ -61,9 +61,9 @@ class AdminModerationControllerTests {
                         displayName = username,
                         emailVerified = true,
                         role = role,
-                    )
+                    ),
                 )
-                .toUserPrincipal()
+                .toUserPrincipal(),
         )
 
     @BeforeEach
@@ -100,7 +100,7 @@ class AdminModerationControllerTests {
                         ),
                     windowStart = lines.first().timestamp,
                     windowEnd = lines.last().timestamp,
-                )
+                ),
             )
     }
 

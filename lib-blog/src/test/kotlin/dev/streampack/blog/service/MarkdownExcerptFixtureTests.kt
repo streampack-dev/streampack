@@ -58,7 +58,7 @@ class MarkdownExcerptFixtureTests {
         fun fixtureCases(): Stream<Arguments> {
             val rootUrl =
                 requireNotNull(
-                    MarkdownExcerptFixtureTests::class.java.classLoader.getResource("excerpts")
+                    MarkdownExcerptFixtureTests::class.java.classLoader.getResource("excerpts"),
                 ) {
                     "Missing excerpts fixture directory in test resources"
                 }

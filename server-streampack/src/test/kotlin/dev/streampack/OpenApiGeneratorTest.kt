@@ -83,7 +83,7 @@ class OpenApiGeneratorTest {
             reviewAlias
                 .at("/requestBody/content")
                 .toString()
-                .contains("#/components/schemas/TagReviewAliasRequest")
+                .contains("#/components/schemas/TagReviewAliasRequest"),
         ) {
             "POST /admin/tags/review/{id}/alias should take a TagReviewAliasRequest: $reviewAlias"
         }
@@ -95,7 +95,7 @@ class OpenApiGeneratorTest {
                 .toList()
         check(
             reviewAliasProperties == listOf("tag") &&
-                required("TagReviewAliasRequest") == listOf("tag")
+                required("TagReviewAliasRequest") == listOf("tag"),
         ) {
             "TagReviewAliasRequest is {tag}, required: $reviewAliasProperties"
         }
@@ -108,7 +108,8 @@ class OpenApiGeneratorTest {
             }
         }
         check(
-            root.at("/paths/~1admin~1tags~1review~1{id}/get/operationId").asText() == "getTagReview"
+            root.at("/paths/~1admin~1tags~1review~1{id}/get/operationId").asText() ==
+                "getTagReview",
         ) {
             "GET /admin/tags/review/{id} is getTagReview"
         }
@@ -124,7 +125,7 @@ class OpenApiGeneratorTest {
             page
                 .at("/responses/200/content")
                 .toString()
-                .contains("#/components/schemas/ContentDetail")
+                .contains("#/components/schemas/ContentDetail"),
         ) {
             "GET /pages/{slug} 200 should be a ContentDetail: ${page.at("/responses/200")}"
         }
@@ -132,7 +133,7 @@ class OpenApiGeneratorTest {
             page
                 .at("/responses/404/content")
                 .toString()
-                .contains("#/components/schemas/ProblemDetail")
+                .contains("#/components/schemas/ProblemDetail"),
         ) {
             "GET /pages/{slug} 404 should be a ProblemDetail: ${page.at("/responses/404")}"
         }

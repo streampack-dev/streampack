@@ -77,7 +77,7 @@ class TagAdminOperation(private val curation: TagCuration) : TypedOperation<Stri
                                 it.isNotEmpty()
                             }
                     OperationResult.Success(
-                        changed(curation.split(tag, parts.ifEmpty { null }, actor))
+                        changed(curation.split(tag, parts.ifEmpty { null }, actor)),
                     )
                 }
                 "keep" -> {
@@ -91,7 +91,7 @@ class TagAdminOperation(private val curation: TagCuration) : TypedOperation<Stri
                 "stop" -> {
                     val stop = curation.stop(rest, actor)
                     OperationResult.Success(
-                        "'${stop.term}' is stoplisted: it's dropped from tags written from now on."
+                        "'${stop.term}' is stoplisted: it's dropped from tags written from now on.",
                     )
                 }
                 "unstop" -> {
@@ -128,7 +128,7 @@ class TagAdminOperation(private val curation: TagCuration) : TypedOperation<Stri
         return OperationResult.Success(
             "Tag aliases: " +
                 all.take(LISTED).joinToString("; ") { "${it.alias} = ${it.tag}" } +
-                if (all.size > LISTED) " (and ${all.size - LISTED} more)" else ""
+                if (all.size > LISTED) " (and ${all.size - LISTED} more)" else "",
         )
     }
 
@@ -138,7 +138,7 @@ class TagAdminOperation(private val curation: TagCuration) : TypedOperation<Stri
         return OperationResult.Success(
             "Tag stoplist: " +
                 all.take(LISTED).joinToString(", ") { it.term } +
-                if (all.size > LISTED) " (and ${all.size - LISTED} more)" else ""
+                if (all.size > LISTED) " (and ${all.size - LISTED} more)" else "",
         )
     }
 

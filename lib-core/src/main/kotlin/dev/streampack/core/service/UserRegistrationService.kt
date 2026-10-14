@@ -39,7 +39,7 @@ class UserRegistrationService(
                     email = claim(email),
                     displayName = displayName,
                     role = role,
-                )
+                ),
             )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -48,7 +48,7 @@ class UserRegistrationService(
                 serviceId = serviceId,
                 externalIdentifier = externalIdentifier,
                 metadata = metadata,
-            )
+            ),
         )
         return user.toUserPrincipal()
     }
@@ -66,7 +66,7 @@ class UserRegistrationService(
                     username = externalIdentifier,
                     displayName = externalIdentifier,
                     role = Role.GUEST,
-                )
+                ),
             )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -74,7 +74,7 @@ class UserRegistrationService(
                 protocol = protocol,
                 serviceId = serviceId,
                 externalIdentifier = externalIdentifier,
-            )
+            ),
         )
         return user.toUserPrincipal()
     }
@@ -95,7 +95,7 @@ class UserRegistrationService(
                     displayName = displayName,
                     role = role,
                     emailVerified = true,
-                )
+                ),
             )
         return user.toUserPrincipal()
     }
@@ -118,7 +118,7 @@ class UserRegistrationService(
         val binding =
             serviceBindingRepository.resolve(protocol, serviceId, externalIdentifier)
                 ?: throw IllegalArgumentException(
-                    "No binding found for $protocol/$serviceId/$externalIdentifier"
+                    "No binding found for $protocol/$serviceId/$externalIdentifier",
                 )
         serviceBindingRepository.delete(binding)
     }
@@ -143,7 +143,7 @@ class UserRegistrationService(
                 serviceId = serviceId,
                 externalIdentifier = externalIdentifier,
                 metadata = metadata,
-            )
+            ),
         )
     }
 }

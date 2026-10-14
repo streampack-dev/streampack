@@ -62,7 +62,7 @@ class IrcAdminOperationTests {
     fun `irc connect without SUPER_ADMIN returns error`() {
         val result =
             eventGateway.process(
-                ircMessage("irc connect libera irc.libera.chat nevet", regularUser)
+                ircMessage("irc connect libera irc.libera.chat nevet", regularUser),
             )
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue((result as OperationResult.Error).message.contains("SUPER_ADMIN"))
@@ -102,7 +102,7 @@ class IrcAdminOperationTests {
         val result = eventGateway.process(ircMessage("irc"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue(
-            (result as OperationResult.Success).payload.toString().contains("IRC Admin Commands")
+            (result as OperationResult.Success).payload.toString().contains("IRC Admin Commands"),
         )
     }
 
@@ -219,7 +219,7 @@ class IrcAdminOperationTests {
     fun `irc connect with SASL credentials returns success`() {
         val result =
             eventGateway.process(
-                ircMessage("irc connect libera irc.libera.chat nevet myaccount mypassword")
+                ircMessage("irc connect libera irc.libera.chat nevet myaccount mypassword"),
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
     }

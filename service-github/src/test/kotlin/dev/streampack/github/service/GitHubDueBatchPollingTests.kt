@@ -38,7 +38,7 @@ import org.springframework.messaging.support.MessageBuilder
             "streampack.github.batch-size=2",
             "streampack.github.poll-interval=PT1H",
             "streampack.github.max-backoff=PT4H",
-        ]
+        ],
 )
 @ResetDatabaseBeforeEach
 @Import(TestSecurityConfiguration::class)
@@ -101,7 +101,7 @@ class GitHubDueBatchPollingTests {
                 name = name,
                 nextPollAt = dueAt,
                 lastPolledAt = dueAt.minusSeconds(3600),
-            )
+            ),
         )
     }
 
@@ -139,7 +139,7 @@ class GitHubDueBatchPollingTests {
                 name = "hooked",
                 deliveryMode = dev.streampack.forge.model.DeliveryMode.WEBHOOK,
                 nextPollAt = now.minusSeconds(1),
-            )
+            ),
         )
 
         assertEquals(1, pollingService.pollDue(now))

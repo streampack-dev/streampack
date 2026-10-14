@@ -35,7 +35,7 @@ class FactoidWikiLinkResolverServiceTests {
                 attributeType = FactoidAttributeType.TEXT,
                 attributeValue = "thing is a thing",
                 updatedBy = "test",
-            )
+            ),
         )
         factoidAttributeRepository.save(
             FactoidAttribute(
@@ -43,7 +43,7 @@ class FactoidWikiLinkResolverServiceTests {
                 attributeType = FactoidAttributeType.URLS,
                 attributeValue = "https://thing.com",
                 updatedBy = "test",
-            )
+            ),
         )
 
         val resolved = resolver.resolve("thing")
@@ -61,7 +61,7 @@ class FactoidWikiLinkResolverServiceTests {
                 attributeType = FactoidAttributeType.URLS,
                 attributeValue = "javascript:alert(1)",
                 updatedBy = "test",
-            )
+            ),
         )
         val resolved = resolver.resolve("thing")
         assertNull(resolved?.href)

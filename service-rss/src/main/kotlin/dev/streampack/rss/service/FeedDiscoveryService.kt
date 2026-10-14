@@ -184,7 +184,7 @@ class FeedDiscoveryService(private val fetcher: GuardedFetcher) {
                     "link[rel~=alternate][type*=rss+xml], " +
                         "link[rel~=alternate][type*=atom+xml], " +
                         "link[rel~=alternate][type*=application/xml], " +
-                        "link[rel~=alternate][type*=text/xml]"
+                        "link[rel~=alternate][type*=text/xml]",
                 )
                 .filter { it.absUrl("href").isNotBlank() }
                 .partition { isCommentsLink(it.absUrl("href"), it.attr("title")) }

@@ -53,7 +53,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
             "status" -> handleStatus(tokens.drop(1))
             else ->
                 OperationResult.Error(
-                    "Unknown Mattermost subcommand '$subcommand'. Use 'mattermost' for available commands."
+                    "Unknown Mattermost subcommand '$subcommand'. Use 'mattermost' for available commands.",
                 )
         }
     }
@@ -108,7 +108,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
     private fun handleAutojoin(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: mattermost autojoin <server> <channel-id-or-name> <true|false>"
+                "Usage: mattermost autojoin <server> <channel-id-or-name> <true|false>",
             )
         }
         val enabled =
@@ -134,7 +134,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
     private fun handleAutomute(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: mattermost automute <server> <channel-id-or-name> <true|false>"
+                "Usage: mattermost automute <server> <channel-id-or-name> <true|false>",
             )
         }
         val enabled =
@@ -146,7 +146,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
     private fun handleVisible(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: mattermost visible <server> <channel-id-or-name> <true|false>"
+                "Usage: mattermost visible <server> <channel-id-or-name> <true|false>",
             )
         }
         val enabled =
@@ -158,7 +158,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
     private fun handleLogged(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: mattermost logged <server> <channel-id-or-name> <true|false>"
+                "Usage: mattermost logged <server> <channel-id-or-name> <true|false>",
             )
         }
         val enabled =
@@ -170,7 +170,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
     private fun handleModerated(args: List<String>): OperationResult {
         if (args.size < 3) {
             return OperationResult.Error(
-                "Usage: mattermost moderated <server> <channel-id-or-name> <true|false>"
+                "Usage: mattermost moderated <server> <channel-id-or-name> <true|false>",
             )
         }
         val enabled =
@@ -182,7 +182,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
     private fun handleSignal(args: List<String>): OperationResult {
         if (args.isEmpty()) {
             return OperationResult.Error(
-                "Usage: mattermost signal <name> [character]  (omit character to reset)"
+                "Usage: mattermost signal <name> [character]  (omit character to reset)",
             )
         }
         return toResult(mattermostService.setSignal(args[0], args.getOrNull(1)))

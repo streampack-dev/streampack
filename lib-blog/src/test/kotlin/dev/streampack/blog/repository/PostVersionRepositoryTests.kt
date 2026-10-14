@@ -39,7 +39,7 @@ class PostVersionRepositoryTests {
     fun setUp() {
         author =
             userRepository.save(
-                User(username = "reader", email = "reader@test.com", displayName = "The Reader")
+                User(username = "reader", email = "reader@test.com", displayName = "The Reader"),
             )
         published = post("Published", PostStatus.APPROVED, Instant.now().minus(1, ChronoUnit.DAYS))
     }
@@ -59,7 +59,7 @@ class PostVersionRepositoryTests {
                 publishedAt = publishedAt,
                 author = author,
                 deleted = deleted,
-            )
+            ),
         )
 
     private fun version(
@@ -80,7 +80,7 @@ class PostVersionRepositoryTests {
                 sourceHash = "a".repeat(64),
                 contentHash = "b".repeat(64),
                 storageKey = "ab/${UUID.randomUUID()}",
-            )
+            ),
         )
 
     @Test
@@ -128,7 +128,7 @@ class PostVersionRepositoryTests {
                 PostStatus.APPROVED,
                 Instant.now().minus(2, ChronoUnit.DAYS),
                 deleted = true,
-            )
+            ),
         )
 
         val found = versionRepository.findPublishedByKind(PostVersion.KIND_AUDIO, Instant.now())

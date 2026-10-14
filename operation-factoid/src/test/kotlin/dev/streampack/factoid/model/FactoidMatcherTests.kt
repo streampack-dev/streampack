@@ -9,7 +9,7 @@ class FactoidMatcherTests {
     private fun catalog(vararg selectors: String, untexted: List<String> = emptyList()) =
         FactoidCatalog(
             selectors.map { FactoidCatalogEntry(it, "$it is something.") } +
-                untexted.map { FactoidCatalogEntry(it, null) }
+                untexted.map { FactoidCatalogEntry(it, null) },
         )
 
     private fun FactoidMatcher.selectors(text: String) = find(text).map { it.selector }
@@ -66,13 +66,13 @@ class FactoidMatcherTests {
                     "idea",
                     "kotlin",
                     untexted = listOf("node"),
-                )
+                ),
             )
 
         assertEquals(
             listOf("kotlin"),
             matcher.selectors(
-                "In Java 65 is class files; ask why; the idea is to go with node and Kotlin."
+                "In Java 65 is class files; ask why; the idea is to go with node and Kotlin.",
             ),
         )
     }

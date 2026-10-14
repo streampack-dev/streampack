@@ -82,7 +82,7 @@ class IrcSecretRefStartupGuard(
 
         printFailure(migrationExports, validationErrors)
         throw SilentStartupException(
-            "IRC secret externalization required. Add env vars shown above and restart."
+            "IRC secret externalization required. Add env vars shown above and restart.",
         )
     }
 

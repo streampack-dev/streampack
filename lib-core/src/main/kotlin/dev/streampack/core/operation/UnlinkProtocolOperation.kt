@@ -82,7 +82,7 @@ class UnlinkProtocolOperation(
                 externalIdentifier = payload.externalIdentifier,
             )
             OperationResult.Success(
-                "Unlinked ${payload.externalIdentifier} from ${payload.username}"
+                "Unlinked ${payload.externalIdentifier} from ${payload.username}",
             )
         } catch (e: Exception) {
             logger.warn("Failed to unlink protocol for user {}: {}", payload.username, e.message)

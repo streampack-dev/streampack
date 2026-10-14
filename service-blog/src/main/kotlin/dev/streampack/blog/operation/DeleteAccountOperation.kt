@@ -75,7 +75,7 @@ class DeleteAccountOperation(
                     displayName = "[deleted]",
                     status = UserStatus.ERASED,
                     role = Role.GUEST,
-                )
+                ),
             )
 
         // Reassign content to sentinel before deleting the original user

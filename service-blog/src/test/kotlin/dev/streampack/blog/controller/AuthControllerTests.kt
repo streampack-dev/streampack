@@ -77,7 +77,7 @@ class AuthControllerTests {
         expiresAt: Instant = Instant.now().plusSeconds(300),
     ) {
         oneTimeCodeRepository.saveAndFlush(
-            OneTimeCode(recipient = email, code = code, expiresAt = expiresAt)
+            OneTimeCode(recipient = email, code = code, expiresAt = expiresAt),
         )
     }
 
@@ -164,12 +164,12 @@ class AuthControllerTests {
         assertTrue(
             setCookieHeaders.any {
                 it.contains(CookieService.ACCESS_TOKEN_COOKIE) && it.contains("HttpOnly")
-            }
+            },
         )
         assertTrue(
             setCookieHeaders.any {
                 it.contains(CookieService.REFRESH_TOKEN_COOKIE) && it.contains("HttpOnly")
-            }
+            },
         )
     }
 
@@ -262,12 +262,12 @@ class AuthControllerTests {
         assertTrue(
             setCookieHeaders.any {
                 it.contains(CookieService.ACCESS_TOKEN_COOKIE) && it.contains("Max-Age=0")
-            }
+            },
         )
         assertTrue(
             setCookieHeaders.any {
                 it.contains(CookieService.REFRESH_TOKEN_COOKIE) && it.contains("Max-Age=0")
-            }
+            },
         )
     }
 
@@ -275,7 +275,7 @@ class AuthControllerTests {
     fun `logout revokes refresh tokens`() {
         val rawRefreshToken = refreshTokenService.issueToken(testUser.id)
         assertNotNull(
-            refreshTokenRepository.findByTokenHash(RefreshTokenService.sha256(rawRefreshToken))
+            refreshTokenRepository.findByTokenHash(RefreshTokenService.sha256(rawRefreshToken)),
         )
 
         mockMvc
@@ -285,7 +285,7 @@ class AuthControllerTests {
             .andExpect { status { isNoContent() } }
 
         assertNull(
-            refreshTokenRepository.findByTokenHash(RefreshTokenService.sha256(rawRefreshToken))
+            refreshTokenRepository.findByTokenHash(RefreshTokenService.sha256(rawRefreshToken)),
         )
     }
 
@@ -311,12 +311,12 @@ class AuthControllerTests {
         assertTrue(
             setCookieHeaders.any {
                 it.contains(CookieService.ACCESS_TOKEN_COOKIE) && it.contains("HttpOnly")
-            }
+            },
         )
         assertTrue(
             setCookieHeaders.any {
                 it.contains(CookieService.REFRESH_TOKEN_COOKIE) && it.contains("HttpOnly")
-            }
+            },
         )
     }
 

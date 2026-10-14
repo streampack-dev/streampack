@@ -85,7 +85,7 @@ class ExportUserDataOperationTests {
                     markdownSource = "content",
                     renderedHtml = "<p>content</p>",
                     author = author,
-                )
+                ),
             )
         commentRepository.saveAndFlush(
             Comment(
@@ -93,7 +93,7 @@ class ExportUserDataOperationTests {
                 author = author,
                 markdownSource = "my comment",
                 renderedHtml = "<p>my comment</p>",
-            )
+            ),
         )
 
         val result = eventGateway.process(exportMessage(asUser = regularUser))

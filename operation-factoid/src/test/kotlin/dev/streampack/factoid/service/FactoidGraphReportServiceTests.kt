@@ -24,7 +24,7 @@ class FactoidGraphReportServiceTests {
         val saved = factoidRepository.save(Factoid(selector = selector, updatedBy = "test"))
         attributes.forEach { (type, value) ->
             attributeRepository.save(
-                FactoidAttribute(factoid = saved, attributeType = type, attributeValue = value)
+                FactoidAttribute(factoid = saved, attributeType = type, attributeValue = value),
             )
         }
     }
@@ -86,7 +86,7 @@ class FactoidGraphReportServiceTests {
     fun `see-also to factoids that don't exist`() {
         assertEquals(
             listOf(
-                FactoidGraphReport.SeeAlsoToNothing("comprehension debt", listOf("technical debt"))
+                FactoidGraphReport.SeeAlsoToNothing("comprehension debt", listOf("technical debt")),
             ),
             service.report().seeAlsoToNothing,
         )

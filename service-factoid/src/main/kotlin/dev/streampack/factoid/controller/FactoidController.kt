@@ -440,7 +440,7 @@ class FactoidController(
     }
 
     private fun Factoid.toSummary(
-        summaries: Map<String, dev.streampack.factoid.service.FactoidService.FactoidListSummary>
+        summaries: Map<String, dev.streampack.factoid.service.FactoidService.FactoidListSummary>,
     ) =
         FactoidSummaryResponse(
             selector = selector,

@@ -71,7 +71,7 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
             is RemoveFeedOutcome.Removed ->
                 OperationResult.Success(
                     "Removed feed \"${outcome.feed.title}\" " +
-                        "(${outcome.subscriptionsDeactivated} subscriptions deactivated)"
+                        "(${outcome.subscriptionsDeactivated} subscriptions deactivated)",
                 )
             is RemoveFeedOutcome.FeedNotFound ->
                 OperationResult.Error("No registered feed found for ${outcome.url}")

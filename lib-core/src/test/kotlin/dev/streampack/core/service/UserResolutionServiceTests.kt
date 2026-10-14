@@ -32,7 +32,7 @@ class UserResolutionServiceTests {
                     username = "testuser",
                     email = "testuser@example.com",
                     displayName = "Test User",
-                )
+                ),
             )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -40,7 +40,7 @@ class UserResolutionServiceTests {
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
                 externalIdentifier = "~testuser@example.com/testuser",
-            )
+            ),
         )
 
         val principal =
@@ -73,7 +73,7 @@ class UserResolutionServiceTests {
                     email = "erased@test.com",
                     displayName = "Erased User",
                     status = UserStatus.ERASED,
-                )
+                ),
             )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -81,7 +81,7 @@ class UserResolutionServiceTests {
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
                 externalIdentifier = "ghost",
-            )
+            ),
         )
 
         val principal = userResolutionService.resolve(Protocol.IRC, "ircservice", "ghost")
@@ -93,11 +93,11 @@ class UserResolutionServiceTests {
     fun `resolves correct user when multiple bindings exist`() {
         val user1 =
             userRepository.saveAndFlush(
-                User(username = "alice", email = "alice@test.com", displayName = "Alice")
+                User(username = "alice", email = "alice@test.com", displayName = "Alice"),
             )
         val user2 =
             userRepository.saveAndFlush(
-                User(username = "bob", email = "bob@test.com", displayName = "Bob")
+                User(username = "bob", email = "bob@test.com", displayName = "Bob"),
             )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -105,7 +105,7 @@ class UserResolutionServiceTests {
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
                 externalIdentifier = "~alice@example.com/alice",
-            )
+            ),
         )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -113,7 +113,7 @@ class UserResolutionServiceTests {
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
                 externalIdentifier = "~bob@example.com/bob",
-            )
+            ),
         )
 
         val principal =
@@ -132,7 +132,7 @@ class UserResolutionServiceTests {
                     username = "testuser",
                     email = "testuser@example.com",
                     displayName = "Test User",
-                )
+                ),
             )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -140,7 +140,7 @@ class UserResolutionServiceTests {
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
                 externalIdentifier = "~testuser@example.com/testuser",
-            )
+            ),
         )
         serviceBindingRepository.saveAndFlush(
             ServiceBinding(
@@ -148,7 +148,7 @@ class UserResolutionServiceTests {
                 protocol = Protocol.DISCORD,
                 serviceId = "jvm-community",
                 externalIdentifier = "testuser#1234",
-            )
+            ),
         )
 
         val fromIrc =

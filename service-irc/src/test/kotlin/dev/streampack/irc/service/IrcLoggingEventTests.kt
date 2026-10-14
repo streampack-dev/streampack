@@ -44,7 +44,7 @@ class IrcLoggingEventTests {
                 channel,
                 "* pebble joined $channel",
                 "pebble",
-            )
+            ),
         )
 
         assertEquals(listOf("pebble" to "* pebble joined $channel"), logged(channel))
@@ -61,7 +61,7 @@ class IrcLoggingEventTests {
                 channel,
                 "* someone changed the topic to: hello",
                 null,
-            )
+            ),
         )
 
         assertEquals(listOf("unknown" to "* someone changed the topic to: hello"), logged(channel))
@@ -80,7 +80,7 @@ class IrcLoggingEventTests {
                 "* pebble quit (bye)",
                 "pebble",
                 MessageKind.QUIT,
-            )
+            ),
         )
 
         val uri =

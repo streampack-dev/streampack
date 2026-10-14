@@ -74,9 +74,9 @@ class FeedTagTaxonomyTests {
         feedTags.record(
             synd.entries.map {
                 entries.save(
-                    RssEntry(feed = feed, guid = it.uri, link = it.link, title = it.title)
+                    RssEntry(feed = feed, guid = it.uri, link = it.link, title = it.title),
                 ) to it
-            }
+            },
         )
     }
 

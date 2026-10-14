@@ -51,7 +51,7 @@ object Cvss {
         if (impact <= 0) return 0.0
         val exploitability = 8.22 * av * ac * pr * ui
         return roundUp(
-            min(if (changed) 1.08 * (impact + exploitability) else impact + exploitability, 10.0)
+            min(if (changed) 1.08 * (impact + exploitability) else impact + exploitability, 10.0),
         )
     }
 

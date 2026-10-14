@@ -13,13 +13,13 @@ interface ChannelControlOptionsRepository : JpaRepository<ChannelControlOptions,
 
     /** All active/logged channel controls, including hidden entries (admin view). */
     @Query(
-        "SELECT c FROM ChannelControlOptions c WHERE c.deleted = false AND c.active = true AND c.logged = true"
+        "SELECT c FROM ChannelControlOptions c WHERE c.deleted = false AND c.active = true AND c.logged = true",
     )
     fun findBrowsableChannelsForAdmin(): List<ChannelControlOptions>
 
     /** Active/logged/visible channel controls (non-admin and anonymous view). */
     @Query(
-        "SELECT c FROM ChannelControlOptions c WHERE c.deleted = false AND c.active = true AND c.logged = true AND c.visible = true"
+        "SELECT c FROM ChannelControlOptions c WHERE c.deleted = false AND c.active = true AND c.logged = true AND c.visible = true",
     )
     fun findBrowsableChannelsForUser(): List<ChannelControlOptions>
 }

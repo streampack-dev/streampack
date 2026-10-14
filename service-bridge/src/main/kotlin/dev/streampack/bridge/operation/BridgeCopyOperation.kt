@@ -49,7 +49,7 @@ class BridgeCopyOperation(
                     .setHeader(
                         Provenance.HEADER,
                         targetProvenance.copy(
-                            metadata = targetProvenance.metadata + (Provenance.BRIDGED to true)
+                            metadata = targetProvenance.metadata + (Provenance.BRIDGED to true),
                         ),
                     )
                     .build()

@@ -35,9 +35,9 @@ class AdminFactoidControllerTests {
                         displayName = username,
                         emailVerified = true,
                         role = role,
-                    )
+                    ),
                 )
-                .toUserPrincipal()
+                .toUserPrincipal(),
         )
 
     @Test

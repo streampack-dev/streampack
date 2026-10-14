@@ -64,9 +64,9 @@ class MattermostAdapter(
                         HttpClient.newBuilder()
                             .version(HttpClient.Version.HTTP_1_1)
                             .connectTimeout(Duration.ofSeconds(10))
-                            .build()
+                            .build(),
                     )
-                    .apply { setReadTimeout(Duration.ofSeconds(30)) }
+                    .apply { setReadTimeout(Duration.ofSeconds(30)) },
             )
             .baseUrl(normalizedBaseUrl)
             .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer $token")
@@ -273,7 +273,7 @@ class MattermostAdapter(
             exactMatches.size == 1 -> exactMatches.first()
             exactMatches.size > 1 ->
                 throw IllegalArgumentException(
-                    "Ambiguous channel '$query': ${exactMatches.joinToString { it.summary() }}"
+                    "Ambiguous channel '$query': ${exactMatches.joinToString { it.summary() }}",
                 )
             channels.size == 1 -> channels.first()
             else -> null
@@ -502,7 +502,7 @@ class MattermostAdapter(
                         "seq" to seq.getAndIncrement(),
                         "action" to "authentication_challenge",
                         "data" to mapOf("token" to token),
-                    )
+                    ),
                 )
             webSocket.sendText(authMessage, true)
             webSocket.request(1)

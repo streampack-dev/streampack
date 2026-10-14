@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Import
             "streampack.gitlab.batch-size=2",
             "streampack.gitlab.poll-interval=PT1H",
             "streampack.gitlab.max-backoff=PT4H",
-        ]
+        ],
 )
 @ResetDatabaseBeforeEach
 @Import(TestSecurityConfiguration::class)
@@ -51,7 +51,7 @@ class GitLabDueBatchPollingTests {
         instanceRepository.save(
             store
                 .defaultInstance()
-                .copy(apiUrl = "http://localhost:${httpServer.address.port}/api/v4")
+                .copy(apiUrl = "http://localhost:${httpServer.address.port}/api/v4"),
         )
     }
 
@@ -88,7 +88,7 @@ class GitLabDueBatchPollingTests {
                 projectId = path.hashCode().toLong(),
                 nextPollAt = dueAt,
                 lastPolledAt = dueAt.minusSeconds(3600),
-            )
+            ),
         )
     }
 

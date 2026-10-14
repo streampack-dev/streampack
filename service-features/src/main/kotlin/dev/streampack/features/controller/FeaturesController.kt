@@ -80,8 +80,8 @@ class FeaturesController(
                     codeChannels =
                         codeDeliveries
                             .sortedBy { it.channel.name }
-                            .map { CodeChannelFeature(it.channel.wireName(), it.servers()) }
-                )
+                            .map { CodeChannelFeature(it.channel.wireName(), it.servers()) },
+                ),
         )
 
     private fun buildResponse(): FeaturesResponse {

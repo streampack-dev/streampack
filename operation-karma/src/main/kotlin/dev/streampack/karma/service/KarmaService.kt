@@ -32,7 +32,7 @@ class KarmaService(
             repository.save(existing.copy(delta = existing.delta + increment))
         } else {
             repository.save(
-                KarmaRecord(subject = normalized, recordDate = today, delta = increment)
+                KarmaRecord(subject = normalized, recordDate = today, delta = increment),
             )
         }
         return getKarma(subject)

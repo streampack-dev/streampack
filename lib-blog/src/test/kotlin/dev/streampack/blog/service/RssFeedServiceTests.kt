@@ -40,7 +40,7 @@ class RssFeedServiceTests {
                     displayName = "Feed Author",
                     emailVerified = true,
                     role = Role.USER,
-                )
+                ),
             )
     }
 
@@ -65,7 +65,7 @@ class RssFeedServiceTests {
                     author = author,
                     deleted = deleted,
                     sortOrder = sortOrder,
-                )
+                ),
             )
         slugRepository.save(Slug(path = slug, post = post, canonical = true))
         return post

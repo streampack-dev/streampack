@@ -105,7 +105,7 @@ class AdminCommentController(
                         ProblemDetail.forStatusAndDetail(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             "Unhandled request",
-                        )
+                        ),
                     )
             }
         }
