@@ -5,6 +5,8 @@ import dev.streampack.ai.config.AiProperties
 import dev.streampack.ai.service.AiService
 import dev.streampack.ai.service.AiStructuredResponse
 import dev.streampack.core.integration.EventGateway
+import dev.streampack.core.model.LoggingRequest
+import dev.streampack.core.model.MessageKind
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.repository.MessageLogRepository
@@ -269,6 +271,40 @@ class ModerationReviewServiceTests {
         assertEquals(0.0, scores.scoreOf(channelUri, "troll"))
         assertTrue(review.review().isEmpty())
         assertTrue(ai.calls.isEmpty())
+    }
+
+    /** A channel event, as IRC sends one: logged, but not said. */
+    private fun event(nick: String, text: String, kind: MessageKind) {
+        eventGateway.send(
+            MessageBuilder.withPayload(LoggingRequest(text, kind) as Any)
+                .setHeader(
+                    Provenance.HEADER,
+                    Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = channel),
+                )
+                .setHeader("nick", nick)
+                .build()
+        )
+    }
+
+    @Test
+    fun `joining and parting over and over is not repetition, nor reviewed`() {
+        repeat(6) {
+            event("flappy", "* flappy joined $channel", MessageKind.JOIN)
+            event("flappy", "* flappy left $channel (Ping timeout)", MessageKind.PART)
+        }
+        event("flappy", "* flappy quit (Quit: bye)", MessageKind.QUIT)
+        event("flappy", "* flappy is now known as flappy_", MessageKind.NICK)
+
+        assertEquals(0.0, scores.scoreOf(channelUri, "flappy"))
+        assertTrue(review.review().isEmpty())
+        assertTrue(ai.calls.isEmpty())
+    }
+
+    @Test
+    fun `saying the same line over and over still counts as repetition`() {
+        repeat(4) { say("echo", "join my server at example.com") }
+
+        assertTrue(scores.scoreOf(channelUri, "echo") > 0.0)
     }
 
     @Test
