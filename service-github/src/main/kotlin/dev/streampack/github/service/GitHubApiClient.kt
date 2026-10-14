@@ -257,9 +257,16 @@ class GitHubApiClient(properties: GitHubProperties) {
         }
     }
 
+    /** Every hub4j call's connector: the configured connect timeout, and a deadline (#219) */
+    private val connector =
+        TimedGitHubConnector(
+            Duration.ofSeconds(properties.connectTimeoutSeconds.toLong()),
+            Duration.ofSeconds(properties.readTimeoutSeconds.toLong()),
+        )
+
     /** Build a GitHub client for [apiUrl] with an optional token */
     private fun connect(apiUrl: String, token: String?): GitHub {
-        val builder = GitHubBuilder().withEndpoint(apiUrl)
+        val builder = GitHubBuilder().withEndpoint(apiUrl).withConnector(connector)
         if (!token.isNullOrBlank()) {
             builder.withOAuthToken(token)
         }
