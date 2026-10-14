@@ -62,9 +62,11 @@ This reference covers the variables commonly used by `server-streampack`.
 | `GITLAB_<HOST>_<PATH>_TOKEN` | Per project | The same, for a project on a self-hosted instance, e.g. `GITLAB_GITLAB_EXAMPLE_COM_GROUP_PROJECT_TOKEN`. |
 | `GITLAB_INSTANCE_<HOST>_TOKEN` | Per instance | Default API token for every project on a registered GitLab instance that has no token of its own. |
 | `ANTHROPIC_API_KEY` | Optional | Anthropic API key. |
+| `DICTIONARY_TIMEOUT` | Optional | How long `define` waits for each dictionary before asking the next (default `3s`). See [operation-dictionary](../../operation-dictionary/README.md). |
+| `DICTIONARY_BREAK_FOR` | Optional | How long a dictionary that failed is skipped before it is asked again (default `15m`). |
 | `AI_ENABLED` | Optional | Enables AI-backed features. |
 | `AI_MODEL` | Optional | The Anthropic model for AI features: ask, summaries, derived factoids, poetry (default `claude-opus-5-5`). |
-| `AI_MODERATION_MODEL` | Optional | A cheaper model for high-volume or background work, such as abuse detection (default `claude-haiku-4-5-20251001`). It shares the timeout, retries and token limit, but not `AI_THINKING` or `AI_EFFORT`, which apply to `AI_MODEL` only (Haiku 4.5 refuses an effort). |
+| `AI_MODERATION_MODEL` | Optional | A cheaper model for high-volume or background work, such as abuse detection and `define`'s last-resort definitions (default `claude-haiku-4-5-20251001`). It shares the timeout, retries and token limit, but not `AI_THINKING` or `AI_EFFORT`, which apply to `AI_MODEL` only (Haiku 4.5 refuses an effort). |
 | `AI_MAX_TOKENS` | Optional | The most tokens an answer may have (default `1024`). |
 | `AI_TIMEOUT` | Optional | How long one call to the model may take before it fails and is logged, a duration such as `60s` (default `60s`). |
 | `AI_MAX_RETRIES` | Optional | How often a failed call is tried again (default `1`). |

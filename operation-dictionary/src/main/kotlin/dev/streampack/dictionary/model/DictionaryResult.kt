@@ -1,14 +1,14 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.dictionary.model
 
+/**
+ * A definition and the credit its source asks for, e.g. "(Wiktionary via FreeDictionaryAPI.com, CC
+ * BY-SA 4.0: https://en.wiktionary.org/wiki/ephemeral)". The credit goes everywhere the definition
+ * does, the factoid it's cached as included.
+ */
 data class DictionaryResult(
     val word: String,
     val partOfSpeech: String,
     val definition: String,
-    val sourceUrl: String,
-    val license: String,
-) {
-    /** The attribution CC BY-SA asks for: where the definition came from, and under what license */
-    val credit: String
-        get() = "Source: $sourceUrl (Wiktionary, $license)"
-}
+    val credit: String,
+)

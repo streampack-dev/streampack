@@ -1,70 +1,109 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.dictionary.service
 
-import dev.streampack.core.json.JacksonMappers
-import dev.streampack.core.service.PageFetcher
 import dev.streampack.dictionary.model.DictionaryResult
-import java.net.URLEncoder
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
-/** Fetches word definitions from the Free Dictionary API */
+/**
+ * Looks a word up in each [DictionaryProvider] in turn (#202). The first that finds the word, or
+ * says there's no such word, settles it. Wiktionary is case-sensitive ("JSON", "Kubernetes",
+ * "ephemeral"), so each provider is asked for the word as typed, then lowercase, Capitalized and
+ * UPPERCASE, until one is found; it says there's no such word only when none is. One that fails
+ * (down, slow, limited, garbled) is skipped for [breakFor], 15 minutes by default
+ * (`streampack.dictionary.break-for`), so an outage costs one timeout rather than one per lookup.
+ * Tripping and recovering are logged at WARN, so an outage is noticed.
+ */
 @Service
-open class DictionaryLookupService(private val pageFetcher: PageFetcher) {
+open class DictionaryLookupService(
+    providers: List<DictionaryProvider>,
+    private val breakFor: Duration,
+    private val clock: Clock,
+) {
+    @Autowired
+    constructor(
+        providers: List<DictionaryProvider>,
+        @Value("\${streampack.dictionary.break-for:15m}") breakFor: Duration,
+    ) : this(providers, breakFor, Clock.systemUTC())
 
     private val logger = LoggerFactory.getLogger(DictionaryLookupService::class.java)
-    private val mapper = JacksonMappers.standard()
+    private val providers = providers.sortedBy { it.order }
 
-    /** Look up the first definition of a word, or null if the word is not found */
+    /** When each tripped provider may be asked again */
+    private val brokenUntil = ConcurrentHashMap<String, Instant>()
+
+    /** The first definition of [word], or null if there's no such word or nobody could answer */
     open fun lookup(word: String): DictionaryResult? {
-        return lookupUrl(buildUrl(word))
+        for (provider in providers) {
+            val until = brokenUntil[provider.name]
+            if (until != null && clock.instant().isBefore(until)) continue
+            when (val answer = askEachCase(provider, word)) {
+                is DictionaryAnswer.Found -> {
+                    recovered(provider)
+                    return answer.result
+                }
+                DictionaryAnswer.Unknown -> {
+                    recovered(provider)
+                    return null
+                }
+                is DictionaryAnswer.Failed -> trip(provider, answer.reason)
+            }
+        }
+        logger.warn("No dictionary could answer for '{}'", word)
+        return null
     }
 
-    /** Fetch a dictionary page by URL and extract the first definition */
-    fun lookupUrl(url: String): DictionaryResult? {
-        val body = pageFetcher.fetch(url) ?: return null
-        return parseDefinition(body)
+    /** Forgets every tripped provider: for tests sharing one service */
+    internal fun resetBreakers() = brokenUntil.clear()
+
+    /** [provider]'s answer for the first of [word]'s cases it finds; a failure stops at once */
+    private fun askEachCase(provider: DictionaryProvider, word: String): DictionaryAnswer {
+        for (form in cases(word)) {
+            val answer = ask(provider, form)
+            if (answer != DictionaryAnswer.Unknown) return answer
+        }
+        return DictionaryAnswer.Unknown
     }
 
-    /** Build the API URL for a word lookup */
-    protected open fun buildUrl(word: String): String {
-        return "https://api.dictionaryapi.dev/api/v2/entries/en/$word"
-    }
-
-    private fun parseDefinition(json: String): DictionaryResult? {
-        return try {
-            val tree = mapper.readTree(json)
-            if (!tree.isArray || tree.isEmpty) return null
-
-            val entry = tree[0]
-            val word = entry.path("word").asString(null) ?: return null
-            val meanings = entry.path("meanings")
-            if (!meanings.isArray || meanings.isEmpty) return null
-
-            val firstMeaning = meanings[0]
-            val partOfSpeech = firstMeaning.path("partOfSpeech").asString(null) ?: return null
-            val definitions = firstMeaning.path("definitions")
-            if (!definitions.isArray || definitions.isEmpty) return null
-
-            val definition = definitions[0].path("definition").asString(null) ?: return null
-            if (definition.isBlank()) return null
-
-            // Wiktionary's text is CC BY-SA, so every result carries its page and license
-            val sourceUrl = entry.path("sourceUrls").path(0).asString(null) ?: wiktionaryUrl(word)
-            val license = entry.path("license").path("name").asString(null) ?: DEFAULT_LICENSE
-
-            DictionaryResult(word, partOfSpeech, definition, sourceUrl, license)
+    private fun ask(provider: DictionaryProvider, word: String): DictionaryAnswer =
+        try {
+            provider.lookup(word)
         } catch (e: Exception) {
-            logger.debug("Failed to parse dictionary response: {}", e.message)
-            null
+            DictionaryAnswer.Failed(e.javaClass.simpleName + (e.message?.let { ": $it" } ?: ""))
+        }
+
+    private fun trip(provider: DictionaryProvider, reason: String) {
+        val first = brokenUntil.put(provider.name, clock.instant().plus(breakFor)) == null
+        logger.warn(
+            "Dictionary {} failed ({}){}; skipping it for {}",
+            provider.name,
+            reason,
+            if (first) "" else " again",
+            breakFor,
+        )
+    }
+
+    private fun recovered(provider: DictionaryProvider) {
+        if (brokenUntil.remove(provider.name) != null) {
+            logger.warn("Dictionary {} is answering again", provider.name)
         }
     }
 
-    private fun wiktionaryUrl(word: String): String =
-        "https://en.wiktionary.org/wiki/" +
-            URLEncoder.encode(word.replace(' ', '_'), Charsets.UTF_8)
-
-    private companion object {
-        private const val DEFAULT_LICENSE = "CC BY-SA"
+    companion object {
+        /** [word] as typed, then lowercase, Capitalized and UPPERCASE, each once */
+        internal fun cases(word: String): List<String> =
+            listOf(
+                    word,
+                    word.lowercase(),
+                    word.lowercase().replaceFirstChar { it.uppercaseChar() },
+                    word.uppercase(),
+                )
+                .distinct()
     }
 }

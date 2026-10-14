@@ -110,6 +110,10 @@ streampack:
     reconnect-delay: ${MATTERMOST_RECONNECT_DELAY:PT15S}
   security:
     enforce-external-secrets: ${STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS:true}
+  dictionary:
+    # define's providers (#202): each one's timeout, and how long one that failed is skipped.
+    timeout: ${DICTIONARY_TIMEOUT:3s}
+    break-for: ${DICTIONARY_BREAK_FOR:15m}
   ai:
     enabled: ${AI_ENABLED:false}
     api-key: ${ANTHROPIC_API_KEY:}

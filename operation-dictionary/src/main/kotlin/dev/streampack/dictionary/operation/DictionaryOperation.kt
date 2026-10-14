@@ -18,11 +18,12 @@ import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
 /**
- * Looks up word definitions from the Free Dictionary API, crediting Wiktionary as their source.
+ * Looks up word definitions ([DictionaryLookupService]: dictionaries in turn, AI as a last resort),
+ * each with its source's credit.
  *
  * Acts as a factoid cache-miss handler: runs after the factoid get operation (priority 90) so that
- * known definitions are served from the factoid store. On first lookup, fetches the definition from
- * the API, caches it as a factoid via EventGateway, and returns the result.
+ * known definitions are served from the factoid store. On first lookup, fetches the definition,
+ * caches it as a factoid via EventGateway, and returns the result.
  */
 @Component
 class DictionaryOperation(
@@ -39,7 +40,7 @@ class DictionaryOperation(
             is CommandMatchResult.Match,
             is CommandMatchResult.TooManyArguments -> {
                 val lexed = CommandLexer.lex(payload)
-                val word = lexed.tokens.drop(1).joinToString(" ").trim().lowercase()
+                val word = lexed.tokens.drop(1).joinToString(" ").trim()
                 if (word.isBlank()) null else DictionaryRequest(word)
             }
             else -> null

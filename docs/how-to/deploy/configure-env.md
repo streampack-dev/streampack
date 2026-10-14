@@ -39,6 +39,13 @@ Sign-in:
 |----------|---------|
 | `OTP_MAX_FAILED_ATTEMPTS` | Wrong one-time codes a recipient may present before all of its active codes are expired. Defaults to `5`. |
 
+`define`:
+
+| Variable | Purpose |
+|----------|---------|
+| `DICTIONARY_TIMEOUT` | How long each dictionary is waited for before the next is asked. Defaults to `3s`. |
+| `DICTIONARY_BREAK_FOR` | How long a dictionary that failed is skipped. Defaults to `15m`. |
+
 Channel logs:
 
 | Variable | Purpose |

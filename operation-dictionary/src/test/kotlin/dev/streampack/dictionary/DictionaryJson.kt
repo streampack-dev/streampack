@@ -41,3 +41,22 @@ fun dictionaryJson(
             """
         .trimIndent()
 }
+
+/** A FreeDictionaryAPI.com response; no [definition] is its answer for an unknown word */
+fun freeDictionaryJson(
+    word: String,
+    partOfSpeech: String = "",
+    definition: String? = null,
+): String {
+    val entries =
+        if (definition == null) ""
+        else
+            """{"language":{"code":"en","name":"English"},"partOfSpeech":"$partOfSpeech",
+               "senses":[{"definition":"$definition","examples":[]}]}"""
+    val url =
+        if (definition == null) "https://en.wiktionary.org"
+        else "https://en.wiktionary.org/wiki/$word"
+    return """{"word":"$word","entries":[$entries],
+              "source":{"url":"$url","license":{"name":"CC BY-SA 4.0",
+              "url":"https://creativecommons.org/licenses/by-sa/4.0/"}}}"""
+}
