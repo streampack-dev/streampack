@@ -390,6 +390,29 @@ needs a full address (`tell irc://libera/#java hello`).
 `/admin/console/stream` and allow a read timeout longer than the heartbeat; see
 [Configure a Reverse Proxy](../how-to/deploy/configure-reverse-proxy.md).
 
+## Admin Secrets
+
+The environment variables the server needs set before its next start (#209): credentials given at
+the console are stored in the database until their variables exist, and with
+`STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` on, a start fails until they do. For active
+`SUPER_ADMIN` accounts (`401` without a credential, `403` otherwise). The console's `secrets`
+command gives the same list as text.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /admin/secrets` | `{"required": [{"variable": "...", "description": "...", "state": "..."}]}`, sorted by variable. |
+
+`state` is `STORED_IN_DATABASE` (given at the console, kept as typed until `variable` is set; the
+next start then replaces it with a reference) or `NOT_SET` (stored as a reference to `variable`,
+which the environment doesn't have). Values are never returned. An empty list means the next start
+needs nothing more. The server reads its environment when it starts, so a variable added to `.env`
+shows as set only after the container is recreated. See
+[Move Credentials into the Environment](../how-to/deploy/move-credentials-into-the-environment.md).
+
+A setup tool on the server's own box can call this, and the web console, with the token in
+`STREAMPACK_LOCAL_ADMIN_TOKEN_FILE` as its bearer credential; see
+[The Local Admin Token](../explanation/local-admin-token.md).
+
 ## Admin Moderation
 
 Abuse reports from the hourly review, and what admins do with them (#150), for PUDL's Moderation

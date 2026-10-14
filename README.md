@@ -132,8 +132,9 @@ Build the bootable JAR and start it:
 java -jar server-streampack/target/server-streampack-*-exec.jar
 ```
 
-On first boot, Flyway runs all database migrations and a superadmin account is created automatically.
-The generated password is logged to the console - look for the `SuperAdminBootstrap` log output.
+On first boot, Flyway runs all database migrations. When `ADMIN_EMAIL` is set and no super-admin exists,
+one is created for that address (`SuperAdminBootstrap`). There's no password: the super-admin signs in
+with a one-time code sent by mail, or uses the console.
 
 The application starts on port 8080 by default.
 The Swagger UI is available at `http://localhost:8080/swagger-ui.html`.
@@ -141,6 +142,7 @@ The Swagger UI is available at `http://localhost:8080/swagger-ui.html`.
 ## Console Mode
 
 The interactive console lets you send commands directly to the operation pipeline as the superadmin user.
+It needs a super-admin, so set `ADMIN_EMAIL` on a fresh database.
 Enable it by setting `CONSOLE_ENABLED=true` in your `.env.properties` or as an environment variable:
 
 ```bash
@@ -158,7 +160,10 @@ The result of (42/3.14)*4 is: 53.50318471337579
 > exit
 ```
 
-Type `exit` or `quit` to stop.
+Type `exit` or `quit` to end the console; the server keeps running, and the console is back on the next
+restart. It starts once the server is ready. Under Docker, see
+[Use the Console in Docker](docs/how-to/deploy/use-the-console-in-docker.md); to set up a server from
+nothing, see [Deploy with Docker for Mattermost and GitLab](docs/tutorials/deploy-with-docker-for-mattermost-and-gitlab.md).
 
 ## Project Structure
 

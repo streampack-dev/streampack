@@ -16,6 +16,8 @@ Two concepts are kept separate throughout the docs:
 
 Start with [What is Streampack?](explanation/what-is-streampack.md) if you are orienting yourself, [Deploy `server-streampack`](tutorials/deploy-server-streampack.md) if you are putting the bundled server on a machine, [Run the infobot on IRC](tutorials/run-infobot-on-irc.md) if you want the protocol path first, [Use GitHub repository watching](how-to/infobot/use-github-repository-watching.md) if you are setting up GitHub notifications, or [Use GitLab project watching](how-to/infobot/use-gitlab-project-watching.md) for GitLab.
 
+To bring a server up from nothing with Docker, connected to Mattermost and GitLab, see [Deploy with Docker for Mattermost and GitLab](tutorials/deploy-with-docker-for-mattermost-and-gitlab.md). For the parts on their own: [Run the Published Image with Docker Compose](how-to/deploy/run-the-published-image.md), [Use the Console in Docker](how-to/deploy/use-the-console-in-docker.md), [Move Credentials into the Environment](how-to/deploy/move-credentials-into-the-environment.md), and, for why it works as it does, [How Credentials Reach the Environment](explanation/credentials-and-the-environment.md) and [The Local Admin Token](explanation/local-admin-token.md).
+
 For Mattermost development against a private local server, see [Run a Local Mattermost for Development](how-to/develop/run-local-mattermost.md).
 
 For repository-side release mechanics, see [Version and Publish Maven Artifacts to Nexus](how-to/develop/release-and-deploy-server-streampack.md).

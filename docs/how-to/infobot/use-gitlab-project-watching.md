@@ -24,6 +24,8 @@ gitlab add group/project env://GITLAB_GROUP_PROJECT_TOKEN
 
 This looks the project up, records its numeric GitLab id, and seeds current issues, merge requests, and releases so later notifications are incremental.
 
+The token needs only the `read_api` scope: Streampack reads issues, merge requests, releases and pipelines, and never writes to GitLab (webhooks are configured by hand, below). A project access token with the Reporter role, or a personal or group access token with `read_api`, will do. A public project on gitlab.com needs no token at all, though an unauthenticated client gets a lower rate limit.
+
 Tokens follow the same externalization rule as GitHub tokens: a literal token is stored, the response names the environment variable that will hold it (`GITLAB_<PATH>_TOKEN`, with `/` and other non-alphanumerics becoming `_`, e.g. `GITLAB_GROUP_SUBGROUP_PROJECT_TOKEN`), and once that variable exists the literal is rewritten to an `env://` reference at startup. With `STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` on, startup fails while any active project still holds a literal whose variable is not set, naming the variables; token values are never printed.
 
 ## Subscribe a Destination
@@ -34,6 +36,18 @@ gitlab subscribe group/project to irc://libera/%23java
 gitlab subscriptions
 gitlab subscriptions for irc://libera/%23java
 ```
+
+### Deliver to a Mattermost Channel
+
+A Mattermost destination is `mattermost://<server>/<channel-id>`, where `<server>` is the name given to `mattermost connect` and `<channel-id>` is Mattermost's id for the channel, not its name. `mattermost channels` lists each channel the account can see with its id in brackets; a term narrows the list:
+
+```text
+> mattermost channels work builds
+  Builds [8xk3m1q5nfdq7c9w4yzr2t6ape] on engineering
+> gitlab subscribe group/project to mattermost://work/8xk3m1q5nfdq7c9w4yzr2t6ape
+```
+
+The account must be a member of the channel to post there: `mattermost join work <channel-id>` joins a public channel, and a private one needs a Mattermost admin to add the account.
 
 ## Get Pipeline Outcomes
 

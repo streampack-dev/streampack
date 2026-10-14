@@ -1,6 +1,8 @@
 # Deploy `server-streampack`
 
-This tutorial deploys the bundled server distribution. It assumes Docker Compose, PostgreSQL, and a reverse proxy on the host.
+This tutorial deploys the bundled server distribution from an image you build and publish yourself. It assumes Docker Compose, PostgreSQL, and a reverse proxy on the host.
+
+To run a published release instead, with nothing to build, follow [Deploy with Docker for Mattermost and GitLab](deploy-with-docker-for-mattermost-and-gitlab.md), or set the files up by hand with [Run the Published Image with Docker Compose](../how-to/deploy/run-the-published-image.md).
 
 ## 1. Build and Publish the Image
 
@@ -23,8 +25,9 @@ Set `DOCKER_PUSH_LATEST=true` only when you intentionally want to publish a `lat
 Create a deployment `.env` on the host. Minimum values:
 
 ```dotenv
-APP_IMAGE_TAG=<version>
+STREAMPACK_VERSION=<version>
 DB_PASSWORD=replace-with-a-strong-password
+ADMIN_EMAIL=you@example.com
 JWT_SECRET=replace-with-a-long-random-secret
 BASE_URL=https://api.example.com
 BLOG_BASE_URL=https://www.example.com
@@ -42,7 +45,7 @@ openssl rand -base64 48
 
 ## 3. Start the Services
 
-Use Docker Compose from the deployment project:
+Use a compose file that pulls the image you published: [Run the Published Image with Docker Compose](../how-to/deploy/run-the-published-image.md) has one, with `nexus.streampack.dev/images` as the registry. Point its `image:` at your own registry if you pushed elsewhere. (The repository's `docker-compose.yml` builds from source instead, for development.)
 
 ```bash
 docker compose pull
@@ -54,6 +57,8 @@ Check backend readiness:
 ```bash
 curl -fsS http://localhost:8080/features
 ```
+
+On first start the log says `Superadmin account created for you@example.com`. That account signs in with a one-time code by mail (step 4), and can give commands at the console; see [Use the Console in Docker](../how-to/deploy/use-the-console-in-docker.md).
 
 If the UI is deployed as a peer container, it should call the backend by service name, for example:
 
