@@ -1,183 +1,208 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.dictionary.operation
 
-import com.sun.net.httpserver.HttpServer
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
-import dev.streampack.core.service.PageFetcher
+import dev.streampack.dictionary.StubServer
 import dev.streampack.dictionary.dictionaryJson
+import dev.streampack.dictionary.freeDictionaryJson
 import dev.streampack.dictionary.service.DictionaryLookupService
-import java.net.InetSocketAddress
-import org.junit.jupiter.api.AfterEach
+import dev.streampack.test.ResetDatabaseBeforeEach
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Primary
 import org.springframework.messaging.support.MessageBuilder
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 
 @SpringBootTest
+@ResetDatabaseBeforeEach
 class DictionaryOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
-    @Autowired lateinit var testLookupService: LocalDictionaryLookupService
+    @Autowired lateinit var lookupService: DictionaryLookupService
 
-    private lateinit var httpServer: HttpServer
-    private var baseUrl: String = ""
+    companion object {
+        private val stub = StubServer()
 
-    private fun provenance() =
-        Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")
+        @JvmStatic
+        @DynamicPropertySource
+        fun dictionaries(registry: DynamicPropertyRegistry) {
+            registry.add("streampack.dictionary.free-dictionary-url") { "${stub.url}/free" }
+            registry.add("streampack.dictionary.dictionaryapi-dev-url") { "${stub.url}/dev" }
+            registry.add("streampack.dictionary.timeout") { "500ms" }
+        }
+
+        @JvmStatic @AfterAll fun stop() = stub.close()
+    }
 
     private fun message(text: String) =
-        MessageBuilder.withPayload(text).setHeader(Provenance.HEADER, provenance()).build()
+        MessageBuilder.withPayload(text)
+            .setHeader(
+                Provenance.HEADER,
+                Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local"),
+            )
+            .build()
+
+    private fun define(text: String): String {
+        val result = eventGateway.process(message(text))
+        return (assertInstanceOf(OperationResult.Success::class.java, result)).payload.toString()
+    }
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
-        httpServer.start()
-        baseUrl = "http://localhost:${httpServer.address.port}"
-        testLookupService.baseUrl = baseUrl
-    }
-
-    @AfterEach
-    fun tearDown() {
-        httpServer.stop(0)
-    }
-
-    /** Overrides URL resolution to point at the local HTTP server */
-    @TestConfiguration
-    class Config {
-        @Bean
-        @Primary
-        fun localDictionaryLookupService(pageFetcher: PageFetcher): LocalDictionaryLookupService =
-            LocalDictionaryLookupService(pageFetcher)
+        stub.clear()
+        lookupService.resetBreakers()
     }
 
     @Test
-    fun `define lookup returns definition`() {
-        httpServer.createContext("/api/v2/entries/en/ephemeral") { exchange ->
-            val json = dictionaryJson("ephemeral", "adjective", "lasting for a very short time.")
-            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
-            exchange.responseBody.use { it.write(json.toByteArray()) }
-        }
+    fun `define answers from FreeDictionaryAPI, with its credit`() {
+        stub.answer(
+            "/free/ephemeral",
+            200,
+            freeDictionaryJson("ephemeral", "adjective", "lasting for a very short time."),
+        )
 
-        val result = eventGateway.process(message("define ephemeral"))
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val payload = (result as OperationResult.Success).payload.toString()
-        assertTrue(payload.contains("ephemeral"))
-        assertTrue(payload.contains("adjective"))
-        assertTrue(payload.contains("lasting for a very short time."))
+        val payload = define("define ephemeral")
+        assertTrue(
+            payload.contains("ephemeral (adjective): lasting for a very short time."),
+            payload,
+        )
         assertTrue(
             payload.contains(
-                "Source: https://en.wiktionary.org/wiki/ephemeral (Wiktionary, CC BY-SA 3.0)",
+                "(Wiktionary via FreeDictionaryAPI.com, CC BY-SA 4.0: https://en.wiktionary.org/wiki/ephemeral)",
             ),
             payload,
         )
+    }
+
+    @Test
+    fun `with FreeDictionaryAPI failing, dictionaryapi dev answers`() {
+        stub.answer("/free/ephemeral", 503)
+        stub.answer(
+            "/dev/ephemeral",
+            200,
+            dictionaryJson("ephemeral", "adjective", "lasting for a very short time."),
+        )
+
+        val payload = define("define ephemeral")
+        assertTrue(payload.contains("(Wiktionary via dictionaryapi.dev, CC BY-SA 3.0:"), payload)
+    }
+
+    @Test
+    fun `with FreeDictionaryAPI hanging, the next provider still answers quickly`() {
+        stub.hang("/free/ephemeral")
+        stub.answer(
+            "/dev/ephemeral",
+            200,
+            dictionaryJson("ephemeral", "adjective", "lasting for a very short time."),
+        )
+
+        val started = System.nanoTime()
+        define("define ephemeral")
+        assertTrue((System.nanoTime() - started) / 1_000_000 < 3_000)
     }
 
     @Test
     fun `the cached factoid keeps the credit`() {
-        httpServer.createContext("/api/v2/entries/en/transient") { exchange ->
-            val json = dictionaryJson("transient", "adjective", "lasting only for a short time.")
-            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
-            exchange.responseBody.use { it.write(json.toByteArray()) }
-        }
-        eventGateway.process(message("define transient"))
-        httpServer.removeContext("/api/v2/entries/en/transient")
-
-        val result = eventGateway.process(message("define transient"))
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val payload = (result as OperationResult.Success).payload.toString()
-        assertTrue(payload.contains("lasting only for a short time."), payload)
-        assertTrue(
-            payload.contains(
-                "Source: https://en.wiktionary.org/wiki/transient (Wiktionary, CC BY-SA 3.0)",
-            ),
-            payload,
+        stub.answer(
+            "/free/transient",
+            200,
+            freeDictionaryJson("transient", "adjective", "lasting only for a short time."),
         )
+        define("define transient")
+        stub.clear()
+
+        val payload = define("define transient")
+        assertTrue(payload.contains("lasting only for a short time."), payload)
+        assertTrue(payload.contains("(Wiktionary via FreeDictionaryAPI.com"), payload)
     }
 
     @Test
     fun `a definition too long to cache with its credit is answered but not cached`() {
         val definition = "very long. ".repeat(45).trim()
-        httpServer.createContext("/api/v2/entries/en/verbose") { exchange ->
-            val json = dictionaryJson("verbose", "adjective", definition)
-            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
-            exchange.responseBody.use { it.write(json.toByteArray()) }
-        }
+        stub.answer("/free/verbose", 200, freeDictionaryJson("verbose", "adjective", definition))
+        assertTrue(define("define verbose").contains("FreeDictionaryAPI.com"))
 
-        val first = eventGateway.process(message("define verbose"))
-        assertInstanceOf(OperationResult.Success::class.java, first)
-        assertTrue((first as OperationResult.Success).payload.toString().contains("Source: "))
-
-        httpServer.removeContext("/api/v2/entries/en/verbose")
-        httpServer.createContext("/api/v2/entries/en/verbose") { exchange ->
-            exchange.sendResponseHeaders(404, -1)
-        }
-        val second = eventGateway.process(message("define verbose"))
-        assertInstanceOf(OperationResult.NotHandled::class.java, second)
+        stub.answer("/free/verbose", 200, freeDictionaryJson("verbose"))
+        assertInstanceOf(
+            OperationResult.NotHandled::class.java,
+            eventGateway.process(message("define verbose")),
+        )
     }
 
     @Test
     fun `define lookup is case insensitive`() {
-        httpServer.createContext("/api/v2/entries/en/ephemeral") { exchange ->
-            val json = dictionaryJson("ephemeral", "adjective", "lasting for a very short time.")
-            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
-            exchange.responseBody.use { it.write(json.toByteArray()) }
-        }
-
-        val result = eventGateway.process(message("Define EPHEMERAL"))
-        assertInstanceOf(OperationResult.Success::class.java, result)
+        stub.answer(
+            "/free/ephemeral",
+            200,
+            freeDictionaryJson("ephemeral", "adjective", "lasting for a very short time."),
+        )
+        define("Define EPHEMERAL")
     }
 
     @Test
-    fun `unknown word returns not handled`() {
-        httpServer.createContext("/api/v2/entries/en/xyzzyplugh") { exchange ->
-            exchange.sendResponseHeaders(404, -1)
-        }
+    fun `an unknown word is not handled, and the next provider isn't asked`() {
+        stub.answer("/free/xyzzyplugh", 200, freeDictionaryJson("xyzzyplugh"))
+        stub.answer(
+            "/dev/xyzzyplugh",
+            200,
+            dictionaryJson("xyzzyplugh", "noun", "should not be asked"),
+        )
 
-        val result = eventGateway.process(message("define xyzzyplugh"))
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(
+            OperationResult.NotHandled::class.java,
+            eventGateway.process(message("define xyzzyplugh")),
+        )
     }
 
     @Test
     fun `non-matching input is not handled`() {
-        val result = eventGateway.process(message("defin ephemeral"))
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(
+            OperationResult.NotHandled::class.java,
+            eventGateway.process(message("defin ephemeral")),
+        )
     }
 
     @Test
     fun `plain text is not handled`() {
-        val result = eventGateway.process(message("hello world"))
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(
+            OperationResult.NotHandled::class.java,
+            eventGateway.process(message("hello world")),
+        )
     }
 
     @Test
     fun `triggered define lookup is handled`() {
-        httpServer.createContext("/api/v2/entries/en/ephemeral") { exchange ->
-            val json = dictionaryJson("ephemeral", "adjective", "lasting for a very short time.")
-            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
-            exchange.responseBody.use { it.write(json.toByteArray()) }
-        }
-
-        val result = eventGateway.process(message("!define ephemeral"))
-        assertInstanceOf(OperationResult.Success::class.java, result)
+        stub.answer(
+            "/free/ephemeral",
+            200,
+            freeDictionaryJson("ephemeral", "adjective", "lasting for a very short time."),
+        )
+        define("!define ephemeral")
     }
-}
 
-/** DictionaryLookupService that rewrites URLs to point at a local HTTP server */
-class LocalDictionaryLookupService(pageFetcher: PageFetcher) :
-    DictionaryLookupService(pageFetcher) {
-    var baseUrl: String = ""
+    @Test
+    fun `an acronym Wiktionary has in capitals is found, and cached under lowercase`() {
+        stub.answer("/free/json", 200, freeDictionaryJson("json"))
+        stub.answer("/free/Json", 200, freeDictionaryJson("Json"))
+        stub.answer(
+            "/free/JSON",
+            200,
+            freeDictionaryJson("JSON", "noun", "JavaScript Object Notation."),
+        )
 
-    override fun buildUrl(word: String): String {
-        if (baseUrl.isBlank()) return super.buildUrl(word)
-        return "$baseUrl/api/v2/entries/en/$word"
+        assertTrue(define("define json").contains("JSON (noun): JavaScript Object Notation."))
+        stub.clear()
+        assertTrue(
+            define("define JSON").contains("JavaScript Object Notation."),
+            "served from the factoid",
+        )
     }
 }

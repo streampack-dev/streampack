@@ -22,6 +22,11 @@
             <groupId>dev.streampack</groupId>
             <artifactId>lib-core</artifactId>
         </dependency>
+        <!-- The AI fallback (#202), present only when streampack.ai.enabled -->
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-ai</artifactId>
+        </dependency>
         <dependency>
             <groupId>tools.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>

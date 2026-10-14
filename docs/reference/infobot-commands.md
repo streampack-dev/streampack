@@ -31,6 +31,7 @@ Some operations are ambient and react to normal conversation instead.
 For module-local command details and implementation notes, see:
 
 - [lib-core/README.md](../../lib-core/README.md)
+- [operation-dictionary/README.md](../../operation-dictionary/README.md)
 - [operation-factoid/README.md](../../operation-factoid/README.md)
 - [operation-specs/README.md](../../operation-specs/README.md)
 - [service-github/README.md](../../service-github/README.md)
