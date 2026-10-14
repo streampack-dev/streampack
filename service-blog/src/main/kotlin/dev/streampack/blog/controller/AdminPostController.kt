@@ -13,6 +13,7 @@ import dev.streampack.blog.model.DeriveTagsResponse
 import dev.streampack.blog.model.EditContentHttpRequest
 import dev.streampack.blog.model.EditContentRequest
 import dev.streampack.blog.model.FindDraftsRequest
+import dev.streampack.blog.model.FindScheduledRequest
 import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.model.RemoveContentRequest
 import dev.streampack.blog.model.SoftDeleteContentRequest
@@ -85,6 +86,37 @@ class AdminPostController(
         val user = resolveUser(httpRequest) ?: return unauthorized("Authentication required")
         val payload = FindDraftsRequest(page, size, deleted)
         return dispatch(payload, "admin/posts/pending", user) { result -> mapError(result) }
+    }
+
+    @Operation(
+        summary = "List scheduled posts",
+        description =
+            "Approved posts whose publication date is still to come, soonest first. They're in neither the public lists nor the review queue until they go out.",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Paginated list of scheduled posts",
+        content = [Content(schema = Schema(implementation = ContentListResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not authenticated",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Admin access required",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @GetMapping("/scheduled", produces = ["application/json"])
+    fun listScheduled(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Authentication required")
+        val payload = FindScheduledRequest(page, size)
+        return dispatch(payload, "admin/posts/scheduled", user) { result -> mapError(result) }
     }
 
     @Operation(summary = "Approve a draft post and set publication date")

@@ -149,6 +149,14 @@ interface PostRepository : JpaRepository<Post, UUID> {
     )
     fun findDrafts(pageable: Pageable): Page<Post>
 
+    /** Paginated scheduled posts, soonest first, for admins to find and change (#207) */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt > :now ORDER BY p.publishedAt ASC",
+        countQuery =
+            "SELECT COUNT(p) FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt > :now",
+    )
+    fun findScheduled(now: Instant, pageable: Pageable): Page<Post>
+
     /** Paginated soft-deleted drafts for admin review/purge */
     @Query(
         "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.DRAFT AND p.deleted = true ORDER BY p.updatedAt DESC",

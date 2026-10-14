@@ -1,15 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.operation
 
-import dev.streampack.blog.model.ContentListResponse
-import dev.streampack.blog.model.ContentSummary
 import dev.streampack.blog.model.FindDraftsRequest
-import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
-import dev.streampack.blog.repository.PostTagRepository
-import dev.streampack.blog.repository.SlugRepository
-import dev.streampack.blog.service.PostTagVisibility
-import dev.streampack.blog.service.PostVersionService
+import dev.streampack.blog.service.AdminPostSummaries
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -23,10 +17,7 @@ import org.springframework.stereotype.Component
 @Component
 class FindDraftsOperation(
     private val postRepository: PostRepository,
-    private val slugRepository: SlugRepository,
-    private val postTagRepository: PostTagRepository,
-    private val postCategoryRepository: PostCategoryRepository,
-    private val postVersionService: PostVersionService,
+    private val summaries: AdminPostSummaries,
 ) : TypedOperation<FindDraftsRequest>(FindDraftsRequest::class) {
 
     override val priority = 50
@@ -43,35 +34,10 @@ class FindDraftsOperation(
                 postRepository.findDrafts(PageRequest.of(payload.page, payload.size))
             }
 
-        // One query for the page's kinds of version (#200).
-        val kinds = postVersionService.kindsFor(pageResult.content.map { it.id })
-        val summaries =
-            pageResult.content.map { post ->
-                val canonicalSlug = slugRepository.findCanonical(post.id)
-                ContentSummary(
-                    id = post.id,
-                    title = post.title,
-                    slug = canonicalSlug?.path ?: "",
-                    excerpt = post.excerpt,
-                    authorDisplayName = post.author?.displayName ?: "Anonymous",
-                    publishedAt = post.publishedAt,
-                    tags =
-                        PostTagVisibility.forViewer(
-                            postTagRepository.findNamesByPost(post.id),
-                            post,
-                            (message.headers[Provenance.HEADER] as? Provenance)?.user,
-                        ),
-                    categories = postCategoryRepository.findNamesByPost(post.id),
-                    versionKinds = kinds[post.id].orEmpty(),
-                )
-            }
-
         return OperationResult.Success(
-            ContentListResponse(
-                posts = summaries,
-                page = pageResult.number,
-                totalPages = pageResult.totalPages,
-                totalCount = pageResult.totalElements,
+            summaries.listing(
+                pageResult,
+                (message.headers[Provenance.HEADER] as? Provenance)?.user,
             )
         )
     }
