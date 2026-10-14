@@ -45,6 +45,9 @@ streampack:
     max-failed-attempts: ${OTP_MAX_FAILED_ATTEMPTS:5}
   console:
     enabled: ${CONSOLE_ENABLED:false}
+  logs:
+    # The IANA timezone channel logs are split into days by, the same for every reader (#212).
+    zone: ${STREAMPACK_LOG_ZONE:UTC}
   mail:
     enabled: ${MAIL_ENABLED:false}
     from: ${MAIL_FROM:noreply@bytecode.news}

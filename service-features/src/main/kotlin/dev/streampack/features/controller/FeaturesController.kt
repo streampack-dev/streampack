@@ -3,11 +3,13 @@ package dev.streampack.features.controller
 
 import dev.streampack.core.config.StreampackProperties
 import dev.streampack.core.service.CodeDelivery
+import dev.streampack.core.service.LogDays
 import dev.streampack.core.service.Operation
 import dev.streampack.core.service.ProtocolAdapter
 import dev.streampack.features.model.AuthenticationFeatures
 import dev.streampack.features.model.CodeChannelFeature
 import dev.streampack.features.model.FeaturesResponse
+import dev.streampack.features.model.LogsFeature
 import dev.streampack.features.model.OidcFeatures
 import dev.streampack.features.model.VersionInfo
 import java.security.MessageDigest
@@ -47,6 +49,7 @@ class FeaturesController(
     @Value("\${streampack.blog.site-name:Nevet}") private val siteName: String,
     private val streampackProperties: StreampackProperties,
     private val codeDeliveries: List<CodeDelivery>,
+    private val logDays: LogDays,
 ) {
 
     private val cachedResponse: FeaturesResponse = buildResponse()
@@ -102,6 +105,7 @@ class FeaturesController(
             adapters = adapters,
             ai = ai,
             anonymousSubmission = anonymousSubmission,
+            logs = LogsFeature(zone = logDays.zone.id),
         )
     }
 

@@ -11,6 +11,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `BASE_URL` | Production | Public backend URL. |
 | `BLOG_BASE_URL` | Production | Public frontend/site URL. |
 | `STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` | Optional | Defaults to `true`. Fails startup when required secrets are missing or use insecure defaults. Set to `false` only for local development. |
+| `STREAMPACK_LOG_ZONE` | Optional | The IANA timezone channel logs are split into days by, such as `America/New_York` (default `UTC`). Every reader sees the same days; `GET /features` gives it as `logs.zone`. Stored times stay UTC. An invalid zone stops startup. |
 | `MAIL_ENABLED` | Optional | Enables outbound email. |
 | `MAIL_HOST` | Optional | SMTP host. |
 | `MAIL_PORT` | Optional | SMTP port. |

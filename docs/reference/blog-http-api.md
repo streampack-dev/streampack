@@ -243,11 +243,16 @@ The public log browser reads these. Each takes the caller's credentials if there
 `access_token` cookie, else a bearer token) and answers anonymous callers too; what a caller sees
 depends on who they are.
 
+A log day runs from midnight to midnight in the instance's log zone, `STREAMPACK_LOG_ZONE`
+(UTC by default), so every reader sees the same day. `GET /features` gives it as `logs.zone`
+(`{"logs": {"zone": "America/New_York"}}`) for labelling days. Lines' `timestamp`s stay UTC
+instants.
+
 | Endpoint | Purpose |
 |----------|---------|
 | `GET /logs/provenances` | Lists the channels the caller may browse, most recently active first. |
 | `GET /logs/channels/{protocol}/{service}/{name}` | Finds a channel by its readable address: `irc/libera/primate`. |
-| `GET /logs?provenance=<uri>&day=YYYY-MM-DD&events=all` | One UTC day of a channel's log, oldest first. `day` defaults to today. |
+| `GET /logs?provenance=<uri>&day=YYYY-MM-DD&events=all` | One log day of a channel's log, oldest first. `day` defaults to today. |
 | `GET /logs/search?provenance=<uri>&q=<text>&sender=<nick>&page=0&size=50&events=all` | Searches one channel's log, newest first. |
 
 **Which channels.** A channel is browsable when it's registered (with a protocol's `join`), active,
@@ -321,7 +326,7 @@ as written (`%` and `_` are literal), and is 3 to 200 characters; `sender` is a 
 ignoring case, up to 255 characters, and alone lists everything that person said in the channel.
 `size` is 1 to 100. It answers `LogSearchResponse`: `provenanceUri`, `query`, `sender`, `page`,
 `size`, `totalCount`, `totalPages`, and `hits`, each an entry as above (with its `kind`) plus its
-UTC `day`, so a client can link to the day view. `events` and `kinds` narrow it as they do the day
+log `day`, so a client can link to the day view. `events` and `kinds` narrow it as they do the day
 view; `totalCount` counts only what they let through. Searches are limited to 30 a minute for each signed-in caller, and
 60 a minute shared by all anonymous callers (`429` past that). A bad parameter is a `400`.
 
@@ -401,7 +406,7 @@ request here, and each is recorded with who made it and when. See
 | `POST /admin/moderation/reports/{id}/unhide` | Puts hidden lines of the excerpt back. The report's status stays. |
 | `POST /admin/moderation/reports/{id}/purge` | Deletes lines of the excerpt for good: `{"lineIds": [...], "confirm": true, "note": "..."}`. Without `"confirm": true` it's a `400`. Marks the report `ACTIONED`. |
 | `POST /admin/moderation/reports/{id}/dismiss` | Closes an open report as not abuse; the body (`{"note": "..."}`) is optional. A report that isn't open is a `400`. |
-| `GET /admin/moderation/logs?provenance=<uri>&day=YYYY-MM-DD` | One UTC day of a channel's log with every line's id, hidden lines included and marked; `day` defaults to today. |
+| `GET /admin/moderation/logs?provenance=<uri>&day=YYYY-MM-DD` | One log day of a channel's log with every line's id, hidden lines included and marked; `day` defaults to today. |
 | `POST /admin/moderation/lines/hide` | Hides lines found in a log day rather than a report: `{"lineIds": [...], "note": "..."}`. |
 | `POST /admin/moderation/lines/unhide` | Puts them back. |
 
@@ -435,7 +440,7 @@ when AI was off or the model didn't answer. `channel` is the provenance's channe
 `GET /admin/moderation/reports/{id}` answers `ReportDetail`: `report` (as above), `lines`, the lines
 the review read, oldest first, each `{id, timestamp, day, sender, content, direction, hidden,
 flagged, cited, signals, weight, strong}` (`flagged`: the person's line raised a signal; `cited`:
-the model pointed at it; `day`: its UTC day, for a link to the log day; `signals`, `weight` and
+the model pointed at it; `day`: its log day, for a link to the log day; `signals`, `weight` and
 `strong`: for a flagged line, the signals it raised, what it added, and whether that reaches
 `strong-line-weight` so it's worth pre-checking for hiding (#169), all null for other lines and for
 reports filed before they were kept), `purgedLineIds` (excerpt lines since purged), and

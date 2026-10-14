@@ -33,7 +33,7 @@ data class LogEntry(
 
 data class LogDayResponse(val provenanceUri: String, val day: String, val entries: List<LogEntry>)
 
-/** A line found by a search, with its UTC day, so a client can link to the day and the line. */
+/** A line found by a search, with its log day, so a client can link to the day and the line. */
 data class LogSearchHit(
     val timestamp: Instant,
     val day: String,

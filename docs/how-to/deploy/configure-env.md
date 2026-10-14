@@ -39,6 +39,12 @@ Sign-in:
 |----------|---------|
 | `OTP_MAX_FAILED_ATTEMPTS` | Wrong one-time codes a recipient may present before all of its active codes are expired. Defaults to `5`. |
 
+Channel logs:
+
+| Variable | Purpose |
+|----------|---------|
+| `STREAMPACK_LOG_ZONE` | The IANA timezone log days are split by, such as `America/New_York`. Defaults to `UTC`; an invalid zone stops startup. |
+
 Optional integrations:
 
 | Variable | Purpose |

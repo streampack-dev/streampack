@@ -17,6 +17,7 @@ import dev.streampack.core.model.ThrottlePolicy
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.ChannelControlOptionsRepository
 import dev.streampack.core.service.JwtService
+import dev.streampack.core.service.LogDays
 import dev.streampack.core.service.MessageLogService
 import dev.streampack.core.service.ThrottleService
 import dev.streampack.web.controller.UserAwareController
@@ -29,7 +30,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import java.time.Duration
 import java.time.LocalDate
-import java.time.ZoneOffset
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
@@ -48,6 +48,7 @@ class LogController(
     private val messageLogService: MessageLogService,
     private val throttleService: ThrottleService,
     private val channelPaths: LogChannelPaths,
+    private val logDays: LogDays,
     jwtService: JwtService,
 ) : UserAwareController(jwtService) {
 
@@ -122,7 +123,7 @@ class LogController(
     @Operation(
         summary = "Get one day of logs for a provenance",
         description =
-            "Every line of one UTC day, oldest first, each with its `kind`: `MESSAGE`, `JOIN`, " +
+            "Every line of one log day (in the zone `/features` gives as `logs.zone`), oldest first, each with its `kind`: `MESSAGE`, `JOIN`, " +
                 "`PART`, `QUIT`, `NICK` or `TOPIC`. $EVENTS_DESCRIPTION",
     )
     @ApiResponse(
@@ -156,7 +157,7 @@ class LogController(
 
         val targetDay =
             if (day.isNullOrBlank()) {
-                LocalDate.now(ZoneOffset.UTC)
+                logDays.today()
             } else {
                 runCatching { LocalDate.parse(day) }
                     .getOrElse {
@@ -169,8 +170,8 @@ class LogController(
                 return badRequest(it.message ?: "Unknown events or kinds")
             }
 
-        val start = targetDay.atStartOfDay().toInstant(ZoneOffset.UTC)
-        val end = targetDay.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
+        val start = logDays.start(targetDay)
+        val end = logDays.end(targetDay)
         val entries =
             messageLogService.findMessages(provenance, start, end, 5000, selected).map {
                 LogEntry(
@@ -254,7 +255,7 @@ class LogController(
             found.content.map {
                 LogSearchHit(
                     timestamp = it.timestamp,
-                    day = it.timestamp.atZone(ZoneOffset.UTC).toLocalDate().toString(),
+                    day = logDays.dayOf(it.timestamp).toString(),
                     sender = it.sender,
                     content = it.content,
                     direction = it.direction,
