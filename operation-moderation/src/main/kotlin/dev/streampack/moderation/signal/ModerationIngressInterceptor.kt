@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.moderation.signal
 
+import dev.streampack.core.model.LoggingRequest
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.ChannelControlService
@@ -23,7 +24,8 @@ import org.springframework.stereotype.Component
  *
  * Direct conversations are never scored: what someone says to the bot directly isn't said in a
  * channel, and isn't anyone's to review. Neither is a channel that isn't logged or has opted out
- * with `moderated=false`.
+ * with `moderated=false`. Nor is a channel event, such as a join or a part: it's logged as a line,
+ * but it isn't anything said, so someone leaving and coming back isn't repetition (#208).
  */
 @Component
 class ModerationIngressInterceptor(
@@ -41,6 +43,8 @@ class ModerationIngressInterceptor(
             if (provenance.protocol !in CHANNEL_PROTOCOLS || provenance.isLoopback()) return message
             if (directConversations.isDirect(provenance)) return message
             if (!channelControlService.isModerated(provenance)) return message
+            // Joins, parts, quits, nick and topic changes are logged, but nobody said them (#208)
+            if ((message.payload as? LoggingRequest)?.kind?.isEvent == true) return message
             // The sender as the message log names them, so a review finds their lines
             val sender =
                 message.headers["nick"] as? String
