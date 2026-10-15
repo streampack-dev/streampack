@@ -234,9 +234,13 @@ class PostController(
     @Operation(
         summary = "Search published posts",
         description =
-            "Full-text search across post titles (weighted higher) and excerpts. " +
-                "Only published, non-deleted posts are searched. " +
-                "Results are ranked by relevance. Blank queries return an empty list.",
+            "Full-text search across post titles (weighted highest), tags and excerpts, and " +
+                "body text. Queries read like a web search box: `or` between alternatives, " +
+                "`-word` to exclude. Words are stemmed, so `emergent` also finds `emerging`; a " +
+                "quoted word or phrase must also appear exactly, so `\"emergent\"` finds only " +
+                "`emergent`. Each result's `match` is a passage showing why it matched, with the " +
+                "matching words marked. Only published, visible posts are searched. Results are " +
+                "ranked by relevance. Blank queries return an empty list.",
         operationId = "searchPosts",
     )
     @ApiResponse(
@@ -246,13 +250,19 @@ class PostController(
     )
     @GetMapping("/posts/search", produces = ["application/json"])
     fun searchPosts(
-        @Parameter(description = "Search query", example = "virtual threads", required = true)
+        @Parameter(
+            description =
+                "Search query: at most 200 characters, with at most 10 quoted words or " +
+                    "phrases. A longer query, or one with more quotes, is a 400.",
+            example = "virtual threads",
+            required = true,
+        )
         @RequestParam
         q: String,
         @Parameter(description = "Zero-based page index", example = "0")
         @RequestParam(defaultValue = "0")
         page: Int,
-        @Parameter(description = "Number of results per page", example = "20")
+        @Parameter(description = "Number of results per page, at most 100", example = "20")
         @RequestParam(defaultValue = "20")
         size: Int,
         httpRequest: HttpServletRequest,

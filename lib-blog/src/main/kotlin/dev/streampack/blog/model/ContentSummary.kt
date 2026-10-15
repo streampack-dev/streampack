@@ -29,4 +29,12 @@ data class ContentSummary(
         example = "[\"audio\"]",
     )
     val versionKinds: List<String> = emptyList(),
+    /** In search results only: why the post matched (#226). */
+    @Schema(
+        description =
+            "In search results only: a passage showing why the post matched, with the matching " +
+                "words marked. Null in other listings.",
+        nullable = true,
+    )
+    val match: SearchMatch? = null,
 )

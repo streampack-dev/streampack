@@ -235,6 +235,38 @@ class PostControllerTests {
         }
     }
 
+    @Test
+    fun `GET search says why each result matched`() {
+        mockMvc.get("/posts/search?q=publishing").andExpect {
+            status { isOk() }
+            jsonPath("$.posts[0].title") { value("Published Post") }
+            jsonPath("$.posts[0].match.source") { value("body") }
+            jsonPath("$.posts[0].match.text") { value("Published content") }
+            jsonPath("$.posts[0].match.marks[0].start") { value(0) }
+            jsonPath("$.posts[0].match.marks[0].end") { value(9) }
+        }
+    }
+
+    @Test
+    fun `GET search with a quoted word matches it exactly`() {
+        mockMvc.get("/posts/search?q=\"publishing\"").andExpect {
+            status { isOk() }
+            jsonPath("$.totalCount") { value(0) }
+        }
+        mockMvc.get("/posts/search?q=\"published\"").andExpect {
+            status { isOk() }
+            jsonPath("$.posts[0].title") { value("Published Post") }
+        }
+    }
+
+    @Test
+    fun `GET search refuses a query that's too long`() {
+        mockMvc.get("/posts/search?q=" + "a".repeat(201)).andExpect {
+            status { isBadRequest() }
+            jsonPath("$.detail") { value("Search query is too long: at most 200 characters") }
+        }
+    }
+
     // --- POST /posts ---
 
     @Test
