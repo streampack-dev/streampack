@@ -256,6 +256,9 @@ soft-deleted post keeps them, unserved, in case it's restored.
 
 ### Feeds
 
+The post feeds, `/feed.xml`, `/feed.atom`, `/blog/rss.xml` and `/blog/atom.xml`, share one channel
+title and description: `BLOG_FEED_TITLE` (default `BLOG_SITE_NAME`) and `BLOG_FEED_DESCRIPTION`.
+
 `/feed.xml` and `/blog/rss.xml` give a post with a recording an
 `<enclosure url="…" length="…" type="…"/>`; `/feed.atom` and `/blog/atom.xml` a
 `<link rel="enclosure" href="…" length="…" type="…"/>`. `/podcast.xml` is `/feed.xml` limited to the

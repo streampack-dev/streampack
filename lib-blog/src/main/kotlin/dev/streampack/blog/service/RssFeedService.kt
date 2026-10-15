@@ -6,6 +6,7 @@ import com.rometools.rome.feed.synd.SyndEntry
 import com.rometools.rome.feed.synd.SyndEntryImpl
 import com.rometools.rome.feed.synd.SyndFeed
 import com.rometools.rome.feed.synd.SyndFeedImpl
+import dev.streampack.blog.config.BlogProperties
 import dev.streampack.blog.config.RssFeedProperties
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.SlugRepository
@@ -23,6 +24,7 @@ class RssFeedService(
     private val streampackProperties: StreampackProperties,
     private val rssFeedProperties: RssFeedProperties,
     private val postVersionService: PostVersionService,
+    private val blogProperties: BlogProperties,
 ) {
 
     /** Assembles a SyndFeed containing the most recent published posts */
@@ -37,7 +39,7 @@ class RssFeedService(
 
         val feed = SyndFeedImpl()
         feed.feedType = "rss_2.0"
-        feed.title = rssFeedProperties.title
+        feed.title = rssFeedProperties.title.ifBlank { blogProperties.siteName }
         feed.description = rssFeedProperties.description
         feed.link = baseUrl
         feed.language = rssFeedProperties.language

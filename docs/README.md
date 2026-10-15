@@ -22,9 +22,9 @@ For Mattermost development against a private local server, see [Run a Local Matt
 
 For repository-side release mechanics, see [Version and Publish Maven Artifacts to Nexus](how-to/develop/release-and-deploy-server-streampack.md).
 
-To name a deployment, see [Name the Deployment](how-to/deploy/name-the-deployment.md). To add your own operations, a banner or settings without rebuilding the image, follow [Write and Load an Extension](tutorials/write-and-load-an-extension.md), then [Extend the Server with Jars](how-to/deploy/extend-the-server-with-jars.md); the directory is described in [The `ext/` Directory](reference/ext-directory.md), and what an extension is trusted with in [Extensions](explanation/extensions.md).
+To give a deployment its own name, follow [Give a Deployment Its Own Name](tutorials/give-a-deployment-its-own-name.md); the settings are in [Name the Deployment](how-to/deploy/name-the-deployment.md). To add your own operations, a banner or settings without rebuilding the image, follow [Write and Load an Extension](tutorials/write-and-load-an-extension.md), then [Extend the Server with Jars](how-to/deploy/extend-the-server-with-jars.md); the directory is described in [The `ext/` Directory](reference/ext-directory.md), and what an extension is trusted with in [Extensions](explanation/extensions.md).
 
-For AI prompt customization, see [Configure Generative Prompts](how-to/deploy/configure-generative-prompts.md).
+To change AI prompts or the mail the server sends, see [Customize Prompts and Messages](how-to/deploy/configure-generative-prompts.md); every template and its default text is in [Prompt and Message Templates](reference/templates.md), and why they work as they do in [Templates](explanation/templates.md).
 
 For posts' recordings, the media directory they're stored in, and the podcast feed, see [Configure Media Storage and the Podcast Feed](how-to/deploy/configure-media-storage.md).
 

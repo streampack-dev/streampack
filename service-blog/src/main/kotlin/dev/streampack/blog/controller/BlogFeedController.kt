@@ -13,6 +13,7 @@ import com.rometools.rome.feed.synd.SyndFeedImpl
 import com.rometools.rome.io.SyndFeedOutput
 import dev.streampack.blog.config.BlogProperties
 import dev.streampack.blog.config.PodcastProperties
+import dev.streampack.blog.config.RssFeedProperties
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.entity.PostVersion
 import dev.streampack.blog.repository.PostRepository
@@ -48,6 +49,7 @@ class BlogFeedController(
     private val markdownRenderingService: MarkdownRenderingService,
     private val postVersionService: PostVersionService,
     private val podcastProperties: PodcastProperties,
+    private val feedProperties: RssFeedProperties,
 ) {
     @GetMapping(value = ["/feed.xml", "/feed.atom"], produces = [MediaType.APPLICATION_XML_VALUE])
     fun feed(request: HttpServletRequest): ResponseEntity<String> =
@@ -75,9 +77,10 @@ class BlogFeedController(
 
         val feed = SyndFeedImpl()
         feed.feedType = if (atom) "atom_1.0" else "rss_2.0"
-        feed.title = blogProperties.siteName
+        // The same channel as /blog/rss.xml (#233); the podcast's is set below.
+        feed.title = feedProperties.title.ifBlank { blogProperties.siteName }
         feed.link = baseUrl
-        feed.description = "Latest posts on ${blogProperties.siteName}"
+        feed.description = feedProperties.description
         if (podcast) describePodcast(feed)
 
         feed.entries = posts.mapNotNull { post ->

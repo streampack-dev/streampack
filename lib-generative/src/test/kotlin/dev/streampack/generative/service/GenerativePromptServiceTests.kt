@@ -77,4 +77,33 @@ class GenerativePromptServiceTests {
 
         assertEquals("lane=essay title=Signals and Noise", rendered)
     }
+
+    @Test
+    fun `a text override has its placeholders filled, and wins over the bundled template`() {
+        promptDir.createDirectories()
+        promptDir
+            .resolve("mail-sign-in-code.txt")
+            .writeText("Subject: {{siteName}} code\n\nUse {{code}} within {{minutes}} minutes.")
+
+        val rendered =
+            promptService.render(
+                "mail-sign-in-code",
+                "dev/streampack/core/mail/mail-sign-in-code.txt",
+                mapOf("siteName" to "Gholem", "code" to "123456", "minutes" to 10),
+            )
+
+        assertEquals("Subject: Gholem code\n\nUse 123456 within 10 minutes.", rendered)
+    }
+
+    @Test
+    fun `the bundled template has its placeholders filled too`() {
+        val rendered =
+            promptService.render(
+                "mail-sign-in-code",
+                "dev/streampack/core/mail/mail-sign-in-code.txt",
+                mapOf("siteName" to "Gholem", "code" to "123456", "minutes" to 10),
+            )
+
+        assertEquals(true, rendered.startsWith("Subject: Your sign-in code for Gholem"), rendered)
+    }
 }

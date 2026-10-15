@@ -76,6 +76,11 @@ streampack:
   blog:
     anonymous-submission: ${ANONYMOUS_SUBMISSION:false}
     site-name: ${BLOG_SITE_NAME:${STREAMPACK_NAME:Nevet}}
+    # Every post feed's channel (/blog/rss.xml, /blog/atom.xml, /feed.xml, /feed.atom; #233). The
+    # podcast feed has its own, below.
+    feed:
+      title: ${BLOG_FEED_TITLE:${BLOG_SITE_NAME:${STREAMPACK_NAME:Nevet}}}
+      description: ${BLOG_FEED_DESCRIPTION:JVM ecosystem news and community content}
     base-url: ${BLOG_BASE_URL:http://localhost:3001}
     summary:
       # The system prompt for admins' AI summaries (#102); empty uses the built-in editorial stance.

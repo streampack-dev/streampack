@@ -9,6 +9,7 @@ import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.MailHeaders
 import dev.streampack.core.service.ProtocolAdapter
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Component
 class MailEgressSubscriber(
     private val mailSender: JavaMailSender,
     private val properties: StreampackProperties,
+    /** The site's name (`BLOG_SITE_NAME`), in a subject when none was given (#232). */
+    @Value("\${streampack.blog.site-name:}") private val siteName: String = "",
 ) : EgressSubscriber(), ProtocolAdapter {
     override val protocol: Protocol = Protocol.MAILTO
     override val serviceName: String = "mail"
@@ -53,7 +56,7 @@ class MailEgressSubscriber(
         message.setTo(to)
         message.subject =
             headers[MailHeaders.SUBJECT] as? String
-                ?: "${properties.name.replaceFirstChar { it.uppercase() }} notification"
+                ?: "${siteName.ifBlank { properties.name.replaceFirstChar { it.uppercase() } }} notification"
         message.text = text
 
         logger.info("Sending notification email to {}", to)

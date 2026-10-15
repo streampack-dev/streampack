@@ -189,10 +189,10 @@ class RssFeedServiceTests {
     }
 
     @Test
-    fun `feed channel metadata comes from properties`() {
+    fun `feed channel metadata comes from properties, the title from the site's name`() {
         val feed = rssFeedService.buildFeed()
 
-        assertEquals("bytecode.news", feed.title)
+        assertEquals("Nevet", feed.title)
         assertEquals("JVM ecosystem news and community content", feed.description)
         assertEquals("en-us", feed.language)
     }
@@ -202,6 +202,6 @@ class RssFeedServiceTests {
         val feed = rssFeedService.buildFeed()
 
         assertEquals(0, feed.entries.size)
-        assertEquals("bytecode.news", feed.title)
+        assertEquals("Nevet", feed.title)
     }
 }
