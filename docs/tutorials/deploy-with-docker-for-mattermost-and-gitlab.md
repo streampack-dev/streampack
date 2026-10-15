@@ -28,20 +28,19 @@ docker compose version
 
 ## 1. Install the Setup Tool
 
-```bash
-curl -fLO https://github.com/streampack-dev/setup/releases/latest/download/streampack-setup-linux-amd64
-install -m 755 streampack-setup-linux-amd64 ~/streampack-setup
-```
+1. Follow [Install the Tool](https://github.com/streampack-dev/setup/blob/main/docs/how-to/install-the-tool.md) on the server. Use the Linux section for the server's processor. It makes the deployment directory, `~/streampack`, and puts the tool in it.
+2. Stay in that directory:
 
-Use `linux-arm64` on an ARM server. The tool's [README](https://github.com/streampack-dev/setup#install) shows how to check the download against its checksums.
+   ```bash
+   cd ~/streampack
+   ```
 
 ## 2. Answer the First Questions
 
-Make a directory for the deployment, and run the tool in it:
+Run the tool:
 
 ```bash
-mkdir ~/streampack && cd ~/streampack
-~/streampack-setup
+./streampack-setup
 ```
 
 It asks what starting the server needs. Press Enter to take a default in brackets:
@@ -155,7 +154,7 @@ Paste each token again when asked; nothing you type is shown. The tool wrote the
 Run the tool again in the same directory whenever you want the console:
 
 ```bash
-cd ~/streampack && ~/streampack-setup
+cd ~/streampack && ./streampack-setup
 ```
 
 It sees the `.env`, skips the questions, makes sure the server is up, and opens the console.
