@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>dev.streampack</groupId>
+        <artifactId>streampack-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <!--
+      An extension, loaded from the server's ext/ directory rather than built into it (#229). It is
+      not a dependency of server-streampack: its jar goes in ext/. lib-core is provided, as the
+      server has it already, so the jar holds only the extension's own classes.
+    -->
+    <artifactId>example-extension</artifactId>
+
+    <properties>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-testsupport</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

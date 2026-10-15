@@ -44,6 +44,8 @@ streampack:
   fetch:
     user-agent: ${STREAMPACK_NAME:ByteCode.News} (+${BASE_URL:https://bytecode.news})
   base-url: ${BASE_URL:http://localhost:8080}
+  # Extension jars and extra classpath files (#229); the image puts this directory on the classpath.
+  ext-dir: ${STREAMPACK_EXT_DIR:/opt/streampack/ext}
   jwt:
     secret: ${JWT_SECRET:}
   otp:
