@@ -36,7 +36,6 @@ class MattermostConnectionManager(
     private val serverRepository: MattermostServerRepository,
     private val channelRepository: dev.streampack.mattermost.repository.MattermostChannelRepository,
     private val channelControlService: dev.streampack.core.service.ChannelControlService,
-    private val restClientBuilder: RestClient.Builder,
 ) : InitializingBean, DisposableBean, ProtocolAdapter {
     override val protocol: Protocol = Protocol.MATTERMOST
     override val serviceName: String = "mattermost"
@@ -92,7 +91,9 @@ class MattermostConnectionManager(
                 reconnectDelay = mattermostProperties.reconnectDelay,
                 eventGateway = eventGateway,
                 userResolutionService = userResolutionService,
-                restClientBuilder = restClientBuilder,
+                // Its own builder: Spring Boot 4 no longer provides one without
+                // spring-boot-restclient
+                restClientBuilder = RestClient.builder(),
                 onConnected = { joinAutojoinChannels(server, it) },
             )
         adapters[server.name] = adapter
