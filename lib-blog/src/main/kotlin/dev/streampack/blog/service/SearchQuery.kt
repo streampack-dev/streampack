@@ -8,7 +8,12 @@ package dev.streampack.blog.service
  * phrases of one alternative. An alternative with none leaves the query to stemming alone. A
  * negated quote (`-"x"`) adds nothing: stemming already excludes it.
  */
-class SearchQuery private constructor(val exactGroups: List<List<String>>) {
+class SearchQuery
+private constructor(
+    val exactGroups: List<List<String>>,
+    /** Every positive, non-empty quote in the query, whether or not it ends up exact. */
+    val phraseCount: Int,
+) {
     /** Whether results must contain some phrase exactly. */
     val hasExact: Boolean
         get() = exactGroups.isNotEmpty()
@@ -42,6 +47,15 @@ class SearchQuery private constructor(val exactGroups: List<List<String>>) {
     }
 
     companion object {
+        /**
+         * Limits on a search, so a query can't be made expensive: each quoted phrase adds a
+         * lookahead the pattern checks against every candidate post's whole text, and each result a
+         * ts_headline over its body.
+         */
+        const val MAX_LENGTH = 200
+        const val MAX_PHRASES = 10
+        const val MAX_PAGE_SIZE = 100
+
         private val WHITESPACE = Regex("\\s+")
         private const val SPECIAL = "\\^$.|?*+()[]{}"
 
@@ -82,9 +96,10 @@ class SearchQuery private constructor(val exactGroups: List<List<String>>) {
                     }
                 }
             }
+            val phraseCount = groups.sumOf { it.size }
             // An alternative with no exact phrase can be met by stemming alone.
-            if (groups.any { it.isEmpty() }) return SearchQuery(emptyList())
-            return SearchQuery(groups.map { it.distinct() })
+            if (groups.any { it.isEmpty() }) return SearchQuery(emptyList(), phraseCount)
+            return SearchQuery(groups.map { it.distinct() }, phraseCount)
         }
     }
 }

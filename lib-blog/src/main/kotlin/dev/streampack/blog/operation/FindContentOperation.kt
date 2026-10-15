@@ -146,14 +146,25 @@ class FindContentOperation(
             )
         }
 
-        val now = Instant.now()
+        if (query.length > SearchQuery.MAX_LENGTH) {
+            return OperationResult.Error(
+                "Search query is too long: at most ${SearchQuery.MAX_LENGTH} characters",
+            )
+        }
         val parsed = SearchQuery.parse(query)
+        if (parsed.phraseCount > SearchQuery.MAX_PHRASES) {
+            return OperationResult.Error(
+                "Search query has too many quoted words or phrases: at most " +
+                    "${SearchQuery.MAX_PHRASES}",
+            )
+        }
+        val now = Instant.now()
         val pageResult =
             postRepository.searchPublished(
                 query,
                 parsed.postgresPattern(),
                 now,
-                PageRequest.of(page, size),
+                PageRequest.of(page.coerceAtLeast(0), size.coerceIn(1, SearchQuery.MAX_PAGE_SIZE)),
             )
         val matches = searchPassages.forPosts(pageResult.content.map { it.id }, query, parsed)
 

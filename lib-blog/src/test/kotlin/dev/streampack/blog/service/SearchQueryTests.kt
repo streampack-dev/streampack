@@ -80,4 +80,10 @@ class SearchQueryTests {
         assertFalse(patterns[0].containsMatchIn("nonemergently"))
         assertTrue(patterns[1].containsMatchIn("Kotlin\ncoroutines"))
     }
+
+    @Test
+    fun `every positive quote is counted, even when or leaves them to stemming`() {
+        assertEquals(3, SearchQuery.parse("\"a\" \"b\" or \"c\" -\"d\" \"\"").phraseCount)
+        assertEquals(2, SearchQuery.parse("\"a\" or b \"c").phraseCount)
+    }
 }

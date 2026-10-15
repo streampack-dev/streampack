@@ -13,6 +13,7 @@ import dev.streampack.blog.repository.CategoryRepository
 import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.PostTagRepository
+import dev.streampack.blog.service.SearchQuery
 import dev.streampack.core.entity.User
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
@@ -91,9 +92,22 @@ class SearchCoverageTests {
 
     private fun search(query: String): List<String> = searchSummaries(query).map { it.title }
 
-    private fun searchSummaries(query: String): List<ContentSummary> {
+    private fun searchSummaries(query: String, size: Int = 20): List<ContentSummary> {
+        val response =
+            (searchResult(query, size) as OperationResult.Success).payload as ContentListResponse
+        if (response.totalCount <= minOf(size, SearchQuery.MAX_PAGE_SIZE)) {
+            assertEquals(
+                response.posts.size.toLong(),
+                response.totalCount,
+                "count query agrees with results",
+            )
+        }
+        return response.posts
+    }
+
+    private fun searchResult(query: String, size: Int = 20): OperationResult {
         val message =
-            MessageBuilder.withPayload(FindContentRequest.Search(query))
+            MessageBuilder.withPayload(FindContentRequest.Search(query, size = size))
                 .setHeader(
                     Provenance.HEADER,
                     Provenance(
@@ -103,15 +117,7 @@ class SearchCoverageTests {
                     ),
                 )
                 .build()
-        val response =
-            (eventGateway.process(message) as OperationResult.Success).payload
-                as ContentListResponse
-        assertEquals(
-            response.posts.size.toLong(),
-            response.totalCount,
-            "count query agrees with results",
-        )
-        return response.posts
+        return eventGateway.process(message) as OperationResult
     }
 
     /** The marked words of a result's passage. */
@@ -289,6 +295,34 @@ class SearchCoverageTests {
         assertEquals(emptyList<String>(), search("the"))
         assertEquals(emptyList<String>(), search("\"the\""))
         assertEquals(listOf("Art"), search("\"state of the art\""))
+    }
+
+    // Limits, so a query can't be made expensive.
+
+    @Test
+    fun `a query over the length limit is refused`() {
+        val result = searchResult("a".repeat(SearchQuery.MAX_LENGTH + 1))
+        assertEquals(true, (result as OperationResult.Error).message.contains("too long"))
+        assertEquals(
+            true,
+            searchResult("a".repeat(SearchQuery.MAX_LENGTH)) is OperationResult.Success,
+        )
+    }
+
+    @Test
+    fun `too many quoted phrases are refused`() {
+        val many = (1..SearchQuery.MAX_PHRASES + 1).joinToString(" ") { "\"w$it\"" }
+        val result = searchResult(many)
+        assertEquals(true, (result as OperationResult.Error).message.contains("quoted"))
+        val enough = (1..SearchQuery.MAX_PHRASES).joinToString(" ") { "\"w$it\"" }
+        assertEquals(true, searchResult(enough) is OperationResult.Success)
+    }
+
+    @Test
+    fun `a page holds at most the page limit`() {
+        repeat(SearchQuery.MAX_PAGE_SIZE + 5) { post("Limit $it", body = "pagination limit") }
+
+        assertEquals(SearchQuery.MAX_PAGE_SIZE, searchSummaries("pagination", size = 10_000).size)
     }
 
     // #226: each result says why it matched.

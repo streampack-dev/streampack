@@ -30,3 +30,11 @@ Terms combine. `java "virtual threads" -spring` needs a word stemmed from `java`
 - **What's searched.** The title, the visible tags, the excerpt, and the body as a reader sees it: no markup, no link addresses, entities decoded.
 - **Ranking.** Results are ranked by relevance. A match in the title counts most, then tags and the excerpt, then the body. Quotes don't change the ranking.
 - **Blank queries.** A blank query returns no results.
+
+## Limits
+
+- **Length.** A query is at most 200 characters.
+- **Quotes.** A query has at most 10 quoted words or phrases. Negated and empty quotes don't count.
+- **Page size.** A page holds at most 100 results. A larger `size` is treated as 100.
+
+A query over a limit is refused with `400 Bad Request`, and the problem's `detail` says which limit. The limits keep a single search cheap: each quoted phrase is checked against the whole text of every candidate post, and each result gets a passage.

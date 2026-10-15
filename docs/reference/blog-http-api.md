@@ -121,7 +121,8 @@ carries it too.
 
 `GET /posts/search` searches the title, tags, excerpt and body text of visible posts, ranked by
 relevance. Words are stemmed (`emergent` finds `emerging`); quoted words match exactly
-(`"emergent"`). The full grammar is in [Post Search Syntax](post-search-syntax.md).
+(`"emergent"`). The full grammar, and the limits on a query's length, its quotes and the page
+size, are in [Post Search Syntax](post-search-syntax.md).
 
 Each result carries `match`, a passage that shows why it matched:
 

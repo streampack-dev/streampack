@@ -250,13 +250,19 @@ class PostController(
     )
     @GetMapping("/posts/search", produces = ["application/json"])
     fun searchPosts(
-        @Parameter(description = "Search query", example = "virtual threads", required = true)
+        @Parameter(
+            description =
+                "Search query: at most 200 characters, with at most 10 quoted words or " +
+                    "phrases. A longer query, or one with more quotes, is a 400.",
+            example = "virtual threads",
+            required = true,
+        )
         @RequestParam
         q: String,
         @Parameter(description = "Zero-based page index", example = "0")
         @RequestParam(defaultValue = "0")
         page: Int,
-        @Parameter(description = "Number of results per page", example = "20")
+        @Parameter(description = "Number of results per page, at most 100", example = "20")
         @RequestParam(defaultValue = "20")
         size: Int,
         httpRequest: HttpServletRequest,

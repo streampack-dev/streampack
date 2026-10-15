@@ -259,6 +259,14 @@ class PostControllerTests {
         }
     }
 
+    @Test
+    fun `GET search refuses a query that's too long`() {
+        mockMvc.get("/posts/search?q=" + "a".repeat(201)).andExpect {
+            status { isBadRequest() }
+            jsonPath("$.detail") { value("Search query is too long: at most 200 characters") }
+        }
+    }
+
     // --- POST /posts ---
 
     @Test
