@@ -101,6 +101,7 @@
         <module>service-moderation</module>
         <module>service-rss</module>
         <module>service-slack</module>
+        <module>example-extension</module>
     </modules>
 
     <dependencyManagement>

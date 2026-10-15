@@ -1,2 +1,3 @@
 org.springframework.boot.EnvironmentPostProcessor=\
-  dev.streampack.core.config.OperationConfigEnvironmentPostProcessor
+  dev.streampack.core.config.OperationConfigEnvironmentPostProcessor,\
+  dev.streampack.core.config.ExtensionConfigurationGuard

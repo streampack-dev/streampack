@@ -51,7 +51,9 @@ class MailEgressSubscriber(
         val message = SimpleMailMessage()
         message.from = properties.mail.from
         message.setTo(to)
-        message.subject = headers[MailHeaders.SUBJECT] as? String ?: "Nevet notification"
+        message.subject =
+            headers[MailHeaders.SUBJECT] as? String
+                ?: "${properties.name.replaceFirstChar { it.uppercase() }} notification"
         message.text = text
 
         logger.info("Sending notification email to {}", to)

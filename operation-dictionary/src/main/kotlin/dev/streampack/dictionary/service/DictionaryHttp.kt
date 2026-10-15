@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.dictionary.service
 
+import dev.streampack.core.fetch.FetchProperties
 import java.net.URI
 import java.net.URLEncoder
 import java.net.http.HttpClient
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Component
 @Component
 class DictionaryHttp(
     @Value("\${streampack.dictionary.timeout:3s}") private val timeout: Duration,
+    /** Its user agent names the deployment (#228). */
+    private val fetch: FetchProperties = FetchProperties(),
 ) {
     private val client = HttpClient.newBuilder().connectTimeout(timeout).build()
 
@@ -29,7 +32,7 @@ class DictionaryHttp(
         val request =
             HttpRequest.newBuilder(URI.create(url))
                 .timeout(timeout)
-                .header("User-Agent", USER_AGENT)
+                .header("User-Agent", fetch.userAgent)
                 .header("Accept", "application/json")
                 .GET()
                 .build()
@@ -38,8 +41,6 @@ class DictionaryHttp(
     }
 
     companion object {
-        private const val USER_AGENT = "streampack-define/1.0 (+https://bytecode.news)"
-
         /** [word] as one path segment: spaces as %20, not + */
         fun segment(word: String): String =
             URLEncoder.encode(word, Charsets.UTF_8).replace("+", "%20")

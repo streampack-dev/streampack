@@ -6,7 +6,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 /** Central configuration for all streampack core services */
 @ConfigurationProperties(prefix = "streampack")
 data class StreampackProperties(
+    /** The deployment's name (`STREAMPACK_NAME`, #228), as it introduces itself. */
+    val name: String = "nevet",
     val baseUrl: String = "http://localhost:8080",
+    /**
+     * The directory whose jars and files join the classpath (`STREAMPACK_EXT_DIR`, #229). The image
+     * passes it to Spring Boot's launcher; the server only reports what's in it.
+     */
+    val extDir: String = "/opt/streampack/ext",
     val frontendUrl: String = "",
     val jwt: JwtProperties = JwtProperties(),
     val token: TokenProperties = TokenProperties(),

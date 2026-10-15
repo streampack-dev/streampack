@@ -86,7 +86,7 @@ IRC_LIBERA_SASL_PASSWORD
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `IRC_ENABLED` | `false` | Turns IRC on. |
-| `IRC_IDENTITY` | `Nevet IRC Bridge` | The bot's identity, as CTCP `VERSION` answers. |
+| `IRC_IDENTITY` | `<STREAMPACK_NAME> IRC Bridge` (`Nevet IRC Bridge`) | The bot's identity, as CTCP `VERSION` answers. |
 | `IRC_ADAPTIVE_SEND_DELAY_ENABLED` | `true` | The adaptive send queue; off, every message waits `IRC_SEND_DELAY_MS`. |
 | `IRC_MIN_SEND_DELAY_MS` / `IRC_MAX_SEND_DELAY_MS` | `120` / `1000` | The adaptive gap's bounds. |
 | `IRC_SEND_DELAY_RAMP_UP_FACTOR` / `IRC_SEND_DELAY_RAMP_DOWN_FACTOR` | `1.1` / `0.9` | How fast the gap grows under a backlog and shrinks after. |

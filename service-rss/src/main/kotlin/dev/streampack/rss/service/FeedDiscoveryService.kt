@@ -309,9 +309,9 @@ class FeedDiscoveryService(private val fetcher: GuardedFetcher) {
         isCommentsLink(href, feed.title.orEmpty())
 
     companion object {
+        // The user agent is the fetcher's, which names the deployment (#228).
         private val HEADERS =
             mapOf(
-                "User-Agent" to "Mozilla/5.0 (compatible; Nevet/1.0; +https://bytecode.news)",
                 "Accept" to
                     "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html, */*;q=0.8",
             )
