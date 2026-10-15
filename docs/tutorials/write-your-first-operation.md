@@ -44,6 +44,8 @@ Test the operation with the shared channel and test-support configuration where 
 
 Add the operation module as a dependency of `server-streampack` or your own server distribution. `OperationService` discovers operation beans through Spring scanning.
 
+Or build it as a jar and put it in a deployment's `ext/` directory, with no change to the server: see [Write and Load an Extension](write-and-load-an-extension.md).
+
 ## 6. Externalize Prompts When Appropriate
 
 If an operation uses AI or other generative prompting, do not hardcode deployment-specific prompt text in the operation itself.

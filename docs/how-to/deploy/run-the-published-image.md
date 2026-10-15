@@ -36,6 +36,8 @@ services:
     volumes:
       - media:/opt/streampack/media
       - ./generative:/opt/streampack/generative:ro
+      # Extension jars and extra classpath files, such as banner.txt; see "Extend the Server with Jars".
+      - ./ext:/opt/streampack/ext:ro
     tmpfs:
       - /run/streampack:mode=0700
     # For the stdin console (CONSOLE_ENABLED=true); see "Use the Console in Docker".
@@ -71,6 +73,8 @@ STREAMPACK_VERSION=<a version from the tag list>
 DB_PASSWORD=<openssl rand -base64 24>
 JWT_SECRET=<openssl rand -base64 48>
 ADMIN_EMAIL=you@example.com
+# The deployment's name; also the default for the site's name and the IRC identity.
+STREAMPACK_NAME=nevet
 BASE_URL=https://api.example.com
 BLOG_BASE_URL=https://www.example.com
 
@@ -86,7 +90,7 @@ Every variable is described in [Environment Variables](../../reference/environme
 ## Start It
 
 ```bash
-mkdir -p generative
+mkdir -p generative ext
 docker compose pull
 docker compose up -d
 curl -fsS http://localhost:8080/features

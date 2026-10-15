@@ -10,6 +10,11 @@ This reference covers the variables commonly used by `server-streampack`.
 | `JWT_SECRET` | Yes | JWT signing secret. Must be strong and deployment-specific. Startup fails when it is unset (with enforcement on) or set to a placeholder such as `change-me`. |
 | `BASE_URL` | Production | Public backend URL. |
 | `BLOG_BASE_URL` | Production | Public frontend/site URL. |
+| `STREAMPACK_NAME` | Optional | The deployment's name (default `nevet`): what `GET /features` and `version` report. It's also the default for `BLOG_SITE_NAME`, `IRC_IDENTITY` (*name* `IRC Bridge`), `KARMA_IMMUNE_SUBJECTS`, the mail subject fallback (*Name* `notification`), and the user agent the server sends when it fetches. Each of those still wins when set. |
+| `BLOG_SITE_NAME` | Optional | The site's name, in feeds and pages the server renders (default `STREAMPACK_NAME`, or `Nevet`). |
+| `KARMA_IMMUNE_SUBJECTS` | Optional | Comma-separated subjects karma can't change (default `STREAMPACK_NAME`). |
+| `STREAMPACK_FETCH_USERAGENT` | Optional | The user agent the server sends to the sites it fetches from: feeds, link previews, lookups (default *name* `(+`*`BASE_URL`*`)`, or `ByteCode.News (+https://bytecode.news)` with neither set). Outgoing mentions use *name* `mentions (+`*`BASE_URL`*`)`. |
+| `STREAMPACK_EXT_DIR` | Optional | The directory whose jars, and the files in it, join the classpath ahead of the server's own (default `/opt/streampack/ext`, in the image). A `banner.txt` there replaces the banner; `config/application.yml` there adds settings. An `application.yml` at its top stops the start. See [The `ext/` Directory](ext-directory.md). |
 | `ADMIN_EMAIL` | First start | The super-admin's email address. On a database with no active super-admin, startup creates one for it (username: the part before `@`); otherwise it's ignored. There's no password: the account signs in with a one-time code by mail, through the console, or with the local admin token. Without it, a fresh server has no super-admin, so the console and the local admin token can't start. |
 | `STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` | Optional | Defaults to `true`. Fails startup when required secrets are missing or use insecure defaults. Set to `false` only for local development. |
 | `STREAMPACK_LOG_ZONE` | Optional | The IANA timezone channel logs are split into days by, such as `America/New_York` (default `UTC`). Every reader sees the same days; `GET /features` gives it as `logs.zone`. Stored times stay UTC. An invalid zone stops startup. |
@@ -87,7 +92,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `STREAMPACK_SPECS_CVE_MAVEN_BACK_OFF` | Optional | How long `cve` stops searching Maven Central after a 429 or 503 without a `Retry-After` (default `PT15M`); with one, it waits as long as that says, up to `STREAMPACK_SPECS_CVE_MAVEN_BACK_OFF_MAX` (default `PT24H`). Other lookups carry on. |
 | `BLOG_SUMMARY_PROMPT` | Optional | System prompt for admins' AI-derived post summaries. Empty uses the built-in stance: lead with the substance, never tease or bury the lede. |
 | `IRC_ENABLED` | Optional | Enables IRC adapter. |
-| `IRC_IDENTITY` | Optional | The bot's identity, as its CTCP `VERSION` answer (default `Nevet IRC Bridge`). |
+| `IRC_IDENTITY` | Optional | The bot's identity, as its CTCP `VERSION` answer (default *`STREAMPACK_NAME`* `IRC Bridge`, so `Nevet IRC Bridge` unset). |
 | `IRC_ADAPTIVE_SEND_DELAY_ENABLED` | Optional | Spaces outgoing IRC messages adaptively, growing the gap under a backlog (default `true`). |
 | `IRC_MIN_SEND_DELAY_MS`, `IRC_MAX_SEND_DELAY_MS` | Optional | Bounds of the adaptive gap (defaults `120` and `1000`). |
 | `IRC_SEND_DELAY_RAMP_UP_FACTOR`, `IRC_SEND_DELAY_RAMP_DOWN_FACTOR` | Optional | How fast the adaptive gap grows and shrinks (defaults `1.1` and `0.9`). |

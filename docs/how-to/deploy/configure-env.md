@@ -57,6 +57,8 @@ Optional integrations:
 
 | Variable | Purpose |
 |----------|---------|
+| `STREAMPACK_NAME` | The deployment's name, and the default for the site's name, the IRC identity, the karma-immune subjects and the user agent. |
+| `STREAMPACK_EXT_DIR` | The directory of extension jars and extra classpath files. See [Extend the Server with Jars](extend-the-server-with-jars.md). |
 | `IRC_ENABLED` | Enables IRC adapter. |
 | `DISCORD_ENABLED` | Enables Discord adapter. |
 | `SLACK_ENABLED` | Enables Slack adapter. |
