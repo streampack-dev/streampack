@@ -34,7 +34,8 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
-      - media:/opt/streampack/media
+      # Posts' recordings, for the audio streams: files on the host, beside .env.
+      - ./media:/opt/streampack/media
       - ./generative:/opt/streampack/generative:ro
       # Extension jars and extra classpath files, such as banner.txt; see "Extend the Server with Jars".
       - ./ext:/opt/streampack/ext:ro
@@ -61,7 +62,6 @@ services:
 
 volumes:
   pgdata:
-  media:
 ```
 
 ## The `.env`
@@ -90,7 +90,7 @@ Every variable is described in [Environment Variables](../../reference/environme
 ## Start It
 
 ```bash
-mkdir -p generative ext
+mkdir -p generative ext media
 docker compose pull
 docker compose up -d
 curl -fsS http://localhost:8080/features
@@ -101,6 +101,12 @@ curl -fsS http://localhost:8080/features
 ## Change Settings
 
 Edit `.env`, then `docker compose up -d`. `docker compose restart` keeps the old environment.
+
+## Back Up
+
+Back up the database and `media/` together: the database refers to the recordings in `media/` by name. See [Back Up and Restore PostgreSQL](backup-and-restore-postgres.md).
+
+On Linux, the files the server writes into `media/` belong to root, because the server runs as root in its container. Read them as root, or with `sudo`, to back them up.
 
 ## Upgrade
 
