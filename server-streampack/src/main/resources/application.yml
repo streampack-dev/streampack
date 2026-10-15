@@ -34,9 +34,15 @@ spring:
             required: ${MAIL_STARTTLS:false}
   ai: {}
   application:
-    name: nevet
+    # The deployment's name (#228): STREAMPACK_NAME also defaults the site's name, the IRC identity,
+    # the karma-immune subjects and the user agent below.
+    name: ${STREAMPACK_NAME:nevet}
     version: 3.0
 streampack:
+  name: ${STREAMPACK_NAME:nevet}
+  # How the server names itself to the sites it fetches from (feeds, previews, lookups).
+  fetch:
+    user-agent: ${STREAMPACK_NAME:ByteCode.News} (+${BASE_URL:https://bytecode.news})
   base-url: ${BASE_URL:http://localhost:8080}
   jwt:
     secret: ${JWT_SECRET:}
@@ -58,7 +64,7 @@ streampack:
     from: ${MAIL_FROM:noreply@bytecode.news}
   irc:
     enabled: ${IRC_ENABLED:false}
-    identity: ${IRC_IDENTITY:Nevet IRC Bridge}
+    identity: ${IRC_IDENTITY:${STREAMPACK_NAME:Nevet} IRC Bridge}
     adaptive-send-delay-enabled: ${IRC_ADAPTIVE_SEND_DELAY_ENABLED:true}
     min-send-delay-ms: ${IRC_MIN_SEND_DELAY_MS:120}
     max-send-delay-ms: ${IRC_MAX_SEND_DELAY_MS:1000}
@@ -67,7 +73,7 @@ streampack:
     send-delay-ms: ${IRC_SEND_DELAY_MS:900}
   blog:
     anonymous-submission: ${ANONYMOUS_SUBMISSION:false}
-    site-name: ${BLOG_SITE_NAME:Nevet}
+    site-name: ${BLOG_SITE_NAME:${STREAMPACK_NAME:Nevet}}
     base-url: ${BLOG_BASE_URL:http://localhost:3001}
     summary:
       # The system prompt for admins' AI summaries (#102); empty uses the built-in editorial stance.
@@ -77,6 +83,7 @@ streampack:
       # feeds (#128).
       mentions: ${BLOG_MENTIONS_ENABLED:true}
       autosubscribe: ${BLOG_AUTOSUBSCRIBE_ENABLED:true}
+      user-agent: ${STREAMPACK_NAME:ByteCode.News} mentions (+${BASE_URL:https://bytecode.news})
     # The podcast feed's channel (/podcast.xml, #196). Blank title uses BLOG_SITE_NAME; blank
     # author, image, category and owner are left out.
     podcast:
@@ -96,7 +103,7 @@ streampack:
     max-size: ${STREAMPACK_MEDIA_MAX_SIZE:100MB}
     cache-max-age: ${STREAMPACK_MEDIA_CACHE_MAX_AGE:PT5M}
   karma:
-    immune-subjects: ${KARMA_IMMUNE_SUBJECTS:nevet}
+    immune-subjects: ${KARMA_IMMUNE_SUBJECTS:${STREAMPACK_NAME:nevet}}
   weather:
     api-key: ${OPENWEATHERMAP_API_KEY:change-me}
   discord:

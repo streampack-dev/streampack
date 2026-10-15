@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.weather.service
 
+import dev.streampack.core.fetch.FetchProperties
 import dev.streampack.core.json.JacksonMappers
 import dev.streampack.weather.config.WeatherProperties
 import dev.streampack.weather.model.GeocodingResult
@@ -17,7 +18,11 @@ import tools.jackson.module.kotlin.readValue
 
 /** Geocodes locations via Nominatim and fetches current weather from OpenWeatherMap */
 @Service
-class WeatherService(private val config: WeatherProperties) {
+class WeatherService(
+    private val config: WeatherProperties,
+    /** Its user agent names the deployment (#228). */
+    private val fetch: FetchProperties = FetchProperties(),
+) {
 
     private val logger = LoggerFactory.getLogger(WeatherService::class.java)
     private val mapper = JacksonMappers.standard()
@@ -114,10 +119,7 @@ class WeatherService(private val config: WeatherProperties) {
                 HttpRequest.newBuilder()
                     .uri(URI(url))
                     .timeout(Duration.ofSeconds(config.readTimeoutSeconds.toLong()))
-                    .header(
-                        "User-Agent",
-                        "Mozilla/5.0 (compatible; Nevet/1.0; +https://bytecode.news)",
-                    )
+                    .header("User-Agent", fetch.userAgent)
                     .GET()
                     .build()
             val response = client.send(request, HttpResponse.BodyHandlers.ofString())

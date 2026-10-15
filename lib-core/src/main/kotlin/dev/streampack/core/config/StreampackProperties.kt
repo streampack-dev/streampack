@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 /** Central configuration for all streampack core services */
 @ConfigurationProperties(prefix = "streampack")
 data class StreampackProperties(
+    /** The deployment's name (`STREAMPACK_NAME`, #228), as it introduces itself. */
+    val name: String = "nevet",
     val baseUrl: String = "http://localhost:8080",
     val frontendUrl: String = "",
     val jwt: JwtProperties = JwtProperties(),
