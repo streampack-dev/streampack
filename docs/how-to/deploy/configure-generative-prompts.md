@@ -1,6 +1,6 @@
-# Configure Generative Prompts
+# Customize Prompts and Messages
 
-Streampack can load AI/generative prompts from a runtime filesystem directory instead of relying only on bundled defaults.
+Streampack can load AI prompts, and the mail it sends, from a runtime filesystem directory instead of relying only on bundled defaults. Every template, its placeholders and its default text are in [Prompt and Message Templates](../../reference/templates.md).
 
 This is useful when:
 
@@ -39,6 +39,28 @@ For a prompt named `suggest-prompt`, Streampack resolves:
 3. the bundled classpath fallback
 
 If an external prompt fails to load, Streampack logs the problem and falls back safely.
+
+## Change a Mail
+
+The sign-in code, address-confirmation and new-draft mails are templates too: `mail-sign-in-code`, `mail-verify-email` and `mail-new-draft`.
+
+1. Copy the default text of the mail from [Prompt and Message Templates](../../reference/templates.md) into a file named after it in the mounted directory:
+
+   ```text
+   generative/mail-sign-in-code.txt
+   ```
+
+2. Edit the text. Keep the first line, `Subject: …`: it's the mail's subject. Use the placeholders the reference lists, such as `{{siteName}}` and `{{code}}`.
+
+   ```text
+   Subject: Your {{siteName}} code
+
+   Here's your code: {{code}}. It works for {{minutes}} minutes.
+   ```
+
+3. Send yourself the mail, for example by signing in. The file is read every time, so no restart is needed.
+
+A placeholder that the mail has no value for shows as written, so a typo is visible in the mail you receive.
 
 ## Plain Text Override
 
@@ -143,7 +165,7 @@ The first consumer of this mechanism is `operation-ideas` for the `suggest` comm
 
 The bundled fallback prompt lives at:
 
-[`operation-ideas/src/main/resources/dev/streampack/ideas/prompts/suggest-prompt.txt`](/Users/joeo/work/streampack-dev/streampack/operation-ideas/src/main/resources/dev/streampack/ideas/prompts/suggest-prompt.txt)
+`operation-ideas/src/main/resources/dev/streampack/ideas/prompts/suggest-prompt.txt`
 
 `service-rss` renders `rss-rating-rubric`, the rubric the model's hidden guess at feed item ratings
 judges by (#192). Its bundled default is
@@ -151,11 +173,15 @@ judges by (#192). Its bundled default is
 keys. The instructions for the answer are appended in code, so an override can't break how the
 answer is read. See [Admin Feed Item Ratings](../../reference/blog-http-api.md#admin-feed-item-ratings).
 
+`lib-core` and `lib-blog` render the mail templates (#232), with `siteName` from `BLOG_SITE_NAME`.
+
 ## Developer Notes
 
 Shared prompt loading lives in `lib-generative`, not in `operation-ideas`.
 
-Use `GenerativePromptService` for new generative features that need:
+Use `GenerativePromptService` for new generative features that need these. Code in `lib-core`, which can't depend on `lib-generative`, uses the `TextTemplates` interface that it implements.
+
+It gives:
 
 - bundled fallback prompts
 - deployment-specific filesystem overrides

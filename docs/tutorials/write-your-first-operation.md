@@ -56,4 +56,4 @@ Use the shared prompt-loading support in `lib-generative` so the feature can:
 - accept filesystem overrides from a mounted directory
 - optionally evaluate dynamic `.clj` prompt files at runtime
 
-For the first concrete example, see `operation-ideas` and [Configure Generative Prompts](../how-to/deploy/configure-generative-prompts.md).
+For the first concrete example, see `operation-ideas` and [Customize Prompts and Messages](../how-to/deploy/configure-generative-prompts.md).

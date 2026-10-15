@@ -64,8 +64,9 @@ Optional integrations:
 | `SLACK_ENABLED` | Enables Slack adapter. |
 | `MATTERMOST_ENABLED` | Enables Mattermost adapter. |
 | `AI_ENABLED` | Enables AI-backed features. |
-| `STREAMPACK_GENERATIVE_PROMPT_DIR` | Filesystem directory for external generative prompt overrides. |
+| `STREAMPACK_GENERATIVE_PROMPT_DIR` | Filesystem directory for prompt and mail template overrides. See [Customize Prompts and Messages](configure-generative-prompts.md). |
 | `STREAMPACK_MEDIA_DIR` | Writable directory for uploaded media, such as posts' recordings. Unset, media is off. See [Configure Media Storage](configure-media-storage.md). |
+| `BLOG_FEED_TITLE`, `BLOG_FEED_DESCRIPTION` | Every post feed's title (default `BLOG_SITE_NAME`) and description. |
 | `PODCAST_TITLE`, `PODCAST_AUTHOR`, `PODCAST_IMAGE`, `PODCAST_CATEGORY`, `PODCAST_EXPLICIT`, `PODCAST_OWNER_EMAIL` | The podcast feed's channel (`/podcast.xml`). See [Configure Media Storage](configure-media-storage.md#the-podcast-feed). |
 | `ANTHROPIC_API_KEY` | Anthropic API key. |
 | `GITHUB_WEBHOOK_SECRET_KEY` | Key that encrypts stored GitHub webhook secrets. Needed before enabling webhook delivery. |
