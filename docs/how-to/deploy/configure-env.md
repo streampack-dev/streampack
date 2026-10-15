@@ -9,7 +9,8 @@ Required production values:
 | `JWT_SECRET` | HMAC secret for JWT signing. Must be unique and strong. |
 | `DB_URL` | JDBC URL for PostgreSQL. In Compose this is usually `jdbc:postgresql://db:5432/nevet`. |
 | `DB_USERNAME` | PostgreSQL username. |
-| `DB_PASSWORD` | PostgreSQL password. |
+| `DB_PASSWORD` | PostgreSQL password. The repository's `docker-compose.yml` gives it to the database too (default `nevet`, for development only). |
+| `ADMIN_EMAIL` | The super-admin's address, created on first start when there's none. Needed for the console and the local admin token. |
 
 Common public URLs:
 

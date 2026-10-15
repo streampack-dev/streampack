@@ -2,7 +2,9 @@
 package dev.streampack.slack.service
 
 import dev.streampack.core.model.SecretRef
+import dev.streampack.core.model.SecretRequirement
 import dev.streampack.core.service.SecretRefEnvironment
+import dev.streampack.core.service.SecretRequirementSource
 import dev.streampack.core.service.SilentStartupException
 import dev.streampack.slack.repository.SlackWorkspaceRepository
 import java.time.Instant
@@ -23,7 +25,7 @@ class SlackSecretRefStartupGuard(
     private val workspaceRepository: SlackWorkspaceRepository,
     private val springEnvironment: Environment,
     @Value("\${streampack.security.enforce-external-secrets:true}") private val enforce: Boolean,
-) : InitializingBean {
+) : InitializingBean, SecretRequirementSource {
     private val logger = org.slf4j.LoggerFactory.getLogger(javaClass)
 
     override fun afterPropertiesSet() {
@@ -118,6 +120,30 @@ class SlackSecretRefStartupGuard(
             )
         }
         return GuardResult(newRef = current)
+    }
+
+    /** The variables the next start needs, judged as [enforce] judges them (#209). */
+    override fun secretRequirements(): List<SecretRequirement> {
+        val lookup: (String) -> String? = { key ->
+            System.getenv(key) ?: springEnvironment.getProperty(key)
+        }
+        return workspaceRepository.findByDeletedFalse().flatMap { workspace ->
+            val prefix = SecretRefEnvironment.buildKey("SLACK", workspace.name)
+            listOfNotNull(
+                SecretRequirement.of(
+                    workspace.botToken,
+                    SecretRefEnvironment.buildKey(prefix, "BOT_TOKEN"),
+                    "Slack workspace '${workspace.name}' bot token",
+                    lookup,
+                ),
+                SecretRequirement.of(
+                    workspace.appToken,
+                    SecretRefEnvironment.buildKey(prefix, "APP_TOKEN"),
+                    "Slack workspace '${workspace.name}' app token",
+                    lookup,
+                ),
+            )
+        }
     }
 
     private fun printFailure(migrationExports: List<String>, validationErrors: List<String>) {

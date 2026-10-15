@@ -2,6 +2,7 @@
 package dev.streampack.github.service
 
 import dev.streampack.core.model.SecretRef
+import dev.streampack.core.model.SecretRequirement
 import dev.streampack.core.service.SilentStartupException
 import dev.streampack.forge.secret.SecretLookup
 import dev.streampack.github.entity.GitHubInstance
@@ -141,5 +142,27 @@ class GitHubSecretRefStartupGuardTests {
 
         guard.enforce { key -> if (key == "GITHUB_OWNER_REPO_TOKEN") "ghp_abc" else null }
         Mockito.verify(repository, Mockito.never()).save(Mockito.any())
+    }
+
+    @Test
+    fun `lists what the next start needs, by variable, as the startup check judges it`() {
+        val stored =
+            GitHubRepo(owner = "acme", name = "stored", token = SecretRef.literal("ghp-abc"))
+        val missing =
+            GitHubRepo(
+                owner = "acme",
+                name = "missing",
+                token = SecretRef.env("GITHUB_ACME_MISSING_TOKEN"),
+            )
+        Mockito.`when`(repository.findAll()).thenReturn(listOf(stored, missing))
+        Mockito.`when`(instanceRepository.findAll()).thenReturn(emptyList())
+
+        assertEquals(
+            listOf(
+                "GITHUB_ACME_STORED_TOKEN" to SecretRequirement.State.STORED_IN_DATABASE,
+                "GITHUB_ACME_MISSING_TOKEN" to SecretRequirement.State.NOT_SET,
+            ),
+            guard.secretRequirements().map { it.variable to it.state },
+        )
     }
 }

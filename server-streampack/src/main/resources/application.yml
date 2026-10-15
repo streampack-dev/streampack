@@ -45,6 +45,11 @@ streampack:
     max-failed-attempts: ${OTP_MAX_FAILED_ATTEMPTS:5}
   console:
     enabled: ${CONSOLE_ENABLED:false}
+  # A short-lived super-admin token, written to this file when the server is ready and renewed at
+  # half its lifetime, for a setup tool on the same box (#209). Off while blank.
+  local-admin-token:
+    file: ${STREAMPACK_LOCAL_ADMIN_TOKEN_FILE:}
+    lifetime: ${STREAMPACK_LOCAL_ADMIN_TOKEN_LIFETIME:PT1H}
   logs:
     # The IANA timezone channel logs are split into days by, the same for every reader (#212).
     zone: ${STREAMPACK_LOG_ZONE:UTC}

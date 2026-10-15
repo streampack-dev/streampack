@@ -53,12 +53,13 @@ If you prefer the UI: sign up at <http://localhost:8065>, create a team, enable 
 
 ## 3. Connect Streampack
 
-Run `server-streampack` outside compose with the console adapter, so you have a place to type admin commands. The console reads standard input, which a compose service has no way to provide. The compose `db` service supplies Postgres:
+Run `server-streampack` outside compose with the console adapter, so the terminal you started it in is where you type admin commands. (A compose service can have the console too, with `stdin_open` and `tty`; see [Use the Console in Docker](../deploy/use-the-console-in-docker.md). Running the jar is quicker while you're changing code.) The console needs a super-admin, which `ADMIN_EMAIL` creates on a fresh database. The compose `db` service supplies Postgres:
 
 ```bash
 docker compose up -d db
 just build
-CONSOLE_ENABLED=true MATTERMOST_ENABLED=true STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS=false \
+ADMIN_EMAIL=you@example.com CONSOLE_ENABLED=true MATTERMOST_ENABLED=true \
+  STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS=false \
   java -jar server-streampack/target/server-streampack-*-exec.jar
 ```
 

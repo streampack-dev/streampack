@@ -10,6 +10,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `JWT_SECRET` | Yes | JWT signing secret. Must be strong and deployment-specific. Startup fails when it is unset (with enforcement on) or set to a placeholder such as `change-me`. |
 | `BASE_URL` | Production | Public backend URL. |
 | `BLOG_BASE_URL` | Production | Public frontend/site URL. |
+| `ADMIN_EMAIL` | First start | The super-admin's email address. On a database with no active super-admin, startup creates one for it (username: the part before `@`); otherwise it's ignored. There's no password: the account signs in with a one-time code by mail, through the console, or with the local admin token. Without it, a fresh server has no super-admin, so the console and the local admin token can't start. |
 | `STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` | Optional | Defaults to `true`. Fails startup when required secrets are missing or use insecure defaults. Set to `false` only for local development. |
 | `STREAMPACK_LOG_ZONE` | Optional | The IANA timezone channel logs are split into days by, such as `America/New_York` (default `UTC`). Every reader sees the same days; `GET /features` gives it as `logs.zone`. Stored times stay UTC. An invalid zone stops startup. |
 | `MAIL_ENABLED` | Optional | Enables outbound email. |
@@ -100,8 +101,12 @@ This reference covers the variables commonly used by `server-streampack`.
 | `SLACK_ENABLED` | Optional | Enables Slack adapter. |
 | `SLACK_SIGNAL` | Optional | Signal that addresses the bot in Slack channels (default `!`); overridable per workspace with `slack signal`. |
 | `SLACK_<NAME>_BOT_TOKEN`, `SLACK_<NAME>_APP_TOKEN` | Per workspace | Bot (`xoxb-`) and app (`xapp-`) tokens for the Slack workspace registered as `<name>`, e.g. `SLACK_JVM_NEWS_BOT_TOKEN`. Externalized and enforced at startup like Mattermost tokens. |
-| `CONSOLE_ENABLED` | Optional | Enables console adapter. |
+| `CONSOLE_ENABLED` | Optional | Enables the console adapter: commands read from standard input, sent as the super-admin. It starts once the server is ready, on a thread of its own. Under Docker Compose the service needs `stdin_open: true` and `tty: true`; see [Use the Console in Docker](../how-to/deploy/use-the-console-in-docker.md). |
+| `STREAMPACK_LOCAL_ADMIN_TOKEN_FILE` | Optional | A file to write a super-admin token to, for a setup tool on the same box ([The Local Admin Token](../explanation/local-admin-token.md)). Off while blank. Written when the server is ready and renewed at half its lifetime, readable by the server's user alone (mode `0600`), removed on shutdown; the token is never logged. Needs a super-admin (`ADMIN_EMAIL`). |
+| `STREAMPACK_LOCAL_ADMIN_TOKEN_LIFETIME` | Optional | How long each local admin token is valid, ISO-8601 duration (default `PT1H`). |
 | `CORS_ORIGINS` | Optional | Comma-separated browser origins trusted for credentialed cross-origin requests; also the origins a cookie-authenticated web console command must come from. |
 | `STREAMPACK_WEBCONSOLE_COMMANDS_PER_MINUTE` | Optional | Web console commands an admin may submit a minute (default `30`). The console's other limits are `STREAMPACK_WEBCONSOLE_*` too: `HEARTBEAT` (`15s`), `MAX_STREAM_AGE` (`1h`), `MAX_STREAMS_PER_USER` (`4`), `STREAM_OPENS_PER_MINUTE` (`20`), `QUEUE_EVENTS` (`100`), `QUEUE_BYTES` (`1048576`), `MAX_EVENT_BYTES` (`131072`), `MAX_LINE` (`4096`), `MAX_BODY` (`32768`). |
+
+The per-credential variables above (`GITHUB_…_TOKEN`, `GITLAB_…_TOKEN`, `MATTERMOST_<NAME>_TOKEN`, `SLACK_<NAME>_…`, `IRC_<NAME>_SASL_…`) are listed by name, for a running server, by the console's `secrets` command and by `GET /admin/secrets` (super-admin): which ones the next start needs, and whether each is waiting in the database or referenced but not set. See [Move Credentials into the Environment](../how-to/deploy/move-credentials-into-the-environment.md).
 
 Each `AI_*` setting is also read as `STREAMPACK_AI_*` (e.g. `STREAMPACK_AI_MODEL`, `STREAMPACK_AI_MODERATION_MODEL`), the property's own name in the environment; where both are set, the `STREAMPACK_AI_*` one wins.

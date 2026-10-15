@@ -2,7 +2,9 @@
 package dev.streampack.irc.service
 
 import dev.streampack.core.model.SecretRef
+import dev.streampack.core.model.SecretRequirement
 import dev.streampack.core.service.SecretRefEnvironment
+import dev.streampack.core.service.SecretRequirementSource
 import dev.streampack.core.service.SilentStartupException
 import dev.streampack.irc.repository.IrcNetworkRepository
 import java.time.Instant
@@ -23,7 +25,7 @@ class IrcSecretRefStartupGuard(
     private val networkRepository: IrcNetworkRepository,
     private val springEnvironment: Environment,
     @Value("\${streampack.security.enforce-external-secrets:true}") private val enforce: Boolean,
-) : InitializingBean {
+) : InitializingBean, SecretRequirementSource {
     private val logger = org.slf4j.LoggerFactory.getLogger(javaClass)
 
     override fun afterPropertiesSet() {
@@ -121,6 +123,30 @@ class IrcSecretRefStartupGuard(
             )
         }
         return GuardResult(newRef = current)
+    }
+
+    /** The variables the next start needs, judged as [enforce] judges them (#209). */
+    override fun secretRequirements(): List<SecretRequirement> {
+        val lookup: (String) -> String? = { key ->
+            System.getenv(key) ?: springEnvironment.getProperty(key)
+        }
+        return networkRepository.findByDeletedFalse().flatMap { network ->
+            val prefix = SecretRefEnvironment.buildKey("IRC", network.name)
+            listOfNotNull(
+                SecretRequirement.of(
+                    network.saslAccount,
+                    SecretRefEnvironment.buildKey(prefix, "SASL_ACCOUNT"),
+                    "IRC network '${network.name}' SASL account",
+                    lookup,
+                ),
+                SecretRequirement.of(
+                    network.saslPassword,
+                    SecretRefEnvironment.buildKey(prefix, "SASL_PASSWORD"),
+                    "IRC network '${network.name}' SASL password",
+                    lookup,
+                ),
+            )
+        }
     }
 
     private fun printFailure(migrationExports: List<String>, validationErrors: List<String>) {

@@ -2,7 +2,9 @@
 package dev.streampack.github.service
 
 import dev.streampack.core.model.SecretRef
+import dev.streampack.core.model.SecretRequirement
 import dev.streampack.core.service.SecretRefEnvironment
+import dev.streampack.core.service.SecretRequirementSource
 import dev.streampack.core.service.SilentStartupException
 import dev.streampack.forge.secret.SecretLookup
 import dev.streampack.github.entity.GitHubInstance
@@ -26,7 +28,7 @@ class GitHubSecretRefStartupGuard(
     private val instanceRepository: GitHubInstanceRepository,
     private val secretLookup: SecretLookup,
     @Value("\${streampack.security.enforce-external-secrets:true}") private val enforce: Boolean,
-) : InitializingBean {
+) : InitializingBean, SecretRequirementSource {
     private val logger = org.slf4j.LoggerFactory.getLogger(javaClass)
 
     override fun afterPropertiesSet() {
@@ -112,6 +114,32 @@ class GitHubSecretRefStartupGuard(
         } else if (active && lookup(key).isNullOrBlank()) {
             validationErrors.add("$description requires environment variable $key")
         }
+    }
+
+    /** The variables the next start needs, judged as [enforce] judges them (#209). */
+    override fun secretRequirements(): List<SecretRequirement> {
+        val lookup: (String) -> String? = { key -> secretLookup.lookup(key) }
+        val instances =
+            instanceRepository.findAll().mapNotNull { instance ->
+                SecretRequirement.of(
+                    instance.defaultToken,
+                    envKeyFor(instance),
+                    "GitHub instance '${instance.host}' default token",
+                    lookup,
+                    required = instance.active,
+                )
+            }
+        val repos =
+            repoRepository.findAll().mapNotNull { repo ->
+                SecretRequirement.of(
+                    repo.token,
+                    envKeyFor(repo),
+                    "GitHub repository '${repo.displayName}' token",
+                    lookup,
+                    required = repo.active,
+                )
+            }
+        return instances + repos
     }
 
     private fun printFailure(migrationExports: List<String>, validationErrors: List<String>) {

@@ -16,6 +16,7 @@ data class StreampackProperties(
     val cookie: CookieProperties = CookieProperties(),
     val maxHops: Int = 3,
     val logs: LogsProperties = LogsProperties(),
+    val localAdminToken: LocalAdminTokenProperties = LocalAdminTokenProperties(),
 ) {
     data class JwtProperties(val secret: String = "", val expirationHours: Long = 24)
 
@@ -39,4 +40,13 @@ data class StreampackProperties(
 
     /** [zone] is the IANA timezone channel logs are split into days by (#212) */
     data class LogsProperties(val zone: String = "UTC")
+
+    /**
+     * A super-admin token written to [file] for a setup tool on the same box (#209), valid for
+     * [lifetime] and renewed at half of it. Off while [file] is blank.
+     */
+    data class LocalAdminTokenProperties(
+        val file: String = "",
+        val lifetime: java.time.Duration = java.time.Duration.ofHours(1),
+    )
 }

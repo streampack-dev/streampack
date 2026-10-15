@@ -11,7 +11,7 @@ services:
     environment:
       DB_URL: jdbc:postgresql://db:5432/nevet
       DB_USERNAME: nevet
-      DB_PASSWORD: nevet
+      DB_PASSWORD: ${DB_PASSWORD:-nevet}
       BASE_URL: ${BASE_URL:-http://localhost:8080}
       BLOG_BASE_URL: ${BLOG_BASE_URL:-http://localhost:3001}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
@@ -60,7 +60,7 @@ services:
     environment:
       POSTGRES_DB: nevet
       POSTGRES_USER: nevet
-      POSTGRES_PASSWORD: nevet
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nevet}
     ports:
       - "5432:5432"
     volumes:

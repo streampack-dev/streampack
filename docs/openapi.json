@@ -2492,6 +2492,34 @@
         "required" : [ "confusion", "counts", "guessedRatesRatedDull", "perClass", "ratedRatesGuessedDull" ],
         "type" : "object"
       },
+      "SecretRequirement" : {
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "state" : {
+            "enum" : [ "STORED_IN_DATABASE", "NOT_SET" ],
+            "type" : "string"
+          },
+          "variable" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "description", "state", "variable" ],
+        "type" : "object"
+      },
+      "SecretRequirementsResponse" : {
+        "properties" : {
+          "required" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SecretRequirement"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "required" ],
+        "type" : "object"
+      },
       "SeeAlsoToNothing" : {
         "properties" : {
           "missing" : {
@@ -5539,6 +5567,48 @@
         } ],
         "summary" : "Map a feed tag to an existing tag",
         "tags" : [ "Admin - RSS" ]
+      }
+    },
+    "/admin/secrets" : {
+      "get" : {
+        "operationId" : "required",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SecretRequirementsResponse"
+                }
+              }
+            },
+            "description" : "The variables, by name, with what each is for; never their values"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not a super-admin"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "List the environment variables the next start needs",
+        "tags" : [ "Admin - Secrets" ]
       }
     },
     "/admin/tags/actions" : {

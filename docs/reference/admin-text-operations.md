@@ -70,6 +70,18 @@ Notes:
 - `operation ...` and `channel ...` mutations require `ADMIN`.
 - When `channel ... for` is omitted, the current provenance is used.
 
+### Secrets
+
+```text
+secrets
+```
+
+`SUPER_ADMIN` only. Lists the environment variables the next start needs: credentials given at the
+console (`mattermost connect`, `gitlab add`, `github add`, `irc` SASL, `slack connect`) that are
+stored in the database until their variables are set, and references whose variables aren't set.
+Names and what they're for, never values. `GET /admin/secrets` answers the same list as JSON. See
+[Move Credentials into the Environment](../how-to/deploy/move-credentials-into-the-environment.md).
+
 ## Factoid Moderation
 
 Normal users can create and query factoids. Admins get moderation controls:

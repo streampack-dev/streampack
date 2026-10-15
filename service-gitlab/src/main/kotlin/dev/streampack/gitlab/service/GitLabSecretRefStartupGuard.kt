@@ -2,7 +2,9 @@
 package dev.streampack.gitlab.service
 
 import dev.streampack.core.model.SecretRef
+import dev.streampack.core.model.SecretRequirement
 import dev.streampack.core.service.SecretRefEnvironment
+import dev.streampack.core.service.SecretRequirementSource
 import dev.streampack.core.service.SilentStartupException
 import dev.streampack.forge.secret.SecretLookup
 import dev.streampack.gitlab.config.ConditionalOnGitLab
@@ -28,7 +30,7 @@ class GitLabSecretRefStartupGuard(
     private val instanceRepository: GitLabInstanceRepository,
     private val secretLookup: SecretLookup,
     @Value("\${streampack.security.enforce-external-secrets:true}") private val enforce: Boolean,
-) : InitializingBean {
+) : InitializingBean, SecretRequirementSource {
     private val logger = org.slf4j.LoggerFactory.getLogger(javaClass)
 
     override fun afterPropertiesSet() {
@@ -114,6 +116,32 @@ class GitLabSecretRefStartupGuard(
         } else if (active && lookup(key).isNullOrBlank()) {
             validationErrors.add("$description requires environment variable $key")
         }
+    }
+
+    /** The variables the next start needs, judged as [enforce] judges them (#209). */
+    override fun secretRequirements(): List<SecretRequirement> {
+        val lookup: (String) -> String? = { key -> secretLookup.lookup(key) }
+        val instances =
+            instanceRepository.findAll().mapNotNull { instance ->
+                SecretRequirement.of(
+                    instance.defaultToken,
+                    envKeyFor(instance),
+                    "GitLab instance '${instance.host}' default token",
+                    lookup,
+                    required = instance.active,
+                )
+            }
+        val projects =
+            projectRepository.findAll().mapNotNull { project ->
+                SecretRequirement.of(
+                    project.token,
+                    envKeyFor(project),
+                    "GitLab project '${project.displayName}' token",
+                    lookup,
+                    required = project.active,
+                )
+            }
+        return instances + projects
     }
 
     private fun printFailure(migrationExports: List<String>, validationErrors: List<String>) {
