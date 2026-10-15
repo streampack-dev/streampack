@@ -650,6 +650,14 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "match" : {
+            "description" : "In search results only: a passage showing why the post matched, with the matching words marked. Null in other listings.",
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/SearchMatch"
+            }, {
+              "type" : "null"
+            } ]
+          },
           "publishedAt" : {
             "format" : "date-time",
             "type" : [ "string", "null" ]
@@ -2490,6 +2498,47 @@
           }
         },
         "required" : [ "confusion", "counts", "guessedRatesRatedDull", "perClass", "ratedRatesGuessedDull" ],
+        "type" : "object"
+      },
+      "SearchMark" : {
+        "description" : "A range of `text`: from `start` up to, not including, `end`, counted in UTF-16 code units, as JavaScript's `String.prototype.slice` counts.",
+        "properties" : {
+          "end" : {
+            "example" : 11,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "start" : {
+            "example" : 3,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "end", "start" ],
+        "type" : "object"
+      },
+      "SearchMatch" : {
+        "description" : "Why a search result matched: a short passage from the post, as plain text, with the words that matched marked by offsets. Search stems words, so a marked word may differ from the one searched for (`emerging` for `emergent`); a quoted word matches exactly.",
+        "properties" : {
+          "marks" : {
+            "description" : "The matching words in `text`, in order, without overlaps.",
+            "items" : {
+              "$ref" : "#/components/schemas/SearchMark"
+            },
+            "type" : "array"
+          },
+          "source" : {
+            "description" : "Where the passage comes from: `body`, `excerpt`, `title` or `tags`.",
+            "example" : "body",
+            "type" : "string"
+          },
+          "text" : {
+            "description" : "The passage, as plain text with no markup. ` … ` joins separate extracts, and starts or ends one cut from a longer text.",
+            "example" : "An emerging runtime, call it oden, could use the same modules.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "marks", "source", "text" ],
         "type" : "object"
       },
       "SecretRequirement" : {
@@ -8470,7 +8519,7 @@
     },
     "/posts/search" : {
       "get" : {
-        "description" : "Full-text search across post titles (weighted higher) and excerpts. Only published, non-deleted posts are searched. Results are ranked by relevance. Blank queries return an empty list.",
+        "description" : "Full-text search across post titles (weighted highest), tags and excerpts, and body text. Queries read like a web search box: `or` between alternatives, `-word` to exclude. Words are stemmed, so `emergent` also finds `emerging`; a quoted word or phrase must also appear exactly, so `\"emergent\"` finds only `emergent`. Each result's `match` is a passage showing why it matched, with the matching words marked. Only published, visible posts are searched. Results are ranked by relevance. Blank queries return an empty list.",
         "operationId" : "searchPosts",
         "parameters" : [ {
           "description" : "Search query",

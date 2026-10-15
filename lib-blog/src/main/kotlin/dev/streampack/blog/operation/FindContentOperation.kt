@@ -15,6 +15,8 @@ import dev.streampack.blog.repository.PostTagRepository
 import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.blog.service.PostTagVisibility
 import dev.streampack.blog.service.PostVersionService
+import dev.streampack.blog.service.SearchPassages
+import dev.streampack.blog.service.SearchQuery
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -43,6 +45,7 @@ class FindContentOperation(
     private val temperatureService: TemperatureService,
     private val tagVocabulary: TagVocabulary,
     private val postVersionService: PostVersionService,
+    private val searchPassages: SearchPassages,
 ) : TypedOperation<FindContentRequest>(FindContentRequest::class) {
 
     override val priority = 50
@@ -144,14 +147,23 @@ class FindContentOperation(
         }
 
         val now = Instant.now()
-        val pageResult = postRepository.searchPublished(query, now, PageRequest.of(page, size))
+        val parsed = SearchQuery.parse(query)
+        val pageResult =
+            postRepository.searchPublished(
+                query,
+                parsed.postgresPattern(),
+                now,
+                PageRequest.of(page, size),
+            )
+        val matches = searchPassages.forPosts(pageResult.content.map { it.id }, query, parsed)
 
         val summaries =
             toSummaries(
-                pageResult.content.map { post ->
-                    postRepository.findActiveByIdWithAuthor(post.id) ?: post
-                },
-            )
+                    pageResult.content.map { post ->
+                        postRepository.findActiveByIdWithAuthor(post.id) ?: post
+                    },
+                )
+                .map { summary -> summary.copy(match = matches[summary.id]) }
 
         return OperationResult.Success(
             ContentListResponse(

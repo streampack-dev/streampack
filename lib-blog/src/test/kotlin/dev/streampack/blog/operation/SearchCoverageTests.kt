@@ -6,6 +6,7 @@ import dev.streampack.blog.entity.Post
 import dev.streampack.blog.entity.PostCategory
 import dev.streampack.blog.entity.PostTag
 import dev.streampack.blog.model.ContentListResponse
+import dev.streampack.blog.model.ContentSummary
 import dev.streampack.blog.model.FindContentRequest
 import dev.streampack.blog.model.PostStatus
 import dev.streampack.blog.repository.CategoryRepository
@@ -65,13 +66,14 @@ class SearchCoverageTests {
         excerpt: String = "An unrelated summary",
         body: String = "Unrelated body text.",
         tags: List<String> = emptyList(),
+        html: String = "<p>$body</p>",
     ): Post {
         val post =
             postRepository.save(
                 Post(
                     title = title,
                     markdownSource = body,
-                    renderedHtml = "<p>$body</p>",
+                    renderedHtml = html,
                     excerpt = excerpt,
                     status = PostStatus.APPROVED,
                     publishedAt = Instant.now().minusSeconds(60),
@@ -87,7 +89,9 @@ class SearchCoverageTests {
         return post
     }
 
-    private fun search(query: String): List<String> {
+    private fun search(query: String): List<String> = searchSummaries(query).map { it.title }
+
+    private fun searchSummaries(query: String): List<ContentSummary> {
         val message =
             MessageBuilder.withPayload(FindContentRequest.Search(query))
                 .setHeader(
@@ -107,8 +111,12 @@ class SearchCoverageTests {
             response.totalCount,
             "count query agrees with results",
         )
-        return response.posts.map { it.title }
+        return response.posts
     }
+
+    /** The marked words of a result's passage. */
+    private fun marked(summary: ContentSummary): List<String> =
+        summary.match!!.let { m -> m.marks.map { m.text.substring(it.start, it.end) } }
 
     @Test
     fun `a term only in the body is found`() {
@@ -221,5 +229,150 @@ class SearchCoverageTests {
         entityManager.flush()
 
         assertEquals(setOf("Visible zeppelin", "Hidden zeppelin"), search("zeppelin").toSet())
+    }
+
+    // #227: quoted words match exactly; unquoted words keep stemming.
+
+    @Test
+    fun `an unquoted word is stemmed, a quoted one is exact`() {
+        post("Runtimes", body = "An emerging runtime could use the same modules.")
+        post("Behaviour", body = "The behaviour is emergent, not designed.")
+
+        assertEquals(setOf("Runtimes", "Behaviour"), search("emergent").toSet())
+        assertEquals(listOf("Behaviour"), search("\"emergent\""))
+        assertEquals(listOf("Behaviour"), search("\"Emergent\""))
+    }
+
+    @Test
+    fun `a quoted phrase needs its words together, in order`() {
+        post("Together", body = "Kotlin coroutines make this simple.")
+        post("Apart", body = "Coroutines in Kotlin make this simple.")
+
+        assertEquals(setOf("Together", "Apart"), search("kotlin coroutines").toSet())
+        assertEquals(listOf("Together"), search("\"kotlin coroutines\""))
+    }
+
+    @Test
+    fun `quoted and stemmed words mix, and or gives alternatives`() {
+        post("Runtimes", body = "An emerging runtime, built on threads.")
+        post("Behaviour", body = "The behaviour is emergent, across threads.")
+        post("Neither", body = "Nothing emerges here but threads.")
+
+        assertEquals(listOf("Behaviour"), search("thread \"emergent\""))
+        assertEquals(
+            setOf("Runtimes", "Behaviour"),
+            search("\"emergent\" or \"emerging\"").toSet(),
+        )
+    }
+
+    @Test
+    fun `an unclosed quote is exact to the end of the query`() {
+        post("Together", body = "Kotlin coroutines make this simple.")
+        post("Apart", body = "Coroutines in Kotlin make this simple.")
+
+        assertEquals(listOf("Together"), search("\"kotlin coroutines"))
+    }
+
+    @Test
+    fun `an exact phrase doesn't run from one field into the next`() {
+        post("Kotlin", excerpt = "Coroutines everywhere", body = "Nothing else.")
+
+        assertEquals(listOf("Kotlin"), search("kotlin coroutines"))
+        assertEquals(emptyList<String>(), search("\"kotlin coroutines\""))
+    }
+
+    @Test
+    fun `common words find nothing alone, but count inside a quoted phrase`() {
+        post("Art", body = "This is the state of the art in parsers.")
+        post("Other", body = "The art of the state is another thing.")
+
+        assertEquals(emptyList<String>(), search("the"))
+        assertEquals(emptyList<String>(), search("\"the\""))
+        assertEquals(listOf("Art"), search("\"state of the art\""))
+    }
+
+    // #226: each result says why it matched.
+
+    @Test
+    fun `a stemmed match marks the word that matched`() {
+        post("Runtimes", body = "Some preamble. An emerging runtime could use the same modules.")
+
+        val result = searchSummaries("emergent").single()
+        assertEquals("body", result.match!!.source)
+        assertEquals(listOf("emerging"), marked(result))
+    }
+
+    @Test
+    fun `a quoted word marks only the exact word`() {
+        post("Both", body = "An emerging runtime shows emergent behaviour.")
+
+        val result = searchSummaries("\"emergent\"").single()
+        assertEquals(listOf("emergent"), marked(result))
+    }
+
+    @Test
+    fun `a match only in the title or a tag says so`() {
+        post("Emergent Design")
+        post("Tagged", tags = listOf("emergence"))
+
+        val byTitle = searchSummaries("\"emergent\"").single()
+        assertEquals("title", byTitle.match!!.source)
+        assertEquals(listOf("Emergent"), marked(byTitle))
+
+        val byTag = searchSummaries("emergence").single { it.title == "Tagged" }
+        assertEquals("tags", byTag.match!!.source)
+        assertEquals(listOf("emergence"), marked(byTag))
+    }
+
+    @Test
+    fun `the passage is plain text, with no markup from the post`() {
+        post(
+            "Markup",
+            body =
+                "Tom &amp; Jerry use <a href=\"https://example.com/x\">emergent</a> <em>tricks</em>.",
+        )
+
+        for (query in listOf("emergent", "\"emergent\"")) {
+            val result = searchSummaries(query).single()
+            assertEquals(false, result.match!!.text.contains('<'), result.match!!.text)
+            assertEquals(false, result.match!!.text.contains("&amp;"), result.match!!.text)
+            assertEquals(listOf("emergent"), marked(result))
+        }
+        // The exact passage keeps the whole short sentence, so the decoded entity shows.
+        assertEquals(
+            "Tom & Jerry use emergent tricks.",
+            searchSummaries("\"emergent\"").single().match!!.text,
+        )
+    }
+
+    @Test
+    fun `block tags keep words apart, inline tags don't split them`() {
+        post(
+            "Blocks",
+            html =
+                "<p>first</p><p>emergent</p><ul><li>second</li></ul><p><strong>un</strong>expected.</p>",
+        )
+
+        val text = searchSummaries("\"emergent\"").single().match!!.text
+        assertEquals("first emergent second unexpected.", text)
+    }
+
+    @Test
+    fun `a word split by inline markup is indexed whole, stemmed or exact`() {
+        post("Split", html = "<p>Something <strong>un</strong>expected happened.</p>")
+
+        assertEquals(listOf("Split"), search("unexpected"))
+        assertEquals(listOf("Split"), search("\"unexpected\""))
+    }
+
+    @Test
+    fun `a long body is cut to a window around the match`() {
+        val filler = (1..80).joinToString(" ") { "word$it" }
+        post("Long", body = "$filler emergent $filler")
+
+        val match = searchSummaries("\"emergent\"").single().match!!
+        assertEquals(true, match.text.startsWith("…"), match.text)
+        assertEquals(true, match.text.endsWith("…"), match.text)
+        assertEquals(listOf("emergent"), marked(searchSummaries("\"emergent\"").single()))
     }
 }

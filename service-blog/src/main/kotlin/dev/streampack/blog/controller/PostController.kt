@@ -234,9 +234,13 @@ class PostController(
     @Operation(
         summary = "Search published posts",
         description =
-            "Full-text search across post titles (weighted higher) and excerpts. " +
-                "Only published, non-deleted posts are searched. " +
-                "Results are ranked by relevance. Blank queries return an empty list.",
+            "Full-text search across post titles (weighted highest), tags and excerpts, and " +
+                "body text. Queries read like a web search box: `or` between alternatives, " +
+                "`-word` to exclude. Words are stemmed, so `emergent` also finds `emerging`; a " +
+                "quoted word or phrase must also appear exactly, so `\"emergent\"` finds only " +
+                "`emergent`. Each result's `match` is a passage showing why it matched, with the " +
+                "matching words marked. Only published, visible posts are searched. Results are " +
+                "ranked by relevance. Blank queries return an empty list.",
         operationId = "searchPosts",
     )
     @ApiResponse(
