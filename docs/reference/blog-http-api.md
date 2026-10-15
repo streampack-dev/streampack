@@ -74,7 +74,7 @@ ignored), whether or not the identity exists. Past the limit, `POST /auth/otp/ve
 | `GET /posts?page=0&size=20` | Lists published blog posts in publication order. |
 | `GET /posts?category=kotlin&page=0&size=20` | Lists published posts in a category. |
 | `GET /posts?tag=kotlin&page=0&size=20` | Lists published posts with a tag. |
-| `GET /posts/search?q=spring&page=0&size=20` | Searches published posts. |
+| `GET /posts/search?q=spring&page=0&size=20` | Searches published posts; see [Search](#search). |
 | `GET /posts/popular?page=0&size=3` | Lists published posts ordered by decayed access temperature. |
 
 A post's `tags` never include system tags (those starting with `_`, such as `_idea`), and
@@ -116,6 +116,32 @@ Each post's `versionKinds` lists the kinds of version it has, sorted, such as `a
 recording, so a list can mark it; it's empty for most posts, and while media is off (#200). The
 versions themselves are in the post's details. The admin drafts list (`GET /admin/posts/pending`)
 carries it too.
+
+### Search
+
+`GET /posts/search` searches the title, tags, excerpt and body text of visible posts, ranked by
+relevance. Words are stemmed (`emergent` finds `emerging`); quoted words match exactly
+(`"emergent"`). The full grammar is in [Post Search Syntax](post-search-syntax.md).
+
+Each result carries `match`, a passage that shows why it matched:
+
+```json
+"match": {
+  "source": "body",
+  "text": "Some preamble. An emerging runtime could use the same modules",
+  "marks": [{ "start": 18, "end": 26 }]
+}
+```
+
+- `source` is the field the passage comes from: `body`, `excerpt`, `title` or `tags`. It's the
+  first of these, in that order, with a match.
+- `text` is plain text, with no markup. ` … ` joins separate extracts, and begins or ends one cut
+  from a longer text.
+- `marks` are the matching words, in order, as ranges of `text` counted in UTF-16 code units, as
+  JavaScript's `String.prototype.slice` counts them. A stemmed match marks the word as written in
+  the post (`emerging` for a search of `emergent`). A quoted match marks the exact words.
+
+`match` is null in other listings.
 
 Popularity is based on `lib-temperature`: each successful direct post read and explicit post access
 event accrues a `blog.post` / `hit` signal. Scores decay over time, so older traffic gradually matters
