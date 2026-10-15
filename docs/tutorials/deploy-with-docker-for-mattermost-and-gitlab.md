@@ -47,9 +47,13 @@ It asks what starting the server needs. Press Enter to take a default in bracket
 
 ```text
 Server version [1.16.0]:
+The system's name [nevet]: gholem
 The super-admin's email address: you@example.com
 The API's public address [http://localhost:8080]: https://api.example.com
 The site's public address [http://localhost:3000]: https://www.example.com
+The site's name [gholem]: Gholem
+The feed's title [Gholem]:
+The feed's description [JVM ecosystem news and community content]: News for the team
 Turn on Mattermost? [Y/n]:
 Turn on GitLab? [Y/n]:
 Turn on IRC? [y/N]:
@@ -60,7 +64,9 @@ Wrote compose.yaml
 Wrote .env (readable by you alone)
 ```
 
-You didn't give it any Mattermost or GitLab tokens. Those come later, at the console. The tool generated the database password, the JWT secret and the webhook keys itself; they're in `.env`.
+You didn't give it any Mattermost or GitLab tokens. Those come later, at the console. The tool generated the database password, the JWT secret and the webhook keys itself; they're in `.env`. It also made three directories the server reads: `generative/` for prompt and mail templates, `ext/` for extensions, and `media/` for recordings.
+
+The system's name, `gholem`, is how the server introduces itself: in `/features`, its IRC identity and its user agent. The site's name, `Gholem`, is what readers see in pages, mail and feeds. See [Name the Deployment](../how-to/deploy/name-the-deployment.md).
 
 ## 3. Watch It Start
 

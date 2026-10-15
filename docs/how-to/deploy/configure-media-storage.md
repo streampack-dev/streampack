@@ -44,7 +44,7 @@ directory must be writable by that user.
 | `STREAMPACK_MEDIA_CACHE_MAX_AGE` | `PT5M` | How long browsers and caches may keep a file before asking again. A replaced file keeps its address but not its ETag, so it's fetched again after this. |
 
 There is no cap on total storage. The files aren't in the database, so a database backup doesn't
-hold them: back up the media volume beside it (see
+hold them: back up the media directory, or volume, beside it (see
 [Back Up and Restore PostgreSQL](backup-and-restore-postgres.md)). A post's versions refer to their
 files by keys the server generated; restoring one without the other leaves versions whose media
 answers `404`.
