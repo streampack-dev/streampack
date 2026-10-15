@@ -2,6 +2,7 @@
 package dev.streampack.config
 
 import dev.streampack.blog.config.BlogProperties
+import dev.streampack.blog.config.RssFeedProperties
 import dev.streampack.blog.outgoing.OutgoingLinksProperties
 import dev.streampack.core.config.StreampackProperties
 import dev.streampack.core.fetch.FetchProperties
@@ -103,5 +104,26 @@ class NameSettingsBindingTests {
             b.of("streampack.karma", KarmaProperties::class.java).immuneSubjects,
         )
         assertEquals("custom/1.0", b.of("streampack.fetch", FetchProperties::class.java).userAgent)
+    }
+
+    @Test
+    fun `the feed's title follows the site's name, and its own settings win (#233)`() {
+        val feed = { env: Map<String, Any> ->
+            binder(env).of("streampack.blog.feed", RssFeedProperties::class.java)
+        }
+        assertEquals("Nevet", feed(emptyMap()).title)
+        assertEquals("JVM ecosystem news and community content", feed(emptyMap()).description)
+        assertEquals("ByteCode.News", feed(mapOf("BLOG_SITE_NAME" to "ByteCode.News")).title)
+        assertEquals("gholem", feed(mapOf("STREAMPACK_NAME" to "gholem")).title)
+        val own =
+            feed(
+                mapOf(
+                    "BLOG_SITE_NAME" to "ByteCode.News",
+                    "BLOG_FEED_TITLE" to "bytecode.news",
+                    "BLOG_FEED_DESCRIPTION" to "News for the team",
+                ),
+            )
+        assertEquals("bytecode.news", own.title)
+        assertEquals("News for the team", own.description)
     }
 }

@@ -1,0 +1,8 @@
+Subject: Verify your email address
+
+Welcome to {{siteName}}!
+
+Please verify your email address by visiting:
+{{link}}
+
+This link will expire in {{hours}} hours.

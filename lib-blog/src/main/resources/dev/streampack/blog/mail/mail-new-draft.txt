@@ -1,0 +1,9 @@
+Subject: New post submission: {{title}}
+
+A new post draft was submitted on {{siteName}}.
+
+Title: {{title}}
+Author: {{author}}
+URL: {{url}}
+
+{{markdown}}

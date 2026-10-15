@@ -95,7 +95,7 @@ class RssFeedControllerTests {
                 .contentAsString
 
         assertTrue(result.contains("<feed") || result.contains("<rss"))
-        assertTrue(result.contains("<title>bytecode.news</title>"))
+        assertTrue(result.contains("<title>Nevet</title>"))
         assertTrue(
             result.contains(
                 "<description>JVM ecosystem news and community content</description>",
@@ -141,6 +141,6 @@ class RssFeedControllerTests {
                 .contentAsString
 
         assertTrue(result.contains("<channel>") || result.contains("<feed"))
-        assertTrue(result.contains("<title>bytecode.news</title>"))
+        assertTrue(result.contains("<title>Nevet</title>"))
     }
 }

@@ -109,7 +109,7 @@ class McpControllerTests {
             .andExpect {
                 status { isOk() }
                 jsonPath("$.result.protocolVersion") { value("2024-11-05") }
-                jsonPath("$.result.serverInfo.name") { value("bytecode.news-mcp") }
+                jsonPath("$.result.serverInfo.name") { value("nevet-mcp") }
                 jsonPath("$.result.capabilities.tools.listChanged") { value(false) }
             }
     }

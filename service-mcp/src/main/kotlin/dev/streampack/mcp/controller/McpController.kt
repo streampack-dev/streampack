@@ -4,6 +4,7 @@ package dev.streampack.mcp.controller
 import dev.streampack.core.json.JacksonMappers
 import dev.streampack.mcp.service.McpToolService
 import dev.streampack.mcp.service.ToolResult
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -13,9 +14,16 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import tools.jackson.databind.exc.MismatchedInputException
 
-/** Minimal JSON-RPC MCP endpoint for read-only bytecode.news tools. */
+/**
+ * Minimal JSON-RPC MCP endpoint for the site's read-only tools. It names itself after the
+ * deployment (`STREAMPACK_NAME`) and the site (`BLOG_SITE_NAME`), #233.
+ */
 @RestController
-class McpController(private val toolService: McpToolService) {
+class McpController(
+    private val toolService: McpToolService,
+    @Value("\${streampack.name:nevet}") private val name: String = "nevet",
+    @Value("\${streampack.blog.site-name:Nevet}") private val siteName: String = "Nevet",
+) {
     private val mapper = JacksonMappers.standard()
     private val protocolVersion = "2024-11-05"
 
@@ -46,7 +54,7 @@ class McpController(private val toolService: McpToolService) {
     fun info(): ResponseEntity<String> {
         val message =
             """
-            bytecode.news MCP endpoint
+            $siteName MCP endpoint
 
             This endpoint uses JSON-RPC 2.0 over HTTP POST.
             Send POST /mcp with a JSON body using methods:
@@ -64,7 +72,7 @@ class McpController(private val toolService: McpToolService) {
     private fun initializeResult() =
         InitializeResult(
             protocolVersion = protocolVersion,
-            serverInfo = ServerInfo(name = "bytecode.news-mcp", version = "1.0"),
+            serverInfo = ServerInfo(name = "$name-mcp", version = "1.0"),
             capabilities = ServerCapabilities(tools = ToolCapabilities(listChanged = false)),
         )
 

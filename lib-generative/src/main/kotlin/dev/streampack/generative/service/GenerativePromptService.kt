@@ -5,6 +5,7 @@ import clojure.java.api.Clojure
 import clojure.lang.IFn
 import clojure.lang.Keyword
 import clojure.lang.PersistentArrayMap
+import dev.streampack.core.service.TextTemplates
 import dev.streampack.generative.config.GenerativeProperties
 import java.nio.file.Files
 import java.nio.file.Path
@@ -52,7 +53,7 @@ import org.springframework.core.io.ResourceLoader
 class GenerativePromptService(
     private val properties: GenerativeProperties,
     private val resourceLoader: ResourceLoader,
-) {
+) : TextTemplates {
     private val logger = LoggerFactory.getLogger(GenerativePromptService::class.java)
     private val readStringFn: IFn = Clojure.`var`("clojure.core", "read-string")
     private val evalFn: IFn = Clojure.`var`("clojure.core", "eval")
@@ -79,25 +80,28 @@ class GenerativePromptService(
      *     )
      * ```
      *
-     * @param promptName logical prompt name without file extension
-     * @param fallbackClasspathResource classpath resource path used when no usable external prompt
-     *   is available
+     * A `.txt` template, external or bundled, has its `{{key}}` placeholders filled from [context]
+     * ([TextTemplates.fill]); a `.clj` one receives [context] itself.
+     *
+     * @param name logical prompt name without file extension
+     * @param fallbackResource classpath resource path used when no usable external prompt is
+     *   available
      * @param context dynamic values exposed to a `.clj` prompt function; string keys become Clojure
      *   keyword keys
      * @return the prompt text to pass into the consumer’s AI/generative pipeline
      */
-    fun render(
-        promptName: String,
-        fallbackClasspathResource: String,
-        context: Map<String, Any?> = emptyMap(),
+    override fun render(
+        name: String,
+        fallbackResource: String,
+        context: Map<String, Any?>,
     ): String {
-        resolveExternalClj(promptName, context)?.let {
+        resolveExternalClj(name, context)?.let {
             return it
         }
-        resolveExternalText(promptName)?.let {
-            return it
+        resolveExternalText(name)?.let {
+            return TextTemplates.fill(it, context)
         }
-        return resolveClasspathFallback(fallbackClasspathResource)
+        return TextTemplates.fill(resolveClasspathFallback(fallbackResource), context)
     }
 
     /**

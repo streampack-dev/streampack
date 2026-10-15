@@ -8,7 +8,11 @@ import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.core.entity.User
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.core.service.ClasspathTextTemplates
 import dev.streampack.core.service.MailNotificationPublisher
+import dev.streampack.core.service.MailText
+import dev.streampack.core.service.TextTemplates
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.stereotype.Service
 
 /** Resolves recipients and publishes email notifications for blog submissions and replies. */
@@ -19,26 +23,39 @@ class BlogNotificationService(
     private val slugRepository: SlugRepository,
     private val mailNotificationPublisher: MailNotificationPublisher,
     private val blogProperties: BlogProperties,
+    templates: ObjectProvider<TextTemplates>,
 ) {
+    private val templates = templates.getIfAvailable { ClasspathTextTemplates() }
+
+    /**
+     * Tells the admins of a draft. The text is the `mail-new-draft` template (#232), named with the
+     * site's name; a file of that name in `generative/` replaces it.
+     */
     fun notifyPostSubmission(post: Post, slugPath: String, submitter: User?) {
         if (submitter?.role == Role.ADMIN || submitter?.role == Role.SUPER_ADMIN) {
             return
         }
 
-        val body = buildString {
-            appendLine("A new post draft was submitted on bytecode.news.")
-            appendLine()
-            appendLine("Title: ${post.title}")
-            appendLine("Author: ${submitter?.displayName ?: "Anonymous"}")
-            appendLine("URL: ${buildPostUrl(slugPath)}")
-            appendLine()
-            appendLine(post.markdownSource)
-        }
+        val mail =
+            MailText.parse(
+                templates.render(
+                    "mail-new-draft",
+                    "dev/streampack/blog/mail/mail-new-draft.txt",
+                    mapOf(
+                        "siteName" to blogProperties.siteName,
+                        "title" to post.title,
+                        "author" to (submitter?.displayName ?: "Anonymous"),
+                        "url" to buildPostUrl(slugPath),
+                        "markdown" to post.markdownSource,
+                    ),
+                ),
+                fallbackSubject = "New post submission: ${post.title}",
+            )
 
         mailNotificationPublisher.publishAll(
             userRepository.findDistinctActiveAdminEmailAddresses(),
-            "New post submission: ${post.title}",
-            body.trim(),
+            mail.subject,
+            mail.body,
         )
     }
 

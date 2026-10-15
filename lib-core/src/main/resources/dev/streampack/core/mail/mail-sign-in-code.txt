@@ -1,0 +1,6 @@
+Subject: Your sign-in code for {{siteName}}
+
+Your one-time sign-in code is: {{code}}
+
+This code will expire in {{minutes}} minutes.
+If you did not request this, please ignore this email.
