@@ -8,7 +8,7 @@ nexus.streampack.dev/images/server-streampack:<version>
 
 The registry lists them at <https://nexus.streampack.dev/v2/images/server-streampack/tags/list>. Use a version number; `latest` isn't kept current.
 
-The repository's own `docker-compose.yml` builds the image from source, for development. To run a release, use a compose file of your own, like the one below. The [setup tool](https://github.com/streampack-dev/setup) writes this same file, with the `.env` beside it.
+The repository's own `docker-compose.yml` builds the image from source, for development. To run a release, use a compose file of your own, like the one below. The [setup tool](https://github.com/streampack-dev/setup) writes this same file, with the `.env` beside it. It works with Docker Compose and with Podman's podman-compose (1.2.0 or later, which reads `.env` as Docker Compose does).
 
 ## The Compose File
 
@@ -33,12 +33,14 @@ services:
     # The API, for a reverse proxy on the same box. Use "8080:8080" to reach it from elsewhere.
     ports:
       - "127.0.0.1:8080:8080"
+    # z lets the container at the host's directories under SELinux (Fedora, RHEL, Rocky); without
+    # SELinux it does nothing.
     volumes:
       # Posts' recordings, for the audio streams: files on the host, beside .env.
-      - ./media:/opt/streampack/media
-      - ./generative:/opt/streampack/generative:ro
+      - ./media:/opt/streampack/media:z
+      - ./generative:/opt/streampack/generative:ro,z
       # Extension jars and extra classpath files, such as banner.txt; see "Extend the Server with Jars".
-      - ./ext:/opt/streampack/ext:ro
+      - ./ext:/opt/streampack/ext:ro,z
     tmpfs:
       - /run/streampack:mode=0700
     # For the stdin console (CONSOLE_ENABLED=true); see "Use the Console in Docker".
@@ -46,7 +48,8 @@ services:
     tty: true
 
   db:
-    image: postgres:18
+    # The full name: Podman won't guess a registry for a short one without asking.
+    image: docker.io/library/postgres:18
     restart: unless-stopped
     environment:
       POSTGRES_DB: streampack
