@@ -143,7 +143,7 @@ class MattermostConnectionManager(
         if (serverName != null) {
             val adapter = adapters[serverName]
             return if (adapter != null && adapter.isConnected()) {
-                "Server '$serverName': connected"
+                "Server '$serverName': ${adapter.status()}"
             } else {
                 "Server '$serverName': not connected"
             }
@@ -153,7 +153,7 @@ class MattermostConnectionManager(
         return adapters.entries
             .sortedBy { it.key }
             .joinToString("\n") { (name, adapter) ->
-                "  $name: " + if (adapter.isConnected()) "connected" else "reconnecting"
+                "  $name: ${adapter.status()}"
             }
     }
 }

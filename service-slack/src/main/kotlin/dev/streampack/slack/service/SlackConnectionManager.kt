@@ -136,7 +136,7 @@ class SlackConnectionManager(
         if (workspaceName != null) {
             val adapter = adapters[workspaceName]
             return if (adapter != null) {
-                "Workspace '$workspaceName': connected"
+                "Workspace '$workspaceName': ${adapter.status()}"
             } else {
                 "Workspace '$workspaceName': not connected"
             }
@@ -146,6 +146,10 @@ class SlackConnectionManager(
             return "No active Slack connections"
         }
 
-        return adapters.keys.joinToString("\n") { name -> "  $name: connected" }
+        return adapters.entries
+            .sortedBy { it.key }
+            .joinToString("\n") { (name, adapter) ->
+                "  $name: ${adapter.status()}"
+            }
     }
 }

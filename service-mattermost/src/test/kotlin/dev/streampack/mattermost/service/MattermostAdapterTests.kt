@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import org.springframework.messaging.Message
 import org.springframework.web.client.RestClient
@@ -35,6 +36,9 @@ class MattermostAdapterTests {
     private val membership = CopyOnWriteArrayList<String>()
     private val connectedHooks = java.util.concurrent.atomic.AtomicInteger(0)
     @Volatile private var failNextDispatch = false
+    /* The account's teams, and what a channel search on any of them finds */
+    @Volatile private var teams = """[{"id":"team01","name":"crew","display_name":"Crew"}]"""
+    @Volatile private var searchResults = "[]"
 
     private val gateway =
         object : EventGateway {
@@ -58,6 +62,18 @@ class MattermostAdapterTests {
         httpServer.createContext("/api/v4/users/me") { exchange ->
             authHeaders += exchange.requestHeaders.getFirst("Authorization")
             val body = """{"id": "botuser01", "username": "nevet"}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        httpServer.createContext("/api/v4/users/me/teams") { exchange ->
+            val body = if (exchange.requestURI.path.endsWith("/teams")) teams else "[]"
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        httpServer.createContext("/api/v4/teams/") { exchange ->
+            val body = searchResults
             exchange.responseHeaders.add("Content-Type", "application/json")
             exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
             exchange.responseBody.use { it.write(body.toByteArray()) }
@@ -260,5 +276,58 @@ class MattermostAdapterTests {
         val deadline = System.currentTimeMillis() + 30_000
         while (connectedHooks.get() < 2 && System.currentTimeMillis() < deadline) Thread.sleep(10)
         assertEquals(2, connectedHooks.get())
+    }
+
+    @Test
+    fun `status names the account it signed in as`() {
+        assertEquals("reconnecting", adapter.status())
+        adapter.handleFrame("""{"status":"OK","seq_reply":1}""")
+        assertEquals("connected as nevet", adapter.status())
+    }
+
+    @Test
+    fun `an account on no team is told so, not that there are no channels`() {
+        teams = "[]"
+        val e = assertThrows<MattermostLookupException> { adapter.listChannels(null) }
+        assertEquals(
+            "'nevet' is not a member of any team on 'local'; add it to a team on Mattermost",
+            e.message,
+        )
+        assertThrows<MattermostLookupException> { adapter.resolveChannel("lantern") }
+    }
+
+    @Test
+    fun `a channel that isn't found says what was searched`() {
+        teams =
+            """[{"id":"team01","name":"crew","display_name":"Crew"},
+                {"id":"team02","name":"ops","display_name":"Operations"}]"""
+        val e = assertThrows<MattermostLookupException> { adapter.resolveChannel("lantern") }
+        assertEquals(
+            "No public channel matches 'lantern' on Crew, Operations, the teams 'nevet' is on. " +
+                "A private channel is joined by its id, once the account is added to it on Mattermost.",
+            e.message,
+        )
+    }
+
+    @Test
+    fun `a display name with spaces finds its channel`() {
+        searchResults =
+            """[{"id":"chan02","name":"dev-ops","display_name":"Dev Ops","team_id":"team01","type":"O"},
+                {"id":"chan03","name":"dev-ops-archive","display_name":"Dev Ops Archive","team_id":"team01","type":"O"}]"""
+        assertEquals("chan02", adapter.resolveChannel("Dev Ops")?.id)
+        assertEquals("chan02", adapter.resolveChannel("dev-ops")?.id)
+    }
+
+    @Test
+    fun `several partial matches are listed, not called no match`() {
+        searchResults =
+            """[{"id":"chan04","name":"lantern-dev","display_name":"Lantern Dev","team_id":"team01","type":"O"},
+                {"id":"chan05","name":"lantern-ops","display_name":"Lantern Ops","team_id":"team01","type":"O"}]"""
+        val e = assertThrows<MattermostLookupException> { adapter.resolveChannel("lantern") }
+        assertEquals(
+            "No channel is named exactly 'lantern'; it is part of: Lantern Dev [chan04] on Crew, " +
+                "Lantern Ops [chan05] on Crew. Use one's name or id.",
+            e.message,
+        )
     }
 }

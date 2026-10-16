@@ -137,6 +137,11 @@ class MattermostAdapter(
 
     fun isConnected(): Boolean = connected.get()
 
+    /** `connected as <account>`, or `reconnecting`, for `mattermost status` */
+    fun status(): String =
+        if (isConnected()) "connected" + (selfUser?.username?.let { " as $it" } ?: "")
+        else "reconnecting"
+
     /** A user on this server by username, or null when there is none or the lookup fails. */
     internal fun lookupUser(username: String): MattermostUserView? = runCatching {
         restClient
@@ -262,7 +267,8 @@ class MattermostAdapter(
             }
         }
 
-        val channels = listChannels(cleaned)
+        val teams = currentTeamsOrFail()
+        val channels = search(teams, cleaned)
         val exactMatches = channels.filter {
             it.name.equals(cleaned, ignoreCase = true) ||
                 it.displayName.equals(query, ignoreCase = true) ||
@@ -276,12 +282,33 @@ class MattermostAdapter(
                     "Ambiguous channel '$query': ${exactMatches.joinToString { it.summary() }}",
                 )
             channels.size == 1 -> channels.first()
-            else -> null
+            channels.size > 1 ->
+                throw MattermostLookupException(
+                    "No channel is named exactly '$cleaned'; it is part of: " +
+                        channels.joinToString { it.summary() } +
+                        ". Use one's name or id.",
+                )
+            else ->
+                throw MattermostLookupException(
+                    "No public channel matches '$cleaned' on " +
+                        teams.joinToString { it.displayName ?: it.name } +
+                        ", the teams '${account()}' is on. A private channel is joined by its id, " +
+                        "once the account is added to it on Mattermost.",
+                )
         }
     }
 
-    fun listChannels(searchTerm: String?): List<MattermostChannelRef> {
-        val teams = currentTeams()
+    /**
+     * The account's channels, or with a term, Mattermost's search of public channels, on every team
+     * the account is on. An account on no team is an error, not an empty list.
+     */
+    fun listChannels(searchTerm: String?): List<MattermostChannelRef> =
+        search(currentTeamsOrFail(), searchTerm)
+
+    private fun search(
+        teams: List<MattermostTeamView>,
+        searchTerm: String?,
+    ): List<MattermostChannelRef> {
         val term = searchTerm?.trim().orEmpty()
         val seen = LinkedHashMap<String, MattermostChannelRef>()
 
@@ -327,6 +354,16 @@ class MattermostAdapter(
     private fun fetchCurrentUser(): MattermostUserView =
         restClient.get().uri("/api/v4/users/me").retrieve().body(MattermostUserView::class.java)
             ?: error("Mattermost /users/me returned no body for '$serverName'")
+
+    private fun account(): String = selfUser?.username ?: "the account"
+
+    private fun currentTeamsOrFail(): List<MattermostTeamView> =
+        currentTeams().ifEmpty {
+            throw MattermostLookupException(
+                "'${account()}' is not a member of any team on '$serverName'; " +
+                    "add it to a team on Mattermost",
+            )
+        }
 
     private fun currentTeams(): List<MattermostTeamView> =
         restClient
@@ -555,3 +592,6 @@ class MattermostAdapter(
         val MAX_RECONNECT_DELAY: Duration = Duration.ofMinutes(5)
     }
 }
+
+/** A channel lookup that can't succeed; the message says why, for the admin who asked */
+class MattermostLookupException(message: String) : IllegalArgumentException(message)

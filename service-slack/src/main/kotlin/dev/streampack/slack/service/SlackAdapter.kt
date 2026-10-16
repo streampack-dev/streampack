@@ -42,7 +42,8 @@ class SlackAdapter(
     private val logger = LoggerFactory.getLogger(SlackAdapter::class.java)
     private lateinit var boltApp: App
     private lateinit var socketModeApp: SocketModeApp
-    private var botUserId: String? = null
+    @Volatile private var botUserId: String? = null
+    @Volatile private var botUserName: String? = null
     private val displayNameCache = ConcurrentHashMap<String, String>()
 
     /** Tracks the last message per channel for reaction filtering */
@@ -244,13 +245,22 @@ class SlackAdapter(
         }
     }
 
+    /** `connected as <bot user>` once auth.test has named it, for `slack status` */
+    fun status(): String = "connected" + (botUserName?.let { " as $it" } ?: "")
+
+    /** Records who the bot token belongs to, from auth.test */
+    internal fun identified(userId: String?, userName: String?) {
+        botUserId = userId
+        botUserName = userName
+    }
+
     /** Resolves the bot's own user ID for mention detection */
     private fun resolveBotUserId() {
         try {
             val response = methodsClient().authTest { it }
             if (response.isOk) {
-                botUserId = response.userId
-                logger.info("Bot user ID for '{}': {}", workspaceName, botUserId)
+                identified(response.userId, response.user)
+                logger.info("Bot user for '{}': {} ({})", workspaceName, botUserName, botUserId)
             } else {
                 logger.warn("authTest failed for '{}': {}", workspaceName, response.error)
             }
