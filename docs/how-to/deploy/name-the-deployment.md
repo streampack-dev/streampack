@@ -5,7 +5,7 @@ A deployment calls itself `nevet` unless you name it. The name appears in `GET /
 1. Add the name to `.env`:
 
    ```dotenv
-   STREAMPACK_NAME=gholem
+   STREAMPACK_NAME=lantern
    ```
 
 2. Recreate the server:
@@ -20,7 +20,7 @@ A deployment calls itself `nevet` unless you name it. The name appears in `GET /
    curl -fsS http://localhost:8080/features
    ```
 
-   `version.name` and `siteName` are now `gholem`.
+   `version.name` and `siteName` are now `lantern`.
 
 ## Give One Thing a Different Name
 
@@ -39,8 +39,8 @@ The mail the server sends says the site's name. To change its wording too, see [
 For example, a lower-case name with a site name in title case:
 
 ```dotenv
-STREAMPACK_NAME=gholem
-BLOG_SITE_NAME=Gholem
+STREAMPACK_NAME=lantern
+BLOG_SITE_NAME=Lantern
 ```
 
 See [Environment Variables](../../reference/environment-variables.md).

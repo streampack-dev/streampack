@@ -1,6 +1,6 @@
 # Give a Deployment Its Own Name
 
-In this tutorial, you give a deployment its own name, `gholem`, and see where the name appears. You set the site's name and the feed's title, and you change the wording of the sign-in mail. It takes about fifteen minutes.
+In this tutorial, you give a deployment its own name, `lantern`, and see where the name appears. You set the site's name and the feed's title, and you change the wording of the sign-in mail. It takes about fifteen minutes.
 
 You need:
 
@@ -12,7 +12,7 @@ You need:
 Add the name to `.env`:
 
 ```dotenv
-STREAMPACK_NAME=gholem
+STREAMPACK_NAME=lantern
 ```
 
 Recreate the server, and wait until it answers:
@@ -23,14 +23,14 @@ docker compose up -d
 curl -fsS http://localhost:8080/features
 ```
 
-In the answer, `version.name` and `siteName` are both `gholem`. The site's name follows the deployment's name until you give it one of its own.
+In the answer, `version.name` and `siteName` are both `lantern`. The site's name follows the deployment's name until you give it one of its own.
 
 ## 2. Give the Site Its Own Name
 
 The site's name is what readers see. Give it capital letters:
 
 ```dotenv
-BLOG_SITE_NAME=Gholem
+BLOG_SITE_NAME=Lantern
 ```
 
 Recreate the server again, then look at the feed:
@@ -40,12 +40,12 @@ docker compose up -d
 curl -fsS http://localhost:8080/blog/rss.xml | head -5
 ```
 
-The channel's title is `Gholem`. The feed's title follows the site's name.
+The channel's title is `Lantern`. The feed's title follows the site's name.
 
 ## 3. Give the Feed Its Own Title
 
 ```dotenv
-BLOG_FEED_TITLE=Gholem Dispatches
+BLOG_FEED_TITLE=Lantern Dispatches
 BLOG_FEED_DESCRIPTION=News for the team
 ```
 
@@ -65,7 +65,7 @@ Recreate the server, and look at the feed again. Its title and description are t
 
 4. Ask for a sign-in code: sign in to one of the front ends with your email address.
 
-The mail's subject is "Your Gholem code". You didn't restart anything: the server reads the template each time it sends the mail.
+The mail's subject is "Your Lantern code". You didn't restart anything: the server reads the template each time it sends the mail.
 
 ## What You've Learned
 
