@@ -43,19 +43,19 @@ Run the tool:
 ./streampack-setup
 ```
 
-It asks what starting the server needs. Press Enter to take a default in brackets:
+It asks what starting the server needs. Press Enter to take a default in brackets. Every integration is off unless you turn it on, so answer `y` for Mattermost and GitLab:
 
 ```text
 Server version [1.16.0]:
-The system's name [nevet]: gholem
+The system's name [streampack]: lantern
 The super-admin's email address: you@example.com
 The API's public address [http://localhost:8080]: https://api.example.com
 The site's public address [http://localhost:3000]: https://www.example.com
-The site's name [gholem]: Gholem
-The feed's title [Gholem]:
-The feed's description [JVM ecosystem news and community content]: News for the team
-Turn on Mattermost? [Y/n]:
-Turn on GitLab? [Y/n]:
+The site's name [lantern]: Lantern
+The feed's title [Lantern]:
+The feed's description [Posts from Lantern]: News for the team
+Turn on Mattermost? [y/N]: y
+Turn on GitLab? [y/N]: y
 Turn on IRC? [y/N]:
 Turn on Slack? [y/N]:
 Turn on Discord? [y/N]:
@@ -66,7 +66,7 @@ Wrote .env (readable by you alone)
 
 You didn't give it any Mattermost or GitLab tokens. Those come later, at the console. The tool generated the database password, the JWT secret and the webhook keys itself; they're in `.env`. It also made three directories the server reads: `generative/` for prompt and mail templates, `ext/` for extensions, and `media/` for recordings.
 
-The system's name, `gholem`, is how the server introduces itself: in `/features`, its IRC identity and its user agent. The site's name, `Gholem`, is what readers see in pages, mail and feeds. See [Name the Deployment](../how-to/deploy/name-the-deployment.md).
+The system's name, `lantern`, is how the server introduces itself: in `/features`, its IRC identity and its user agent. The site's name, `Lantern`, is what readers see in pages, mail and feeds. See [Name the Deployment](../how-to/deploy/name-the-deployment.md).
 
 ## 3. Watch It Start
 
