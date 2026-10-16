@@ -1,6 +1,6 @@
 # Run the Published Image with Docker Compose
 
-Releases of `server-streampack` are published as images for linux/amd64 and linux/arm64, and pull without signing in:
+Releases of `server-streampack` are published as images for linux/amd64 and linux/arm64, and pull without signing in. The amd64 image runs on any x86-64 processor, including virtual machines with a generic CPU type:
 
 ```text
 nexus.streampack.dev/images/server-streampack:<version>

@@ -1,6 +1,6 @@
 # Build and Publish the Server Container
 
-`server-streampack` is packaged as a Spring Boot executable jar outside Docker. The Docker build copies a staged jar into a GraalVM CE JDK image.
+`server-streampack` is packaged as a Spring Boot executable jar outside Docker. The Docker build copies a staged jar into `eclipse-temurin:25-jre-resolute`: the Temurin Java 25 runtime on Ubuntu 26.04, the same base as ui-pudl's image. The tag names the Ubuntu release, so the OS changes only when the Dockerfile does. Before #238 the base was GraalVM's `jdk-community:25`, whose moving tag went to Oracle Linux 10; that needs an x86-64-v3 processor, and the server stopped at once on older ones.
 
 Build and push the default multi-platform image:
 
