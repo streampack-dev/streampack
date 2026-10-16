@@ -1,4 +1,7 @@
-FROM ghcr.io/graalvm/jdk-community:25
+# Temurin on Ubuntu 26.04, the base every Java image here shares (ui-pudl too). The release is
+# pinned so the OS changes only by commit: GraalVM's moving tag went to Oracle Linux 10, which
+# needs an x86-64-v3 processor (#238). This one needs only baseline x86-64, or arm64.
+FROM eclipse-temurin:25-jre-resolute
 
 WORKDIR /opt/streampack
 
