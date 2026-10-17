@@ -65,21 +65,25 @@ class LinkProtocolOperation(
             userRepository.findByUsername(payload.username)
                 ?: return OperationResult.Error("User not found")
 
-        // Validate via identity provider if one exists for this protocol
+        // The identity provider, if this protocol has one, checks the identity and may rewrite it
+        // (a Mattermost username becomes its user id); what it resolved is what's stored.
         val provider = identityProviders.find { it.protocol == payload.protocol }
-        if (provider != null) {
-            val resolution = provider.resolveIdentity(payload.serviceId, payload.externalIdentifier)
-            if (resolution is IdentityResolution.Invalid) {
-                return OperationResult.Error(resolution.reason)
+        val identity =
+            when (
+                val resolution =
+                    provider?.resolveIdentity(payload.serviceId, payload.externalIdentifier)
+            ) {
+                is IdentityResolution.Invalid -> return OperationResult.Error(resolution.reason)
+                is IdentityResolution.Valid -> resolution
+                null -> IdentityResolution.Valid(payload.serviceId, payload.externalIdentifier)
             }
-        }
 
         return try {
             userRegistrationService.linkProtocol(
                 userId = targetUser.id,
                 protocol = payload.protocol,
-                serviceId = payload.serviceId,
-                externalIdentifier = payload.externalIdentifier,
+                serviceId = identity.serviceId,
+                externalIdentifier = identity.externalIdentifier,
                 metadata = payload.metadata,
             )
             OperationResult.Success(targetUser.toUserPrincipal())

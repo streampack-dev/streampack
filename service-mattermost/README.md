@@ -87,7 +87,10 @@ registered here.
   no text (a file alone), and edits. A post delivered twice is handled once.
 - **Users** are recognized by their Mattermost user id through the account links
   (`MattermostIdentityProvider`, `UserResolutionService`), so a reply knows who asked and what they
-  may do. Someone without a linked account is anonymous.
+  may do. Someone without a linked account is anonymous. Link one by Mattermost username, and the
+  connected server looks up the id: `link user alice mattermost work alice.k` (or `@alice.k`). The
+  id itself (26 lower-case letters and digits) works too, and is the only form while the server is
+  disconnected. `unlink user` takes either form as well.
 - **Logging:** a channel that was never registered has no settings, and is logged, but isn't listed
   in the log browser. Direct and group messages are logged marked direct, and nothing ever reads
   them back out of the log: not the log browser, not search, not the operations that read the log.
@@ -170,7 +173,7 @@ Development](../docs/how-to/develop/run-local-mattermost.md).
 | `MattermostAdapter` | The WebSocket listener and REST client: addressing, users, joining and leaving, replies, reconnecting. |
 | `ReconnectBackoff` | The doubling reconnect delay. |
 | `MattermostEgressSubscriber` | Delivers replies to the right server and channel, unless the channel is muted or the reply would loop. |
-| `MattermostIdentityProvider` | How a Mattermost identity (server and user id) is checked when linking it to an account. |
+| `MattermostIdentityProvider` | How a Mattermost identity (server, and username or user id) is checked when linking it to an account; a username becomes its id. |
 | `MattermostCodeDelivery` | Sends sign-in codes as direct messages. |
 | `MattermostSecretRefStartupGuard` | Moves tokens to environment variables and holds the start until they're set. |
 | `MattermostServer`, `MattermostChannel` (`lib-mattermost`) | The stored servers and channels. |
