@@ -17,6 +17,25 @@ manage protocol integrations, or otherwise require elevated privileges.
 
 ### User and Identity Management
 
+How to use these, step by step: [Manage Users](../how-to/deploy/manage-users.md).
+
+Anyone, signed in or not:
+
+```text
+whoami
+```
+
+`whoami` names the account and role, or, for a chat identity with no account, gives the `link user` line that would link it. In a channel it answers only `Ask me that in a direct message.`
+
+`ADMIN` or `SUPER_ADMIN`:
+
+```text
+list users [role]
+show user <username>
+```
+
+`list users` gives each account that isn't erased: username, display name, role, state, and the number of linked identities. `show user` adds each linked identity, written as `unlink user` takes it. Email addresses appear for `SUPER_ADMIN` only.
+
 `SUPER_ADMIN`:
 
 ```text
@@ -25,6 +44,8 @@ link help [protocol]
 link user <username> <protocol> <serviceId> <externalIdentifier>
 unlink user <username> <protocol> <serviceId> <externalIdentifier>
 ```
+
+`create user` takes quoted arguments (`create user dana dana@example.com "Dana Kim" admin`). An unknown role, a missing argument, or a word too many (an unquoted display name with spaces) is an error, and no account is made. The text commands answer in a sentence (`Created dana (Dana Kim), admin.`); a typed HTTP request still gets the user back.
 
 `link help <protocol>` shows what the identifier is for each protocol. A protocol's identity provider may rewrite it, and the binding stores what it resolved: a Mattermost username becomes its user id. `unlink` finds the binding either way.
 

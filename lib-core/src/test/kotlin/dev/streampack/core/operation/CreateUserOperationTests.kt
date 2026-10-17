@@ -15,6 +15,7 @@ import dev.streampack.core.service.UserRegistrationService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -214,11 +215,10 @@ class CreateUserOperationTests {
                 textMessage("create user newuser newuser@example.com NewUser", superAdmin),
             )
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val principal = (result as OperationResult.Success).payload as UserPrincipal
-        assertEquals("newuser", principal.username)
-        assertEquals("NewUser", principal.displayName)
-        assertEquals(Role.USER, principal.role)
+        assertEquals(OperationResult.Success("Created newuser (NewUser), user."), result)
+        val user = userRepository.findByUsername("newuser")!!
+        assertEquals("NewUser", user.displayName)
+        assertEquals(Role.USER, user.role)
     }
 
     @Test
@@ -228,9 +228,8 @@ class CreateUserOperationTests {
                 textMessage("create user newadmin newadmin@example.com NewAdmin admin", superAdmin),
             )
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val principal = (result as OperationResult.Success).payload as UserPrincipal
-        assertEquals(Role.ADMIN, principal.role)
+        assertEquals(OperationResult.Success("Created newadmin (NewAdmin), admin."), result)
+        assertEquals(Role.ADMIN, userRepository.findByUsername("newadmin")!!.role)
     }
 
     @Test
@@ -240,13 +239,12 @@ class CreateUserOperationTests {
                 textMessage("create user newsa newsa@example.com NewSA super-admin", superAdmin),
             )
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val principal = (result as OperationResult.Success).payload as UserPrincipal
-        assertEquals(Role.SUPER_ADMIN, principal.role)
+        assertEquals(OperationResult.Success("Created newsa (NewSA), super_admin."), result)
+        assertEquals(Role.SUPER_ADMIN, userRepository.findByUsername("newsa")!!.role)
     }
 
     @Test
-    fun `text command with invalid role defaults to USER`() {
+    fun `text command with an unknown role is refused, not made a user`() {
         val result =
             eventGateway.process(
                 textMessage(
@@ -255,17 +253,57 @@ class CreateUserOperationTests {
                 ),
             )
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val principal = (result as OperationResult.Success).payload as UserPrincipal
-        assertEquals(Role.USER, principal.role)
+        assertEquals(
+            OperationResult.Error(
+                "Unknown role 'bogusrole': use guest, user, admin, super_admin",
+            ),
+            result,
+        )
+        assertNull(userRepository.findByUsername("newuser2"))
     }
 
     @Test
-    fun `text command with too few parts is not handled`() {
+    fun `text command takes a quoted display name`() {
+        val result =
+            eventGateway.process(
+                textMessage("""create user dana dana@example.com "Dana Kim" admin""", superAdmin),
+            )
+
+        assertEquals(OperationResult.Success("Created dana (Dana Kim), admin."), result)
+        val user = userRepository.findByUsername("dana")!!
+        assertEquals("Dana Kim", user.displayName)
+        assertEquals(Role.ADMIN, user.role)
+    }
+
+    @Test
+    fun `an unquoted display name with spaces is refused, not split`() {
+        val result =
+            eventGateway.process(
+                textMessage("create user dana dana@example.com Dana Kim admin", superAdmin),
+            )
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertTrue(
+            (result as OperationResult.Error).message.startsWith("Too many arguments"),
+            result.message,
+        )
+        assertNull(userRepository.findByUsername("dana"))
+    }
+
+    @Test
+    fun `text command with too few parts says how to use it`() {
         val result =
             eventGateway.process(textMessage("create user newuser newuser@example.com", superAdmin))
 
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertTrue((result as OperationResult.Error).message.startsWith("Usage: create user"))
+    }
+
+    @Test
+    fun `a malformed command from someone not allowed only says so`() {
+        val result = eventGateway.process(textMessage("create user newuser", regularUser))
+
+        assertEquals(OperationResult.Error("Insufficient privileges"), result)
     }
 
     @Test

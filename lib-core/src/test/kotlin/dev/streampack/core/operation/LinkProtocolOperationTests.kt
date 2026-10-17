@@ -299,7 +299,12 @@ class LinkProtocolOperationTests {
                 textMessage("link user regularuser irc ircservice regularuser_irc", superAdmin),
             )
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            OperationResult.Success(
+                "Linked irc ircservice regularuser_irc to regularuser (Regular User), user.",
+            ),
+            result,
+        )
 
         val binding =
             serviceBindingRepository.resolve(Protocol.IRC, "ircservice", "regularuser_irc")

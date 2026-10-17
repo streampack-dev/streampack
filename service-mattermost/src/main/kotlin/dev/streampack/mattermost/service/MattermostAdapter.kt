@@ -4,6 +4,7 @@ package dev.streampack.mattermost.service
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.ServiceIdentity
 import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.ProtocolAdapter
 import dev.streampack.core.service.UserResolutionService
@@ -419,7 +420,11 @@ class MattermostAdapter(
                 .setHeader(Provenance.ADDRESSED, addressed)
         if (nick != null) builder.setHeader("nick", nick)
         // The user id is how a private notice reaches them (#148)
-        if (!senderId.isNullOrBlank()) builder.setHeader(Provenance.SENDER_ID, senderId)
+        if (!senderId.isNullOrBlank()) {
+            builder.setHeader(Provenance.SENDER_ID, senderId)
+            // What the sender was resolved by: the server and their user id
+            builder.setHeader(Provenance.IDENTITY, ServiceIdentity(serverName, senderId))
+        }
         eventGateway.send(builder.build())
     }
 

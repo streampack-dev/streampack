@@ -11,6 +11,7 @@ import com.slack.api.model.event.ReactionAddedEvent
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.ServiceIdentity
 import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.ProtocolAdapter
@@ -403,7 +404,11 @@ class SlackAdapter(
         if (nick != null) builder.setHeader("nick", nick)
         if (isAction) builder.setHeader(Provenance.IS_ACTION, true)
         // The user id is how a private notice reaches them (#148)
-        if (senderId != null) builder.setHeader(Provenance.SENDER_ID, senderId)
+        if (senderId != null) {
+            builder.setHeader(Provenance.SENDER_ID, senderId)
+            // What the sender was resolved by: the workspace and their user id
+            builder.setHeader(Provenance.IDENTITY, ServiceIdentity(workspaceName, senderId))
+        }
         eventGateway.send(builder.build())
     }
 

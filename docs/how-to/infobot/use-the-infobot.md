@@ -125,6 +125,14 @@ tell irc://libera/%23java deploy is complete
 
 Targets resolve relative to the current protocol unless you provide a full provenance URI.
 
+### Who Am I?
+
+```text
+whoami
+```
+
+Send it to the bot in a direct message. It names the account you're using and its role. If your chat account isn't linked to one, it gives the `link user` line an admin types to link it, so send that to your admin. In a channel it only asks for a direct message.
+
 ### Bridge Discovery
 
 ```text

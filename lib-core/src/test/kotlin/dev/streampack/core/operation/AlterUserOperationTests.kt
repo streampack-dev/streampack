@@ -248,9 +248,7 @@ class AlterUserOperationTests {
         val result =
             eventGateway.process(textMessage("alter user regularuser role admin", superAdmin))
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val principal = (result as OperationResult.Success).payload as UserPrincipal
-        assertEquals(Role.ADMIN, principal.role)
+        assertEquals(OperationResult.Success("Updated regularuser (Regular User), admin."), result)
     }
 
     @Test
@@ -270,9 +268,10 @@ class AlterUserOperationTests {
                 textMessage("alter user regularuser displayname New Display Name", superAdmin),
             )
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val principal = (result as OperationResult.Success).payload as UserPrincipal
-        assertEquals("New Display Name", principal.displayName)
+        assertEquals(
+            OperationResult.Success("Updated regularuser (New Display Name), user."),
+            result,
+        )
     }
 
     @Test
@@ -280,9 +279,7 @@ class AlterUserOperationTests {
         val result =
             eventGateway.process(textMessage("alter user regularuser username newname", superAdmin))
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val principal = (result as OperationResult.Success).payload as UserPrincipal
-        assertEquals("newname", principal.username)
+        assertEquals(OperationResult.Success("Updated newname (Regular User), user."), result)
     }
 
     @Test
@@ -318,8 +315,9 @@ class AlterUserOperationTests {
         val result =
             eventGateway.process(textMessage("alter user regularuser role super-admin", superAdmin))
 
-        assertInstanceOf(OperationResult.Success::class.java, result)
-        val principal = (result as OperationResult.Success).payload as UserPrincipal
-        assertEquals(Role.SUPER_ADMIN, principal.role)
+        assertEquals(
+            OperationResult.Success("Updated regularuser (Regular User), super_admin."),
+            result,
+        )
     }
 }

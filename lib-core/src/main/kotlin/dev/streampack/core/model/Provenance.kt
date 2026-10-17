@@ -65,6 +65,13 @@ data class Provenance(
         const val SENDER_ID = "streampack_sender_id"
 
         /**
+         * Message header: the [ServiceIdentity] the adapter resolved the sender by, the pair a
+         * `link user` binding names (#247). Chat adapters set it on what people say; the console
+         * and HTTP, whose senders are signed in already, don't.
+         */
+        const val IDENTITY = "streampack_identity"
+
+        /**
          * Message header: true when the provenance's principal came from a credential (a web token,
          * say) and must be re-read from the user store as the message enters the operation chain,
          * so a role or status change since the credential was issued, or while the message was

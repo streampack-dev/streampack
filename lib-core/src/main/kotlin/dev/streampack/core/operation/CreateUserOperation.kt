@@ -1,12 +1,13 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.operation
 
-import dev.streampack.core.extensions.compress
 import dev.streampack.core.model.CreateUserRequest
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
+import dev.streampack.core.parser.CommandLexer
+import dev.streampack.core.parser.UnbalancedQuoteException
 import dev.streampack.core.service.TranslatingOperation
 import dev.streampack.core.service.UserRegistrationService
 import org.springframework.messaging.Message
@@ -19,32 +20,66 @@ class CreateUserOperation(private val userRegistrationService: UserRegistrationS
 
     override val priority = 50
 
-    override fun translate(payload: String, message: Message<*>): CreateUserRequest? {
-        val text = payload.compress().lowercase()
-        if (!text.startsWith("create user ")) return null
-        val parts =
-            payload.compress().removePrefix("create user ").removePrefix("Create user ").split(" ")
-        if (parts.size < 3) return null
+    /**
+     * `create user <username> <email> <display-name> [role]`. Arguments may be quoted, so a display
+     * name with spaces is `"Dana Kim"`; a role that doesn't exist, or a word too many, is an error
+     * rather than a guess (#247).
+     */
+    override fun translate(payload: String, message: Message<*>): CreateUserRequest? =
+        if (isCreateUser(payload)) parse(payload).getOrNull() else null
 
-        val username = parts[0]
-        val email = parts[1]
-        val displayName = parts[2]
-        val role =
-            if (parts.size > 3) {
-                try {
-                    Role.valueOf(parts[3].uppercase().replace("-", "_"))
-                } catch (_: IllegalArgumentException) {
-                    Role.USER
-                }
-            } else {
-                Role.USER
+    /** A malformed `create user` is answered with what's wrong, not passed down the chain */
+    override fun canHandle(message: Message<*>): Boolean =
+        (message.payload as? String)?.let(::isCreateUser) ?: super.canHandle(message)
+
+    override fun execute(message: Message<*>): OperationOutcome? {
+        val text = message.payload as? String ?: return super.execute(message)
+        if (!isCreateUser(text)) return null
+        return parse(text)
+            .fold(
+                onSuccess = { UserCommands.said(handle(it, message), "Created") },
+                onFailure = {
+                    if (hasRole(message, Role.SUPER_ADMIN)) OperationResult.Error(it.message!!)
+                    else OperationResult.Error("Insufficient privileges")
+                },
+            )
+    }
+
+    private fun isCreateUser(text: String): Boolean {
+        val lowered = text.trim().lowercase()
+        return lowered == "create user" || lowered.startsWith("create user ")
+    }
+
+    private fun parse(text: String): Result<CreateUserRequest> {
+        val args =
+            try {
+                CommandLexer.split(text).drop(2)
+            } catch (e: UnbalancedQuoteException) {
+                return Result.failure(e)
             }
-
-        return CreateUserRequest(
-            username = username,
-            email = email,
-            displayName = displayName,
-            role = role,
+        if (args.size < 3) return Result.failure(IllegalArgumentException(USAGE))
+        if (args.size > 4) {
+            return Result.failure(
+                IllegalArgumentException(
+                    "Too many arguments. A display name with spaces goes in quotes: " +
+                        "create user dana dana@example.com \"Dana Kim\" admin",
+                ),
+            )
+        }
+        val role =
+            args.getOrNull(3)?.let {
+                UserCommands.parseRole(it)
+                    ?: return Result.failure(
+                        IllegalArgumentException("Unknown role '$it': use ${UserCommands.roles}"),
+                    )
+            } ?: Role.USER
+        return Result.success(
+            CreateUserRequest(
+                username = args[0],
+                email = args[1],
+                displayName = args[2],
+                role = role,
+            ),
         )
     }
 
@@ -73,5 +108,11 @@ class CreateUserOperation(private val userRegistrationService: UserRegistrationS
             logger.warn("Failed to create user {}: {}", payload.username, e.message)
             OperationResult.Error("Username already exists")
         }
+    }
+
+    private companion object {
+        const val USAGE =
+            "Usage: create user <username> <email> <display-name> [role]; " +
+                "a display name with spaces goes in quotes"
     }
 }
