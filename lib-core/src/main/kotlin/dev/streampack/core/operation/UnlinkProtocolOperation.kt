@@ -10,6 +10,8 @@ import dev.streampack.core.model.Role
 import dev.streampack.core.model.UnlinkProtocolRequest
 import dev.streampack.core.repository.ServiceBindingRepository
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.core.service.IdentityProvider
+import dev.streampack.core.service.IdentityResolution
 import dev.streampack.core.service.TranslatingOperation
 import dev.streampack.core.service.UserRegistrationService
 import org.springframework.messaging.Message
@@ -21,6 +23,7 @@ class UnlinkProtocolOperation(
     private val userRepository: UserRepository,
     private val userRegistrationService: UserRegistrationService,
     private val serviceBindingRepository: ServiceBindingRepository,
+    private val identityProviders: List<IdentityProvider>,
 ) : TranslatingOperation<UnlinkProtocolRequest>(UnlinkProtocolRequest::class) {
 
     override val priority = 50
@@ -64,12 +67,26 @@ class UnlinkProtocolOperation(
             userRepository.findByUsername(payload.username)
                 ?: return OperationResult.Error("User not found")
 
+        // The identity as the provider resolves it (a Mattermost username to its id), as link
+        // stored it; else as typed, so a link made before that, or with its server down, still
+        // goes.
+        val resolved =
+            identityProviders
+                .find { it.protocol == payload.protocol }
+                ?.resolveIdentity(payload.serviceId, payload.externalIdentifier)
+                as? IdentityResolution.Valid
         val binding =
-            serviceBindingRepository.resolve(
-                payload.protocol,
-                payload.serviceId,
-                payload.externalIdentifier,
-            ) ?: return OperationResult.Error("Binding not found")
+            listOfNotNull(
+                    resolved?.let { it.serviceId to it.externalIdentifier },
+                    payload.serviceId to payload.externalIdentifier,
+                )
+                .firstNotNullOfOrNull { (serviceId, externalIdentifier) ->
+                    serviceBindingRepository.resolve(
+                        payload.protocol,
+                        serviceId,
+                        externalIdentifier,
+                    )
+                } ?: return OperationResult.Error("Binding not found")
 
         if (binding.user.id != targetUser.id) {
             return OperationResult.Error("Binding does not belong to user ${payload.username}")
@@ -78,11 +95,11 @@ class UnlinkProtocolOperation(
         return try {
             userRegistrationService.unlinkProtocol(
                 protocol = payload.protocol,
-                serviceId = payload.serviceId,
-                externalIdentifier = payload.externalIdentifier,
+                serviceId = binding.serviceId,
+                externalIdentifier = binding.externalIdentifier,
             )
             OperationResult.Success(
-                "Unlinked ${payload.externalIdentifier} from ${payload.username}",
+                "Unlinked ${binding.externalIdentifier} from ${payload.username}",
             )
         } catch (e: Exception) {
             logger.warn("Failed to unlink protocol for user {}: {}", payload.username, e.message)

@@ -17,6 +17,7 @@ import dev.streampack.core.service.UserRegistrationService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -147,6 +148,47 @@ class LinkProtocolOperationTests {
         val binding =
             serviceBindingRepository.resolve(Protocol.IRC, "ircservice", "regularuser_irc")
         assertNotNull(binding)
+    }
+
+    @Test
+    fun `the binding holds what the identity provider resolved, not what was typed`() {
+        val request =
+            LinkProtocolRequest(
+                username = "regularuser",
+                protocol = Protocol.SLACK,
+                serviceId = "test-workspace",
+                externalIdentifier = "U0REGULAR",
+            )
+        val result = eventGateway.process(linkProtocolMessage(request, superAdmin))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertNotNull(
+            serviceBindingRepository.resolve(Protocol.SLACK, "test-workspace", "u0regular"),
+        )
+        assertNull(serviceBindingRepository.resolve(Protocol.SLACK, "test-workspace", "U0REGULAR"))
+    }
+
+    @Test
+    fun `unlink finds the binding as the provider resolves it, or as typed`() {
+        val typed =
+            LinkProtocolRequest(
+                username = "regularuser",
+                protocol = Protocol.SLACK,
+                serviceId = "test-workspace",
+                externalIdentifier = "U0REGULAR",
+            )
+        eventGateway.process(linkProtocolMessage(typed, superAdmin))
+
+        val result =
+            eventGateway.process(
+                textMessage("unlink user regularuser slack test-workspace U0REGULAR", superAdmin),
+            )
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            "Unlinked u0regular from regularuser",
+            (result as OperationResult.Success).payload,
+        )
+        assertNull(serviceBindingRepository.resolve(Protocol.SLACK, "test-workspace", "u0regular"))
     }
 
     @Test

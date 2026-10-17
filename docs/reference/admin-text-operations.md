@@ -26,6 +26,8 @@ link user <username> <protocol> <serviceId> <externalIdentifier>
 unlink user <username> <protocol> <serviceId> <externalIdentifier>
 ```
 
+`link help <protocol>` shows what the identifier is for each protocol. A protocol's identity provider may rewrite it, and the binding stores what it resolved: a Mattermost username becomes its user id. `unlink` finds the binding either way.
+
 `ADMIN` or `SUPER_ADMIN`:
 
 ```text
