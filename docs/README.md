@@ -18,6 +18,8 @@ Start with [What is Streampack?](explanation/what-is-streampack.md) if you are o
 
 To bring a server up from nothing with Docker, connected to Mattermost and GitLab, see [Deploy with Docker for Mattermost and GitLab](tutorials/deploy-with-docker-for-mattermost-and-gitlab.md). For the parts on their own: [Run the Published Image with Docker Compose](how-to/deploy/run-the-published-image.md), [Use the Console in Docker](how-to/deploy/use-the-console-in-docker.md), [Move Credentials into the Environment](how-to/deploy/move-credentials-into-the-environment.md), and, for why it works as it does, [How Credentials Reach the Environment](explanation/credentials-and-the-environment.md) and [The Local Admin Token](explanation/local-admin-token.md).
 
+To add people, give them roles and link their chat accounts, see [Manage Users](how-to/deploy/manage-users.md).
+
 For Mattermost development against a private local server, see [Run a Local Mattermost for Development](how-to/develop/run-local-mattermost.md).
 
 For repository-side release mechanics, see [Version and Publish Maven Artifacts to Nexus](how-to/develop/release-and-deploy-server-streampack.md).

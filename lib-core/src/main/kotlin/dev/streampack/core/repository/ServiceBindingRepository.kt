@@ -30,4 +30,13 @@ interface ServiceBindingRepository : JpaRepository<ServiceBinding, UUID> {
         serviceId: String,
         externalIdentifier: String,
     ): ServiceBinding?
+
+    /** A user's linked identities, for `show user` */
+    fun findByUserIdOrderByProtocolAscServiceIdAscExternalIdentifierAsc(
+        userId: UUID,
+    ): List<ServiceBinding>
+
+    /** How many identities each user has linked, as (user id, count) rows, for `list users` */
+    @Query("SELECT sb.user.id, COUNT(sb) FROM ServiceBinding sb GROUP BY sb.user.id")
+    fun countByUser(): List<Array<Any>>
 }

@@ -161,6 +161,11 @@ class MattermostAdapterTests {
         assertEquals("alice", message.headers["nick"])
         // The poster's id, for a private notice about a scrubbed secret (#148)
         assertEquals("alice01", message.headers[Provenance.SENDER_ID])
+        // What it was resolved by, for whoami's link line (#247)
+        assertEquals(
+            dev.streampack.core.model.ServiceIdentity("local", "alice01"),
+            message.headers[Provenance.IDENTITY],
+        )
         val provenance = lastProvenance()
         assertEquals(Protocol.MATTERMOST, provenance.protocol)
         assertEquals("local", provenance.serviceId)

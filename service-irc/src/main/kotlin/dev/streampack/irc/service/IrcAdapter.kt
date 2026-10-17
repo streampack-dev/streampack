@@ -6,6 +6,7 @@ import dev.streampack.core.model.LoggingRequest
 import dev.streampack.core.model.MessageKind
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.ServiceIdentity
 import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.ProtocolAdapter
 import dev.streampack.core.service.ProvenanceStateService
@@ -186,6 +187,12 @@ class IrcAdapter(
         if (nick != null) builder.setHeader("nick", nick).setHeader(Provenance.SENDER_ID, nick)
         if (host != null) builder.setHeader("host", host)
         if (ident != null) builder.setHeader("ident", ident)
+        if (ident != null && host != null) {
+            builder.setHeader(
+                Provenance.IDENTITY,
+                ServiceIdentity(serviceId = networkName, externalIdentifier = "$ident@$host"),
+            )
+        }
         eventGateway.send(builder.build())
     }
 
@@ -258,6 +265,10 @@ class IrcAdapter(
                         .setHeader(Provenance.SENDER_ID, nick)
                         .setHeader("host", host)
                         .setHeader("ident", ident)
+                        .setHeader(
+                            Provenance.IDENTITY,
+                            ServiceIdentity(networkName, "$ident@$host"),
+                        )
                 eventGateway.send(builder.build())
             } catch (e: Exception) {
                 logger.error("Error processing channel action on {}: {}", networkName, e.message)

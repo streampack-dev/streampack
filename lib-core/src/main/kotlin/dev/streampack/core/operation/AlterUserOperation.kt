@@ -59,6 +59,12 @@ class AlterUserOperation(private val userRepository: UserRepository) :
         }
     }
 
+    /** Typed in, the change is answered in words; a typed (HTTP) request gets the principal */
+    override fun execute(message: Message<*>): OperationOutcome? {
+        val outcome = super.execute(message)
+        return if (message.payload is String) UserCommands.said(outcome, "Updated") else outcome
+    }
+
     override fun handle(payload: AlterUserRequest, message: Message<*>): OperationOutcome {
         val provenance =
             message.headers[Provenance.HEADER] as? Provenance

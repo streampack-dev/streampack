@@ -51,19 +51,39 @@ class LinkProtocolOperation(
         )
     }
 
-    override fun handle(payload: LinkProtocolRequest, message: Message<*>): OperationOutcome {
+    override fun handle(payload: LinkProtocolRequest, message: Message<*>): OperationOutcome =
+        link(payload, message).first
+
+    /** Typed in, the link is answered in words, naming the identity as it was stored */
+    override fun execute(message: Message<*>): OperationOutcome? {
+        val text = message.payload as? String ?: return super.execute(message)
+        val request = translate(text, message) ?: return null
+        val (outcome, identity) = link(request, message)
+        identity ?: return outcome
+        val protocol = request.protocol.name.lowercase()
+        return UserCommands.said(
+            outcome,
+            "Linked $protocol ${identity.serviceId} ${identity.externalIdentifier} to",
+        )
+    }
+
+    /** The outcome, and the identity stored when the link was made */
+    private fun link(
+        payload: LinkProtocolRequest,
+        message: Message<*>,
+    ): Pair<OperationOutcome, IdentityResolution.Valid?> {
         val provenance =
             message.headers[Provenance.HEADER] as? Provenance
-                ?: return OperationResult.Error("No provenance")
-        val principal = provenance.user ?: return OperationResult.Error("Not authenticated")
+                ?: return OperationResult.Error("No provenance") to null
+        val principal = provenance.user ?: return OperationResult.Error("Not authenticated") to null
 
         if (principal.role != Role.SUPER_ADMIN) {
-            return OperationResult.Error("Insufficient privileges")
+            return OperationResult.Error("Insufficient privileges") to null
         }
 
         val targetUser =
             userRepository.findByUsername(payload.username)
-                ?: return OperationResult.Error("User not found")
+                ?: return OperationResult.Error("User not found") to null
 
         // The identity provider, if this protocol has one, checks the identity and may rewrite it
         // (a Mattermost username becomes its user id); what it resolved is what's stored.
@@ -73,7 +93,8 @@ class LinkProtocolOperation(
                 val resolution =
                     provider?.resolveIdentity(payload.serviceId, payload.externalIdentifier)
             ) {
-                is IdentityResolution.Invalid -> return OperationResult.Error(resolution.reason)
+                is IdentityResolution.Invalid ->
+                    return OperationResult.Error(resolution.reason) to null
                 is IdentityResolution.Valid -> resolution
                 null -> IdentityResolution.Valid(payload.serviceId, payload.externalIdentifier)
             }
@@ -86,10 +107,10 @@ class LinkProtocolOperation(
                 externalIdentifier = identity.externalIdentifier,
                 metadata = payload.metadata,
             )
-            OperationResult.Success(targetUser.toUserPrincipal())
+            OperationResult.Success(targetUser.toUserPrincipal()) to identity
         } catch (e: Exception) {
             logger.warn("Failed to link protocol for user {}: {}", payload.username, e.message)
-            OperationResult.Error("Duplicate binding")
+            OperationResult.Error("Duplicate binding") to null
         }
     }
 }

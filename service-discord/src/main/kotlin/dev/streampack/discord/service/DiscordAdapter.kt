@@ -4,6 +4,7 @@ package dev.streampack.discord.service
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.model.ServiceIdentity
 import dev.streampack.core.repository.UserRepository
 import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.MailNotificationPublisher
@@ -257,7 +258,14 @@ class DiscordAdapter(
         if (nick != null) builder.setHeader("nick", nick)
         if (displayText != null) builder.setHeader("displayText", displayText)
         // The author's id is how a private notice reaches them (#148)
-        if (senderId != null) builder.setHeader(Provenance.SENDER_ID, senderId)
+        if (senderId != null) {
+            builder.setHeader(Provenance.SENDER_ID, senderId)
+            // What the sender was resolved by: the guild (none in a DM) and their user id
+            builder.setHeader(
+                Provenance.IDENTITY,
+                ServiceIdentity(provenance.serviceId ?: "", senderId),
+            )
+        }
         if (isAction) builder.setHeader(Provenance.IS_ACTION, true)
         eventGateway.send(builder.build())
     }

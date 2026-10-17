@@ -62,7 +62,7 @@ The token moves to `MATTERMOST_WORK_TOKEN`. The account must be a member of the 
 
 ## Identities
 
-Protocol identities map to Streampack users through service bindings (`link user …`; `link help <protocol>` shows each protocol's form). This lets one user have HTTP, IRC, Discord, Slack, and Mattermost identities while sharing the same role and permissions model.
+Protocol identities map to Streampack users through service bindings (`link user …`; `link help <protocol>` shows each protocol's form). [Manage Users](../deploy/manage-users.md) walks through it, and `whoami`, sent to the bot in a direct message, prints the line that links you. This lets one user have HTTP, IRC, Discord, Slack, and Mattermost identities while sharing the same role and permissions model.
 
 A Mattermost identity is linked by username, while the server is connected: `link user alice mattermost work alice.k`. Streampack looks the name up and stores the user id, which posts carry and which survives a rename. The id works too, and is needed while the server is disconnected. To find your own without admin rights, open `https://<your-mattermost>/api/v4/users/me` in a signed-in browser; `"id"` is the field.
 
