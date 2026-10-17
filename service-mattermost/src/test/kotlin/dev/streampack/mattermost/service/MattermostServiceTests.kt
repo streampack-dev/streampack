@@ -2,15 +2,19 @@
 package dev.streampack.mattermost.service
 
 import dev.streampack.core.repository.ChannelControlOptionsRepository
+import dev.streampack.core.service.ChannelControlService
 import dev.streampack.mattermost.model.MattermostChannelRef
 import dev.streampack.mattermost.repository.MattermostChannelRepository
 import dev.streampack.mattermost.repository.MattermostServerRepository
+import java.util.function.Consumer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
@@ -23,6 +27,28 @@ class MattermostServiceTests {
     @Autowired lateinit var serverRepository: MattermostServerRepository
     @Autowired lateinit var channelRepository: MattermostChannelRepository
     @Autowired lateinit var channelControlOptionsRepository: ChannelControlOptionsRepository
+    @Autowired lateinit var channelControlService: ChannelControlService
+
+    /** The service as it is with a live connection to 'work', served by [adapter] */
+    private fun connectedService(adapter: MattermostAdapter): MattermostService {
+        val manager = Mockito.mock(MattermostConnectionManager::class.java)
+        Mockito.`when`(manager.getAdapter("work")).thenReturn(adapter)
+        @Suppress("UNCHECKED_CAST")
+        val provider =
+            Mockito.mock(ObjectProvider::class.java) as ObjectProvider<MattermostConnectionManager>
+        Mockito.`when`(provider.ifAvailable).thenReturn(manager)
+        Mockito.doAnswer {
+                (it.arguments[0] as Consumer<MattermostConnectionManager>).accept(manager)
+            }
+            .`when`(provider)
+            .ifAvailable(Mockito.any())
+        return MattermostService(
+            serverRepository,
+            channelRepository,
+            channelControlService,
+            provider,
+        )
+    }
 
     @Test
     fun `connect persists server entity`() {
@@ -265,5 +291,39 @@ class MattermostServiceTests {
         )
         val byId = mattermostService.mute("work", "teamb00000000000000000000")
         assertTrue(byId.startsWith("Muted"), byId)
+    }
+
+    @Test
+    fun `a joined channel is found by its display name while connected`() {
+        mattermostService.connect("work", "https://mattermost.example.com", "token-123")
+        val server = serverRepository.findByNameAndDeletedFalse("work")!!
+        val devOps =
+            MattermostChannelRef(
+                id = "devops00000000000000000000",
+                name = "dev-ops",
+                displayName = "Dev Ops",
+                teamId = "ta",
+                teamName = "Team A",
+                type = "O",
+            )
+        mattermostService.registerChannel(server, devOps)
+        val adapter = Mockito.mock(MattermostAdapter::class.java)
+        Mockito.`when`(adapter.resolveChannel("Dev Ops")).thenReturn(devOps)
+
+        val result = connectedService(adapter).mute("work", "Dev Ops")
+        assertTrue(result.startsWith("Muted"), result)
+    }
+
+    @Test
+    fun `channels and join pass on why a lookup can't work`() {
+        mattermostService.connect("work", "https://mattermost.example.com", "token-123")
+        val adapter = Mockito.mock(MattermostAdapter::class.java)
+        val noTeams = MattermostLookupException("'haadam' is not a member of any team on 'work'")
+        Mockito.`when`(adapter.listChannels(null)).thenThrow(noTeams)
+        Mockito.`when`(adapter.resolveChannel("lantern")).thenThrow(noTeams)
+        val service = connectedService(adapter)
+
+        assertEquals("Error: ${noTeams.message}", service.listChannels("work", null))
+        assertEquals("Error: ${noTeams.message}", service.join("work", "lantern"))
     }
 }

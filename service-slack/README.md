@@ -23,7 +23,7 @@ All are `SUPER_ADMIN` only. `slack` alone lists them.
 | `slack remove <name>` | Disconnects, then removes the workspace and its channels (soft-deleted). `connect` with tokens brings the workspace back, but not its channels: join them again. |
 | `slack autoconnect <name> <true\|false>` | Whether the workspace connects when Streampack starts. Off for a new or restored workspace. |
 | `slack signal <name> [signal]` | Sets the workspace's signal (the `!` in `!help`; up to 10 characters), or with none, goes back to the default (`SLACK_SIGNAL`). Takes effect at once. |
-| `slack status [name]` | With Slack on: whether one workspace, or which workspaces, are connected. With Slack off: the stored workspaces, autoconnect or manual, and one workspace's channel names. |
+| `slack status [name]` | With Slack on: whether one workspace, or which workspaces, are connected, each `connected as <bot user>` once Slack has said who the token belongs to. With Slack off: the stored workspaces, autoconnect or manual, and one workspace's channel names. |
 
 The bot token is the `xoxb-…` one, the app token the `xapp-…` one Socket Mode needs. Either may be
 given as `env://VARIABLE` instead of a value, and is then read from that variable when connecting.

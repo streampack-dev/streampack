@@ -157,7 +157,7 @@ class MattermostService(
             serverRepository.findByNameAndDeletedFalse(serverName)
                 ?: return "Error: Server '$serverName' not found"
         val channel =
-            findRegistered(server, channelQuery)
+            findRegisteredOrLive(server, channelQuery)
                 ?: return "Error: Channel '$channelQuery' not found on '$serverName'"
         channelRepository.save(channel.copy(deleted = true, updatedAt = Instant.now()))
         val adapter = connectionManager.ifAvailable?.getAdapter(serverName)
@@ -177,7 +177,12 @@ class MattermostService(
         val adapter =
             connectionManager.ifAvailable?.getAdapter(server.name)
                 ?: return "Error: Server '$serverName' is not connected"
-        val channels = adapter.listChannels(searchTerm)
+        val channels =
+            try {
+                adapter.listChannels(searchTerm)
+            } catch (e: MattermostLookupException) {
+                return "Error: ${e.message}"
+            }
         if (channels.isEmpty()) return "No Mattermost channels found"
         return channels.joinToString("\n") { "  ${it.summary()}" }
     }
@@ -317,8 +322,19 @@ class MattermostService(
 
     private fun resolveChannelUri(serverName: String, channelQuery: String): String? {
         val server = serverRepository.findByNameAndDeletedFalse(serverName) ?: return null
-        return findRegistered(server, channelQuery)?.provenanceUri()
+        return findRegisteredOrLive(server, channelQuery)?.provenanceUri()
     }
+
+    /**
+     * A registered channel by id or URL name; failing that, while connected, by whatever Mattermost
+     * finds for the query (a display name such as `Dev Ops`), if that channel is registered.
+     */
+    private fun findRegisteredOrLive(server: MattermostServer, query: String): MattermostChannel? =
+        findRegistered(server, query)
+            ?: connectionManager.ifAvailable
+                ?.getAdapter(server.name)
+                ?.let { adapter -> runCatching { adapter.resolveChannel(query) }.getOrNull() }
+                ?.let { channelRepository.findByServerAndChannelIdAndDeletedFalse(server, it.id) }
 
     /**
      * A registered channel by id, else by name. A name shared by several teams is refused with the

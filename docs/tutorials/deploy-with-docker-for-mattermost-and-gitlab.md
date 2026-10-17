@@ -90,8 +90,10 @@ At the `>` prompt you're typing the server's own commands. Register the Mattermo
 > mattermost connect work https://mattermost.example.com <the bot's token>
 Connecting to 'work'...
 > mattermost status work
-Server 'work': connected
+Server 'work': connected as lantern
 ```
+
+The name after `as` is the account the token belongs to: here, a bot called `lantern`. If it names a person, the token is theirs, and the bot won't answer messages sent to it.
 
 Have it reconnect whenever the server starts:
 
@@ -99,7 +101,7 @@ Have it reconnect whenever the server starts:
 > mattermost autoconnect work true
 ```
 
-Find the channel to post into. `mattermost channels` lists the channels the account can see, with each one's id in brackets; a word narrows the list:
+Find the channel to post into. `mattermost channels` lists the channels the account can see, with each one's id in brackets; a word narrows the list, and a name with spaces goes in quotes (`"Build News"`):
 
 ```text
 > mattermost channels work builds

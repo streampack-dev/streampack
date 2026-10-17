@@ -235,7 +235,9 @@ Operational notes:
 
 - `connect` with a URL and token registers the server; the token is externalized to `MATTERMOST_<NAME>_TOKEN` once that variable exists, and startup refuses to run with enforcement on until it does. Token values are never printed.
 - `autojoin` channels are joined through the API on every connect and reconnect (public channels; private ones need an admin to add the account).
-- `channels` lists channels visible to the account across its teams; `join` accepts a channel id or a name and reports an ambiguous name rather than guessing. Names repeat across teams, so a name registered on two teams must be addressed by id afterwards.
+- `status` names the account each connection signed in as: `Server 'work': connected as lantern`.
+- A channel name with spaces goes in quotes: `mattermost join work "Dev Ops"`. An unclosed quote is refused. `connect` splits on spaces alone.
+- `channels` lists channels visible to the account across its teams, and says so when the account is on no team; `join` accepts a channel id, a name or a display name, reports an ambiguous name rather than guessing, and when nothing matches names the teams it searched. Names repeat across teams, so a name registered on two teams must be addressed by id afterwards.
 - `join` on a public channel adds the account to it on Mattermost; `leave` removes the account, so the server stops sending that channel's posts, and retires the channel's record (its flags are kept for a later `join`). Private channels must be joined by an admin on Mattermost; `join` registers them hidden and unlogged. Every command but `join` needs a registered channel.
 - `signal` takes effect on the live connection immediately.
 - A dropped socket is retried with doubling delays (from `MATTERMOST_RECONNECT_DELAY`, capped at five minutes) until it reconnects or the server is disconnected; `status` with no name shows `reconnecting` meanwhile; `status <name>` says `not connected`. An unreachable server at startup does not stop the application.
@@ -452,7 +454,7 @@ Present only when `SLACK_ENABLED` is true. Notes:
 - A channel is named `#name`, `name` or by its Slack id. Its flags are kept by its id (`slack://<workspace>/<channel-id>`), the address its messages arrive with.
 - `join` while connected finds the channel, registers it, and puts the bot in a public one; a private one needs the bot invited in Slack, and registers hidden and unlogged. While disconnected, `join` takes only an id.
 - `leave` takes the bot out of the channel; the channel stays registered.
-- `status` with Slack on reports only whether workspaces are connected.
+- `status` with Slack on reports whether workspaces are connected, and as which bot user.
 
 See [service-slack](../../service-slack/README.md) for addressing, reactions and the Slack app's setup.
 

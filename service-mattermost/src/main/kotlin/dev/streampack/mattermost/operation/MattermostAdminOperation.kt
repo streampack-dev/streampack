@@ -4,6 +4,8 @@ package dev.streampack.mattermost.operation
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Role
+import dev.streampack.core.parser.CommandLexer
+import dev.streampack.core.parser.UnbalancedQuoteException
 import dev.streampack.core.service.TypedOperation
 import dev.streampack.mattermost.service.MattermostService
 import org.springframework.messaging.Message
@@ -31,8 +33,19 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
         val args = payload.trim().removePrefix("mattermost").trim()
         if (args.isBlank()) return OperationResult.Success(helpText())
 
-        val tokens = args.split("\\s+".toRegex())
-        val subcommand = tokens[0]
+        val subcommand = args.substringBefore(' ').substringBefore('\t')
+        // Quotes hold a channel name with spaces ("Dev Ops"); connect splits on whitespace alone,
+        // so its token is the word the log's redaction counts.
+        val tokens =
+            if (subcommand == "connect") args.split("\\s+".toRegex())
+            else
+                try {
+                    CommandLexer.split(args)
+                } catch (e: UnbalancedQuoteException) {
+                    return OperationResult.Error(
+                        "${e.message}. Close the quote; a name with an apostrophe goes in double quotes.",
+                    )
+                }
 
         return when (subcommand) {
             "connect" -> handleConnect(tokens.drop(1))
@@ -88,7 +101,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
     private fun handleChannels(args: List<String>): OperationResult {
         if (args.isEmpty())
             return OperationResult.Error("Usage: mattermost channels <server> [term]")
-        return OperationResult.Success(mattermostService.listChannels(args[0], args.getOrNull(1)))
+        return toResult(mattermostService.listChannels(args[0], args.getOrNull(1)))
     }
 
     private fun handleJoin(args: List<String>): OperationResult {
@@ -214,6 +227,7 @@ class MattermostAdminOperation(private val mattermostService: MattermostService)
         |  mattermost moderated <server> <channel-id-or-name> <true|false>
         |  mattermost signal <name> [character]
         |  mattermost status [server]
+        |A channel name with spaces goes in quotes: mattermost join work "Dev Ops"
         """
             .trimMargin()
 }

@@ -26,13 +26,16 @@ All are `SUPER_ADMIN` only. `mattermost` alone lists them.
 | `mattermost remove <name>` | Disconnects, and removes the server and its channels (soft-deleted: `connect` with details brings the server back, but not its channels). |
 | `mattermost autoconnect <name> <true\|false>` | Whether the server connects when Streampack starts. Off for a new or restored server. |
 | `mattermost signal <name> [character]` | Sets the server's signal character (the `!` in `!help`), or with none, goes back to the default (`MATTERMOST_SIGNAL`). Takes effect at once. |
-| `mattermost channels <name> [term]` | Lists channels as `display name [id] on team`, across every team the account belongs to. With no term, the channels the account is a member of; with a term, the results of Mattermost's channel search. Needs a live connection. |
-| `mattermost status [name]` | With a name, `connected` or `not connected`. Without, every server that has a connection, each `connected` or `reconnecting`. With Mattermost off, the stored servers instead. |
+| `mattermost channels <name> [term]` | Lists channels as `display name [id] on team`, across every team the account belongs to. With no term, the channels the account is a member of; with a term, the results of Mattermost's channel search. Needs a live connection. An account on no team gets `'<account>' is not a member of any team on '<name>'; add it to a team on Mattermost`, not an empty list. |
+| `mattermost status [name]` | With a name, `connected as <account>` or `not connected`. Without, every server that has a connection, each `connected as <account>` or `reconnecting`. The account is the one the token belongs to: if it names a person rather than the bot, the token is the wrong one. With Mattermost off, the stored servers instead. |
 
 ### Channels
 
-A channel is named by its Mattermost id (lower-case letters and digits, 26 of them) or by its name (the
-URL name, such as `town-square`); a leading `#` is ignored. Names repeat across teams (every team
+A channel is named by its Mattermost id (lower-case letters and digits, 26 of them), by its name (the
+URL name, such as `town-square`), or by its display name; a leading `#` is ignored. A name with spaces
+goes in quotes, double or single: `mattermost join work "Dev Ops"`, `mattermost autojoin work "Dev Ops"
+true`. A display name with an apostrophe goes in double quotes (`"Joe's Place"`), and a quote that is
+never closed is refused rather than guessed at. The token in `connect` is always one word. Names repeat across teams (every team
 has a `town-square`), so a name that matches more than one channel is refused with the candidate
 ids, and the id must be used.
 
@@ -50,10 +53,14 @@ How a channel is found:
 
 - **`join`**, while connected, asks Mattermost: an id is looked up directly; otherwise the name is
   searched on each of the account's teams, and an exact match on the name or display name wins. If
-  there is no exact match but the search found exactly one channel, that one is used. While not
-  connected, `join` takes only an id, and registers it without touching membership.
+  there is no exact match but the search found exactly one channel, that one is used. Mattermost's
+  search returns public channels only, on the teams the account is on, so when nothing matches the
+  error names those teams, and says a private channel is joined by its id once the account has been
+  added to it. While not connected, `join` takes only an id, and registers it without touching
+  membership.
 - **Every other channel command** works only on a channel already registered with `join`, found by
-  id, else by name among the registered channels.
+  id, else by name among the registered channels, else (while connected) by what Mattermost finds
+  for the name, such as a display name.
 
 Defaults at `join`: a public channel starts logged and visible; a private channel, direct or group
 message starts unlogged and hidden, and has to be turned on with `logged` and `visible`. The type
@@ -145,6 +152,8 @@ mattermost autojoin work town-square true
 mattermost autoconnect work true
 mattermost status work
 ```
+
+`status` should say `Server 'work': connected as <the bot's username>`.
 
 Then restart once with `MATTERMOST_WORK_TOKEN` set, as the start asks. For a private channel, add
 the account to it on Mattermost, `join` it by id, and turn on `logged` and `visible` if its log
