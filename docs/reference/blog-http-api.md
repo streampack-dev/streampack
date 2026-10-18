@@ -154,7 +154,7 @@ less than recent traffic.
 |----------|---------|
 | `GET /posts/{year}/{month}/{slug}` | Reads a published post by canonical or alias slug. |
 | `GET /posts/{id}` | Reads a published post by UUID. |
-| `GET /pages/{slug}` | Reads an approved system page from the `_pages` category. |
+| `GET /pages/{slug}` | Reads an approved system post: one in any `_` category, such as `_pages`. See [System Posts](#system-posts). |
 
 Successful `GET /posts/{year}/{month}/{slug}` and `GET /posts/{id}` requests are pure reads. They do
 not record post access or change temperature buckets. UI clients should call `POST /posts/{id}/access`
@@ -162,6 +162,17 @@ when a post link is opened from client-side navigation.
 
 A post's details carry its `versions`, such as a recording of it; see
 [Post Versions and Media](#post-versions-and-media).
+
+
+## System Posts
+
+A post in a category whose name starts with `_` (`_pages`, `_sidebar`, `_test`, or any other) is system content (#254). It's reachable at its own address and nowhere else:
+
+- **Reachable:** `GET /pages/{slug}`, `GET /posts/{id}`, and on the front ends `/posts/{slug}`. A post made in a `_` category gets an undated slug, such as `about`. A post that joins one later keeps the slug it had.
+- **Left out of:** post lists and the board, Popular Reads, tag pages, search, every feed (`/blog/rss.xml`, `/blog/atom.xml`, `/feed.xml`, `/feed.atom`, `/podcast.xml`), and outgoing links: no Webmentions, Pingbacks or autosubscribing.
+- **Still in:** `/sitemap.xml`, which lists every published post, pages included.
+
+A post that leaves its last `_` category is an ordinary post from then on, and its links are sent then. To try a post on the live site, see [Try a Post on the Live Site](../how-to/blog/try-a-post-on-the-live-site.md).
 
 ## Post Versions and Media
 

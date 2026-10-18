@@ -40,13 +40,17 @@ interface PostVersionRepository : JpaRepository<PostVersion, UUID> {
 
     /**
      * Versions of [kind] without a variant whose posts anonymous readers can see (approved, not
-     * deleted, published by [now]), with their posts and the posts' authors, newest post first.
+     * deleted, published by [now], not system content), with their posts and the posts' authors,
+     * newest post first.
      */
     @Query(
         "SELECT v FROM PostVersion v JOIN FETCH v.post p LEFT JOIN FETCH p.author " +
             "WHERE v.kind = :kind AND v.variant IS NULL " +
             "AND p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false " +
-            "AND p.publishedAt <= :now ORDER BY p.publishedAt DESC",
+            "AND p.publishedAt <= :now AND " +
+            SystemContent.NOT_SYSTEM +
+            " " +
+            "ORDER BY p.publishedAt DESC",
     )
     fun findPublishedByKind(kind: String, now: Instant): List<PostVersion>
 

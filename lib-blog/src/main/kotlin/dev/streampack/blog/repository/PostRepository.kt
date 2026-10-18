@@ -18,6 +18,17 @@ interface PostRepository : JpaRepository<Post, UUID> {
     )
     fun findPublished(now: Instant): List<Post>
 
+    /**
+     * Every published post the feeds carry (`/feed.xml`, `/feed.atom`): system content left out
+     * (#254)
+     */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND " +
+            SystemContent.NOT_SYSTEM +
+            " ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
+    )
+    fun findPublishedForFeeds(now: Instant): List<Post>
+
     @Query(
         "SELECT p FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.DRAFT AND p.deleted = false",
     )
@@ -47,15 +58,20 @@ interface PostRepository : JpaRepository<Post, UUID> {
 
     /** Published posts with eagerly loaded authors for RSS feed generation */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND " +
+            SystemContent.NOT_SYSTEM +
+            " ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
     )
     fun findRecentPublishedWithAuthor(now: Instant, pageable: Pageable): List<Post>
 
     /** Paginated published posts for listing pages, excluding system categories */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\') ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND " +
+            SystemContent.NOT_SYSTEM +
+            " ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
         countQuery =
-            "SELECT COUNT(p) FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\')",
+            "SELECT COUNT(p) FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND " +
+                SystemContent.NOT_SYSTEM,
     )
     fun findPublished(now: Instant, pageable: Pageable): Page<Post>
 
@@ -69,9 +85,12 @@ interface PostRepository : JpaRepository<Post, UUID> {
 
     /** Posts with a specific tag, excluding system-category content */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tagName)) AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\') ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tagName)) AND " +
+            SystemContent.NOT_SYSTEM +
+            " ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
         countQuery =
-            "SELECT COUNT(p) FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tagName)) AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\')",
+            "SELECT COUNT(p) FROM Post p WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tagName)) AND " +
+                SystemContent.NOT_SYSTEM,
     )
     fun findByTag(tagName: String, now: Instant, pageable: Pageable): Page<Post>
 
@@ -103,10 +122,15 @@ interface PostRepository : JpaRepository<Post, UUID> {
     @Query(
         nativeQuery = true,
         value =
-            "SELECT * FROM posts WHERE status = 'APPROVED' AND deleted = false AND published_at <= :now " +
-                "AND COALESCE((metadata->>'linksCheckedThrough')::bigint, 0) < " +
-                "FLOOR(EXTRACT(EPOCH FROM updated_at) * 1000)::bigint " +
-                "ORDER BY published_at ASC LIMIT :limit",
+            "SELECT p.* FROM posts p WHERE p.status = 'APPROVED' AND p.deleted = false AND p.published_at <= :now " +
+                // System content sends nothing (#254); it's due once it leaves its _ category,
+                // since that edit moves updated_at past what was checked.
+                "AND " +
+                SystemContent.NOT_SYSTEM_SQL +
+                " " +
+                "AND COALESCE((p.metadata->>'linksCheckedThrough')::bigint, 0) < " +
+                "FLOOR(EXTRACT(EPOCH FROM p.updated_at) * 1000)::bigint " +
+                "ORDER BY p.published_at ASC LIMIT :limit",
     )
     fun findOutgoingLinksDue(now: Instant, limit: Int): List<Post>
 
@@ -186,9 +210,12 @@ interface PostRepository : JpaRepository<Post, UUID> {
     @Query(
         nativeQuery = true,
         value =
-            "SELECT p.* FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND (CAST(:exact AS text) IS NULL OR posts_search_text(p.id, p.title, p.excerpt, p.rendered_html) ~* CAST(:exact AS text)) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now AND NOT EXISTS (SELECT 1 FROM post_categories pc JOIN categories c ON c.id = pc.category_id WHERE pc.post_id = p.id AND c.name LIKE '\\_%' ESCAPE '\\') ORDER BY ts_rank(p.search_vector, websearch_to_tsquery('english', :query)) DESC",
+            "SELECT p.* FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND (CAST(:exact AS text) IS NULL OR posts_search_text(p.id, p.title, p.excerpt, p.rendered_html) ~* CAST(:exact AS text)) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now AND " +
+                SystemContent.NOT_SYSTEM_SQL +
+                " ORDER BY ts_rank(p.search_vector, websearch_to_tsquery('english', :query)) DESC",
         countQuery =
-            "SELECT count(*) FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND (CAST(:exact AS text) IS NULL OR posts_search_text(p.id, p.title, p.excerpt, p.rendered_html) ~* CAST(:exact AS text)) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now AND NOT EXISTS (SELECT 1 FROM post_categories pc JOIN categories c ON c.id = pc.category_id WHERE pc.post_id = p.id AND c.name LIKE '\\_%' ESCAPE '\\')",
+            "SELECT count(*) FROM posts p WHERE p.search_vector @@ websearch_to_tsquery('english', :query) AND (CAST(:exact AS text) IS NULL OR posts_search_text(p.id, p.title, p.excerpt, p.rendered_html) ~* CAST(:exact AS text)) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now AND " +
+                SystemContent.NOT_SYSTEM_SQL,
     )
     fun searchPublished(
         query: String,

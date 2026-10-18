@@ -34,6 +34,8 @@ For what the message log keeps, what channel settings do, and why direct message
 
 To learn post search, follow [Search Posts with the API](tutorials/search-posts-with-the-api.md). For queries by task, see [Search Posts](how-to/blog/search-posts.md); for the grammar, [Post Search Syntax](reference/post-search-syntax.md); and for how it works, why `emergent` finds `emerging`, and what quotes change, [Post Search](explanation/post-search.md).
 
+To try a post on the live site without it reaching lists, feeds or anyone it links to, see [Try a Post on the Live Site](how-to/blog/try-a-post-on-the-live-site.md); the rule it relies on is [System Posts](reference/blog-http-api.md#system-posts).
+
 For Mermaid diagrams in posts, see [Draw Diagrams in Posts](how-to/blog/draw-diagrams-in-posts.md); the HTML they become, for front ends, is in [Diagram HTML](reference/diagram-html.md), and why and how the server draws them in [How Diagrams Are Drawn](explanation/diagrams.md).
 
 For how the Atlas (the map of the site's tags) is laid out, and why it holds still, see [The Atlas](explanation/atlas.md).
