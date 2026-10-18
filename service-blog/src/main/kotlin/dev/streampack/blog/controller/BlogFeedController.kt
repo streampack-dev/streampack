@@ -70,7 +70,7 @@ class BlogFeedController(
                 val versions = postVersionService.publishedAudio(now)
                 versions.map { it.post } to versions.associateBy { it.post.id }
             } else {
-                val published = postRepository.findPublished(now)
+                val published = postRepository.findPublishedForFeeds(now)
                 published to postVersionService.audioByPost(published.map { it.id })
             }
         val baseUrl = resolveBaseUrl(request)

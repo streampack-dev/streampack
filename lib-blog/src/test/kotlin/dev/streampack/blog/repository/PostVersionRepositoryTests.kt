@@ -1,7 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.repository
 
+import dev.streampack.blog.entity.Category
 import dev.streampack.blog.entity.Post
+import dev.streampack.blog.entity.PostCategory
 import dev.streampack.blog.entity.PostVersion
 import dev.streampack.blog.model.PostStatus
 import dev.streampack.core.entity.User
@@ -31,6 +33,8 @@ class PostVersionRepositoryTests {
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var transactions: TransactionTemplate
+    @Autowired lateinit var categoryRepository: CategoryRepository
+    @Autowired lateinit var postCategoryRepository: PostCategoryRepository
 
     private lateinit var author: User
     private lateinit var published: Post
@@ -135,6 +139,19 @@ class PostVersionRepositoryTests {
 
         assertEquals(listOf("Published"), found.map { it.post.title })
         assertEquals("The Reader", found.single().post.author?.displayName)
+    }
+
+    @Test
+    fun `published audio leaves out system posts, as the podcast feed must (#254)`() {
+        version(published)
+        val test = post("Trying it", PostStatus.APPROVED, Instant.now().minus(1, ChronoUnit.HOURS))
+        version(test)
+        val category = categoryRepository.save(Category(name = "_test", slug = "_test"))
+        postCategoryRepository.save(PostCategory(post = test, category = category))
+
+        val found = versionRepository.findPublishedByKind(PostVersion.KIND_AUDIO, Instant.now())
+
+        assertEquals(listOf("Published"), found.map { it.post.title })
     }
 
     @Test

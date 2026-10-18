@@ -2,9 +2,13 @@
 package dev.streampack.blog.outgoing
 
 import com.sun.net.httpserver.HttpServer
+import dev.streampack.blog.entity.Category
 import dev.streampack.blog.entity.Post
+import dev.streampack.blog.entity.PostCategory
 import dev.streampack.blog.entity.Slug
 import dev.streampack.blog.model.PostStatus
+import dev.streampack.blog.repository.CategoryRepository
+import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.repository.SlugRepository
 import dev.streampack.core.model.LinkedSiteSubscription
@@ -23,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -70,6 +75,8 @@ class OutgoingLinksServiceTests {
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var slugRepository: SlugRepository
     @Autowired lateinit var subscriptions: CapturingSubscriptions
+    @Autowired lateinit var categoryRepository: CategoryRepository
+    @Autowired lateinit var postCategoryRepository: PostCategoryRepository
 
     private lateinit var server: HttpServer
     private lateinit var base: String
@@ -112,6 +119,7 @@ class OutgoingLinksServiceTests {
     fun stop() {
         server.stop(0)
         created.forEach { post ->
+            postCategoryRepository.deleteByPost(post.id)
             slugRepository.findCanonical(post.id)?.let { slugRepository.delete(it) }
             postRepository.deleteById(post.id)
         }
@@ -250,6 +258,30 @@ class OutgoingLinksServiceTests {
         assertEquals(1, pingbacks.size)
         // The site was looked at already.
         assertEquals(1, subscriptions.requests.size)
+    }
+
+    @Test
+    fun `a system post sends nothing until it leaves its _ category`() {
+        val category =
+            categoryRepository.findByName("_test")
+                ?: categoryRepository.save(Category(name = "_test", slug = "_test"))
+        val post = post(links("$base/wm-page"))
+        postCategoryRepository.save(PostCategory(post = post, category = category))
+
+        // Not due, so no pass ever handles it: nothing sent, nothing recorded.
+        assertFalse(
+            postRepository.findOutgoingLinksDue(Instant.now(), 1000).any { it.id == post.id },
+        )
+        assertNull(reload(post).metadata["linksCheckedThrough"])
+
+        // Promoted: out of _test, and the edit makes it due, so its links go out once.
+        postCategoryRepository.deleteByPost(post.id)
+        postRepository.save(reload(post).copy(updatedAt = Instant.now().plusSeconds(1)))
+        assertTrue(
+            postRepository.findOutgoingLinksDue(Instant.now(), 1000).any { it.id == post.id },
+        )
+        service.handle(reload(post))
+        assertEquals(1, webmentions.size)
     }
 
     @Test
