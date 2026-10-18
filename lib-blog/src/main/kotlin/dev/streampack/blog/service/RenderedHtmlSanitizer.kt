@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.service
 
+import java.util.UUID
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Attribute
 import org.jsoup.nodes.Document
@@ -21,6 +22,11 @@ import org.springframework.stereotype.Component
  *
  * Author-supplied raw HTML never reaches this class unescaped, so the SVG allowance below only
  * admits the icon symbol sheet the admonition extension generates.
+ *
+ * A Mermaid diagram's figure (#252) is the exception, kept out of this safelist so it stays as
+ * narrow as it is: each `figure.mermaid` is rebuilt by [MermaidFigures.rebuild], its SVG cleaned by
+ * an allowlist of its own, and put back where it was. HTML with no such figure takes the same path
+ * as before.
  */
 @Component
 class RenderedHtmlSanitizer {
@@ -55,8 +61,32 @@ class RenderedHtmlSanitizer {
     /** Returns [html] with disallowed elements, attributes, and URL schemes removed. */
     fun sanitize(html: String): String {
         if (html.isBlank()) return ""
-        return Jsoup.clean(html, RELATIVE_BASE, safelist, outputSettings).trim()
+        if (!html.contains("mermaid")) return clean(html)
+        val doc = Jsoup.parseBodyFragment(html)
+        doc.outputSettings(outputSettings)
+        val figures =
+            doc.select(MermaidFigures.FIGURE).filter { figure ->
+                figure.parents().none { it.`is`(MermaidFigures.FIGURE) }
+            }
+        if (figures.isEmpty()) return clean(html)
+        // Each figure leaves a placeholder no stored HTML can forge, then comes back rebuilt.
+        val token = "diagram-" + UUID.randomUUID()
+        val rebuilt = figures.mapIndexed { index, figure ->
+            MermaidFigures.rebuild(figure).also {
+                figure.replaceWith(Element("p").id("$token-$index"))
+            }
+        }
+        val cleaned = Jsoup.parseBodyFragment(clean(doc.body().html()))
+        cleaned.outputSettings(outputSettings)
+        rebuilt.forEachIndexed { index, figure ->
+            val slot = cleaned.getElementById("$token-$index") ?: return@forEachIndexed
+            if (figure == null) slot.remove() else slot.replaceWith(figure)
+        }
+        return cleaned.body().html().trim()
     }
+
+    private fun clean(html: String): String =
+        Jsoup.clean(html, RELATIVE_BASE, safelist, outputSettings).trim()
 
     /**
      * The safelist, admitting a `<use>` reference only when it names one of the admonition sprite's

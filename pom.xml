@@ -35,6 +35,8 @@
         <flexmarkVersion>0.64.8</flexmarkVersion>
         <kittehVersion>9.0.0</kittehVersion>
         <jsoupVersion>1.23.2</jsoupVersion>
+        <!-- GraalJS runs Pele, the Mermaid renderer, inside the JVM (#252); interpreted on Temurin. -->
+        <graalPolyglotVersion>25.4.4.1.1</graalPolyglotVersion>
         <romeVersion>2.1.0</romeVersion>
         <jdaVersion>6.7.0</jdaVersion>
         <slackSdkVersion>1.52.0</slackSdkVersion>
@@ -204,6 +206,17 @@
                 <groupId>com.vladsch.flexmark</groupId>
                 <artifactId>flexmark</artifactId>
                 <version>${flexmarkVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.graalvm.polyglot</groupId>
+                <artifactId>polyglot</artifactId>
+                <version>${graalPolyglotVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.graalvm.polyglot</groupId>
+                <artifactId>js-community</artifactId>
+                <version>${graalPolyglotVersion}</version>
+                <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>org.kitteh.irc</groupId>

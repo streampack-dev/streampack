@@ -22,6 +22,7 @@ class MarkdownRenderingService(
     private val excerptSummarizerService: ExcerptSummarizerService,
     private val factoidWikiLinkResolver: FactoidWikiLinkResolver? = null,
     private val renderedHtmlSanitizer: RenderedHtmlSanitizer = RenderedHtmlSanitizer(),
+    private val mermaidRenderer: MermaidRenderer? = null,
 ) {
     private val factoidAnchorPattern =
         Regex(
@@ -65,13 +66,44 @@ class MarkdownRenderingService(
      *
      * Escaping covers HTML typed by the author; sanitizing covers HTML the renderer generates from
      * markdown syntax, in particular link and image destinations with `javascript:` or `data:`
-     * schemes (see issue #48).
+     * schemes (see issue #48). Mermaid blocks are drawn as SVG before sanitizing (#252), and the
+     * sanitizer cleans the drawings by their own allowlist.
      */
     fun render(markdownSource: String): String {
         if (markdownSource.isBlank()) return ""
         val document = parser.parse(markdownSource)
         val html = renderer.render(document).trim()
-        return renderedHtmlSanitizer.sanitize(refine(resolveFactoidWikiLinks(html)))
+        return renderedHtmlSanitizer.sanitize(drawDiagrams(refine(resolveFactoidWikiLinks(html))))
+    }
+
+    /**
+     * Each ```` ```mermaid ```` block drawn by [mermaidRenderer], up to [MAX_DIAGRAMS] a document;
+     * the rest, and every block when there's no renderer, stay code. A diagram Pele refuses keeps
+     * its source, captioned with the reason, so the author sees what to fix.
+     */
+    private fun drawDiagrams(html: String): String {
+        val mermaid = mermaidRenderer ?: return html
+        if (!html.contains("language-mermaid")) return html
+        val doc = Jsoup.parseBodyFragment(html)
+        doc.outputSettings().prettyPrint(false)
+        val blocks = doc.select("pre > code.language-mermaid").take(MAX_DIAGRAMS)
+        blocks.forEachIndexed { index, code ->
+            val source = code.wholeText()
+            val idPrefix = "mermaid-%08x-%d".format(source.hashCode(), index)
+            val figure =
+                when (val outcome = mermaid.render(source, idPrefix)) {
+                    is MermaidRenderer.Outcome.Drawn -> {
+                        val svg = Jsoup.parseBodyFragment(outcome.svg).body().selectFirst("svg")
+                        svg?.let { MermaidFigures.drawn(it, source) }
+                            ?: MermaidFigures.refused(source, "The drawing was empty.")
+                    }
+                    is MermaidRenderer.Outcome.Refused ->
+                        MermaidFigures.refused(source, outcome.message)
+                    MermaidRenderer.Outcome.Unavailable -> return@forEachIndexed
+                }
+            code.parent()?.replaceWith(figure)
+        }
+        return doc.body().html()
     }
 
     /**
@@ -153,6 +185,7 @@ class MarkdownRenderingService(
         val document = parser.parse(markdownSource)
         val html = renderer.render(document)
         return html
+            .replace(MERMAID_BLOCK, " ") // a diagram's source isn't prose (#252)
             .replace(Regex("<[^>]+>"), "") // strip HTML tags
             .replace("&nbsp;", " ")
             .replace("&amp;", "&")
@@ -251,6 +284,15 @@ class MarkdownRenderingService(
 
     companion object {
         private const val FACTOID_PREFIX = "/factoids/"
+
+        private val MERMAID_BLOCK =
+            Regex(
+                """<pre><code class="language-mermaid">.*?</code></pre>""",
+                RegexOption.DOT_MATCHES_ALL,
+            )
+
+        /** The most diagrams one post or comment gets drawn; any after stay code */
+        const val MAX_DIAGRAMS = 50
     }
 }
 

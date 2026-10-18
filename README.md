@@ -191,3 +191,5 @@ Documentation is organized using the Diataxis model:
 ## License
 
 All user-submitted content is licensed under Creative Commons CC BY-SA 4.0.
+
+lib-blog bundles [Pele](https://github.com/obsidianmd/pele), the Mermaid renderer, under the MIT License; its licence is in `lib-blog/src/main/resources/pele/LICENSE`. It also bundles IBM Plex Sans and IBM Plex Mono, the fonts diagrams are measured and shown in, under the SIL Open Font License 1.1, in `lib-blog/src/main/resources/fonts/ibm-plex/`.
