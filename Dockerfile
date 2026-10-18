@@ -20,5 +20,7 @@ VOLUME ["/opt/streampack/media"]
 # Extensions (#229): Spring Boot's PropertiesLauncher puts STREAMPACK_EXT_DIR's jars, and the
 # directory itself, on the classpath ahead of the server's own, so a jar there adds operations and a
 # banner.txt there replaces the banner. An empty or missing directory changes nothing. exec keeps
-# java as PID 1, so it gets the container's stop signal.
-ENTRYPOINT ["sh", "-c", "exec java -Dloader.path=\"${STREAMPACK_EXT_DIR:-/opt/streampack/ext}\" -cp /opt/streampack/server-streampack.jar org.springframework.boot.loader.launch.PropertiesLauncher \"$@\"", "streampack"]
+# java as PID 1, so it gets the container's stop signal. GraalJS, which draws Mermaid diagrams
+# (#252), loads native code and uses sun.misc.Unsafe; the two flags allow that without the JVM's
+# warnings on the first diagram.
+ENTRYPOINT ["sh", "-c", "exec java --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -Dloader.path=\"${STREAMPACK_EXT_DIR:-/opt/streampack/ext}\" -cp /opt/streampack/server-streampack.jar org.springframework.boot.loader.launch.PropertiesLauncher \"$@\"", "streampack"]

@@ -82,6 +82,10 @@ streampack:
       title: ${BLOG_FEED_TITLE:${BLOG_SITE_NAME:${STREAMPACK_NAME:Nevet}}}
       description: ${BLOG_FEED_DESCRIPTION:JVM ecosystem news and community content}
     base-url: ${BLOG_BASE_URL:http://localhost:3001}
+    # Mermaid blocks in posts and comments drawn as SVG with Pele, inside the JVM (#252).
+    mermaid:
+      enabled: ${BLOG_MERMAID_ENABLED:true}
+      timeout: ${BLOG_MERMAID_TIMEOUT:5s}
     summary:
       # The system prompt for admins' AI summaries (#102); empty uses the built-in editorial stance.
       system-prompt: ${BLOG_SUMMARY_PROMPT:}

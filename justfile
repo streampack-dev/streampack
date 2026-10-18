@@ -28,7 +28,38 @@ coverage:
 # Run server-streampack locally, with .env as its configuration
 run:
     {{maven}} -pl server-streampack -am -DskipTests package
-    {{app_env}} java -jar server-streampack/target/server-streampack-*-exec.jar
+    {{app_env}} java --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -jar server-streampack/target/server-streampack-*-exec.jar
+
+# Replace Pele, the Mermaid renderer (#252), with an exact npm release: just update-pele 1.6.0.
+# npm pack runs no package scripts; only the browser bundle and the licence are kept.
+update-pele version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    work="$(mktemp -d)"
+    trap 'rm -rf "$work"' EXIT
+    (cd "$work" && npm pack "pele@{{version}}" --silent >/dev/null && tar xzf pele-*.tgz)
+    cp "$work/package/dist/pele.global.js" "$work/package/LICENSE" lib-blog/src/main/resources/pele/
+    head -1 lib-blog/src/main/resources/pele/pele.global.js
+
+# Replace the diagram fonts (#252) with IBM Plex releases: just update-plex 1.1.0 2.5.0.
+# The four faces of each are TTFs from IBM/plex's GitHub releases, since the npm packages have
+# only web fonts, which Java 2D can't read.
+update-plex sans mono:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    work="$(mktemp -d)"
+    trap 'rm -rf "$work"' EXIT
+    fonts=lib-blog/src/main/resources/fonts/ibm-plex
+    gh release download "@ibm/plex-sans@{{sans}}" -R IBM/plex -p ibm-plex-sans.zip -D "$work"
+    gh release download "@ibm/plex-mono@{{mono}}" -R IBM/plex -p ibm-plex-mono.zip -D "$work"
+    unzip -q "$work/ibm-plex-sans.zip" -d "$work/sans"
+    unzip -q "$work/ibm-plex-mono.zip" -d "$work/mono"
+    for face in Regular Bold Italic BoldItalic; do
+      cp "$work/sans/ibm-plex-sans/fonts/complete/ttf/IBMPlexSans-$face.ttf" "$fonts/"
+      cp "$work/mono/ibm-plex-mono/fonts/complete/ttf/IBMPlexMono-$face.ttf" "$fonts/"
+    done
+    cp "$work/sans/ibm-plex-sans/LICENSE.txt" "$fonts/LICENSE.txt"
+    echo "IBM Plex Sans {{sans}}, IBM Plex Mono {{mono}}"
 
 # Build a GraalVM native executable for server-streampack. This uses mvnw, not mvnd if it's present.
 native:

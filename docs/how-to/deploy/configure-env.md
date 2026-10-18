@@ -67,6 +67,7 @@ Optional integrations:
 | `STREAMPACK_GENERATIVE_PROMPT_DIR` | Filesystem directory for prompt and mail template overrides. See [Customize Prompts and Messages](configure-generative-prompts.md). |
 | `STREAMPACK_MEDIA_DIR` | Writable directory for uploaded media, such as posts' recordings. Unset, media is off. See [Configure Media Storage](configure-media-storage.md). |
 | `BLOG_FEED_TITLE`, `BLOG_FEED_DESCRIPTION` | Every post feed's title (default `BLOG_SITE_NAME`) and description. |
+| `BLOG_MERMAID_ENABLED`, `BLOG_MERMAID_TIMEOUT` | Draw Mermaid blocks in posts as SVG (default `true`), and the longest one diagram may take (default `5s`). See [Draw Diagrams in Posts](../blog/draw-diagrams-in-posts.md). |
 | `PODCAST_TITLE`, `PODCAST_AUTHOR`, `PODCAST_IMAGE`, `PODCAST_CATEGORY`, `PODCAST_EXPLICIT`, `PODCAST_OWNER_EMAIL` | The podcast feed's channel (`/podcast.xml`). See [Configure Media Storage](configure-media-storage.md#the-podcast-feed). |
 | `ANTHROPIC_API_KEY` | Anthropic API key. |
 | `GITHUB_WEBHOOK_SECRET_KEY` | Key that encrypts stored GitHub webhook secrets. Needed before enabling webhook delivery. |

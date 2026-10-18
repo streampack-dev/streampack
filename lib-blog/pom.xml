@@ -86,6 +86,15 @@
             <artifactId>flexmark-ext-admonition</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>polyglot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>js-community</artifactId>
+            <type>pom</type>
+        </dependency>
+        <dependency>
             <groupId>org.clojure</groupId>
             <artifactId>clojure</artifactId>
             <version>1.12.6</version>
@@ -97,6 +106,20 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>pele/**</exclude>
+                    <exclude>fonts/**</exclude>
+                </excludes>
+            </resource>
+            <!-- Copied as they are, never filtered (#252): Pele's bundle is JavaScript full of ${...},
+                 and the diagram fonts are binary. -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>pele/**</include>
+                    <include>fonts/**</include>
+                </includes>
             </resource>
             <resource>
                 <directory>src/main/clojure</directory>
