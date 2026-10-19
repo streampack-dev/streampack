@@ -865,6 +865,19 @@ tags}`) and `factoids` (every factoid carrying it, by selector, each `{selector,
 updatedAt, tags}`). It's how a tag's factoids are listed: `GET /factoids` searches, but doesn't
 list by tag.
 
+## Crawlers
+
+`GET /robots.txt` answers, as `text/plain`:
+
+```
+User-agent: *
+Disallow: /
+```
+
+It asks every crawler to stay away from the whole API (#259). JSON is no use as a search result, and each front end serves its own `robots.txt` and sitemap for the content. Feeds and media are fetched by readers and apps, which don't obey `robots.txt`, so they aren't affected.
+
+A deployment that serves pages from the API's own host can replace the file: put its own `static/robots.txt` in the [`ext/` directory](ext-directory.md).
+
 ## Generated OpenAPI
 
 The generated OpenAPI document is `docs/openapi.json`. Do not edit it by hand; regenerate it with
