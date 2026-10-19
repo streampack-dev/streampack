@@ -44,7 +44,9 @@ A title from a sign-in or bot-check page describes the wall, not the link, so it
 
 `Sign in`, `Log in`, `Login`, `Login required`, `Sign in to continue`, `Access denied`, `Forbidden`, `Just a moment...` (or with `…`), `Attention Required!`, `Are you a robot?`
 
-So "Repopack · Sign in", "Sign in · GitHub" and "Attention Required! | Cloudflare" are dropped, while "Signing in with passkeys, explained" is reported. The list is configurable as `streampack.urltitle.suppressed-titles`; setting it replaces the defaults, so include them if you only mean to add phrases.
+The whole title or such a part is also suppressed when it is short, at most five words, and its first or last word is a sign-in word: `login`, `logon`, `signin` or `signon`, alone or with `to` joined on. The parts of a sign-in word written apart are joined first, so "Sign in", "Sign-In", "Log on to" and "SignOn" all count ("Sign in to Confluence", "Example Login", "Sign-In | Example"). They are joined only at a word's start, so "Blog in Rust" and "Design Online" don't count. A longer title is an article, and is reported ("Single Sign-On with Keycloak", "Login flows in Spring Security 7"), as is a short one with the word in the middle ("Passkey sign-in, explained"). A short article that ends with the word ("Passkey Login") is lost. This rule isn't configurable.
+
+So "Repopack · Sign in", "Sign in · GitHub", "Log in to Jira", "Example Login" and "Attention Required! | Cloudflare" are dropped, while "Signing in with passkeys, explained" is reported. The list is configurable as `streampack.urltitle.suppressed-titles`; setting it replaces the defaults, so include them if you only mean to add phrases.
 
 ## Permissions
 
