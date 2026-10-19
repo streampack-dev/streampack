@@ -215,6 +215,12 @@ class UrlTitleServiceTests {
                 "Sign into your account",
                 "Login to Example · Example",
                 "LOG INTO My Account Portal",
+                "Example Login",
+                "Sign-In | Example",
+                "Log On to Example",
+                "SignOn Portal",
+                "Example Logon",
+                "Login: Example Cloud",
             ],
     )
     fun `sign-in and bot-check titles are suppressed`(title: String) {
@@ -233,6 +239,13 @@ class UrlTitleServiceTests {
                 "How to sign in to Kubernetes with OIDC",
                 "Login to a Spring app with passkeys: a walkthrough",
                 "Sign in to everything with one key, and other passkey myths",
+                "Blog in Rust",
+                "Catalog Integration",
+                "Analog Interfaces",
+                "Design Online",
+                "Single Sign-On with Keycloak",
+                "Passkey sign-in, explained",
+                "Login flows in Spring Security 7",
             ],
     )
     fun `ordinary titles are not suppressed`(title: String) {

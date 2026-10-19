@@ -90,10 +90,13 @@ class UrlTitleService(
      * separator ("Repopack · Sign in", "Sign in · GitHub"), so a real title that merely mentions
      * signing in still gets through.
      *
-     * A title is one of the configured phrases, or a sign-in phrase and a short site name ("Sign in
-     * to Confluence", "Log in to Jira"): up to four words after the phrase, so an article that
-     * starts the same way ("Login to a Spring app with passkeys: a walkthrough") is still shown
-     * (#264).
+     * A title is one of the configured phrases, or a short title that starts or ends with a sign-in
+     * word (#264). The sign-in words are `login`, `logon`, `signin` and `signon`, also with `to`
+     * joined on (`signinto`). The parts of one written apart are joined first: "Sign in", "Sign-In"
+     * and "log on" count, but "Blog in" and "Design online" don't, because the join only happens at
+     * a word's start. A short title has at most [SIGN_IN_MAX_WORDS] words, so a login page ("Sign
+     * in to Confluence", "Example Login") is suppressed, while an article ("Single Sign-On with
+     * Keycloak", "Login flows in Spring Security 7") is still shown.
      */
     fun isSuppressedTitle(title: String): Boolean {
         val whole = normalizeTitle(title)
@@ -103,9 +106,20 @@ class UrlTitleService(
         return isWall(parts.first()) || isWall(parts.last())
     }
 
-    /** True when [title], normalized, is a configured phrase or a sign-in phrase and a site */
-    private fun isWall(title: String): Boolean =
-        title in suppressedTitles || signInToSite.matches(title)
+    /** True when [title], normalized, is a configured phrase or a short sign-in title */
+    private fun isWall(title: String): Boolean = title in suppressedTitles || isSignIn(title)
+
+    /** True when [title], normalized, has few words, and its first or last is a sign-in word */
+    private fun isSignIn(title: String): Boolean {
+        val words =
+            title
+                .replace(signInWritten, "$1$2")
+                .split(whitespace)
+                .map { it.trim { c -> !c.isLetterOrDigit() } }
+                .filter { it.isNotEmpty() }
+        if (words.isEmpty() || words.size > SIGN_IN_MAX_WORDS) return false
+        return words.first() in signInWords || words.last() in signInWords
+    }
 
     /** Adds an entry and returns its normalized form, which is what `url ignore list` shows */
     @Transactional
@@ -142,11 +156,26 @@ class UrlTitleService(
         // around it, so "Log-in help" stays one phrase.
         private val titleSeparator = Regex("\\s+-\\s+|[·|—–]")
 
-        /**
-         * "Sign in to", "Log in to", "Login to", "Sign into" or "Log into", then one to four words
-         */
-        private val signInToSite =
-            Regex("^(?:sign in to|log in to|login to|sign into|log into)(?:\\s+\\S+){1,4}$")
+        /** The most words a sign-in page's title (or a part of it) has */
+        private const val SIGN_IN_MAX_WORDS = 5
+
+        /** "sign in", "sign-in", "log on" and the like at a word's start, to be joined into one */
+        private val signInWritten = Regex("\\b(sign|log)[\\s-]*(into|in|on)\\b")
+
+        private val whitespace = Regex("\\s+")
+
+        /** A sign-in word, once its parts are joined */
+        private val signInWords =
+            setOf(
+                "login",
+                "logon",
+                "signin",
+                "signon",
+                "loginto",
+                "logonto",
+                "signinto",
+                "signonto",
+            )
 
         /** Strips www. prefix and lowercases for consistent ignore-list matching */
         fun normalizeHost(host: String): String = host.lowercase().removePrefix("www.")
