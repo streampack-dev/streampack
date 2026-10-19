@@ -430,8 +430,38 @@
         "required" : [ "channel" ],
         "type" : "object"
       },
+      "CommentAnchor" : {
+        "description" : "The passage of the post that a comment quotes (a text quote selector)",
+        "properties" : {
+          "exact" : {
+            "description" : "The quoted text, 1 to 500 characters",
+            "maxLength" : 500,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "prefix" : {
+            "description" : "The post's text just before the quote, at most 64 characters",
+            "maxLength" : 64,
+            "type" : [ "string", "null" ]
+          },
+          "suffix" : {
+            "description" : "The post's text just after the quote, at most 64 characters",
+            "maxLength" : 64,
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "exact" ],
+        "type" : "object"
+      },
       "CommentDetail" : {
         "properties" : {
+          "anchor" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/CommentAnchor"
+            }, {
+              "type" : "null"
+            } ]
+          },
           "authorDisplayName" : {
             "type" : "string"
           },
@@ -456,6 +486,16 @@
       },
       "CommentNode" : {
         "properties" : {
+          "anchor" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/CommentAnchor"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "anchorFound" : {
+            "type" : [ "boolean", "null" ]
+          },
           "authorDisplayName" : {
             "type" : "string"
           },
@@ -724,6 +764,13 @@
       },
       "CreateCommentHttpRequest" : {
         "properties" : {
+          "anchor" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/CommentAnchor"
+            }, {
+              "type" : "null"
+            } ]
+          },
           "markdownSource" : {
             "type" : "string"
           },

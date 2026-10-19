@@ -174,6 +174,63 @@ A post in a category whose name starts with `_` (`_pages`, `_sidebar`, `_test`, 
 
 A post that leaves its last `_` category is an ordinary post from then on, and its links are sent then. To try a post on the live site, see [Try a Post on the Live Site](../how-to/blog/try-a-post-on-the-live-site.md).
 
+## Comments
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /posts/{year}/{month}/{slug}/comments` | Reads a post's comments as a thread. |
+| `POST /posts/{year}/{month}/{slug}/comments` | Adds a comment, signed in, with a verified email. Body: `markdownSource`, and optionally `parentCommentId` and `anchor`. |
+| `PUT /comments/{id}` | Edits a comment's `markdownSource`: its author for 5 minutes, an admin at any time. |
+
+### Quoted Passages
+
+A top-level comment can quote the passage of the post that it is about (#256). The quote is an
+`anchor`, a W3C Web Annotation [text quote selector](https://www.w3.org/TR/annotation-model/#text-quote-selector):
+
+```json
+{
+  "markdownSource": "This is the part I disagree with.",
+  "anchor": { "exact": "the quoted words", "prefix": "text just before ", "suffix": " and just after" }
+}
+```
+
+| Field | Limit | Meaning |
+|-------|-------|---------|
+| `exact` | 1 to 500 characters | The quoted text. It must occur in the post's text. |
+| `prefix` | at most 64 characters, optional | The post's text just before `exact`. A front end uses it to choose between repeats. |
+| `suffix` | at most 64 characters, optional | The post's text just after `exact`. |
+
+**The post's text.** The text is what a reader sees: the post's HTML with its tags removed,
+entities decoded (`&amp;` is `&`), and each run of whitespace made one space. A tag between two
+blocks, such as two paragraphs or two list items, counts as a space. Search uses the same text.
+
+**What the server does with an anchor:**
+
+- It makes each run of whitespace in the anchor one space, trims `exact`, and makes an empty
+  `prefix` or `suffix` null. A selection across two paragraphs therefore matches.
+- It refuses the comment with `400` when:
+  - `exact` is empty or longer than 500 characters;
+  - `prefix` or `suffix` is longer than 64 characters;
+  - `exact` doesn't occur in the post's current text;
+  - the comment is a reply (`parentCommentId` is set). A reply is about its parent's passage.
+
+  It doesn't check that `prefix` and `suffix` are next to `exact`.
+- It starts the comment's `renderedHtml` with the quote, escaped as text:
+  `<blockquote class="comment-anchor"><p>the quoted words</p></blockquote>`. A front end that shows
+  callouts can hide this element; any other front end shows the quote as it is.
+- It keeps the anchor apart from `markdownSource`. An edit changes the comment's words and keeps
+  its quote. An edit can't add, change or remove an anchor.
+
+**In responses:**
+
+- A created or edited comment carries `anchor`, or `null`.
+- In a thread, each comment carries `anchor` and `anchorFound`. `anchorFound` is `true` when the
+  quote still occurs in the post, `false` when an edit of the post removed it, and `null` when the
+  comment has no anchor. A comment whose `anchorFound` is `false` keeps its quote in `renderedHtml`.
+- A deleted comment shows no anchor.
+
+The server doesn't record which edit of the post a quote came from.
+
 ## Post Versions and Media
 
 A post can have **versions**: the post in another form, belonging to it and recording which edit of

@@ -128,6 +128,7 @@ class CommentController(
                 postId = postId,
                 parentCommentId = request.parentCommentId,
                 markdownSource = request.markdownSource,
+                anchor = request.anchor,
             )
         return dispatchCreated(payload, "posts/comments", user) { result -> mapError(result) }
     }

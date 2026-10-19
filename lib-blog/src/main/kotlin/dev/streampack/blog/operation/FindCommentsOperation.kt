@@ -7,6 +7,7 @@ import dev.streampack.blog.model.CommentThreadResponse
 import dev.streampack.blog.model.FindCommentsRequest
 import dev.streampack.blog.repository.CommentRepository
 import dev.streampack.blog.repository.PostRepository
+import dev.streampack.blog.service.CommentAnchors
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component
 class FindCommentsOperation(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository,
+    private val commentAnchors: CommentAnchors,
 ) : TypedOperation<FindCommentsRequest>(FindCommentsRequest::class) {
 
     override fun handle(payload: FindCommentsRequest, message: Message<*>): OperationOutcome {
@@ -37,7 +39,14 @@ class FindCommentsOperation(
         val allComments = commentRepository.findByPostWithAuthor(payload.postId)
         val activeCount = commentRepository.countActiveByPost(payload.postId).toInt()
 
-        val tree = buildTree(allComments, principal)
+        // The post's text is read once, and only when a comment quotes it.
+        val postText =
+            if (allComments.any { it.anchorExact != null && !it.deleted }) {
+                postRepository.findReaderText(post.id).orEmpty()
+            } else {
+                ""
+            }
+        val tree = buildTree(allComments, principal, postText)
 
         logger.debug("Found {} comments for post {}", allComments.size, post.id)
 
@@ -51,28 +60,35 @@ class FindCommentsOperation(
     }
 
     /** Assembles flat comment list into a nested tree, masking deleted comments */
-    private fun buildTree(comments: List<Comment>, principal: UserPrincipal?): List<CommentNode> {
+    private fun buildTree(
+        comments: List<Comment>,
+        principal: UserPrincipal?,
+        postText: String,
+    ): List<CommentNode> {
         val childrenByParent = comments.groupBy { it.parentComment?.id }
-        return buildChildren(null, childrenByParent, principal)
+        return buildChildren(null, childrenByParent, principal, postText)
     }
 
     private fun buildChildren(
         parentId: UUID?,
         childrenByParent: Map<UUID?, List<Comment>>,
         principal: UserPrincipal?,
+        postText: String,
     ): List<CommentNode> {
         val children = childrenByParent[parentId] ?: return emptyList()
-        return children.map { comment -> toNode(comment, childrenByParent, principal) }
+        return children.map { comment -> toNode(comment, childrenByParent, principal, postText) }
     }
 
     private fun toNode(
         comment: Comment,
         childrenByParent: Map<UUID?, List<Comment>>,
         principal: UserPrincipal?,
+        postText: String,
     ): CommentNode {
         val isDeleted = comment.deleted
         val editable = computeEditable(comment, principal)
-        val children = buildChildren(comment.id, childrenByParent, principal)
+        val children = buildChildren(comment.id, childrenByParent, principal, postText)
+        val anchor = commentAnchors.of(comment)
 
         return if (isDeleted) {
             CommentNode(
@@ -99,6 +115,8 @@ class FindCommentsOperation(
                 deleted = false,
                 editable = editable,
                 children = children,
+                anchor = anchor,
+                anchorFound = anchor?.let { commentAnchors.found(it.exact, postText) },
             )
         }
     }

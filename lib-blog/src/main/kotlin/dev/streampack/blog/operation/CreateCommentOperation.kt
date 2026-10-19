@@ -8,6 +8,7 @@ import dev.streampack.blog.repository.CommentRepository
 import dev.streampack.blog.repository.PostCategoryRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.service.BlogNotificationService
+import dev.streampack.blog.service.CommentAnchors
 import dev.streampack.blog.service.MarkdownRenderingService
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
@@ -27,6 +28,7 @@ class CreateCommentOperation(
     private val userRepository: UserRepository,
     private val markdownRenderingService: MarkdownRenderingService,
     private val blogNotificationService: BlogNotificationService,
+    private val commentAnchors: CommentAnchors,
 ) : TypedOperation<CreateCommentRequest>(CreateCommentRequest::class) {
 
     override val priority = 50
@@ -71,7 +73,24 @@ class CreateCommentOperation(
                 null
             }
 
-        val renderedHtml = markdownRenderingService.render(payload.markdownSource)
+        val anchor =
+            when {
+                payload.anchor == null -> null
+                parentComment != null ->
+                    return OperationResult.Error("A reply can't quote a passage; its parent does")
+                else ->
+                    when (val checked = commentAnchors.check(payload.anchor, post.id)) {
+                        is CommentAnchors.Checked.Accepted -> checked.anchor
+                        is CommentAnchors.Checked.Refused ->
+                            return OperationResult.Error(checked.reason)
+                    }
+            }
+
+        val renderedHtml =
+            commentAnchors.html(
+                anchor?.exact,
+                markdownRenderingService.render(payload.markdownSource),
+            )
         val now = Instant.now()
 
         val comment =
@@ -84,6 +103,9 @@ class CreateCommentOperation(
                     renderedHtml = renderedHtml,
                     createdAt = now,
                     updatedAt = now,
+                    anchorExact = anchor?.exact,
+                    anchorPrefix = anchor?.prefix,
+                    anchorSuffix = anchor?.suffix,
                 ),
             )
 
@@ -98,6 +120,7 @@ class CreateCommentOperation(
                 authorDisplayName = user.displayName,
                 renderedHtml = comment.renderedHtml,
                 createdAt = comment.createdAt,
+                anchor = anchor,
             ),
         )
     }

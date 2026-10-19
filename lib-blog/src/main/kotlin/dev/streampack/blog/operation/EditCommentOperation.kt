@@ -4,6 +4,7 @@ package dev.streampack.blog.operation
 import dev.streampack.blog.model.CommentDetail
 import dev.streampack.blog.model.EditCommentRequest
 import dev.streampack.blog.repository.CommentRepository
+import dev.streampack.blog.service.CommentAnchors
 import dev.streampack.blog.service.MarkdownRenderingService
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component
 class EditCommentOperation(
     private val commentRepository: CommentRepository,
     private val markdownRenderingService: MarkdownRenderingService,
+    private val commentAnchors: CommentAnchors,
 ) : TypedOperation<EditCommentRequest>(EditCommentRequest::class) {
 
     override val priority = 50
@@ -52,7 +54,12 @@ class EditCommentOperation(
             return OperationResult.Error("Comment content is required")
         }
 
-        val renderedHtml = markdownRenderingService.render(payload.markdownSource)
+        // The quote stays as it was: an edit changes the comment's words, never its anchor.
+        val renderedHtml =
+            commentAnchors.html(
+                comment.anchorExact,
+                markdownRenderingService.render(payload.markdownSource),
+            )
         val now = Instant.now()
 
         val saved =
@@ -76,6 +83,7 @@ class EditCommentOperation(
                 authorDisplayName = updated.author.displayName,
                 renderedHtml = updated.renderedHtml,
                 createdAt = updated.createdAt,
+                anchor = commentAnchors.of(updated),
             ),
         )
     }
