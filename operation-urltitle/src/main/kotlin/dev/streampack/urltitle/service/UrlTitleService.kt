@@ -89,15 +89,23 @@ class UrlTitleService(
      * content. Such a title is the whole title, or the first or last part around a site-name
      * separator ("Repopack · Sign in", "Sign in · GitHub"), so a real title that merely mentions
      * signing in still gets through.
+     *
+     * A title is one of the configured phrases, or a sign-in phrase and a short site name ("Sign in
+     * to Confluence", "Log in to Jira"): up to four words after the phrase, so an article that
+     * starts the same way ("Login to a Spring app with passkeys: a walkthrough") is still shown
+     * (#264).
      */
     fun isSuppressedTitle(title: String): Boolean {
-        if (suppressedTitles.isEmpty()) return false
         val whole = normalizeTitle(title)
-        if (whole in suppressedTitles) return true
+        if (isWall(whole)) return true
         val parts = whole.split(titleSeparator).map { it.trim() }.filter { it.isNotEmpty() }
         if (parts.size < 2) return false
-        return parts.first() in suppressedTitles || parts.last() in suppressedTitles
+        return isWall(parts.first()) || isWall(parts.last())
     }
+
+    /** True when [title], normalized, is a configured phrase or a sign-in phrase and a site */
+    private fun isWall(title: String): Boolean =
+        title in suppressedTitles || signInToSite.matches(title)
 
     /** Adds an entry and returns its normalized form, which is what `url ignore list` shows */
     @Transactional
@@ -133,6 +141,12 @@ class UrlTitleService(
         // Separators sites put between the page and site name. A hyphen counts only with spaces
         // around it, so "Log-in help" stays one phrase.
         private val titleSeparator = Regex("\\s+-\\s+|[·|—–]")
+
+        /**
+         * "Sign in to", "Log in to", "Login to", "Sign into" or "Log into", then one to four words
+         */
+        private val signInToSite =
+            Regex("^(?:sign in to|log in to|login to|sign into|log into)(?:\\s+\\S+){1,4}$")
 
         /** Strips www. prefix and lowercases for consistent ignore-list matching */
         fun normalizeHost(host: String): String = host.lowercase().removePrefix("www.")

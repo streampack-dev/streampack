@@ -209,6 +209,12 @@ class UrlTitleServiceTests {
                 "Forbidden — nginx",
                 "Are you a robot?",
                 "Log in | Some App",
+                "Sign in to Example Login",
+                "Log in to Jira",
+                "Sign in to Confluence",
+                "Sign into your account",
+                "Login to Example · Example",
+                "LOG INTO My Account Portal",
             ],
     )
     fun `sign-in and bot-check titles are suppressed`(title: String) {
@@ -224,6 +230,9 @@ class UrlTitleServiceTests {
                 "Login-free tools · Blog",
                 "Coroutines | Kotlin",
                 "Forbidden Planet (1956) | IMDb fan page | Reviews",
+                "How to sign in to Kubernetes with OIDC",
+                "Login to a Spring app with passkeys: a walkthrough",
+                "Sign in to everything with one key, and other passkey myths",
             ],
     )
     fun `ordinary titles are not suppressed`(title: String) {

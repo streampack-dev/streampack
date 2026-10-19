@@ -214,7 +214,7 @@ Operational notes:
 
 - `repopack.com/project` covers that path and below on whole segments (not `/projects`); `*.repopack.com` covers the bare host and every subdomain.
 - Entries are normalized on add and delete (lower-cased, no scheme, `www.` or trailing slash).
-- Sign-in and bot-check titles ("Repopack · Sign in", "Just a moment...") are never emitted, independent of this list; the phrases are configured by `streampack.urltitle.suppressed-titles`. See `operation-urltitle/README.md`.
+- Sign-in and bot-check titles ("Repopack · Sign in", "Log in to Jira", "Just a moment...") are never emitted, independent of this list; the phrases are configured by `streampack.urltitle.suppressed-titles`. See `operation-urltitle/README.md`.
 
 ## Channel Controls
 
