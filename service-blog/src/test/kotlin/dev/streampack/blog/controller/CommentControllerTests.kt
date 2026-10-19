@@ -176,6 +176,50 @@ class CommentControllerTests {
     }
 
     @Test
+    fun `POST with an anchor returns it and starts the comment with the quote (#256)`() {
+        mockMvc
+            .post("/posts/$slugPath/comments") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $verifiedUserToken")
+                content =
+                    """{"markdownSource":"Well put.","anchor":{"exact":"Post\ncontent","prefix":"","suffix":"."}}"""
+            }
+            .andExpect {
+                status { isCreated() }
+                jsonPath("$.anchor.exact") { value("Post content") }
+                jsonPath("$.anchor.prefix") { doesNotExist() }
+                jsonPath("$.anchor.suffix") { value(".") }
+                jsonPath("$.renderedHtml") {
+                    value(
+                        org.hamcrest.Matchers.startsWith(
+                            "<blockquote class=\"comment-anchor\"><p>Post content</p></blockquote>",
+                        ),
+                    )
+                }
+            }
+
+        mockMvc.get("/posts/$slugPath/comments").andExpect {
+            status { isOk() }
+            jsonPath("$.comments[0].anchor.exact") { value("Post content") }
+            jsonPath("$.comments[0].anchorFound") { value(true) }
+        }
+    }
+
+    @Test
+    fun `POST with a quote that isn't in the post returns 400 (#256)`() {
+        mockMvc
+            .post("/posts/$slugPath/comments") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $verifiedUserToken")
+                content = """{"markdownSource":"Hm.","anchor":{"exact":"something else"}}"""
+            }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.detail") { value("The quoted passage isn't in the post") }
+            }
+    }
+
+    @Test
     fun `POST with parent comment ID creates nested reply`() {
         val parentComment =
             commentRepository.save(

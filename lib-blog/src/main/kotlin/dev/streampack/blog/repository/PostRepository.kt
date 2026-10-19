@@ -223,4 +223,21 @@ interface PostRepository : JpaRepository<Post, UUID> {
         now: Instant,
         pageable: Pageable,
     ): Page<Post>
+
+    /**
+     * Returns the text of a post as a reader sees it, for comment anchors (#256).
+     *
+     * The text comes from the database function `html_text` (V78), which search also uses. It
+     * removes tags, decodes entities and makes each run of whitespace one space. Comment anchors
+     * use this one definition of the text, so that a quote the server accepts is also a quote that
+     * it finds again later.
+     *
+     * @param id the post's id.
+     * @return the post's text, or null when no post has this id. A post with no body gives "".
+     */
+    @Query(
+        nativeQuery = true,
+        value = "SELECT html_text(p.rendered_html) FROM posts p WHERE p.id = :id",
+    )
+    fun findReaderText(id: UUID): String?
 }

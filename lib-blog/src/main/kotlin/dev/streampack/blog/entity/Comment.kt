@@ -32,4 +32,10 @@ data class Comment(
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     @Column(nullable = false) val updatedAt: Instant = Instant.now(),
     @Column(nullable = false) val deleted: Boolean = false,
+    /** The quoted passage's text, or null for a comment that quotes nothing (#256). */
+    @Column(columnDefinition = "text") val anchorExact: String? = null,
+    /** The post's text just before the quoted passage, or null. */
+    @Column(columnDefinition = "text") val anchorPrefix: String? = null,
+    /** The post's text just after the quoted passage, or null. */
+    @Column(columnDefinition = "text") val anchorSuffix: String? = null,
 )
