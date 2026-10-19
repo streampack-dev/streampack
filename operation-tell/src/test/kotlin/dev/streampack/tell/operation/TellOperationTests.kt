@@ -142,6 +142,47 @@ class TellOperationTests {
     }
 
     @Test
+    fun `a quoted target is read to its closing quote, and the message follows it`() {
+        val result = tellOperation.execute(addressedMessage("tell \"foo bar\" hello there"))
+        val success = assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("foo bar", success.provenance!!.replyTo)
+        assertEquals("testnet", success.provenance!!.serviceId)
+        assertEquals("<testuser> hello there", success.payload)
+    }
+
+    @Test
+    fun `a quoted full address may have a space in it`() {
+        val result =
+            tellOperation.execute(addressedMessage("tell \"mattermost://fn/foo bar\" hello"))
+        val success = assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(Protocol.MATTERMOST, success.provenance!!.protocol)
+        assertEquals("fn", success.provenance!!.serviceId)
+        assertEquals("foo bar", success.provenance!!.replyTo)
+        assertEquals("<testuser> hello", success.payload)
+    }
+
+    @Test
+    fun `a percent-encoded address needs no quotes`() {
+        val result = tellOperation.execute(addressedMessage("tell mattermost://fn/foo%20bar hello"))
+        val success = assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("foo bar", success.provenance!!.replyTo)
+        assertEquals("<testuser> hello", success.payload)
+    }
+
+    @Test
+    fun `an unclosed quote is refused, and nothing is sent`() {
+        val result = tellOperation.execute(addressedMessage("tell \"foo bar hello"))
+        val error = assertInstanceOf(OperationResult.Error::class.java, result)
+        assertTrue(error.message.contains("quote"), error.message)
+    }
+
+    @Test
+    fun `a quoted target with no message is not handled`() {
+        assertEquals(null, tellOperation.execute(addressedMessage("tell \"foo bar\"")))
+        assertEquals(null, tellOperation.execute(addressedMessage("tell \"foo bar\"   ")))
+    }
+
+    @Test
     fun `typed TellRequest bypasses translation`() {
         val targetProvenance =
             Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = "bob")

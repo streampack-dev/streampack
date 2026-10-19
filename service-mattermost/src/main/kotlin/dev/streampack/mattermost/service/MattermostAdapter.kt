@@ -164,21 +164,41 @@ class MattermostAdapter(
     /** The connected account's display name and id, once identified. */
     internal fun self(): MattermostUserView? = selfUser
 
+    /**
+     * The id of the direct-message channel with [userId], opened if there isn't one yet; null when
+     * the account isn't identified or Mattermost refuses.
+     */
+    fun directChannelId(userId: String): String? {
+        val self = selfUser?.id ?: return null
+        return runCatching {
+            restClient
+                .post()
+                .uri("/api/v4/channels/direct")
+                .body(listOf(self, userId))
+                .retrieve()
+                .body(MattermostChannelView::class.java)
+                ?.id
+                ?.takeIf { it.isNotBlank() }
+        }
+            .getOrElse {
+                logger.warn(
+                    "Could not open a DM with {} on '{}': {}",
+                    userId,
+                    serverName,
+                    it.message,
+                )
+                null
+            }
+    }
+
     /** Opens (or reuses) the direct-message channel with [userId] and posts [text] there. */
     fun sendDirectMessage(userId: String, text: String): Boolean {
-        val self = selfUser?.id ?: return false
+        val channelId = directChannelId(userId) ?: return false
         return runCatching {
-            val channel =
-                restClient
-                    .post()
-                    .uri("/api/v4/channels/direct")
-                    .body(listOf(self, userId))
-                    .retrieve()
-                    .body(MattermostChannelView::class.java) ?: return false
             restClient
                 .post()
                 .uri("/api/v4/posts")
-                .body(MattermostCreatePostRequest(channelId = channel.id, message = text))
+                .body(MattermostCreatePostRequest(channelId = channelId, message = text))
                 .retrieve()
                 .toBodilessEntity()
             true
