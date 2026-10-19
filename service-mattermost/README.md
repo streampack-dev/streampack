@@ -91,6 +91,11 @@ registered here.
   connected server looks up the id: `link user alice mattermost work alice.k` (or `@alice.k`). The
   id itself (26 lower-case letters and digits) works too, and is the only form while the server is
   disconnected. `unlink user` takes either form as well.
+- **`tell`** reaches a person or a channel by name (`MattermostTellTargets`): `tell @dana.k hi`
+  opens the bot's direct message with them, and `tell foo-bar hi` or `tell "Foo Bar" hi` finds the
+  channel's id. The same forms work in a full address (`mattermost://work/@dana.k`). Names are
+  looked up on the live connection; a channel id works disconnected too. A target that isn't found,
+  or a name that matches several channels, is refused to the sender, and nothing is sent.
 - **Logging:** a channel that was never registered has no settings, and is logged, but isn't listed
   in the log browser. Direct and group messages are logged marked direct, and nothing ever reads
   them back out of the log: not the log browser, not search, not the operations that read the log.
@@ -175,6 +180,7 @@ Development](../docs/how-to/develop/run-local-mattermost.md).
 | `MattermostEgressSubscriber` | Delivers replies to the right server and channel, unless the channel is muted or the reply would loop. |
 | `MattermostIdentityProvider` | How a Mattermost identity (server, and username or user id) is checked when linking it to an account; a username becomes its id. |
 | `MattermostCodeDelivery` | Sends sign-in codes as direct messages. |
+| `MattermostTellTargets` | Reads a `tell` target: `@name` becomes the direct-message channel, a channel name its id. |
 | `MattermostSecretRefStartupGuard` | Moves tokens to environment variables and holds the start until they're set. |
 | `MattermostServer`, `MattermostChannel` (`lib-mattermost`) | The stored servers and channels. |
 

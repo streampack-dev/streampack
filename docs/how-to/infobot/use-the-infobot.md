@@ -125,6 +125,23 @@ tell irc://libera/%23java deploy is complete
 
 Targets resolve relative to the current protocol unless you provide a full provenance URI.
 
+Put a target in double quotes when it has a space in it. The message follows the closing quote:
+
+```text
+tell "foo bar" standup in five
+tell "mattermost://work/foo bar" standup in five
+```
+
+In a full address, `%20` is also a space, and needs no quotes: `tell mattermost://work/foo%20bar hi`.
+
+On Mattermost, a target can be a person or a channel name:
+
+- `@name` sends a direct message from the bot to that person: `tell @dana.k the build is green`, or from somewhere else, `tell mattermost://work/@dana.k the build is green`.
+- A channel's name sends to that channel. Use its URL name (`foo-bar` or `#foo-bar`), or its display name in quotes (`"Foo Bar"`). `mattermost channels <term>` shows the names.
+- A channel id is used as it is.
+
+A name is looked up while the bot is connected to that server. If the name isn't found, or it matches more than one channel, the bot tells you, and nothing is sent. Only public channels are found by name. Use a private channel's id.
+
 ### Who Am I?
 
 ```text
