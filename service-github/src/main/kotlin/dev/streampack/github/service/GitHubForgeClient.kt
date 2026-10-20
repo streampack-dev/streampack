@@ -5,6 +5,7 @@ import dev.streampack.core.json.JacksonMappers
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.client.WebhookEnvelope
+import dev.streampack.forge.model.ForgeClosure
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
@@ -69,6 +70,27 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
         return apiClient.fetchPulls(instance.apiUrl, owner, name, token, sinceNumber).map {
             it.toForgeItem()
         }
+    }
+
+    override fun fetchIssuesClosedSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgeClosure> {
+        val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return emptyList()
+        return apiClient.fetchClosedIssues(instance.apiUrl, owner, name, token, since)
+    }
+
+    /** GitHub's pull request list can't filter by date; the poller keeps those in its window */
+    override fun fetchChangeRequestsClosedSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgeClosure> {
+        val (owner, name) = GitHubForgeStore.splitOwnerName(path) ?: return emptyList()
+        return apiClient.fetchClosedPulls(instance.apiUrl, owner, name, token)
     }
 
     override fun fetchReleases(
@@ -162,27 +184,31 @@ class GitHubForgeClient(private val apiClient: GitHubApiClient) : ForgeClient {
         return when (envelope.event) {
             "issues" -> {
                 val event = mapper.treeToValue(root, GitHubIssueEvent::class.java)
-                if (event.action != "opened") {
-                    ignored("issue", path, event.action)
-                    return null
+                val item = ForgeItem(event.issue.number, event.issue.title, event.issue.htmlUrl)
+                when (event.action) {
+                    "opened" -> ForgeEvent.IssueOpened(item)
+                    "closed" -> ForgeEvent.IssueClosed(item)
+                    else -> {
+                        ignored("issue", path, event.action)
+                        null
+                    }
                 }
-                ForgeEvent.IssueOpened(
-                    ForgeItem(event.issue.number, event.issue.title, event.issue.htmlUrl),
-                )
             }
             "pull_request" -> {
                 val event = mapper.treeToValue(root, GitHubPullRequestEvent::class.java)
-                if (event.action != "opened") {
-                    ignored("pull request", path, event.action)
-                    return null
+                val pull = event.pullRequest
+                val item = ForgeItem(pull.number, pull.title, pull.htmlUrl)
+                when (event.action) {
+                    "opened" -> ForgeEvent.ChangeRequestOpened(item)
+                    /* GitHub has no merge action: a merge is a close with `merged` set */
+                    "closed" ->
+                        if (pull.merged == true) ForgeEvent.ChangeRequestMerged(item)
+                        else ForgeEvent.ChangeRequestClosed(item)
+                    else -> {
+                        ignored("pull request", path, event.action)
+                        null
+                    }
                 }
-                ForgeEvent.ChangeRequestOpened(
-                    ForgeItem(
-                        event.pullRequest.number,
-                        event.pullRequest.title,
-                        event.pullRequest.htmlUrl,
-                    ),
-                )
             }
             "release" -> {
                 val event = mapper.treeToValue(root, GitHubReleaseEvent::class.java)

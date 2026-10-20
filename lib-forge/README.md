@@ -9,8 +9,14 @@ what is identical between forges and leaves everything else to the forge module.
 - `client.ForgeClient`: the only forge-specific contract. REST reads (validate, issues since a
   cursor, change requests since a cursor, releases) and the webhook contract (envelope headers,
   supported events, project path in the payload, verification, event parsing).
-- `model.ForgeEvent`: `IssueOpened`, `ChangeRequestOpened`, `ReleasePublished`, `Ping`. Polling
-  and webhooks both produce these.
+- `model.ForgeEvent`: `IssueOpened`, `IssueClosed`, `ChangeRequestOpened`, `ChangeRequestMerged`,
+  `ChangeRequestClosed`, `ReleasePublished`, `PipelineSettled`, `Ping`. Polling and webhooks both
+  produce these. Polling finds closes and merges in the window since the last poll started
+  (`ForgeClient.fetch…ClosedSince`), and only when a subscription asked for them.
+- `subscription.EventKind`, `SubscriptionFilters`, `SubscriptionEvents`: the event selectors a
+  subscription chooses (#267), what it stores, and which events it receives. Stored tokens from
+  before #267 (`issues`, `change_requests`, `releases`) keep their meaning.
+- `command.SubscribeSpec`: reads a subscribe line's project, selectors and pipeline filters.
 - `model.ForgeProject` / `model.ForgeSubscription`: the view of a module's entities the shared
   services need. Tokens are `SecretRef`s (literal or `env://KEY`), resolved at use time through
   `secret.SecretLookup`; modules add a startup guard that externalizes literals.

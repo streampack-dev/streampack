@@ -3,6 +3,7 @@ package dev.streampack.gitlab.service
 
 import dev.streampack.core.json.JacksonMappers
 import dev.streampack.forge.client.ForgeApiException
+import dev.streampack.forge.model.ForgeClosure
 import dev.streampack.forge.model.ForgeItem
 import dev.streampack.forge.model.ForgePipeline
 import dev.streampack.forge.model.ForgeProjectRef
@@ -70,6 +71,74 @@ class GitLabApiClient(properties: GitLabProperties) {
         token: String?,
         sinceIid: Int,
     ): List<ForgeItem> = fetchNumbered(apiUrl, path, "merge_requests", token, sinceIid)
+
+    /**
+     * Issues closed since [since], with when each was closed (#267). One page: the closed issues
+     * updated since [since], most recently updated first.
+     */
+    fun fetchClosedIssues(
+        apiUrl: String,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgeClosure> =
+        fetchClosures(apiUrl, path, "issues", "closed", "closed_at", token, since, merged = false)
+
+    /**
+     * Merge requests merged or closed since [since], with when and whether each was merged (#267).
+     * GitLab keeps the two states apart, so this is one page of each.
+     */
+    fun fetchClosedMergeRequests(
+        apiUrl: String,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgeClosure> =
+        fetchClosures(apiUrl, path, "merge_requests", "merged", "merged_at", token, since, true) +
+            fetchClosures(
+                apiUrl,
+                path,
+                "merge_requests",
+                "closed",
+                "closed_at",
+                token,
+                since,
+                false,
+            )
+
+    /** One page of [resource] in [state] updated since [since], each closed at its [closedField] */
+    private fun fetchClosures(
+        apiUrl: String,
+        path: String,
+        resource: String,
+        state: String,
+        closedField: String,
+        token: String?,
+        since: Instant,
+        merged: Boolean,
+    ): List<ForgeClosure> {
+        val updatedAfter = DateTimeFormatter.ISO_INSTANT.format(since)
+        val query =
+            "state=$state&updated_after=$updatedAfter&order_by=updated_at&sort=desc" +
+                "&per_page=$PAGE_SIZE"
+        val node =
+            get(apiUrl, "/projects/${encode(path)}/$resource?$query", token, path)
+                ?: return emptyList()
+        return node.mapNotNull { item ->
+            val closedAt = instant(item.path(closedField).asString(null)) ?: return@mapNotNull null
+            val iid = item.path("iid").asInt(0).takeIf { it > 0 } ?: return@mapNotNull null
+            ForgeClosure(
+                item =
+                    ForgeItem(
+                        number = iid,
+                        title = item.path("title").asString(""),
+                        url = item.path("web_url").asString(""),
+                    ),
+                closedAt = closedAt,
+                merged = merged,
+            )
+        }
+    }
 
     /** Releases, newest first, up to the first page the API returns */
     fun fetchReleases(apiUrl: String, path: String, token: String?): List<ForgeReleaseInfo> {

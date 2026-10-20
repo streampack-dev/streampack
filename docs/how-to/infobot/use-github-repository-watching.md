@@ -42,6 +42,37 @@ github subscriptions
 github subscriptions for irc://libera/%23java
 ```
 
+## Choose What a Subscription Reports
+
+With no selectors, a subscription reports three things: new issues, new pull requests, and published releases. To choose other events, name them after the repository:
+
+```text
+github subscribe owner/repo prs:merged
+github subscribe owner/repo prs prs:merged releases
+github subscribe owner/repo issues:closed prs:closed on ghe.example.com to irc://libera/%23dev
+```
+
+| Selector | Reports | Example notification |
+|----------|---------|----------------------|
+| `issues` | A new issue | `[owner/repo] New issue #12: Crash on start - https://github.com/owner/repo/issues/12` |
+| `issues:closed` | An issue is closed | `[owner/repo] Closed issue #12: Crash on start - https://github.com/owner/repo/issues/12` |
+| `prs` | A new pull request | `[owner/repo] New PR #34: Fix the crash - https://github.com/owner/repo/pull/34` |
+| `prs:merged` | A pull request is merged | `[owner/repo] Merged PR #34: Fix the crash - https://github.com/owner/repo/pull/34` |
+| `prs:closed` | A pull request is closed without being merged | `[owner/repo] Closed PR #35: Try another way - https://github.com/owner/repo/pull/35` |
+| `releases` | A release is published | `[owner/repo] New release v1.2.0 - https://github.com/owner/repo/releases/tag/v1.2.0` |
+
+- When you name at least one of these selectors, the subscription reports only the events you name. `github subscribe owner/repo prs:merged` reports merges, and no new issues, pull requests or releases.
+- `mrs`, `mrs:merged` and `mrs:closed` also work, and mean the same as the `prs` selectors.
+- Pipeline filters (next section) do not change this. `github subscribe owner/repo pipelines` still reports new issues, pull requests and releases, as well as pipelines.
+- A merged pull request is reported once, as merged. It is not also reported as closed.
+- An issue or pull request that is reopened and closed again is reported again.
+- Subscribing again with selectors replaces the selectors and filters that the subscription had. Subscribing with `issues prs releases` sets it back to the three default events.
+- `github subscriptions` shows a subscription's selectors in brackets, when they are not the defaults: `owner/repo [prs:merged releases]`.
+
+Subscriptions made before selectors existed keep reporting what they reported before: new issues, pull requests and releases, and their pipeline filters.
+
+When a repository is polled, Streampack looks for closes and merges only if a subscription asked for them. A repository whose subscriptions use the defaults makes no extra API calls. A webhook repository reports closes and merges from the **Issues** and **Pull requests** events, which are the same events that report new issues and pull requests.
+
 ## Get Pipeline Outcomes
 
 Pipeline notifications are opt-in per subscription. Add filters after the repository when subscribing:
@@ -57,7 +88,7 @@ github subscribe owner/repo pipelines:failed pipelines:branch:develop on ghe.exa
 - `pipelines` reports every workflow run that belongs to a pull request; `pipelines:failed` only the ones that need attention.
 - `pipelines:default-branch` reports runs on whatever the repository's default branch is.
 - `pipelines:branch:<name>` reports runs on one named branch, for repositories whose working branch is not the default.
-- Any selector takes a trailing `:failed`. Several filters may be combined. Issues, pull requests, and releases are always included.
+- Any selector takes a trailing `:failed`. Several filters may be combined, and combined with the event selectors above. With no event selectors, new issues, pull requests and releases are included as well.
 
 Re-subscribing with filters replaces the previous filters; to drop them, unsubscribe and subscribe again. `github subscriptions` shows each subscription's filters in brackets.
 

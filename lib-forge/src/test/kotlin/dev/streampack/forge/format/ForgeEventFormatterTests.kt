@@ -38,12 +38,42 @@ class ForgeEventFormatterTests {
             ),
         )
         assertEquals(
-            "[group/proj] New MR #42: Fix the thing - https://example.com/42",
+            "[group/proj] New MR !42: Fix the thing - https://example.com/42",
             ForgeEventFormatter.format(
                 ForgeKind.GITLAB,
                 "group/proj",
                 ForgeEvent.ChangeRequestOpened(item),
             ),
+        )
+    }
+
+    @Test
+    fun `closed issues, and merged and closed change requests, use the forge's own number prefix`() {
+        fun github(event: ForgeEvent) = ForgeEventFormatter.format(ForgeKind.GITHUB, "o/r", event)
+        fun gitlab(event: ForgeEvent) = ForgeEventFormatter.format(ForgeKind.GITLAB, "g/p", event)
+        assertEquals(
+            "[o/r] Closed issue #42: Fix the thing - https://example.com/42",
+            github(ForgeEvent.IssueClosed(item)),
+        )
+        assertEquals(
+            "[g/p] Closed issue #42: Fix the thing - https://example.com/42",
+            gitlab(ForgeEvent.IssueClosed(item)),
+        )
+        assertEquals(
+            "[o/r] Merged PR #42: Fix the thing - https://example.com/42",
+            github(ForgeEvent.ChangeRequestMerged(item)),
+        )
+        assertEquals(
+            "[g/p] Merged MR !42: Fix the thing - https://example.com/42",
+            gitlab(ForgeEvent.ChangeRequestMerged(item)),
+        )
+        assertEquals(
+            "[o/r] Closed PR #42: Fix the thing - https://example.com/42",
+            github(ForgeEvent.ChangeRequestClosed(item)),
+        )
+        assertEquals(
+            "[g/p] Closed MR !42: Fix the thing - https://example.com/42",
+            gitlab(ForgeEvent.ChangeRequestClosed(item)),
         )
     }
 

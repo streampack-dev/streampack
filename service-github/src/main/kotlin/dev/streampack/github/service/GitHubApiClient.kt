@@ -3,6 +3,8 @@ package dev.streampack.github.service
 
 import dev.streampack.core.json.JacksonMappers
 import dev.streampack.forge.client.ForgeApiException
+import dev.streampack.forge.model.ForgeClosure
+import dev.streampack.forge.model.ForgeItem
 import dev.streampack.forge.model.ForgePipeline
 import dev.streampack.forge.model.PipelineOutcome
 import dev.streampack.github.config.GitHubProperties
@@ -113,6 +115,69 @@ class GitHubApiClient(properties: GitHubProperties) {
         } catch (e: Exception) {
             throw ForgeApiException("Failed to fetch PRs for $owner/$name: ${e.message}", e)
         }
+    }
+
+    /**
+     * Issues closed since [since], not pull requests, with when each was closed (#267). One page:
+     * the issues updated since [since], most recently updated first.
+     */
+    fun fetchClosedIssues(
+        apiUrl: String,
+        owner: String,
+        name: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgeClosure> {
+        val updated = DateTimeFormatter.ISO_INSTANT.format(since)
+        val node =
+            getJson(
+                apiUrl,
+                "/repos/$owner/$name/issues?state=closed&since=$updated" +
+                    "&sort=updated&direction=desc&per_page=$PAGE_SIZE",
+                token,
+            ) ?: return emptyList()
+        return node.mapNotNull { issue ->
+            if (issue.has("pull_request")) null else closure(issue, merged = false)
+        }
+    }
+
+    /**
+     * Pull requests closed, merged or not, with when each was closed (#267). One page: the closed
+     * pull requests most recently updated, which a poll interval doesn't outrun.
+     */
+    fun fetchClosedPulls(
+        apiUrl: String,
+        owner: String,
+        name: String,
+        token: String?,
+    ): List<ForgeClosure> {
+        val node =
+            getJson(
+                apiUrl,
+                "/repos/$owner/$name/pulls?state=closed&sort=updated&direction=desc" +
+                    "&per_page=$PAGE_SIZE",
+                token,
+            ) ?: return emptyList()
+        return node.mapNotNull { pull ->
+            val mergedAt = pull.path("merged_at").asString("")
+            closure(pull, merged = mergedAt.isNotBlank())
+        }
+    }
+
+    /** An issue's or pull request's close, or null when it has no `closed_at` */
+    private fun closure(node: JsonNode, merged: Boolean): ForgeClosure? {
+        val closedAt = instant(node.path("closed_at").asString(null)) ?: return null
+        val number = node.path("number").asInt(0).takeIf { it > 0 } ?: return null
+        return ForgeClosure(
+            item =
+                ForgeItem(
+                    number = number,
+                    title = node.path("title").asString(""),
+                    url = node.path("html_url").asString(""),
+                ),
+            closedAt = closedAt,
+            merged = merged,
+        )
     }
 
     /** Fetch all releases (up to 100) */

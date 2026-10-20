@@ -131,7 +131,7 @@ class GitLabWebhookControllerTests {
         val (result, provenance) = capturingSubscriber.captured[0]
         assertEquals("console:///local", provenance.encode())
         val text = (result as OperationResult.Success).payload.toString()
-        assertTrue(text.contains("[group/project] New MR #4: Fix the thing"), text)
+        assertTrue(text.contains("[group/project] New MR !4: Fix the thing"), text)
     }
 
     @Test

@@ -3,6 +3,7 @@ package dev.streampack.forge.format
 
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.model.ForgeEvent
+import dev.streampack.forge.model.ForgeItem
 import dev.streampack.forge.model.PipelineOutcome
 import java.time.Duration
 
@@ -12,9 +13,13 @@ object ForgeEventFormatter {
         when (event) {
             is ForgeEvent.IssueOpened ->
                 "[$projectName] New issue #${event.item.number}: ${event.item.title} - ${event.item.url}"
-            is ForgeEvent.ChangeRequestOpened ->
-                "[$projectName] New ${kind.changeRequestNoun} #${event.item.number}: " +
-                    "${event.item.title} - ${event.item.url}"
+            is ForgeEvent.ChangeRequestOpened -> changeRequest(kind, projectName, "New", event.item)
+            is ForgeEvent.IssueClosed ->
+                "[$projectName] Closed issue #${event.item.number}: ${event.item.title} - ${event.item.url}"
+            is ForgeEvent.ChangeRequestMerged ->
+                changeRequest(kind, projectName, "Merged", event.item)
+            is ForgeEvent.ChangeRequestClosed ->
+                changeRequest(kind, projectName, "Closed", event.item)
             is ForgeEvent.ReleasePublished ->
                 "[$projectName] New release ${event.release.tag} - ${event.release.url}"
             is ForgeEvent.PipelineSettled -> pipeline(kind, projectName, event)
@@ -23,6 +28,14 @@ object ForgeEventFormatter {
                 "[$projectName] Webhook ping received - setup verified.$suffix"
             }
         }
+
+    /**
+     * `[owner/repo] Merged PR #12: title - url`, `[group/project] New MR !34: title - url`: the
+     * forge's own noun and number prefix (#267).
+     */
+    private fun changeRequest(kind: ForgeKind, projectName: String, verb: String, item: ForgeItem) =
+        "[$projectName] $verb ${kind.changeRequestNoun} ${kind.changeRequestPrefix}${item.number}: " +
+            "${item.title} - ${item.url}"
 
     /**
      * `[proj] MR !1039 pipeline FAILED (test: unit-tests) - url` or `[proj] main workflow 'CI'

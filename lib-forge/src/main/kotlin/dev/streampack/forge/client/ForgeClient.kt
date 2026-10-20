@@ -2,6 +2,7 @@
 package dev.streampack.forge.client
 
 import dev.streampack.forge.ForgeKind
+import dev.streampack.forge.model.ForgeClosure
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
@@ -45,6 +46,28 @@ interface ForgeClient {
         token: String?,
         sinceNumber: Int,
     ): List<ForgeItem>
+
+    /**
+     * Issues (not change requests) closed after [since], with when each was closed. Called only
+     * when a subscription asked for closed issues (#267).
+     */
+    fun fetchIssuesClosedSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgeClosure>
+
+    /**
+     * Pull or merge requests merged or closed after [since], with when and whether each was merged.
+     * Called only when a subscription asked for merges or closes (#267).
+     */
+    fun fetchChangeRequestsClosedSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgeClosure>
 
     /** All releases the API returns. */
     fun fetchReleases(instance: ForgeInstance, path: String, token: String?): List<ForgeReleaseInfo>
