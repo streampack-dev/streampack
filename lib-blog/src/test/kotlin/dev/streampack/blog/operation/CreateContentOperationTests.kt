@@ -170,7 +170,7 @@ class CreateContentOperationTests {
         val response = (result as OperationResult.Success).payload as CreateContentResponse
         val savedPost = postRepository.findById(response.id).orElse(null)
         assertNotNull(savedPost)
-        assertTrue(savedPost.renderedHtml.contains("<h1>Heading</h1>"))
+        assertTrue(savedPost.renderedHtml.contains("<h1 id=\"section-heading\">Heading</h1>"))
         assertTrue(savedPost.renderedHtml.contains("<p>Paragraph text.</p>"))
     }
 

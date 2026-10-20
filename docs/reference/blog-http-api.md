@@ -163,6 +163,15 @@ when a post link is opened from client-side navigation.
 A post's details carry its `versions`, such as a recording of it; see
 [Post Versions and Media](#post-versions-and-media).
 
+**Headings in `renderedHtml`.** A post's headings carry ids (#270), made by flexmark from the
+heading's words and prefixed with `section-`: `## Why it matters` is
+`<h2 id="section-why-it-matters">Why it matters</h2>`. A heading that repeats another gets a
+numbered id (`section-notes-1`), so each is unique within the post. A front end can link to a
+section with `#section-…`, or list a post's sections. If it shows two posts on one page, it should
+qualify the ids itself, since two posts can share a heading's words. Comments' headings get no ids.
+Posts stored before ids existed are rendered again from their markdown when the server starts,
+without changing their `updatedAt`.
+
 
 ## System Posts
 

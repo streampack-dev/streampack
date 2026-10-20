@@ -66,7 +66,7 @@ class CreateContentOperation(
             return OperationResult.Error("Content is required")
         }
 
-        val renderedHtml = markdownRenderingService.render(payload.markdownSource)
+        val renderedHtml = markdownRenderingService.renderPost(payload.markdownSource)
         val providedSummary = payload.summary?.trim().orEmpty()
         val excerpt =
             if (providedSummary.isNotBlank()) {
