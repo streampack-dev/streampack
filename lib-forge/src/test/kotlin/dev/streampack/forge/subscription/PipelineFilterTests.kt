@@ -94,7 +94,8 @@ class PipelineFilterTests {
         assertFalse(SubscriptionEvents.wants(base, settled(pipeline(changeRequest = 1))))
 
         val withPipelines =
-            SubscriptionEvents.withFilters(listOf(PipelineFilter.parse("pipelines:failed")!!))
+            SubscriptionFilters(pipelines = listOf(PipelineFilter.parse("pipelines:failed")!!))
+                .tokens()
         assertEquals(base + "pipelines:failed", withPipelines)
         assertTrue(SubscriptionEvents.wants(withPipelines, issue))
         assertTrue(SubscriptionEvents.wants(withPipelines, settled(pipeline(changeRequest = 1))))

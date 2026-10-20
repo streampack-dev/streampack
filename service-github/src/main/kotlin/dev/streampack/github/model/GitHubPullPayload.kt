@@ -12,4 +12,6 @@ constructor(
     @JsonProperty("number") val number: Int,
     @JsonProperty("title") val title: String,
     @JsonProperty("html_url") val htmlUrl: String,
+    /** True on a `closed` action when the pull request was merged (#267) */
+    @JsonProperty("merged") val merged: Boolean? = null,
 )

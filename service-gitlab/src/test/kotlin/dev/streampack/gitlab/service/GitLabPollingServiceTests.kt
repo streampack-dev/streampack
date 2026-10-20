@@ -131,7 +131,7 @@ class GitLabPollingServiceTests {
             texts.toString(),
         )
         assertTrue(
-            texts.any { it.contains("[group/project] New MR #3: Third MR") },
+            texts.any { it.contains("[group/project] New MR !3: Third MR") },
             texts.toString(),
         )
         assertTrue(

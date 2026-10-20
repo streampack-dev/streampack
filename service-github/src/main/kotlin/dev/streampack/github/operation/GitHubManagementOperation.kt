@@ -3,12 +3,13 @@ package dev.streampack.github.operation
 
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.command.InstanceSelector
+import dev.streampack.forge.command.SubscribeSpec
 import dev.streampack.forge.model.DeliveryMode
 import dev.streampack.forge.service.RemoveProjectOutcome
 import dev.streampack.forge.service.SubscriptionOutcome
-import dev.streampack.forge.subscription.PipelineFilter
-import dev.streampack.forge.subscription.SubscriptionEvents
+import dev.streampack.forge.subscription.SubscriptionFilters
 import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.service.GitHubSubscriptionService
 import dev.streampack.polling.operation.PollingSourceManagementOperation
@@ -49,7 +50,16 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
             destinationUri,
         )
         return withInstance(identifier) { instance, spec ->
-            val (path, filters) = parseFilters(spec) ?: return@withInstance unknownFilter(spec)
+            val (path, filters) =
+                when (val parsed = SubscribeSpec.parse(spec)) {
+                    is SubscribeSpec.Parsed -> parsed.path to parsed.filters
+                    SubscribeSpec.NoProject ->
+                        return@withInstance OperationResult.Error("Name a repository")
+                    is SubscribeSpec.Unknown ->
+                        return@withInstance OperationResult.Error(
+                            SubscribeSpec.unknownSelector(ForgeKind.GITHUB, parsed.token),
+                        )
+                }
             when (
                 val outcome = subscriptionService.subscribe(instance, path, destinationUri, filters)
             ) {
@@ -59,7 +69,7 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
                     )
                 is SubscriptionOutcome.FiltersUpdated ->
                     OperationResult.Success(
-                        "Updated ${outcome.project.displayName} filters to${renderFilters(outcome.filters)}",
+                        "Updated ${outcome.project.displayName} filters to${renderFilters(outcome.filters).ifEmpty { " the defaults" }}",
                     )
                 is SubscriptionOutcome.AlreadySubscribed ->
                     OperationResult.Success("Already subscribed to ${outcome.project.displayName}")
@@ -93,7 +103,7 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
         }
         val lines =
             subscriptions.joinToString(", ") {
-                it.repo.displayName + renderFilters(SubscriptionEvents.pipelineFilters(it.events))
+                it.repo.displayName + renderFilters(SubscriptionFilters.fromStored(it.events))
             }
         return OperationResult.Success(lines)
     }
@@ -130,28 +140,6 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
         return OperationResult.Error("No registered repository found for $identifier$where")
     }
 
-    /**
-     * `<path> [filter…]`: the project path followed by pipeline filter tokens. Null when a token is
-     * not a recognized filter.
-     */
-    private fun parseFilters(spec: String): Pair<String, List<PipelineFilter>>? {
-        val tokens = spec.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
-        if (tokens.isEmpty()) return null
-        val filters = tokens.drop(1).map { PipelineFilter.parse(it) ?: return null }
-        return tokens.first() to filters
-    }
-
-    private fun renderFilters(filters: List<PipelineFilter>): String =
-        if (filters.isEmpty()) "" else " [${filters.joinToString(" ") { it.render() }}]"
-
-    private fun unknownFilter(spec: String): OperationResult.Error {
-        val bad =
-            spec.trim().split(Regex("\\s+")).drop(1).firstOrNull {
-                PipelineFilter.parse(it) == null
-            }
-        return OperationResult.Error(
-            "Unknown filter '$bad'. Filters: pipelines, pipelines:default-branch, " +
-                "pipelines:branch:<name>, each optionally followed by :failed",
-        )
-    }
+    private fun renderFilters(filters: SubscriptionFilters): String =
+        filters.render(ForgeKind.GITHUB)
 }

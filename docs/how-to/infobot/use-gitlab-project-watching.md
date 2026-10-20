@@ -49,6 +49,39 @@ A Mattermost destination is `mattermost://<server>/<channel-id>`, where `<server
 
 The account must be a member of the channel to post there: `mattermost join work <channel-id>` joins a public channel, and a private one needs a Mattermost admin to add the account.
 
+## Choose What a Subscription Reports
+
+With no selectors, a subscription reports three things: new issues, new merge requests, and published releases. To choose other events, name them after the project:
+
+```text
+gitlab subscribe group/project mrs:merged
+gitlab subscribe group/project mrs mrs:merged releases
+gitlab subscribe group/project issues:closed mrs:closed on gitlab.example.com to irc://libera/%23dev
+```
+
+| Selector | Reports | Example notification |
+|----------|---------|----------------------|
+| `issues` | A new issue | `[group/project] New issue #12: Crash on start - https://gitlab.com/group/project/-/issues/12` |
+| `issues:closed` | An issue is closed | `[group/project] Closed issue #12: Crash on start - https://gitlab.com/group/project/-/issues/12` |
+| `mrs` | A new merge request | `[group/project] New MR !34: Fix the crash - https://gitlab.com/group/project/-/merge_requests/34` |
+| `mrs:merged` | A merge request is merged | `[group/project] Merged MR !34: Fix the crash - https://gitlab.com/group/project/-/merge_requests/34` |
+| `mrs:closed` | A merge request is closed without being merged | `[group/project] Closed MR !35: Try another way - https://gitlab.com/group/project/-/merge_requests/35` |
+| `releases` | A release is published | `[group/project] New release v1.2.0 - https://gitlab.com/group/project/-/releases/v1.2.0` |
+
+Merge requests are numbered with `!`, as GitLab writes them, and issues with `#`.
+
+- When you name at least one of these selectors, the subscription reports only the events you name. `gitlab subscribe group/project mrs:merged` reports merges, and no new issues, merge requests or releases.
+- `prs`, `prs:merged` and `prs:closed` also work, and mean the same as the `mrs` selectors.
+- Pipeline filters (next section) do not change this. `gitlab subscribe group/project pipelines` still reports new issues, merge requests and releases, as well as pipelines.
+- A merged merge request is reported once, as merged. It is not also reported as closed.
+- An issue or merge request that is reopened and closed again is reported again.
+- Subscribing again with selectors replaces the selectors and filters that the subscription had. Subscribing with `issues mrs releases` sets it back to the three default events.
+- `gitlab subscriptions` shows a subscription's selectors in brackets, when they are not the defaults: `group/project [mrs:merged releases]`.
+
+Subscriptions made before selectors existed keep reporting what they reported before: new issues, merge requests and releases, and their pipeline filters.
+
+When a project is polled, Streampack looks for closes and merges only if a subscription asked for them. A project whose subscriptions use the defaults makes no extra API calls. A webhook project reports closes and merges from the **Issues events** and **Merge request events** triggers, which are the same triggers that report new issues and merge requests.
+
 ## Get Pipeline Outcomes
 
 Pipeline notifications are opt-in per subscription. Add filters after the project when subscribing:
@@ -64,7 +97,7 @@ gitlab subscribe group/project pipelines:failed pipelines:branch:development on 
 - `pipelines` reports every merge request pipeline; `pipelines:failed` only the ones that need attention (failed, canceled, or blocked on a manual job).
 - `pipelines:default-branch` reports pipelines on whatever the project's default branch is.
 - `pipelines:branch:<name>` reports pipelines on one named branch. Use it when the default branch is for deployment and day-to-day work lands on another branch, such as `development`.
-- Any selector takes a trailing `:failed`. Several filters may be combined. Issues, merge requests, and releases are always included.
+- Any selector takes a trailing `:failed`. Several filters may be combined, and combined with the event selectors above. With no event selectors, new issues, merge requests and releases are included as well.
 
 Re-subscribing with filters replaces the previous filters; to drop them, unsubscribe and subscribe again. `gitlab subscriptions` shows each subscription's filters in brackets.
 

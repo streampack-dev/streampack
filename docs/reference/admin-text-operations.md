@@ -282,9 +282,24 @@ Rules:
 - A host that has not been registered is an error, not an implicit registration.
 - The instance token is the default credential for its projects; a project token given at `add` time overrides it.
 
+## Event Selectors
+
+Both forges accept event selectors between the project path and `on <host>` on `subscribe`. With none, a subscription reports new issues, new change requests, and published releases. When any is named, the subscription reports only the events named.
+
+| Selector | Reports |
+|----------|---------|
+| `issues` | New issues |
+| `issues:closed` | Closed issues |
+| `prs` or `mrs` | New pull or merge requests |
+| `prs:merged` or `mrs:merged` | Merged pull or merge requests |
+| `prs:closed` or `mrs:closed` | Pull or merge requests closed without being merged |
+| `releases` | Published releases |
+
+`prs` and `mrs` work on either forge. Replies and `subscriptions` use the forge's own word: `prs` on GitHub, `mrs` on GitLab. Pipeline filters alone don't change the event kinds, so a subscription with only `pipelines…` filters also gets the three defaults. An unknown selector is refused, and the reply lists the selectors.
+
 ## Pipeline Filters
 
-Both forges accept pipeline filters between the project path and `on <host>` on `subscribe`. Every subscription receives issues, change requests, and releases; filters add pipeline outcomes on top and are reported once per settlement.
+Both forges accept pipeline filters between the project path and `on <host>` on `subscribe`, with or without event selectors. Filters add pipeline outcomes, and each is reported once per settlement.
 
 | Filter | Reports |
 |--------|---------|
@@ -292,7 +307,7 @@ Both forges accept pipeline filters between the project path and `on <host>` on 
 | `pipelines:default-branch` | Pipelines on the project's default branch |
 | `pipelines:branch:<name>` | Pipelines on one named branch |
 
-Any filter takes a trailing `:failed` to report only pipelines that need attention, e.g. `pipelines:branch:development:failed`. Several filters may be given. Re-subscribing with filters replaces them; unsubscribe and subscribe to drop them. `subscriptions` shows filters in brackets after each project.
+Any filter takes a trailing `:failed` to report only pipelines that need attention, e.g. `pipelines:branch:development:failed`. Several filters may be given. Re-subscribing with selectors or filters replaces them all; unsubscribe and subscribe to drop them. `subscriptions` shows selectors that aren't the defaults, and filters, in brackets after each project.
 
 ## GitHub Operations
 
@@ -303,8 +318,8 @@ github instance add <url>
 github instance add <url> <token>
 github add owner/repo [on <host>]
 github add owner/repo <token> [on <host>]
-github subscribe owner/repo [<filter>…] [on <host>]
-github subscribe owner/repo [<filter>…] [on <host>] to <destination-uri>
+github subscribe owner/repo [<selector>…] [<filter>…] [on <host>]
+github subscribe owner/repo [<selector>…] [<filter>…] [on <host>] to <destination-uri>
 github unsubscribe owner/repo [on <host>]
 github unsubscribe owner/repo [on <host>] from <destination-uri>
 github remove owner/repo [on <host>]
@@ -340,8 +355,8 @@ gitlab instance add <url>
 gitlab instance add <url> <token>
 gitlab add group/project [on <host>]
 gitlab add group/project <token> [on <host>]
-gitlab subscribe group/project [<filter>…] [on <host>]
-gitlab subscribe group/project [<filter>…] [on <host>] to <destination-uri>
+gitlab subscribe group/project [<selector>…] [<filter>…] [on <host>]
+gitlab subscribe group/project [<selector>…] [<filter>…] [on <host>] to <destination-uri>
 gitlab unsubscribe group/project [on <host>]
 gitlab unsubscribe group/project [on <host>] from <destination-uri>
 gitlab remove group/project [on <host>]

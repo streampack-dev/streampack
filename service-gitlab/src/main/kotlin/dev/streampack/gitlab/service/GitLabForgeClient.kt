@@ -4,6 +4,7 @@ package dev.streampack.gitlab.service
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.client.WebhookEnvelope
+import dev.streampack.forge.model.ForgeClosure
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeItem
@@ -55,6 +56,20 @@ class GitLabForgeClient(private val apiClient: GitLabApiClient) : ForgeClient {
         token: String?,
         sinceNumber: Int,
     ): List<ForgeItem> = apiClient.fetchMergeRequests(instance.apiUrl, path, token, sinceNumber)
+
+    override fun fetchIssuesClosedSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgeClosure> = apiClient.fetchClosedIssues(instance.apiUrl, path, token, since)
+
+    override fun fetchChangeRequestsClosedSince(
+        instance: ForgeInstance,
+        path: String,
+        token: String?,
+        since: Instant,
+    ): List<ForgeClosure> = apiClient.fetchClosedMergeRequests(instance.apiUrl, path, token, since)
 
     override fun fetchReleases(
         instance: ForgeInstance,
@@ -122,9 +137,25 @@ class GitLabForgeClient(private val apiClient: GitLabApiClient) : ForgeClient {
     override fun parseWebhookEvent(envelope: WebhookEnvelope, root: JsonNode): ForgeEvent? {
         val path = root.path("project").path("path_with_namespace").asString("")
         return when (envelope.event) {
-            ISSUE_HOOK -> openedItem(root, "issue", path)?.let { ForgeEvent.IssueOpened(it) }
+            ISSUE_HOOK ->
+                when (val action = action(root)) {
+                    "open" -> ForgeEvent.IssueOpened(item(root))
+                    "close" -> ForgeEvent.IssueClosed(item(root))
+                    else -> {
+                        ignored("issue", path, action)
+                        null
+                    }
+                }
             MERGE_REQUEST_HOOK ->
-                openedItem(root, "merge request", path)?.let { ForgeEvent.ChangeRequestOpened(it) }
+                when (val action = action(root)) {
+                    "open" -> ForgeEvent.ChangeRequestOpened(item(root))
+                    "merge" -> ForgeEvent.ChangeRequestMerged(item(root))
+                    "close" -> ForgeEvent.ChangeRequestClosed(item(root))
+                    else -> {
+                        ignored("merge request", path, action)
+                        null
+                    }
+                }
             PIPELINE_HOOK -> parsePipelineHook(root, path)
             RELEASE_HOOK -> {
                 val action = root.path("action").asString("")
@@ -188,14 +219,13 @@ class GitLabForgeClient(private val apiClient: GitLabApiClient) : ForgeClient {
         )
     }
 
-    /** `object_attributes` of an issue or merge request hook, when its action is `open` */
-    private fun openedItem(root: JsonNode, what: String, path: String): ForgeItem? {
+    /** An issue or merge request hook's action: `open`, `close`, `merge`, `update` and the like */
+    private fun action(root: JsonNode): String =
+        root.path("object_attributes").path("action").asString("")
+
+    /** The issue or merge request in an issue or merge request hook's `object_attributes` */
+    private fun item(root: JsonNode): ForgeItem {
         val attributes = root.path("object_attributes")
-        val action = attributes.path("action").asString("")
-        if (action != "open") {
-            ignored(what, path, action)
-            return null
-        }
         return ForgeItem(
             number = attributes.path("iid").asInt(0),
             title = attributes.path("title").asString(""),

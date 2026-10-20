@@ -10,6 +10,15 @@ sealed interface ForgeEvent {
 
     data class ChangeRequestOpened(val item: ForgeItem) : ForgeEvent
 
+    /** An issue was closed (#267). A reopened issue that is closed again is closed again. */
+    data class IssueClosed(val item: ForgeItem) : ForgeEvent
+
+    /** A pull or merge request was merged (#267). */
+    data class ChangeRequestMerged(val item: ForgeItem) : ForgeEvent
+
+    /** A pull or merge request was closed without being merged (#267). */
+    data class ChangeRequestClosed(val item: ForgeItem) : ForgeEvent
+
     data class ReleasePublished(val release: ForgeReleaseInfo) : ForgeEvent
 
     /**

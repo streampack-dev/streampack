@@ -172,9 +172,12 @@ class GitLabPipelineTests {
             store.defaultInstance(),
             "group/project",
             channel,
-            listOf(
-                PipelineFilter.parse("pipelines:branch:development")!!,
-                PipelineFilter.parse("pipelines:failed")!!,
+            dev.streampack.forge.subscription.SubscriptionFilters(
+                pipelines =
+                    listOf(
+                        PipelineFilter.parse("pipelines:branch:development")!!,
+                        PipelineFilter.parse("pipelines:failed")!!,
+                    ),
             ),
         )
         stub(

@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpServer
 import dev.streampack.core.json.JacksonMappers
 import dev.streampack.forge.client.WebhookEnvelope
 import dev.streampack.forge.model.ForgeEvent
+import dev.streampack.forge.model.ForgeItem
 import dev.streampack.gitlab.config.GitLabProperties
 import dev.streampack.gitlab.entity.GitLabInstance
 import java.net.InetSocketAddress
@@ -161,7 +162,7 @@ class GitLabForgeClientTests {
     }
 
     @Test
-    fun `issue merge request and release hooks parse to forge events on open and create only`() {
+    fun `issue merge request and release hooks parse to forge events on the actions reported`() {
         val issue =
             mapper.readTree(
                 """{"object_kind":"issue","project":{"id":1,"path_with_namespace":"g/p"},
@@ -179,7 +180,15 @@ class GitLabForgeClientTests {
             mapper.readTree(
                 """{"object_kind":"issue","object_attributes":{"iid":5,"title":"Broken","url":"u","action":"close"}}""",
             )
-        assertNull(client.parseWebhookEvent(WebhookEnvelope("Issue Hook", null, "t"), closed))
+        assertEquals(
+            ForgeEvent.IssueClosed(ForgeItem(5, "Broken", "u")),
+            client.parseWebhookEvent(WebhookEnvelope("Issue Hook", null, "t"), closed),
+        )
+        val issueUpdated =
+            mapper.readTree(
+                """{"object_kind":"issue","object_attributes":{"iid":5,"title":"Broken","url":"u","action":"update"}}""",
+            )
+        assertNull(client.parseWebhookEvent(WebhookEnvelope("Issue Hook", null, "t"), issueUpdated))
 
         val mr =
             mapper.readTree(

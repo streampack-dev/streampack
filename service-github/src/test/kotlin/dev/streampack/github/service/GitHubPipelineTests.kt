@@ -256,17 +256,27 @@ class GitHubPipelineTests {
             store.defaultInstance(),
             "owner/repo",
             channel,
-            listOf(dev.streampack.forge.subscription.PipelineFilter.parse("pipelines:failed")!!),
+            dev.streampack.forge.subscription.SubscriptionFilters(
+                pipelines =
+                    listOf(
+                        dev.streampack.forge.subscription.PipelineFilter.parse(
+                            "pipelines:failed",
+                        )!!,
+                    ),
+            ),
         )
         subscriptionService.subscribe(
             store.defaultInstance(),
             "owner/repo",
             other,
-            listOf(
-                dev.streampack.forge.subscription.PipelineFilter.parse("pipelines")!!,
-                dev.streampack.forge.subscription.PipelineFilter.parse(
-                    "pipelines:default-branch",
-                )!!,
+            dev.streampack.forge.subscription.SubscriptionFilters(
+                pipelines =
+                    listOf(
+                        dev.streampack.forge.subscription.PipelineFilter.parse("pipelines")!!,
+                        dev.streampack.forge.subscription.PipelineFilter.parse(
+                            "pipelines:default-branch",
+                        )!!,
+                    ),
             ),
         )
         val old = Instant.now().minusSeconds(7200)
@@ -328,7 +338,10 @@ class GitHubPipelineTests {
             store.defaultInstance(),
             "owner/repo",
             channel,
-            listOf(dev.streampack.forge.subscription.PipelineFilter.parse("pipelines")!!),
+            dev.streampack.forge.subscription.SubscriptionFilters(
+                pipelines =
+                    listOf(dev.streampack.forge.subscription.PipelineFilter.parse("pipelines")!!),
+            ),
         )
         stubJobs(77, "unit-tests" to "failure", "docs" to "success")
         val payload =

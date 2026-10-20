@@ -4,6 +4,7 @@ package dev.streampack.forge.service
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.format.ForgeEventFormatter
+import dev.streampack.forge.model.ForgeClosure
 import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeInstance
 import dev.streampack.forge.model.ForgeProject
@@ -93,6 +94,8 @@ abstract class AbstractForgePollingService<
             )
         }
         val instance = project.instance
+        /* The next poll's window starts here, so a change made while this poll runs is seen next */
+        val pollStart = Instant.now()
         logger.info(
             "Polling project {} (since issue {}, {} {})",
             path,
@@ -122,6 +125,7 @@ abstract class AbstractForgePollingService<
 
         val subscriptions = store.findActiveSubscriptions(project)
         val pipelineEvents = pollPipelines(project, token, subscriptions)
+        val closureEvents = pollClosures(project, token, subscriptions, pollStart)
 
         val highestIssue =
             maxOf(project.highestIssueNumber, newIssues.maxOfOrNull { it.number } ?: 0)
@@ -130,23 +134,25 @@ abstract class AbstractForgePollingService<
                 project.highestChangeRequestNumber,
                 newChangeRequests.maxOfOrNull { it.number } ?: 0,
             )
-        val updated =
-            store.updateCursors(project, highestIssue, highestChangeRequest, Instant.now())
+        val updated = store.updateCursors(project, highestIssue, highestChangeRequest, pollStart)
         newReleases.forEach { store.saveRelease(updated, it) }
 
         val events =
             newIssues.map { ForgeEvent.IssueOpened(it) } +
                 newChangeRequests.map { ForgeEvent.ChangeRequestOpened(it) } +
                 newReleases.map { ForgeEvent.ReleasePublished(it) } +
+                closureEvents +
                 pipelineEvents
         if (events.isEmpty()) return
 
         logger.info(
-            "Found {} new issues, {} new {}s, {} new releases, {} settled pipelines for {}",
+            "Found {} new issues, {} new {}s, {} new releases, {} closes or merges, " +
+                "{} settled pipelines for {}",
             newIssues.size,
             newChangeRequests.size,
             kind.changeRequestNoun,
             newReleases.size,
+            closureEvents.size,
             pipelineEvents.size,
             path,
         )
@@ -161,6 +167,46 @@ abstract class AbstractForgePollingService<
                 )
             }
         }
+    }
+
+    /**
+     * Issues closed, and change requests merged or closed, since the last poll started (#267), or
+     * nothing when no subscription asked for them, so projects nobody opted in for cost no extra
+     * API calls. The window is (last poll's start, this poll's start]: a close is in exactly one
+     * window, so it is reported once, and a reopened item that is closed again is reported again.
+     */
+    private fun pollClosures(
+        project: P,
+        token: String?,
+        subscriptions: List<S>,
+        pollStart: Instant,
+    ): List<ForgeEvent> {
+        val since = project.lastPolledAt ?: return emptyList()
+        val wantsIssues = subscriptions.any { SubscriptionEvents.wantsIssueClosures(it.events) }
+        val wantsChangeRequests = subscriptions.any {
+            SubscriptionEvents.wantsChangeRequestClosures(it.events)
+        }
+        val inWindow = { closure: ForgeClosure ->
+            closure.closedAt.isAfter(since) && !closure.closedAt.isAfter(pollStart)
+        }
+        val issues =
+            if (!wantsIssues) emptyList()
+            else
+                client
+                    .fetchIssuesClosedSince(project.instance, project.path, token, since)
+                    .filter(inWindow)
+                    .map { ForgeEvent.IssueClosed(it.item) }
+        val changeRequests =
+            if (!wantsChangeRequests) emptyList()
+            else
+                client
+                    .fetchChangeRequestsClosedSince(project.instance, project.path, token, since)
+                    .filter(inWindow)
+                    .map {
+                        if (it.merged) ForgeEvent.ChangeRequestMerged(it.item)
+                        else ForgeEvent.ChangeRequestClosed(it.item)
+                    }
+        return issues + changeRequests
     }
 
     /**
