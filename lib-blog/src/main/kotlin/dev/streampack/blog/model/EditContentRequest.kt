@@ -32,7 +32,7 @@ data class EditContentRequest(
         return post.copy(
             title = resolvedTitle,
             markdownSource = resolvedMarkdown,
-            renderedHtml = markdownRenderingService.render(resolvedMarkdown),
+            renderedHtml = markdownRenderingService.renderPost(resolvedMarkdown),
             excerpt = excerpt,
             publishedAt = publishedAt ?: post.publishedAt,
             sortOrder = sortOrder ?: post.sortOrder,

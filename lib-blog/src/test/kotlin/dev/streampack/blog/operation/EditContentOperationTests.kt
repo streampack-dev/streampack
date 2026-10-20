@@ -157,7 +157,7 @@ class EditContentOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail
         assertEquals("Updated Title", detail.title)
-        assertTrue(detail.renderedHtml.contains("<h1>Updated</h1>"))
+        assertTrue(detail.renderedHtml.contains("<h1 id=\"section-updated\">Updated</h1>"))
         assertTrue(detail.renderedHtml.contains("<p>New content here.</p>"))
         assertTrue(detail.excerpt!!.contains("New content here"))
     }

@@ -33,6 +33,9 @@ class MarkdownRenderingService(
     private val parser: Parser
     private val renderer: HtmlRenderer
 
+    /** [renderer] with an id on every heading (#270): a post's, never a comment's. */
+    private val postRenderer: HtmlRenderer
+
     init {
         val options = MutableDataSet()
         options.set(
@@ -59,6 +62,13 @@ class MarkdownRenderingService(
         options.set(HtmlRenderer.ESCAPE_HTML, true)
         parser = Parser.builder(options).build()
         renderer = HtmlRenderer.builder(options).build()
+        postRenderer =
+            HtmlRenderer.builder(
+                    MutableDataSet(options)
+                        .set(HtmlRenderer.GENERATE_HEADER_ID, true)
+                        .set(HtmlRenderer.RENDER_HEADER_ID, true),
+                )
+                .build()
     }
 
     /**
@@ -69,11 +79,39 @@ class MarkdownRenderingService(
      * schemes (see issue #48). Mermaid blocks are drawn as SVG before sanitizing (#252), and the
      * sanitizer cleans the drawings by their own allowlist.
      */
-    fun render(markdownSource: String): String {
+    fun render(markdownSource: String): String = renderWith(renderer, markdownSource)
+
+    /**
+     * A post's HTML, as [render] makes it, with an id on every heading (#270), so a front end can
+     * link to a section or list a post's sections. flexmark makes each id from the heading's words,
+     * and tells repeated headings apart; each is prefixed with [SECTION_PREFIX], so no heading's id
+     * can take the name of something else on the page. A comment's headings, rendered by [render],
+     * get none, so they can't clash with the post's.
+     */
+    fun renderPost(markdownSource: String): String =
+        renderWith(postRenderer, markdownSource, headingIds = true)
+
+    private fun renderWith(
+        htmlRenderer: HtmlRenderer,
+        markdownSource: String,
+        headingIds: Boolean = false,
+    ): String {
         if (markdownSource.isBlank()) return ""
         val document = parser.parse(markdownSource)
-        val html = renderer.render(document).trim()
+        var html = htmlRenderer.render(document).trim()
+        if (headingIds) html = prefixHeadingIds(html)
         return renderedHtmlSanitizer.sanitize(drawDiagrams(refine(resolveFactoidWikiLinks(html))))
+    }
+
+    /** Each heading's flexmark id with [SECTION_PREFIX] in front (#270). */
+    private fun prefixHeadingIds(html: String): String {
+        if (!HEADING_WITH_ID.containsMatchIn(html)) return html
+        val doc = Jsoup.parseBodyFragment(html)
+        doc.outputSettings().prettyPrint(false)
+        doc.select("h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]").forEach {
+            it.id(SECTION_PREFIX + it.id())
+        }
+        return doc.body().html()
     }
 
     /**
@@ -283,6 +321,10 @@ class MarkdownRenderingService(
     }
 
     companion object {
+        /** What every heading's id starts with (#270): `section-why-it-matters`. */
+        const val SECTION_PREFIX = "section-"
+        private val HEADING_WITH_ID = Regex("<h[1-6] id=")
+
         private const val FACTOID_PREFIX = "/factoids/"
 
         private val MERMAID_BLOCK =

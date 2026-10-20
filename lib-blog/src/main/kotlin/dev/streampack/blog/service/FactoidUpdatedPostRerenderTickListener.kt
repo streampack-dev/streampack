@@ -37,7 +37,7 @@ class FactoidUpdatedPostRerenderTickListener(
                 .filter { post -> referencesAnySelector(post, selectors) }
                 .toList()
         for (post in candidates) {
-            val rerendered = markdownRenderingService.render(post.markdownSource)
+            val rerendered = markdownRenderingService.renderPost(post.markdownSource)
             if (rerendered == post.renderedHtml) continue
             postRepository.save(post.copy(renderedHtml = rerendered, updatedAt = now))
         }
