@@ -103,6 +103,7 @@ class RssFeedPollingService(
         }
 
         val newEntries = newSyndEntries.mapNotNull { entry -> toRssEntry(entry, feed) }
+        val redated = redate(existing, fetchedEntries)
         val stored =
             if (newEntries.isNotEmpty()) {
                 entryRepository.saveAll(newEntries).also {
@@ -111,7 +112,7 @@ class RssFeedPollingService(
             } else emptyList()
 
         // Every entry in the window keeps the feed's own tags, old entries included (#139)
-        val byGuid = (existing + stored).associateBy { it.guid }
+        val byGuid = (redated + stored).associateBy { it.guid }
         // A new entry keeps the feed's full content, for the rating guess (#187)
         val newByGuid = newSyndEntries.associateBy { it.uri ?: it.link }
         itemTexts.recordContent(stored.mapNotNull { e -> newByGuid[e.guid]?.let { e to it } })
@@ -146,15 +147,33 @@ class RssFeedPollingService(
         val guid = syndEntry.uri ?: syndEntry.link ?: return null
         val link = syndEntry.link ?: guid
         val title = syndEntry.title ?: ""
-        val publishedAt = syndEntry.publishedDate?.toInstant()
+        val receivedAt = Instant.now()
         return RssEntry(
             feed = feed,
             guid = guid,
             link = link,
             title = title.take(500),
             summary = EntrySummary.of(syndEntry),
-            publishedAt = publishedAt,
+            publishedAt = entryTime(syndEntry, receivedAt),
+            createdAt = receivedAt,
         )
+    }
+
+    /**
+     * Gives a time to the stored entries in [existing] that have none, or one later than when they
+     * were received, from the same entries in [fetched] (#261). An entry with a usable time keeps
+     * it. Returns [existing] with the changed entries replaced by their saved copies.
+     */
+    private fun redate(existing: List<RssEntry>, fetched: List<SyndEntry>): List<RssEntry> {
+        val fetchedByGuid = fetched.associateBy { it.uri ?: it.link }
+        return existing.map { entry ->
+            val stale = entry.publishedAt?.isAfter(entry.createdAt) ?: true
+            val syndEntry = fetchedByGuid[entry.guid]
+            if (!stale || syndEntry == null) return@map entry
+            val time = entryTime(syndEntry, entry.createdAt)
+            if (time == entry.publishedAt) entry
+            else entryRepository.save(entry.copy(publishedAt = time))
+        }
     }
 
     private fun deduplicateEntries(entries: List<SyndEntry>): List<SyndEntry> {
@@ -170,5 +189,17 @@ class RssFeedPollingService(
             logger.info("Ignored {} duplicate RSS entries while polling feed updates", duplicates)
         }
         return deduplicated
+    }
+
+    companion object {
+        /**
+         * An entry's own time: `<published>` (or RSS `<pubDate>`), else Atom's `<updated>`, which
+         * Atom requires when it makes `<published>` optional. Null when the feed gives neither, or
+         * gives a time after [receivedAt]: such an entry sorts as received (#261).
+         */
+        fun entryTime(entry: SyndEntry, receivedAt: Instant): Instant? =
+            (entry.publishedDate ?: entry.updatedDate)?.toInstant()?.takeUnless {
+                it.isAfter(receivedAt)
+            }
     }
 }

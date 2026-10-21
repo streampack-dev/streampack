@@ -23,6 +23,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -366,6 +367,137 @@ class RssFeedPollingServiceTests {
                 .associateBy { it.guid }
         assertEquals("What it says.", entries["http://example.com/s/1"]?.summary)
         assertEquals(null, entries["http://example.com/s/2"]?.summary)
+    }
+
+    private fun serve(path: String, body: String) {
+        httpServer.createContext(path) { exchange ->
+            exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+    }
+
+    private fun atom(vararg entries: String) =
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom"><title>Dates</title><id>urn:dates</id>
+        <updated>2026-10-01T00:00:00Z</updated>${entries.joinToString("")}</feed>"""
+
+    private fun atomEntry(id: String, updated: String, published: String? = null) =
+        """<entry><title>$id</title><id>http://example.com/a/$id</id>
+        <link href="http://example.com/a/$id"/><updated>$updated</updated>""" +
+            (published?.let { "<published>$it</published>" } ?: "") +
+            "</entry>"
+
+    private fun stored(feed: RssFeed, id: String): RssEntry =
+        entryRepository.findByFeedAndGuidIn(feed, listOf("http://example.com/a/$id")).single()
+
+    @Test
+    fun `an Atom entry with only updated takes its updated time`() {
+        val feed = createFeed("Atom updated", "/updated.xml")
+        serve("/updated.xml", atom(atomEntry("only-updated", "2020-03-04T05:06:07Z")))
+
+        pollingService.pollFeed(feed)
+
+        assertEquals(
+            Instant.parse("2020-03-04T05:06:07Z"),
+            stored(feed, "only-updated").publishedAt,
+        )
+    }
+
+    @Test
+    fun `an Atom entry with published and updated takes its published time`() {
+        val feed = createFeed("Atom both", "/both.xml")
+        serve(
+            "/both.xml",
+            atom(atomEntry("both", "2024-02-02T00:00:00Z", published = "2024-01-01T00:00:00Z")),
+        )
+
+        pollingService.pollFeed(feed)
+
+        assertEquals(Instant.parse("2024-01-01T00:00:00Z"), stored(feed, "both").publishedAt)
+    }
+
+    @Test
+    fun `an RSS item takes its pubDate`() {
+        val feed = createFeed("RSS dated", "/pubdate.xml")
+        serve(
+            "/pubdate.xml",
+            """<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel>
+            <title>RSS dated</title><link>http://example.com</link><description>d</description>
+            <item><title>Dated</title><link>http://example.com/a/rss</link><guid>http://example.com/a/rss</guid>
+            <pubDate>Tue, 03 Jun 2025 10:00:00 GMT</pubDate></item></channel></rss>""",
+        )
+
+        pollingService.pollFeed(feed)
+
+        assertEquals(Instant.parse("2025-06-03T10:00:00Z"), stored(feed, "rss").publishedAt)
+    }
+
+    @Test
+    fun `an entry dated in the future sorts as received`() {
+        val feed = createFeed("Future", "/future.xml")
+        serve(
+            "/future.xml",
+            atom(
+                atomEntry("future", "2999-01-02T00:00:00Z", published = "2999-01-01T00:00:00Z"),
+                atomEntry("future-updated", "2999-01-01T00:00:00Z"),
+            ),
+        )
+
+        pollingService.pollFeed(feed)
+
+        assertNull(stored(feed, "future").publishedAt)
+        assertNull(stored(feed, "future-updated").publishedAt)
+    }
+
+    @Test
+    fun `a stored entry without a time, or with a future one, takes the time on the next poll`() {
+        val feed = createFeed("Backfill", "/backfill.xml")
+        val received = Instant.parse("2026-10-19T11:02:00Z")
+        listOf("undated" to null, "future" to Instant.parse("2026-11-20T00:00:00Z")).forEach {
+            (id, at) ->
+            entryRepository.save(
+                RssEntry(
+                    feed = feed,
+                    guid = "http://example.com/a/$id",
+                    link = "http://example.com/a/$id",
+                    title = id,
+                    publishedAt = at,
+                    createdAt = received,
+                ),
+            )
+        }
+        serve(
+            "/backfill.xml",
+            atom(
+                atomEntry("undated", "2020-01-01T00:00:00Z"),
+                atomEntry("future", "2021-01-01T00:00:00Z"),
+            ),
+        )
+
+        pollingService.pollFeed(feed)
+
+        assertEquals(Instant.parse("2020-01-01T00:00:00Z"), stored(feed, "undated").publishedAt)
+        assertEquals(Instant.parse("2021-01-01T00:00:00Z"), stored(feed, "future").publishedAt)
+    }
+
+    @Test
+    fun `a stored entry keeps a time it already has`() {
+        val feed = createFeed("Keep", "/keep.xml")
+        entryRepository.save(
+            RssEntry(
+                feed = feed,
+                guid = "http://example.com/a/keep",
+                link = "http://example.com/a/keep",
+                title = "keep",
+                publishedAt = Instant.parse("2019-01-01T00:00:00Z"),
+                createdAt = Instant.parse("2026-10-19T11:02:00Z"),
+            ),
+        )
+        serve("/keep.xml", atom(atomEntry("keep", "2023-05-05T00:00:00Z")))
+
+        pollingService.pollFeed(feed)
+
+        assertEquals(Instant.parse("2019-01-01T00:00:00Z"), stored(feed, "keep").publishedAt)
     }
 
     @Test
