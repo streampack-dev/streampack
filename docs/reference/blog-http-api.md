@@ -213,6 +213,13 @@ A top-level comment can quote the passage of the post that it is about (#256). T
 entities decoded (`&amp;` is `&`), and each run of whitespace made one space. A tag between two
 blocks, such as two paragraphs or two list items, counts as a space. Search uses the same text.
 
+Whitespace is what the database's `\s` matches in `html_text()`, and that depends on its locale.
+Under the image's `en_US.utf8` it is ASCII whitespace, U+1680, U+2000 to U+2006, U+2008 to
+U+200A, U+2028, U+2029, U+205F and U+3000 (the ideographic space), and `&nbsp;` is a space too.
+U+2007, U+202F, U+200B and U+FEFF are not whitespace. The server collapses the same set in an
+anchor, U+00A0 included, and so does clientjs, whose fixtures (`test/fixtures/text.json`) were
+made under this locale. A database with another locale may need both changed.
+
 **What the server does with an anchor:**
 
 - It makes each run of whitespace in the anchor one space, trims `exact`, and makes an empty
