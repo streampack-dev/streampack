@@ -154,6 +154,36 @@ class CommentAnchorTests {
     }
 
     @Test
+    fun `a quote collapses the whitespace the post's text does, beyond ASCII`() {
+        val spaced =
+            postRepository.save(
+                Post(
+                    title = "Spaces",
+                    renderedHtml =
+                        "<p>\u6771\u4eac\u3000\u30bf\u30ef\u30fc, a\u2003wide gap, 10\u202fkm, " +
+                            "non&nbsp;breaking.</p>",
+                    status = PostStatus.APPROVED,
+                    publishedAt = post.publishedAt,
+                    author = reader,
+                ),
+            )
+        fun quote(exact: String) =
+            send(CreateCommentRequest(spaced.id, null, "Noted.", CommentAnchor(exact)))
+
+        fun exact(result: OperationResult) =
+            ((result as OperationResult.Success).payload as CommentDetail).anchor?.exact
+
+        // U+3000 and U+2003 are whitespace to html_text(), so they collapse to a space
+        assertThat(exact(quote("\u6771\u4eac\u3000\u30bf\u30ef\u30fc")))
+            .isEqualTo("\u6771\u4eac \u30bf\u30ef\u30fc")
+        assertThat(exact(quote("a\u2003wide"))).isEqualTo("a wide")
+        // U+202F isn't, so it stays as it is
+        assertThat(exact(quote("10\u202fkm"))).isEqualTo("10\u202fkm")
+        // &nbsp; is a space in the post's text; the DOM gives it back as U+00A0
+        assertThat(exact(quote("non\u00a0breaking"))).isEqualTo("non breaking")
+    }
+
+    @Test
     fun `HTML in a quote is escaped, never rendered`() {
         val detail = created(CommentAnchor("<b> tags"))
 

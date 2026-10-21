@@ -151,7 +151,16 @@ class CommentAnchors(
         /** The most characters a prefix or a suffix can have, after collapsing. */
         const val MAX_CONTEXT = 64
 
-        /** A run of whitespace, as the database's `\s` matches it in `html_text`. */
-        private val WHITESPACE = Regex("\\s+")
+        /**
+         * A run of whitespace, as the database's `\s` matches it in `html_text` (V78) under the
+         * image's en_US.utf8 locale: ASCII whitespace, U+1680, U+2000 to U+2006, U+2008 to U+200A,
+         * U+2028, U+2029, U+205F and U+3000 (#258). Also U+00A0, which the post's text has as a
+         * space (`&nbsp;`) and a browser gives back as U+00A0. U+0085, U+2007, U+202F, U+200B and
+         * U+FEFF are not whitespace there. The same set as clientjs's `WHITESPACE`.
+         */
+        private val WHITESPACE =
+            Regex(
+                "[\\t\\n\\u000B\\f\\r \\u00A0\\u1680\\u2000-\\u2006\\u2008-\\u200A\\u2028\\u2029\\u205F\\u3000]+",
+            )
     }
 }
