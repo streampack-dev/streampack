@@ -93,6 +93,7 @@ class EditContentOperation(
                 excerpt = updated.excerpt,
                 authorId = updated.author?.id,
                 authorDisplayName = updated.author?.displayName ?: "Anonymous",
+                authorRole = updated.author?.role,
                 status = updated.status,
                 publishedAt = updated.publishedAt,
                 sortOrder = updated.sortOrder,

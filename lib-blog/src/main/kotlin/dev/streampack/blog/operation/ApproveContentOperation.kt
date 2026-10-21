@@ -72,6 +72,7 @@ class ApproveContentOperation(
                 excerpt = approved.excerpt,
                 authorId = approved.author?.id,
                 authorDisplayName = approved.author?.displayName ?: "Anonymous",
+                authorRole = approved.author?.role,
                 status = approved.status,
                 publishedAt = approved.publishedAt,
                 createdAt = approved.createdAt,

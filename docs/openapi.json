@@ -566,6 +566,10 @@
             "format" : "uuid",
             "type" : [ "string", "null" ]
           },
+          "authorRole" : {
+            "enum" : [ "GUEST", "USER", "ADMIN", "SUPER_ADMIN" ],
+            "type" : [ "string", "null" ]
+          },
           "categories" : {
             "items" : {
               "type" : "string"
@@ -673,6 +677,16 @@
           "authorDisplayName" : {
             "type" : "string"
           },
+          "authorId" : {
+            "description" : "The author's user id, for `GET /posts?author=`; null for an anonymous post.",
+            "format" : "uuid",
+            "type" : [ "string", "null" ]
+          },
+          "authorRole" : {
+            "description" : "The author's role; null for an anonymous post.",
+            "enum" : [ "GUEST", "USER", "ADMIN", "SUPER_ADMIN" ],
+            "type" : [ "string", "null" ]
+          },
           "categories" : {
             "items" : {
               "type" : "string"
@@ -708,6 +722,11 @@
           "sortOrder" : {
             "format" : "int32",
             "type" : "integer"
+          },
+          "state" : {
+            "description" : "Where the post is in its life: `DRAFT`, `SCHEDULED` or `PUBLISHED`. Public lists carry only published posts; `GET /auth/posts` carries all three.",
+            "enum" : [ "DRAFT", "SCHEDULED", "PUBLISHED" ],
+            "type" : "string"
           },
           "tags" : {
             "items" : {
@@ -7025,6 +7044,62 @@
         "tags" : [ "Authentication" ]
       }
     },
+    "/auth/posts" : {
+      "get" : {
+        "description" : "Returns the caller's posts in every state, newest first, each with its `state`: `DRAFT`, `SCHEDULED` or `PUBLISHED`. Deleted posts and system pages are left out.",
+        "operationId" : "listOwnPosts",
+        "parameters" : [ {
+          "description" : "Zero-based page index",
+          "example" : 0,
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "description" : "Number of posts per page",
+          "example" : 20,
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentListResponse"
+                }
+              }
+            },
+            "description" : "Paginated list of the caller's posts"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "List the authenticated user's own posts",
+        "tags" : [ "Authentication" ]
+      }
+    },
     "/auth/profile" : {
       "put" : {
         "operationId" : "editProfile",
@@ -8267,7 +8342,7 @@
     },
     "/posts" : {
       "get" : {
-        "description" : "Returns a paginated list of posts that are approved, not deleted, and have a publishedAt date in the past. Authenticated users also see their own drafts interleaved in the results.",
+        "description" : "Returns a paginated list of posts that are approved, not deleted, and have a publishedAt date in the past. Filter by one of `category`, `tag` or `author`; `author` with either of the others is refused.",
         "operationId" : "listPosts",
         "parameters" : [ {
           "description" : "Zero-based page index",
@@ -8305,6 +8380,15 @@
           "name" : "tag",
           "required" : false,
           "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Filter by the author's user id (#273)",
+          "in" : "query",
+          "name" : "author",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
             "type" : "string"
           }
         } ],

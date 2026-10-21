@@ -75,6 +75,31 @@ interface PostRepository : JpaRepository<Post, UUID> {
     )
     fun findPublished(now: Instant, pageable: Pageable): Page<Post>
 
+    /** An author's published posts, in board order, leaving out system content (#273) */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.author.id = :authorId AND p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND " +
+            SystemContent.NOT_SYSTEM +
+            " ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
+        countQuery =
+            "SELECT COUNT(p) FROM Post p WHERE p.author.id = :authorId AND p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND " +
+                SystemContent.NOT_SYSTEM,
+    )
+    fun findPublishedByAuthor(authorId: UUID, now: Instant, pageable: Pageable): Page<Post>
+
+    /**
+     * An author's own posts in every state, newest first, leaving out deleted posts and system
+     * content (#273)
+     */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.author.id = :authorId AND p.deleted = false AND " +
+            SystemContent.NOT_SYSTEM +
+            " ORDER BY p.createdAt DESC",
+        countQuery =
+            "SELECT COUNT(p) FROM Post p WHERE p.author.id = :authorId AND p.deleted = false AND " +
+                SystemContent.NOT_SYSTEM,
+    )
+    fun findOwn(authorId: UUID, pageable: Pageable): Page<Post>
+
     /** Posts in a specific category, ordered by sortOrder then publishedAt */
     @Query(
         "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = dev.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName) ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",

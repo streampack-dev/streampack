@@ -7,6 +7,7 @@ import dev.streampack.blog.model.ContentDetail
 import dev.streampack.blog.model.ContentListResponse
 import dev.streampack.blog.model.ContentSummary
 import dev.streampack.blog.model.FindContentRequest
+import dev.streampack.blog.model.PostState
 import dev.streampack.blog.model.PostStatus
 import dev.streampack.blog.repository.CommentRepository
 import dev.streampack.blog.repository.PostCategoryRepository
@@ -28,6 +29,7 @@ import dev.streampack.taxonomy.TagVocabulary
 import dev.streampack.temperature.service.TemperatureService
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
@@ -65,6 +67,9 @@ class FindContentOperation(
                 findByCategory(payload.categoryName, payload.page, payload.size)
             is FindContentRequest.FindByTag ->
                 findByTag(payload.tagName, payload.page, payload.size)
+            is FindContentRequest.FindByAuthor ->
+                findByAuthor(payload.authorId, payload.page, payload.size)
+            is FindContentRequest.FindOwn -> findOwn(user, payload.page, payload.size)
             is FindContentRequest.FindPage -> findPage(payload.slug, user)
         }
     }
@@ -232,6 +237,33 @@ class FindContentOperation(
         )
     }
 
+    /** An author's published posts (#273); an unknown author has none. */
+    private fun findByAuthor(authorId: UUID, page: Int, size: Int): OperationResult =
+        listing(
+            postRepository.findPublishedByAuthor(
+                authorId,
+                Instant.now(),
+                PageRequest.of(page, size),
+            ),
+        )
+
+    /** The caller's own posts in every state (#273). */
+    private fun findOwn(user: UserPrincipal?, page: Int, size: Int): OperationResult {
+        if (user == null) return OperationResult.Error("Not authenticated")
+        return listing(postRepository.findOwn(user.id, PageRequest.of(page, size)))
+    }
+
+    /** A page of [pageResult]'s posts as a [ContentListResponse]. */
+    private fun listing(pageResult: Page<Post>): OperationResult =
+        OperationResult.Success(
+            ContentListResponse(
+                posts = toSummaries(pageResult.content),
+                page = pageResult.number,
+                totalPages = pageResult.totalPages,
+                totalCount = pageResult.totalElements,
+            ),
+        )
+
     private fun findPage(slug: String, user: UserPrincipal?): OperationResult {
         val now = Instant.now()
         val post =
@@ -271,6 +303,7 @@ class FindContentOperation(
             excerpt = post.excerpt,
             authorId = post.author?.id,
             authorDisplayName = post.author?.displayName ?: "Anonymous",
+            authorRole = post.author?.role,
             status = post.status,
             publishedAt = post.publishedAt,
             sortOrder = post.sortOrder,
@@ -296,23 +329,27 @@ class FindContentOperation(
     /** Summaries of [posts], with their kinds of version read in one query for them all (#200). */
     private fun toSummaries(posts: List<Post>): List<ContentSummary> {
         val kinds = postVersionService.kindsFor(posts.map { it.id })
-        return posts.map { post -> toSummary(post, kinds[post.id].orEmpty()) }
+        val now = Instant.now()
+        return posts.map { post -> toSummary(post, kinds[post.id].orEmpty(), now) }
     }
 
-    private fun toSummary(post: Post, versionKinds: List<String>): ContentSummary {
+    private fun toSummary(post: Post, versionKinds: List<String>, now: Instant): ContentSummary {
         val canonicalSlug = slugRepository.findCanonical(post.id)
         return ContentSummary(
             id = post.id,
             title = post.title,
             slug = canonicalSlug?.path ?: "",
             excerpt = post.excerpt,
+            authorId = post.author?.id,
             authorDisplayName = post.author?.displayName ?: "Anonymous",
+            authorRole = post.author?.role,
             publishedAt = post.publishedAt,
             sortOrder = post.sortOrder,
             commentCount = commentRepository.countActiveByPost(post.id).toInt(),
             tags = PostTagVisibility.withoutSystem(tagNamesForPost(post.id)),
             categories = categoryNamesForPost(post.id),
             versionKinds = versionKinds,
+            state = PostState.of(post.status, post.publishedAt, now),
         )
     }
 
