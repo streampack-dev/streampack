@@ -99,7 +99,8 @@ tomorrow hebrew
 weather Boston
 ```
 
-Use these for quick utility lookups.
+Use these for quick utility lookups. `calendar` is another name for `today`: `calendar hebrew`
+gives today's date in the Hebrew calendar.
 
 ## Social and Messaging Tools
 

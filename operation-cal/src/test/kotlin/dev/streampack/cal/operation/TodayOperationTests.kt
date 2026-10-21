@@ -80,6 +80,41 @@ class TodayOperationTests {
     }
 
     @Test
+    fun `calendar answers as today does`() {
+        val result = eventGateway.process(message("calendar"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.startsWith("Today is "), "Expected Today is in: $payload")
+    }
+
+    @Test
+    fun `calendar list returns all calendar names`() {
+        val result = eventGateway.process(message("calendar list"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.startsWith("Available calendars: "), "Expected the list in: $payload")
+        assertTrue(payload.contains("hebrew"), "Expected hebrew in: $payload")
+    }
+
+    @Test
+    fun `calendar hebrew returns today's Hebrew date`() {
+        val result = eventGateway.process(message("calendar hebrew"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.startsWith("Today is "), "Expected Today is in: $payload")
+        assertTrue(payload.contains("Hebrew"), "Expected Hebrew in: $payload")
+    }
+
+    @Test
+    fun `calendar with unknown calendar names calendar list in its hint`() {
+        val result = eventGateway.process(message("calendar nonexistent"))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        val error = (result as OperationResult.Error).message
+        assertTrue(error.contains("nonexistent"), "Expected calendar name in error: $error")
+        assertTrue(error.contains("calendar list"), "Expected usage hint in error: $error")
+    }
+
+    @Test
     fun `non-today message is not handled`() {
         val result = eventGateway.process(message("something else"))
         assertInstanceOf(OperationResult.NotHandled::class.java, result)

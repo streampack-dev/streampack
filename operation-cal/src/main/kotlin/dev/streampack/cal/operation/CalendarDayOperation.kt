@@ -14,7 +14,10 @@ import java.time.LocalDate
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
-/** Reports today/tomorrow dates in configurable calendar systems. */
+/**
+ * Reports today's or tomorrow's date in configurable calendar systems. `calendar` is another name
+ * for `today`.
+ */
 @Component
 class CalendarDayOperation(private val calendarService: CalendarService) :
     TypedOperation<String>(String::class) {
@@ -50,7 +53,7 @@ class CalendarDayOperation(private val calendarService: CalendarService) :
 
     private fun handleMatch(match: CommandMatchResult.Match): OperationOutcome {
         val command = match.patternName
-        val date = if (command == "today") LocalDate.now() else LocalDate.now().plusDays(1)
+        val date = if (command == TOMORROW) LocalDate.now().plusDays(1) else LocalDate.now()
         val prefix = displayName(command)
         val target =
             match.captures["target"] as? String
@@ -72,8 +75,9 @@ class CalendarDayOperation(private val calendarService: CalendarService) :
         }
     }
 
+    /** "Tomorrow" for `tomorrow`; "Today" for `today` and `calendar` */
     private fun displayName(command: String): String =
-        if (command == "today") "Today" else "Tomorrow"
+        if (command == TOMORROW) "Tomorrow" else "Today"
 
     private fun matcher(): CommandPatternMatcher {
         val options = calendarService.listCalendars().map { it.name }.toSet() + "list"
@@ -87,6 +91,12 @@ class CalendarDayOperation(private val calendarService: CalendarService) :
                 ),
                 CommandPattern(name = "today", literals = listOf("today")),
                 CommandPattern(
+                    name = "calendar",
+                    literals = listOf("calendar"),
+                    args = listOf(targetArg),
+                ),
+                CommandPattern(name = "calendar", literals = listOf("calendar")),
+                CommandPattern(
                     name = "tomorrow",
                     literals = listOf("tomorrow"),
                     args = listOf(targetArg),
@@ -94,5 +104,9 @@ class CalendarDayOperation(private val calendarService: CalendarService) :
                 CommandPattern(name = "tomorrow", literals = listOf("tomorrow")),
             ),
         )
+    }
+
+    companion object {
+        private const val TOMORROW = "tomorrow"
     }
 }
