@@ -14,11 +14,19 @@ import org.springframework.messaging.Message
  * Handles the shared pattern of command prefix matching, subcommand extraction, "to <uri>" / "for
  * <uri>" destination parsing, and ADMIN auth for mutations. Subclasses provide the command prefix
  * and implement the five handler methods with pre-parsed inputs.
+ *
+ * A mutation from a user who is not an admin gets a reply that says so, not silence.
  */
 abstract class PollingSourceManagementOperation : TypedOperation<String>(String::class) {
 
     /** Command prefix, e.g. "github" or "feed" */
     abstract val commandPrefix: String
+
+    /**
+     * What the commands manage, in the plural, for replies, e.g. "feeds" or "GitHub repositories"
+     */
+    open val sourceNoun: String
+        get() = "$commandPrefix sources"
 
     override val addressed: Boolean = true
 
@@ -35,27 +43,32 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
             return true
         }
 
-        // Mutation commands require ADMIN
-        val isMutation =
-            lower.startsWith("$prefix subscribe ") ||
-                lower.startsWith("$prefix unsubscribe ") ||
-                lower.startsWith("$prefix remove ")
+        // Mutation commands are taken from everyone; handle() refuses them for non-admins
+        val isMutation = mutation(lower) != null
         if (!isMutation) {
             logger.debug("Payload '{}' is not a {} mutation command", lower, commandPrefix)
-            return false
         }
+        return isMutation
+    }
 
-        val allowed = hasRole(message, Role.ADMIN)
-        if (!allowed) {
-            logger.debug("Mutation '{}' denied (need ADMIN+)", lower)
-        }
-        return allowed
+    /**
+     * The mutation subcommand that [lower] starts with (subscribe, unsubscribe, remove), or null
+     */
+    private fun mutation(lower: String): String? {
+        val prefix = commandPrefix.lowercase()
+        return MUTATIONS.firstOrNull { lower.startsWith("$prefix $it ") }
     }
 
     override fun handle(payload: String, message: Message<*>): OperationOutcome {
         val trimmed = payload.trim()
         val lower = trimmed.lowercase()
         val prefix = commandPrefix.lowercase()
+
+        val mutation = mutation(lower)
+        if (mutation != null && !hasRole(message, Role.ADMIN)) {
+            logger.debug("Mutation '{}' denied (need ADMIN+)", lower)
+            return OperationResult.Error("Only an admin can $mutation $sourceNoun")
+        }
 
         return when {
             lower == "$prefix list" -> onList()
@@ -176,5 +189,9 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
     private fun destinationUri(message: Message<*>): String? {
         val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return null
         return provenance.encode()
+    }
+
+    companion object {
+        private val MUTATIONS = listOf("subscribe", "unsubscribe", "remove")
     }
 }

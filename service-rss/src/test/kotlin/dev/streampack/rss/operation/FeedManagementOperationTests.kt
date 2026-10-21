@@ -119,11 +119,14 @@ class FeedManagementOperationTests {
     }
 
     @Test
-    fun `feed subscribe with nonexistent URL returns error`() {
-        val result =
-            eventGateway.process(message("feed subscribe http://localhost:1/nonexistent.xml"))
+    fun `feed subscribe to an unregistered feed suggests feed add`() {
+        val url = "http://localhost:1/nonexistent.xml"
+        val result = eventGateway.process(message("feed subscribe $url"))
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertTrue((result as OperationResult.Error).message.contains("No registered feed found"))
+        assertEquals(
+            "No feed registered for $url. Did you mean \"feed add $url\"?",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test
@@ -218,7 +221,7 @@ class FeedManagementOperationTests {
     }
 
     @Test
-    fun `feed subscribe without admin role is not handled`() {
+    fun `feed subscribe without admin role is refused with a reply`() {
         val feedUrl = addFeed("Auth Test", 1)
         val guestProvenance =
             Provenance(protocol = Protocol.IRC, serviceId = "libera", replyTo = "#java")
@@ -228,7 +231,11 @@ class FeedManagementOperationTests {
                 .build()
 
         val result = eventGateway.process(msg)
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            "Only an admin can subscribe feeds",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test

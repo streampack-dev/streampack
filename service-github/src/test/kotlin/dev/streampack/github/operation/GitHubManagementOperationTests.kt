@@ -242,7 +242,7 @@ class GitHubManagementOperationTests {
     }
 
     @Test
-    fun `github subscribe without admin role is not handled`() {
+    fun `github subscribe without admin role is refused with a reply`() {
         addRepo("owner", "repo")
         val guestProvenance =
             Provenance(protocol = Protocol.IRC, serviceId = "libera", replyTo = "#java")
@@ -252,7 +252,11 @@ class GitHubManagementOperationTests {
                 .build()
 
         val result = eventGateway.process(msg)
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            "Only an admin can subscribe GitHub repositories",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test

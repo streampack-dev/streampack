@@ -26,6 +26,7 @@ class GitLabManagementOperation(private val subscriptionService: GitLabSubscript
     PollingSourceManagementOperation() {
 
     override val commandPrefix: String = "gitlab"
+    override val sourceNoun: String = "GitLab projects"
     override val priority: Int = 62
     override val operationGroup: String = "gitlab"
 

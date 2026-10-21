@@ -15,6 +15,7 @@ import dev.streampack.test.TestSecurityConfiguration
 import java.net.InetSocketAddress
 import java.util.UUID
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -123,7 +124,7 @@ class GitHubAddOperationTests {
     }
 
     @Test
-    fun `github add without admin role is not handled`() {
+    fun `github add without admin role is refused with a reply`() {
         val guestProvenance = Provenance(protocol = Protocol.CONSOLE, replyTo = "local")
         val msg =
             MessageBuilder.withPayload("github add owner/repo")
@@ -131,7 +132,11 @@ class GitHubAddOperationTests {
                 .build()
 
         val result = eventGateway.process(msg)
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            "Only an admin can add GitHub repositories",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test

@@ -189,7 +189,7 @@ class AddFeedOperationTests {
     }
 
     @Test
-    fun `feed add without admin role is not handled`() {
+    fun `feed add without admin role is refused with a reply`() {
         val guestProvenance =
             Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")
         val msg =
@@ -198,11 +198,12 @@ class AddFeedOperationTests {
                 .build()
 
         val result = eventGateway.process(msg)
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Only an admin can add feeds", (result as OperationResult.Error).message)
     }
 
     @Test
-    fun `feed add with regular user role is not handled`() {
+    fun `feed add with regular user role is refused with a reply`() {
         val userPrincipal =
             UserPrincipal(
                 id = UUID.randomUUID(),
@@ -223,6 +224,7 @@ class AddFeedOperationTests {
                 .build()
 
         val result = eventGateway.process(msg)
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Only an admin can add feeds", (result as OperationResult.Error).message)
     }
 }

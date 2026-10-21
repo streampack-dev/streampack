@@ -77,12 +77,16 @@ This deactivates the feed and any active subscriptions attached to it.
 
 ## Permissions
 
-- `feed add`, `feed subscribe`, `feed unsubscribe`, and `feed remove` require `ADMIN`
+- `feed add`, `feed subscribe`, `feed unsubscribe`, and `feed remove` require `ADMIN`. Anyone
+  else gets the reply "Only an admin can subscribe feeds" (or add, unsubscribe, remove). The
+  `github` and `gitlab` commands answer the same way.
 - `feed list` and `feed subscriptions` are readable without admin privileges
 
 ## Practical Notes
 
 - If autodiscovery fails, you can still add the direct feed URL.
+- A feed must be added before you can subscribe to it. `feed subscribe` with a feed that isn't
+  added answers "No feed registered for … Did you mean "feed add …"?".
 - If a feed is already registered, re-adding it is harmless.
 - Polling stores a baseline of entries and only notifies on new items.
 - Feeds are polled in small batches spread over time, not all at once: every 90 seconds the poller takes the five feeds that have been due longest, and each polled feed is next due an hour later (all configurable, see [Environment Variables](../../reference/environment-variables.md)). A feed that fails to fetch is retried with doubling delays up to a day, so a dead feed never ties up the poller.

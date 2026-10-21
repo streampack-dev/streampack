@@ -15,6 +15,7 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
     PollingSourceManagementOperation() {
 
     override val commandPrefix: String = "feed"
+    override val sourceNoun: String = "feeds"
     override val priority: Int = 56
     override val operationGroup: String = "rss"
 
@@ -37,8 +38,11 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
                 OperationResult.Success("Subscribed to \"${outcome.feed.title}\"")
             is SubscriptionOutcome.AlreadySubscribed ->
                 OperationResult.Success("Already subscribed to \"${outcome.feed.title}\"")
+            // Most likely meant "feed add": subscribing needs the feed added first
             is SubscriptionOutcome.FeedNotFound ->
-                OperationResult.Error("No registered feed found for ${outcome.url}")
+                OperationResult.Error(
+                    "No feed registered for ${outcome.url}. Did you mean \"feed add ${outcome.url}\"?",
+                )
             is SubscriptionOutcome.Unsubscribed,
             is SubscriptionOutcome.NotSubscribed -> OperationResult.Error("Unexpected outcome")
         }

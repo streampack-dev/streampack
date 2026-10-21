@@ -63,10 +63,10 @@ class GitLabAddOperation(private val subscriptionService: GitLabSubscriptionServ
         )
     }
 
-    override fun canHandle(payload: AddProjectRequest, message: Message<*>): Boolean =
-        hasRole(message, Role.ADMIN)
-
     override fun handle(payload: AddProjectRequest, message: Message<*>): OperationOutcome {
+        if (!hasRole(message, Role.ADMIN)) {
+            return OperationResult.Error("Only an admin can add GitLab projects")
+        }
         val instance =
             subscriptionService.instanceFor(payload.host) ?: return unknownInstance(payload.host)
         return when (

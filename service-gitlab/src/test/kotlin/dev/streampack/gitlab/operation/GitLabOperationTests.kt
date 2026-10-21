@@ -153,6 +153,20 @@ class GitLabOperationTests {
     private fun message() = MessageBuilder.withPayload("").build()
 
     @Test
+    fun `gitlab add and subscribe from a non-admin are refused with a reply`() {
+        val added = eventGateway.process(guestMessage("gitlab add group/project"))
+        assertEquals(
+            "Only an admin can add GitLab projects",
+            assertInstanceOf(OperationResult.Error::class.java, added).message,
+        )
+        val subscribed = eventGateway.process(guestMessage("gitlab subscribe group/project"))
+        assertEquals(
+            "Only an admin can subscribe GitLab projects",
+            assertInstanceOf(OperationResult.Error::class.java, subscribed).message,
+        )
+    }
+
+    @Test
     fun `instance list shows gitlab dot com and instance add derives the api url`() {
         val listed = eventGateway.process(guestMessage("gitlab instance list"))
         val payload =
