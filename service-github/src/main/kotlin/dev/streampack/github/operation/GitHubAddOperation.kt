@@ -64,11 +64,10 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
         )
     }
 
-    override fun canHandle(payload: AddRepoRequest, message: Message<*>): Boolean {
-        return hasRole(message, Role.ADMIN)
-    }
-
     override fun handle(payload: AddRepoRequest, message: Message<*>): OperationOutcome {
+        if (!hasRole(message, Role.ADMIN)) {
+            return OperationResult.Error("Only an admin can add GitHub repositories")
+        }
         val instance =
             subscriptionService.instanceFor(payload.host) ?: return unknownInstance(payload.host)
         return when (

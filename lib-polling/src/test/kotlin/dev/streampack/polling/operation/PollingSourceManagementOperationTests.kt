@@ -103,25 +103,69 @@ class PollingSourceManagementOperationTests {
     }
 
     @Test
-    fun `subscribe command requires admin`() {
-        assertFalse(operation.canHandle("test subscribe foo", guestMessage("test subscribe foo")))
-        assertTrue(operation.canHandle("test subscribe foo", adminMessage("test subscribe foo")))
+    fun `mutations are taken from everyone, so a non-admin gets a reply`() {
+        for (text in listOf("test subscribe foo", "test unsubscribe foo", "test remove foo")) {
+            assertTrue(operation.canHandle(text, guestMessage(text)), text)
+            assertTrue(operation.canHandle(text, adminMessage(text)), text)
+        }
     }
 
     @Test
-    fun `unsubscribe command requires admin`() {
-        assertFalse(
-            operation.canHandle("test unsubscribe foo", guestMessage("test unsubscribe foo")),
+    fun `subscribe from a non-admin is refused with a reply`() {
+        val result = operation.handle("test subscribe foo", guestMessage("test subscribe foo"))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            "Only an admin can subscribe test sources",
+            (result as OperationResult.Error).message,
         )
-        assertTrue(
-            operation.canHandle("test unsubscribe foo", adminMessage("test unsubscribe foo")),
-        )
+        assertEquals("", operation.lastCall)
     }
 
     @Test
-    fun `remove command requires admin`() {
-        assertFalse(operation.canHandle("test remove foo", guestMessage("test remove foo")))
-        assertTrue(operation.canHandle("test remove foo", adminMessage("test remove foo")))
+    fun `unsubscribe and remove from a non-admin are refused with a reply`() {
+        val unsubscribe =
+            operation.handle("test unsubscribe foo", guestMessage("test unsubscribe foo"))
+        assertEquals(
+            "Only an admin can unsubscribe test sources",
+            (unsubscribe as OperationResult.Error).message,
+        )
+        val remove = operation.handle("test remove foo", guestMessage("test remove foo"))
+        assertEquals(
+            "Only an admin can remove test sources",
+            (remove as OperationResult.Error).message,
+        )
+        assertEquals("", operation.lastCall)
+    }
+
+    @Test
+    fun `the refusal names the subclass's own noun`() {
+        val feeds =
+            object : PollingSourceManagementOperation() {
+                override val commandPrefix = "feed"
+                override val sourceNoun = "feeds"
+                override val priority = 50
+
+                override fun onList() = OperationResult.Success("listed")
+
+                override fun onSubscribe(identifier: String, destinationUri: String) =
+                    OperationResult.Success("subscribed")
+
+                override fun onUnsubscribe(identifier: String, destinationUri: String) =
+                    OperationResult.Success("unsubscribed")
+
+                override fun onSubscriptions(destinationUri: String) =
+                    OperationResult.Success("subscriptions")
+
+                override fun onRemove(identifier: String) = OperationResult.Success("removed")
+            }
+        val result = feeds.handle("feed subscribe x", guestMessage("feed subscribe x"))
+        assertEquals("Only an admin can subscribe feeds", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `subscriptions command is still open to everyone`() {
+        val result = operation.handle("test subscriptions", guestMessage("test subscriptions"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
     }
 
     @Test

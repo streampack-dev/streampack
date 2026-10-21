@@ -28,11 +28,10 @@ class AddFeedOperation(private val feedService: RssSubscriptionService) :
         return AddFeedRequest(url)
     }
 
-    override fun canHandle(payload: AddFeedRequest, message: Message<*>): Boolean {
-        return hasRole(message, Role.ADMIN)
-    }
-
     override fun handle(payload: AddFeedRequest, message: Message<*>): OperationOutcome {
+        if (!hasRole(message, Role.ADMIN)) {
+            return OperationResult.Error("Only an admin can add feeds")
+        }
         return when (val outcome = feedService.addFeed(payload.url)) {
             is AddFeedOutcome.Added ->
                 OperationResult.Success(
