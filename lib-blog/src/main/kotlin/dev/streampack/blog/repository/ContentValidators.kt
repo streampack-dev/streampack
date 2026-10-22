@@ -3,6 +3,7 @@ package dev.streampack.blog.repository
 
 import java.sql.Timestamp
 import java.time.Instant
+import java.util.UUID
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Component
@@ -40,6 +41,10 @@ class ContentValidators(private val jdbc: NamedParameterJdbcTemplate) {
                        WHERE pc.post_id = p.id AND c.name = :category)""",
             mapOf("category" to category),
         )
+
+    /** An author's published posts (#273). */
+    fun byAuthor(authorId: UUID, now: Instant): Validator =
+        postSet(now, "p.author_id = :author AND $NOT_HIDDEN", mapOf("author" to authorId))
 
     /** Search can match any visible post, so its validator covers them all. */
     fun searchable(now: Instant): Validator = postSet(now, NOT_HIDDEN)

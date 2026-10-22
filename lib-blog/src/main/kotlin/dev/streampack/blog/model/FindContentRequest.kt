@@ -23,6 +23,13 @@ sealed interface FindContentRequest {
     data class FindByTag(val tagName: String, val page: Int = 0, val size: Int = 20) :
         FindContentRequest
 
+    /** An author's published posts (#273). */
+    data class FindByAuthor(val authorId: UUID, val page: Int = 0, val size: Int = 20) :
+        FindContentRequest
+
+    /** The caller's own posts, in every state (#273). */
+    data class FindOwn(val page: Int = 0, val size: Int = 20) : FindContentRequest
+
     /** Fetch a single approved page by slug from the _pages system category */
     data class FindPage(val slug: String) : FindContentRequest
 }

@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.model
 
+import dev.streampack.core.model.Role
 import java.time.Instant
 import java.util.UUID
 
@@ -13,6 +14,8 @@ data class ContentDetail(
     val excerpt: String?,
     val authorId: UUID?,
     val authorDisplayName: String,
+    /** The author's role (#273), or null for an anonymous post. */
+    val authorRole: Role? = null,
     val status: PostStatus,
     val publishedAt: Instant?,
     val sortOrder: Int = 0,

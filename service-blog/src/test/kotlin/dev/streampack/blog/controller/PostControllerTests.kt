@@ -579,4 +579,145 @@ class PostControllerTests {
             jsonPath("$.totalCount") { value(0) }
         }
     }
+
+    // --- Posts by author (#273) ---
+
+    /** A second author, with one post published, so lists by author can tell them apart */
+    private fun otherAuthorWithPost(): User {
+        val now = Instant.now()
+        val other =
+            userRepository.save(
+                User(
+                    username = "other",
+                    email = "other@test.com",
+                    displayName = "Other Author",
+                    emailVerified = true,
+                    role = Role.ADMIN,
+                ),
+            )
+        val post =
+            postRepository.save(
+                Post(
+                    title = "Other Post",
+                    markdownSource = "Other content.",
+                    renderedHtml = "<p>Other content.</p>",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(2, ChronoUnit.HOURS),
+                    author = other,
+                    createdAt = now,
+                    updatedAt = now,
+                ),
+            )
+        slugRepository.save(
+            Slug(path = "2026/01/other-post", post = post, canonical = true, createdAt = now),
+        )
+        return other
+    }
+
+    /** A post by [verifiedUser] in [status], published at [publishedAt], and maybe deleted */
+    private fun ownPost(
+        title: String,
+        status: PostStatus,
+        publishedAt: Instant?,
+        deleted: Boolean = false,
+    ): Post {
+        val now = Instant.now()
+        return postRepository.save(
+            Post(
+                title = title,
+                markdownSource = "$title.",
+                renderedHtml = "<p>$title.</p>",
+                status = status,
+                publishedAt = publishedAt,
+                author = verifiedUser,
+                deleted = deleted,
+                createdAt = now,
+                updatedAt = now,
+            ),
+        )
+    }
+
+    @Test
+    fun `GET posts by author lists only that author's published posts`() {
+        val other = otherAuthorWithPost()
+        ownPost("A Draft", PostStatus.DRAFT, null)
+
+        mockMvc.get("/posts?author=${verifiedUser.id}").andExpect {
+            status { isOk() }
+            jsonPath("$.posts.length()") { value(1) }
+            jsonPath("$.posts[0].title") { value("Published Post") }
+            jsonPath("$.totalCount") { value(1) }
+        }
+        mockMvc.get("/posts?author=${other.id}").andExpect {
+            status { isOk() }
+            jsonPath("$.posts.length()") { value(1) }
+            jsonPath("$.posts[0].title") { value("Other Post") }
+        }
+    }
+
+    @Test
+    fun `GET posts by an unknown author returns an empty list`() {
+        mockMvc.get("/posts?author=00000000-0000-0000-0000-000000000000").andExpect {
+            status { isOk() }
+            jsonPath("$.posts.length()") { value(0) }
+            jsonPath("$.totalCount") { value(0) }
+        }
+    }
+
+    @Test
+    fun `GET posts with an author that is not a UUID returns 400`() {
+        mockMvc.get("/posts?author=poster").andExpect { status { isBadRequest() } }
+    }
+
+    @Test
+    fun `GET posts by author with a tag or category returns 400`() {
+        mockMvc.get("/posts?author=${verifiedUser.id}&tag=kotlin").andExpect {
+            status { isBadRequest() }
+        }
+        mockMvc.get("/posts?author=${verifiedUser.id}&category=kotlin").andExpect {
+            status { isBadRequest() }
+        }
+    }
+
+    @Test
+    fun `list entries and details carry the author's id and role`() {
+        otherAuthorWithPost()
+
+        mockMvc.get("/posts").andExpect {
+            status { isOk() }
+            jsonPath("$.posts[0].authorId") { value(verifiedUser.id.toString()) }
+            jsonPath("$.posts[0].authorRole") { value("USER") }
+            jsonPath("$.posts[1].authorRole") { value("ADMIN") }
+        }
+        mockMvc.get("/posts/$slugPath").andExpect {
+            status { isOk() }
+            jsonPath("$.authorRole") { value("USER") }
+        }
+    }
+
+    @Test
+    fun `GET auth posts lists the caller's own posts in every state`() {
+        otherAuthorWithPost()
+        val now = Instant.now()
+        ownPost("A Draft", PostStatus.DRAFT, null)
+        ownPost("Scheduled Post", PostStatus.APPROVED, now.plus(1, ChronoUnit.DAYS))
+        ownPost("Deleted Draft", PostStatus.DRAFT, null, deleted = true)
+
+        mockMvc
+            .get("/auth/posts") { header("Authorization", "Bearer $verifiedUserToken") }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.totalCount") { value(3) }
+                jsonPath("$.posts[?(@.title == 'A Draft')].state") { value("DRAFT") }
+                jsonPath("$.posts[?(@.title == 'Scheduled Post')].state") { value("SCHEDULED") }
+                jsonPath("$.posts[?(@.title == 'Published Post')].state") { value("PUBLISHED") }
+                jsonPath("$.posts[?(@.title == 'Other Post')]") { isEmpty() }
+                jsonPath("$.posts[?(@.title == 'Deleted Draft')]") { isEmpty() }
+            }
+    }
+
+    @Test
+    fun `GET auth posts unauthenticated returns 401`() {
+        mockMvc.get("/auth/posts").andExpect { status { isUnauthorized() } }
+    }
 }

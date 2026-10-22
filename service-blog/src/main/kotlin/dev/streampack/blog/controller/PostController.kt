@@ -71,8 +71,8 @@ class PostController(
         summary = "List published posts",
         description =
             "Returns a paginated list of posts that are approved, not deleted, " +
-                "and have a publishedAt date in the past. Authenticated users also see " +
-                "their own drafts interleaved in the results.",
+                "and have a publishedAt date in the past. Filter by one of `category`, `tag` " +
+                "or `author`; `author` with either of the others is refused.",
         operationId = "listPosts",
     )
     @ApiResponse(
@@ -92,12 +92,26 @@ class PostController(
         @RequestParam(required = false)
         category: String?,
         @Parameter(description = "Filter by tag name") @RequestParam(required = false) tag: String?,
+        @Parameter(description = "Filter by the author's user id (#273)")
+        @RequestParam(required = false)
+        author: UUID?,
         httpRequest: HttpServletRequest,
         httpResponse: HttpServletResponse,
     ): ResponseEntity<*> {
+        if (author != null && (tag != null || category != null)) {
+            return ResponseEntity.badRequest()
+                .body(
+                    ProblemDetail.forStatusAndDetail(
+                        HttpStatus.BAD_REQUEST,
+                        "Filter by author alone, not with a tag or category",
+                    ),
+                )
+        }
         val user = resolveUser(httpRequest)
         val payload =
-            if (tag != null) {
+            if (author != null) {
+                FindContentRequest.FindByAuthor(author, page, size)
+            } else if (tag != null) {
                 FindContentRequest.FindByTag(tag, page, size)
             } else if (category != null) {
                 FindContentRequest.FindByCategory(category, page, size)
@@ -109,9 +123,10 @@ class PostController(
             httpRequest,
             httpResponse,
             personal = user != null,
-            key = listOf("posts", page, size, category, tag),
+            key = listOf("posts", page, size, category, tag, author),
             validator = {
                 when {
+                    author != null -> validators.byAuthor(author, now)
                     tag != null -> validators.byTag(tag, now)
                     category != null -> validators.byCategory(category, now)
                     else -> validators.board(now)

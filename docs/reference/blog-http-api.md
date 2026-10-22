@@ -74,6 +74,7 @@ ignored), whether or not the identity exists. Past the limit, `POST /auth/otp/ve
 | `GET /posts?page=0&size=20` | Lists published blog posts in publication order. |
 | `GET /posts?category=kotlin&page=0&size=20` | Lists published posts in a category. |
 | `GET /posts?tag=kotlin&page=0&size=20` | Lists published posts with a tag. |
+| `GET /posts?author=019d...&page=0&size=20` | Lists an author's published posts. See [Posts by Author](#posts-by-author). |
 | `GET /posts/search?q=spring&page=0&size=20` | Searches published posts; see [Search](#search). |
 | `GET /posts/popular?page=0&size=3` | Lists published posts ordered by decayed access temperature. |
 
@@ -97,13 +98,16 @@ The response shape is `ContentListResponse`:
       "title": "Example Post",
       "slug": "2026/04/example-post",
       "excerpt": "Short summary",
+      "authorId": "019c...",
       "authorDisplayName": "Author",
+      "authorRole": "USER",
       "publishedAt": "2026-04-22T12:00:00Z",
       "sortOrder": 0,
       "commentCount": 0,
       "tags": ["java"],
       "categories": ["articles"],
-      "versionKinds": ["audio"]
+      "versionKinds": ["audio"],
+      "state": "PUBLISHED"
     }
   ],
   "page": 0,
@@ -116,6 +120,23 @@ Each post's `versionKinds` lists the kinds of version it has, sorted, such as `a
 recording, so a list can mark it; it's empty for most posts, and while media is off (#200). The
 versions themselves are in the post's details. The admin drafts list (`GET /admin/posts/pending`)
 carries it too.
+
+### Posts by Author
+
+`GET /posts?author=` takes an author's user id: the UUID that a list entry and a post's details
+carry as `authorId`. It lists that author's published posts in the board's order, without system
+posts. An id that names no author gives an empty list. An id that isn't a UUID gives `400`.
+`author` can't be used with `tag` or `category`: that request also gives `400`.
+
+Each list entry, and each post's details, carry the author in three fields:
+
+- `authorId` is the author's user id, or null for an anonymous post.
+- `authorDisplayName` is the name to show. It is `Anonymous` for an anonymous post.
+- `authorRole` is the author's role (`USER`, `ADMIN` or `SUPER_ADMIN`), or null for an anonymous
+  post. A front end can use it to decide whether to show a byline.
+
+Each list entry also carries `state`: `DRAFT`, `SCHEDULED` or `PUBLISHED`. Public lists carry only
+published posts. The admin lists and [Your Own Posts](#your-own-posts) carry all three.
 
 ### Search
 
@@ -147,6 +168,21 @@ Each result carries `match`, a passage that shows why it matched:
 Popularity is based on `lib-temperature`: each successful direct post read and explicit post access
 event accrues a `blog.post` / `hit` signal. Scores decay over time, so older traffic gradually matters
 less than recent traffic.
+
+## Your Own Posts
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /auth/posts?page=0&size=20` | Lists the signed-in user's own posts, in every state. |
+
+The list has the same shape as the public lists. It carries the caller's posts only, newest first
+by creation time, each with its `state`:
+
+- `DRAFT`: not approved yet. This includes a submission that waits for review.
+- `SCHEDULED`: approved, with a publication time in the future.
+- `PUBLISHED`: approved and visible to everyone.
+
+Deleted posts and system posts are not in the list. Without a session, the request gives `401`.
 
 ## Public Post Details
 

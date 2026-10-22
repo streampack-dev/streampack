@@ -2,8 +2,10 @@
 package dev.streampack.blog.controller
 
 import dev.streampack.blog.config.BlogProperties
+import dev.streampack.blog.model.ContentListResponse
 import dev.streampack.blog.model.DeleteAccountRequest
 import dev.streampack.blog.model.ExportUserDataRequest
+import dev.streampack.blog.model.FindContentRequest
 import dev.streampack.blog.model.LoginResponse
 import dev.streampack.blog.model.MessageResponse
 import dev.streampack.blog.model.OtpRequest
@@ -21,6 +23,7 @@ import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.RefreshTokenService
 import dev.streampack.web.controller.UserAwareController
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -40,6 +43,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /** HTTP adapter for authentication and account management endpoints */
@@ -211,6 +215,41 @@ class AuthController(
         val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
 
         return dispatch(ExportUserDataRequest(), "auth/export", user) { result ->
+            mapError(result, HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @Operation(
+        summary = "List the authenticated user's own posts",
+        description =
+            "Returns the caller's posts in every state, newest first, each with its `state`: " +
+                "`DRAFT`, `SCHEDULED` or `PUBLISHED`. Deleted posts and system pages are left out.",
+        operationId = "listOwnPosts",
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Paginated list of the caller's posts",
+        content = [Content(schema = Schema(implementation = ContentListResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not authenticated",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @GetMapping("/posts", produces = ["application/json"])
+    fun ownPosts(
+        @Parameter(description = "Zero-based page index", example = "0")
+        @RequestParam(defaultValue = "0")
+        page: Int,
+        @Parameter(description = "Number of posts per page", example = "20")
+        @RequestParam(defaultValue = "20")
+        size: Int,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+
+        return dispatch(FindContentRequest.FindOwn(page, size), "auth/posts", user) { result ->
             mapError(result, HttpStatus.BAD_REQUEST)
         }
     }

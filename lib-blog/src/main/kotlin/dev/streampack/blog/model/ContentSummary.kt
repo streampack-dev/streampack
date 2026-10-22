@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.model
 
+import dev.streampack.core.model.Role
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
 import java.util.UUID
@@ -11,7 +12,16 @@ data class ContentSummary(
     val title: String,
     val slug: String,
     val excerpt: String?,
+    /** The author's user id (#273), or null for an anonymous post. */
+    @Schema(
+        description = "The author's user id, for `GET /posts?author=`; null for an anonymous post.",
+        nullable = true,
+    )
+    val authorId: UUID? = null,
     val authorDisplayName: String,
+    /** The author's role (#273), or null for an anonymous post. */
+    @Schema(description = "The author's role; null for an anonymous post.", nullable = true)
+    val authorRole: Role? = null,
     val publishedAt: Instant?,
     val sortOrder: Int = 0,
     val commentCount: Int = 0,
@@ -29,6 +39,13 @@ data class ContentSummary(
         example = "[\"audio\"]",
     )
     val versionKinds: List<String> = emptyList(),
+    /** Where the post is in its life (#273): draft, scheduled or published. */
+    @Schema(
+        description =
+            "Where the post is in its life: `DRAFT`, `SCHEDULED` or `PUBLISHED`. Public lists " +
+                "carry only published posts; `GET /auth/posts` carries all three.",
+    )
+    val state: PostState = PostState.PUBLISHED,
     /** In search results only: why the post matched (#226). */
     @Schema(
         description =
