@@ -30,6 +30,8 @@ Autodiscovery first tries standard feed metadata, then falls back to other feed 
 - body wording that strongly suggests an RSS/Atom link
 - common paths like `/feed.xml` or `/index.xml`
 
+The feed gets its name from its title. If the title is empty, the feed gets the name of its host, without `www.` (for example, `danluu.com`).
+
 ## 2. Subscribe the Current Destination
 
 ```text
