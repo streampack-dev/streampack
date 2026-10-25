@@ -137,6 +137,40 @@ class AddFeedOperationTests {
     }
 
     @Test
+    fun `a feed with an empty or blank title is named by its host (#283)`() {
+        for ((path, title) in listOf("/empty.xml" to "", "/blank.xml" to "  ")) {
+            // As Hugo writes it for a site with no title: danluu.com's feed.
+            val rss =
+                """
+                <?xml version="1.0" encoding="utf-8"?>
+                <rss version="2.0">
+                    <channel>
+                        <title>$title</title>
+                        <link>$baseUrl$path</link>
+                        <description>Recent content on </description>
+                        <item>
+                            <title>Ambitious</title>
+                            <link>$baseUrl/ambitious/</link>
+                            <guid>$baseUrl/ambitious/</guid>
+                        </item>
+                    </channel>
+                </rss>
+                """
+                    .trimIndent()
+            httpServer.createContext(path) { exchange ->
+                exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
+                exchange.responseBody.use { it.write(rss.toByteArray()) }
+            }
+
+            val result = eventGateway.process(message("feed add $baseUrl$path"))
+            assertEquals(
+                "Added feed \"localhost\" with 1 entries",
+                (result as OperationResult.Success).payload,
+            )
+        }
+    }
+
+    @Test
     fun `feed add with invalid URL returns error`() {
         val result = eventGateway.process(message("feed add http://localhost:1/nonexistent"))
         assertInstanceOf(OperationResult.Error::class.java, result)

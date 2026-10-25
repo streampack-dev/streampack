@@ -79,7 +79,12 @@ class RssSubscriptionService(
                 RssFeed(
                     feedUrl = result.feedUrl,
                     siteUrl = syndFeed.link,
-                    title = syndFeed.title ?: result.feedUrl,
+                    /* A feed with an empty <title> (Hugo's, for a site with no name) is named by
+                    its host, as readers see it (#283) */
+                    title =
+                        syndFeed.title?.trim()?.ifBlank { null }
+                            ?: hostOf(result.feedUrl)
+                            ?: result.feedUrl,
                     description = syndFeed.description?.take(2000),
                     lastFetchedAt = Instant.now(),
                     /* Just fetched: the first poll is one interval out, like any other */
