@@ -215,6 +215,11 @@ factoid that doesn't exist, or has no text, has no `title`. When a factoid chang
 link to it are rendered again. Posts stored before #285 are rendered again when the server starts,
 without changing their `updatedAt`.
 
+**ETags of a post.** A post's `ETag` changes whenever its `renderedHtml` does (#287), even when
+`updatedAt` and `Last-Modified` stay the same, as after the startup passes above. A client that
+revalidates with `If-None-Match` gets the new HTML. A client that only sends `If-Modified-Since`
+does not, so send `If-None-Match` when you have an ETag.
+
 
 ## System Posts
 

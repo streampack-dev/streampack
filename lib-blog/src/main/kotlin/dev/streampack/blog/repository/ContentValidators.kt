@@ -17,7 +17,8 @@ import org.springframework.stereotype.Component
  * search and taxonomy tag counts also leave out posts in hidden (`_`) categories. Sets are
  * fingerprinted by their members, their newest change and their comments, so a post falling due (no
  * row changes, only time) or a comment being added changes the validator too. A single post's also
- * covers its versions (#196), so attaching or replacing a recording does.
+ * covers its versions (#196), so attaching or replacing a recording does, and a hash of its HTML
+ * (#287), so a post rendered again without a change to `updatedAt` (as the startup passes do) does.
  */
 @Component
 class ContentValidators(private val jdbc: NamedParameterJdbcTemplate) {
@@ -148,7 +149,7 @@ class ContentValidators(private val jdbc: NamedParameterJdbcTemplate) {
         return jdbc
             .query(
                 """
-                SELECT p.id, p.updated_at, p.published_at,
+                SELECT p.id, p.updated_at, p.published_at, md5(p.rendered_html) AS rendering,
                   (SELECT s2.path FROM slugs s2 WHERE s2.post_id = p.id AND s2.canonical LIMIT 1) AS canonical,
                   (SELECT count(*) || ':' || coalesce(sum(hashtext(pt.tag_id::text)), 0)
                      FROM post_tags pt WHERE pt.post_id = p.id) AS tagging,
@@ -183,6 +184,7 @@ class ContentValidators(private val jdbc: NamedParameterJdbcTemplate) {
                             talked,
                             rs.getString("versions"),
                             versioned,
+                            rs.getString("rendering"),
                         )
                         .joinToString("|"),
                     lastModified,
