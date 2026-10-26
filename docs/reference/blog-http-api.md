@@ -208,6 +208,13 @@ qualify the ids itself, since two posts can share a heading's words. Comments' h
 Posts stored before ids existed are rendered again from their markdown when the server starts,
 without changing their `updatedAt`.
 
+**Factoid links in `renderedHtml`.** `[[selector]]` in a post's markdown links to the factoid. If the
+factoid has a web address, the link goes there; if not, it goes to `/factoids/<selector>`. If the
+factoid has text, the link's `title` is that text (#285), without a leading `<reply>`. A link to a
+factoid that doesn't exist, or has no text, has no `title`. When a factoid changes, the posts that
+link to it are rendered again. Posts stored before #285 are rendered again when the server starts,
+without changing their `updatedAt`.
+
 
 ## System Posts
 

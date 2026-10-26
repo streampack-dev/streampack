@@ -19,6 +19,7 @@ class FactoidWikiLinkResolverServiceTests {
     @Autowired lateinit var resolver: FactoidWikiLinkResolverService
     @Autowired lateinit var factoidRepository: FactoidRepository
     @Autowired lateinit var factoidAttributeRepository: FactoidAttributeRepository
+    @Autowired lateinit var markdownRenderingService: MarkdownRenderingService
 
     @BeforeEach
     fun setup() {
@@ -65,5 +66,36 @@ class FactoidWikiLinkResolverServiceTests {
         )
         val resolved = resolver.resolve("thing")
         assertNull(resolved?.href)
+    }
+
+    @Test
+    fun `a post's factoid links carry the factoid's url and text (#285)`() {
+        val factoid =
+            factoidRepository.save(
+                Factoid(selector = "arrow's information paradox", updatedBy = "test"),
+            )
+        factoidAttributeRepository.save(
+            FactoidAttribute(
+                factoid = factoid,
+                attributeType = FactoidAttributeType.TEXT,
+                attributeValue = "an economics problem",
+                updatedBy = "test",
+            ),
+        )
+        factoidAttributeRepository.save(
+            FactoidAttribute(
+                factoid = factoid,
+                attributeType = FactoidAttributeType.URLS,
+                attributeValue = "https://en.wikipedia.org/wiki/Arrow_information_paradox",
+                updatedBy = "test",
+            ),
+        )
+
+        val html = markdownRenderingService.renderPost("See [[Arrow's information paradox]].")
+        assertEquals(
+            "<p>See <a href=\"https://en.wikipedia.org/wiki/Arrow_information_paradox\"" +
+                " title=\"an economics problem\">Arrow's information paradox</a>.</p>",
+            html,
+        )
     }
 }

@@ -26,7 +26,7 @@ class MarkdownRenderingService(
 ) {
     private val factoidAnchorPattern =
         Regex(
-            """<a\b([^>]*?)href=(['"])/factoids/([^'"#?]+)\2([^>]*)>(.*?)</a>""",
+            """<a\b([^>]*?)href=(['"])/factoids/((?:(?!\2)[^#?])+)\2([^>]*)>(.*?)</a>""",
             setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL),
         )
 
@@ -261,8 +261,13 @@ class MarkdownRenderingService(
             if (selector.isBlank()) return@replace match.value
 
             val metadata = factoidWikiLinkResolver.resolve(selector) ?: return@replace match.value
-            val href = normalizeHref(metadata.href) ?: return@replace match.value
             val title = normalizeFactoidTitle(metadata.title)
+            /* A factoid with text and no web address keeps its /factoids/ link, with its text as
+            the link's title (#285) */
+            val href =
+                normalizeHref(metadata.href)
+                    ?: if (title.isNotBlank()) "/factoids/$selectorRaw"
+                    else return@replace match.value
             buildAnchor(beforeAttrs, afterAttrs, innerHtml, href, title)
         }
     }
