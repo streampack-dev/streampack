@@ -176,8 +176,9 @@ to it; never hype, never shaming), unless `STREAMPACK_GENERATIVE_PROMPT_DIR` hol
 `rss-rating-rubric.clj` or `.txt`. The text sources and the answer's shape (`ANSWER`) stay in code,
 after the rubric, so an override can't break how the answer is read. Each guess stores the first 12
 hex characters of the SHA-256 of the rendered rubric (`rubric`, `V76`; null for older guesses). The
-examples are the editor's ten most recent RATES and
-five most recent DULL, with title, feed and summary. Until there are `min-rated-examples` (3) RATES,
+examples are the editor's most recent ratings, with title, feed and summary:
+`streampack.rss.rating.examples` sets how many of each (30 RATES, 10 MIGHT and 20 DULL by default,
+#289), about 100 tokens an example. Until there are `min-rated-examples` (3) RATES,
 `streampack.rss.rating.seed-examples` are added (Pong Wars; the Total Annihilation rewrite; a point
 release; a tutorial or marketing). It's the same for every chunk and every pass until the editor
 rates more, so prompt caching can serve it; the items are the user message. At 15 to 25 items a day
@@ -185,7 +186,7 @@ a pass is one plain call; should volume grow, the Message Batches API (asynchron
 is the upgrade. Mind `AI_MAX_TOKENS`: a chunk's answer is about 40 tokens an item.
 
 The guess is never shown where items are rated (`GET /admin/rss/items` carries ratings only): only
-the CSV export, `GET /admin/rss/rating-stats` and the admin list of guesses,
+the CSV export, `GET /admin/rss/rating-stats` (narrowed with `since` or `rubric` to measure a change) and the admin list of guesses,
 `GET /admin/rss/rating-guesses` (newest first, with the rating and whether it agrees), read it. Nothing about it
 blocks polling.
 

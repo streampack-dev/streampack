@@ -64,6 +64,9 @@ This reference covers the variables commonly used by `server-streampack`.
 | `RSS_RATING_GUESS_LOOKBACK` | Optional | How far back a pass looks for items with no guess (default `P2D`). |
 | `RSS_RATING_GUESS_CHUNK_SIZE` | Optional | Items per call to the model (default `20`). Each item carries up to 4,000 characters of text, and its answer needs about 40 output tokens, so keep `AI_MAX_TOKENS` above 40 times this. |
 | `RSS_RATING_GUESS_MAX_ITEMS` | Optional | The most items one pass sends (default `200`). |
+| `RSS_RATING_EXAMPLES_RATES` | Optional | How many of the editor's most recent RATES ratings the guess is shown as examples (default `30`). Each is about 100 tokens, the same in every call of a pass. `0` leaves them out. |
+| `RSS_RATING_EXAMPLES_MIGHT` | Optional | The same for MIGHT (default `10`). |
+| `RSS_RATING_EXAMPLES_DULL` | Optional | The same for DULL (default `20`). |
 | `BLOG_MERMAID_ENABLED` | Optional | Draw posts' and comments' Mermaid blocks as SVG when they're saved (default `true`). Off, they stay code. See [Draw Diagrams in Posts](../how-to/blog/draw-diagrams-in-posts.md). |
 | `BLOG_MERMAID_TIMEOUT` | Optional | The longest one diagram may take to draw before it's left as code (default `5s`). |
 | `BLOG_MENTIONS_ENABLED` | Optional | Tell the pages a published post links to of the mention, by Webmention or Pingback (default `true`). Never sent while `BLOG_BASE_URL` is localhost or a private address. |

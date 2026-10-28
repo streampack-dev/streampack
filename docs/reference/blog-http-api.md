@@ -773,7 +773,7 @@ against the ratings before anything is shown or suggested. Every endpoint is for
 | `DELETE /admin/rss/items/{id}/rating` | Clears the item's rating (`204`, whether it had one or not). |
 | `GET /admin/rss/items?rating=all&page=0&size=50` | Items as `/rss/items` lists them, with their ratings. `rating` is `all` (default), `rates`, `might`, `dull` or `unrated`; `size` is 1 to 100; `feed` and `title` filter as on `/rss/items`. |
 | `GET /admin/rss/ratings.csv` | Every item with a rating or a guess, as CSV, for offline evaluation. |
-| `GET /admin/rss/rating-stats` | How the guess agrees with the ratings. |
+| `GET /admin/rss/rating-stats` | How the guess agrees with the ratings; `since` and `rubric` narrow it to the guesses made after a change. |
 | `GET /admin/rss/rating-guesses?label=all&rated=all&page=0&size=50` | The model's guesses, newest first, with the editor's rating and whether they agree. `label` is `all` (default), `rates`, `might` or `dull`; `rated` is `all` (default), `yes` or `no`; `size` is 1 to 100; `feed` and `title` filter as on `/rss/items`. |
 | `POST /admin/rss/rating-guesses/run` | Runs a guess pass now, as the daily one does. `409` while the guess is off, or while a pass is running. |
 
@@ -800,7 +800,11 @@ made before it was recorded). Rated items come first, newest rating first, then
 the guessed-only ones; a column is empty where there's no rating or no guess. A text field that a
 spreadsheet would take for a formula (starting `=`, `+`, `-`, `@`) is prefixed with `'`.
 
-The stats (`RssRatingStatsResponse`) compare the items that have both a rating and a guess:
+The stats (`RssRatingStatsResponse`) compare the items that have both a rating and a guess. To
+measure a change, `since` (an ISO-8601 instant, such as `2026-10-28T00:00:00Z`) counts only the
+guesses made at or after it, and `rubric` only those made with that rubric's short hash; either can
+be left out, and a `since` that isn't an instant is a `400`. The rating counts are always all of
+them.
 
 ```json
 {
@@ -850,8 +854,9 @@ in the last two days with no guess to `AI_MODERATION_MODEL`, 20 to a call, one p
 chunk, with structured output: `{itemId, label, confidence, reason}` per item. Each item is judged
 on its text, cut to 4,000 characters: the feed's own full content when it gave any, else the
 article page's (fetched once, through the guarded fetcher, and kept), else its summary. The rubric,
-the instructions for the answer, and the examples (the editor's ten latest `RATES` and five latest
-`DULL`, or seed exemplars until there are three `RATES`) are the system prompt, the same for every
+the instructions for the answer, and the examples (the editor's 30 latest `RATES`, 10 latest `MIGHT`
+and 20 latest `DULL`, set by `RSS_RATING_EXAMPLES_*`, with seed exemplars added until there are
+three `RATES`) are the system prompt, the same for every
 call in a pass.
 
 The rubric is the `rss-rating-rubric` prompt, through `lib-generative`: the bundled default

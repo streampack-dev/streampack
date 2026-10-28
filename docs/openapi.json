@@ -5301,8 +5301,23 @@
     },
     "/admin/rss/rating-stats" : {
       "get" : {
-        "description" : "Counts per rating; agreement overall and per rating, and the confusion matrix, over the items with both a rating and a guess; and the items guessed RATES but rated DULL, and rated RATES but guessed DULL.",
+        "description" : "Counts per rating; agreement overall and per rating, and the confusion matrix, over the items with both a rating and a guess; and the items guessed RATES but rated DULL, and rated RATES but guessed DULL. `since` (an ISO-8601 instant) counts only the guesses made at or after it, and `rubric` only those made with that rubric's short hash, so a change can be measured; the rating counts are always all of them.",
         "operationId" : "rssRatingStats",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "since",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "rubric",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
             "content" : {
@@ -5313,6 +5328,16 @@
               }
             },
             "description" : "The stats"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "A since that isn't an instant"
           },
           "401" : {
             "content" : {
