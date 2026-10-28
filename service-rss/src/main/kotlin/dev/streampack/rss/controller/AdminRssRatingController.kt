@@ -20,6 +20,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import java.time.Instant
+import java.time.format.DateTimeParseException
 import java.util.UUID
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -185,7 +187,10 @@ class AdminRssRatingController(
         description =
             "Counts per rating; agreement overall and per rating, and the confusion matrix, " +
                 "over the items with both a rating and a guess; and the items guessed RATES but " +
-                "rated DULL, and rated RATES but guessed DULL.",
+                "rated DULL, and rated RATES but guessed DULL. `since` (an ISO-8601 instant) " +
+                "counts only the guesses made at or after it, and `rubric` only those made with " +
+                "that rubric's short hash, so a change can be measured; the rating counts are " +
+                "always all of them.",
         operationId = "rssRatingStats",
     )
     @ApiResponse(
@@ -193,9 +198,26 @@ class AdminRssRatingController(
         description = "The stats",
         content = [Content(schema = Schema(implementation = RssRatingStatsResponse::class))],
     )
+    @ApiResponse(
+        responseCode = "400",
+        description = "A since that isn't an instant",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @GetMapping("/rating-stats", produces = ["application/json"])
-    fun stats(httpRequest: HttpServletRequest): ResponseEntity<*> =
-        asAdmin(httpRequest) { ResponseEntity.ok(ratings.stats()) }
+    fun stats(
+        @RequestParam(required = false) since: String?,
+        @RequestParam(required = false) rubric: String?,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> =
+        asAdmin(httpRequest) {
+            val from =
+                try {
+                    since?.let(Instant::parse)
+                } catch (_: DateTimeParseException) {
+                    return@asAdmin badRequest("since is an instant, such as 2026-10-28T00:00:00Z")
+                }
+            ResponseEntity.ok(ratings.stats(from, rubric?.takeIf { it.isNotBlank() }))
+        }
 
     @Operation(
         summary = "The model's guesses",

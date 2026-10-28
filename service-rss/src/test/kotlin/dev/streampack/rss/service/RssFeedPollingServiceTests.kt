@@ -391,6 +391,41 @@ class RssFeedPollingServiceTests {
         entryRepository.findByFeedAndGuidIn(feed, listOf("http://example.com/a/$id")).single()
 
     @Test
+    fun `an entry's relative link is stored, logged and announced against the feed's own address`() {
+        val feed = createFeed("Relative", "/~yosh/blog/feed.atom")
+        subscribeFeed(
+            feed,
+            Provenance(protocol = Protocol.IRC, serviceId = "libera", replyTo = "#java").encode(),
+        )
+        serve(
+            "/~yosh/blog/feed.atom",
+            atom(
+                """<entry><title>rooted</title><id>urn:uuid:rooted</id>
+                <link rel="alternate" href="/~yosh/blog/pratt.html"/>
+                <updated>2026-10-25T21:50:00Z</updated></entry>""",
+                """<entry><title>beside</title><id>urn:uuid:beside</id>
+                <link rel="alternate" href="getopt.html"/>
+                <updated>2026-10-20T21:50:00Z</updated></entry>""",
+            ),
+        )
+
+        val logged = warnings { pollingService.pollFeed(feed) }
+
+        val links =
+            entryRepository
+                .findByFeedAndGuidIn(feed, listOf("urn:uuid:rooted", "urn:uuid:beside"))
+                .associate { it.guid to it.link }
+        assertEquals("$baseUrl/~yosh/blog/pratt.html", links["urn:uuid:rooted"])
+        assertEquals("$baseUrl/~yosh/blog/getopt.html", links["urn:uuid:beside"])
+        assertTrue(logged.none { "not http or https" in it }, logged.toString())
+        val said =
+            capturingEgressSubscriber.captured.map { (r, _) ->
+                (r as OperationResult.Success).payload.toString()
+            }
+        assertTrue(said.any { it.endsWith("- $baseUrl/~yosh/blog/pratt.html") }, said.toString())
+    }
+
+    @Test
     fun `an Atom entry with only updated takes its updated time`() {
         val feed = createFeed("Atom updated", "/updated.xml")
         serve("/updated.xml", atom(atomEntry("only-updated", "2020-03-04T05:06:07Z")))

@@ -267,12 +267,20 @@ class RssRatingService(
 
     /**
      * Counts per rating, and how the guess agrees with the ratings over the items that have both:
-     * overall, per rating, as a confusion matrix, and the two worst kinds of miss.
+     * overall, per rating, as a confusion matrix, and the two worst kinds of miss. Only the guesses
+     * made at or after [since], and with the [rubric] hash, count when they're given.
      */
     @Transactional(readOnly = true)
-    fun stats(): RssRatingStatsResponse {
+    fun stats(since: Instant? = null, rubric: String? = null): RssRatingStatsResponse {
         val rated = ratings.findAll().associate { it.itemId to it.rating }
-        val guessed = guesses.findAll().associateBy { it.itemId }
+        // Only the guesses made since a change, or with one rubric, so a change can be measured
+        // (#289)
+        val guessed =
+            guesses
+                .findAll()
+                .filter { since == null || !it.guessedAt.isBefore(since) }
+                .filter { rubric == null || it.rubric == rubric }
+                .associateBy { it.itemId }
         val pairs = rated.mapNotNull { (id, rating) -> guessed[id]?.let { id to (rating to it) } }
         val compared = pairs.size.toLong()
         val agreed = pairs.count { (_, p) -> p.first == p.second.label }.toLong()

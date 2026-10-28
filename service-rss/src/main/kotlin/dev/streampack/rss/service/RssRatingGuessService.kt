@@ -259,19 +259,21 @@ class RssRatingGuessService(
     }
 
     /**
-     * The editor's own most recent ratings, as examples: [RATES_EXAMPLES] RATES and [DULL_EXAMPLES]
-     * DULL, newest first, each with its item's id.
+     * The editor's own most recent ratings, as examples: as many RATES, MIGHT and DULL as
+     * `streampack.rss.rating.examples` says (#289), newest first, each with its item's id.
      */
     fun examples(): List<Pair<UUID, Example>> {
+        val counts = properties.rating.examples
         val chosen =
-            ratings.findByRatingOrderByRatedAtDesc(
-                RssRating.RATES,
-                PageRequest.of(0, RATES_EXAMPLES),
-            ) +
-                ratings.findByRatingOrderByRatedAtDesc(
-                    RssRating.DULL,
-                    PageRequest.of(0, DULL_EXAMPLES),
+            listOf(
+                    RssRating.RATES to counts.rates,
+                    RssRating.MIGHT to counts.might,
+                    RssRating.DULL to counts.dull,
                 )
+                .filter { (_, count) -> count > 0 }
+                .flatMap { (rating, count) ->
+                    ratings.findByRatingOrderByRatedAtDesc(rating, PageRequest.of(0, count))
+                }
         val items = entries.findWithFeedByIdIn(chosen.map { it.itemId }).associateBy { it.id }
         return chosen.mapNotNull { rating ->
             items[rating.itemId]?.let { rating.itemId to it.asExample(rating.rating) }
@@ -287,8 +289,6 @@ class RssRatingGuessService(
     private fun RssEntry.asExample(rating: RssRating) = Example(rating, title, feed.title, summary)
 
     companion object {
-        const val RATES_EXAMPLES = 10
-        const val DULL_EXAMPLES = 5
         private const val MAX_REASON = 1000
         private const val MAX_SUMMARY = 300
 

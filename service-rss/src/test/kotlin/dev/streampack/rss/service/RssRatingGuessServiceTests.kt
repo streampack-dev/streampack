@@ -58,6 +58,7 @@ import org.springframework.test.web.servlet.post
             "streampack.rss.rating.model-guess=true",
             "streampack.rss.rating.chunk-size=2",
             "streampack.rss.rating.min-rated-examples=2",
+            "streampack.rss.rating.examples.dull=1",
             // The scheduled pass never runs during these tests; they run passes themselves
             "streampack.rss.rating.first-guess-delay=P30D",
             "streampack.generative.prompt-dir=\${java.io.tmpdir}/streampack-rss-rubric-tests",
@@ -336,6 +337,25 @@ class RssRatingGuessServiceTests {
         // Enough RATES of the editor's own: no seeds
         assertFalse("Pong Wars" in call.system, call.system)
         assertEquals(listOf(fresh.id.toString()), RecordingAi.idsIn(call.prompt))
+    }
+
+    @Test
+    fun `MIGHT is shown too, and each kind only as many of the newest as the settings say`() {
+        val maybe = item(1, summary = "Maybe summary")
+        val older = item(2, summary = "Older dull")
+        val newer = item(3, summary = "Newer dull")
+        ratings.rate(maybe.id, RssRating.MIGHT, "editor")
+        ratings.rate(older.id, RssRating.DULL, "editor")
+        ratings.rate(newer.id, RssRating.DULL, "editor")
+
+        service.run()
+
+        val system = ai.calls.single().system
+        assertTrue("- MIGHT: \"Item 1\" (Feed A). Maybe summary" in system, system)
+        assertTrue("- DULL: \"Item 3\" (Feed A). Newer dull" in system, system)
+        // One DULL in these tests' settings: the older one isn't an example, so it's guessed
+        assertFalse("Older dull" in system, system)
+        assertEquals(listOf(older.id.toString()), RecordingAi.idsIn(ai.calls.single().prompt))
     }
 
     @Test

@@ -164,6 +164,10 @@ streampack:
       guess-lookback: ${RSS_RATING_GUESS_LOOKBACK:P2D}
       chunk-size: ${RSS_RATING_GUESS_CHUNK_SIZE:20}
       max-items-per-run: ${RSS_RATING_GUESS_MAX_ITEMS:200}
+      examples:
+        rates: ${RSS_RATING_EXAMPLES_RATES:30}
+        might: ${RSS_RATING_EXAMPLES_MIGHT:10}
+        dull: ${RSS_RATING_EXAMPLES_DULL:20}
   github:
     poll-interval: ${GITHUB_POLL_INTERVAL:PT60M}
     scheduler-interval: ${GITHUB_SCHEDULER_INTERVAL:PT90S}

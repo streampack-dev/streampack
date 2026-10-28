@@ -571,6 +571,41 @@ class AdminRssRatingControllerTests {
     }
 
     @Test
+    fun `the stats count only the guesses since a time, or with a rubric, when asked`() {
+        rate(item(1), "RATES")
+        rate(item(2), "DULL")
+        rate(item(3), "MIGHT")
+        guess(1, RssRating.DULL, guessedAt = Instant.parse("2026-10-01T00:00:00Z"), rubric = "old")
+        guess(2, RssRating.DULL, guessedAt = Instant.parse("2026-10-20T00:00:00Z"), rubric = "new")
+        guess(3, RssRating.RATES, guessedAt = Instant.parse("2026-10-21T00:00:00Z"), rubric = "new")
+
+        fun stats(query: String) =
+            mockMvc.get("/admin/rss/rating-stats$query") {
+                header("Authorization", "Bearer $adminToken")
+            }
+        stats("").andExpect {
+            jsonPath("$.counts.compared") { value(3) }
+            jsonPath("$.agreement") { value(1.0 / 3) }
+        }
+        stats("?since=2026-10-20T00:00:00Z").andExpect {
+            jsonPath("$.counts.rated") { value(3) }
+            jsonPath("$.counts.guessed") { value(2) }
+            jsonPath("$.counts.compared") { value(2) }
+            jsonPath("$.agreement") { value(0.5) }
+        }
+        stats("?rubric=old").andExpect {
+            jsonPath("$.counts.compared") { value(1) }
+            jsonPath("$.agreement") { value(0.0) }
+        }
+        stats("?since=2026-10-21T00:00:00Z&rubric=new").andExpect {
+            jsonPath("$.counts.compared") { value(1) }
+            jsonPath("$.perClass[1].rated") { value(1) }
+            jsonPath("$.perClass[1].agreed") { value(0) }
+        }
+        stats("?since=yesterday").andExpect { status { isBadRequest() } }
+    }
+
+    @Test
     fun `with no guesses the stats have nothing to divide`() {
         rate(item(1), "RATES")
         mockMvc
