@@ -80,7 +80,10 @@ class CalculatorServiceTests {
         assertEquals(Math.PI.toString(), service.evaluate("pi"))
     }
 
-    /** ParserNG 3 gives Infinity for 0/0 (NaN before); accepted upstream, so pinned (#272). */
+    /**
+     * ParserNG 3.0.9.1 gives Infinity for 0/0 (NaN before); pinned (#272). ParserNG 3.0.9.2 gives
+     * NaN again, so this test changes to NaN with that upgrade.
+     */
     @Test
     fun `gives infinity for zero over zero`() {
         assertEquals("Infinity", service.evaluate("0/0"))
@@ -139,6 +142,31 @@ class CalculatorServiceTests {
             calls
                 .map { it.get(30, TimeUnit.SECONDS) }
                 .forEach { (n, result) -> assertEquals("$n.0", result) }
+        } finally {
+            pool.shutdownNow()
+        }
+        assertTrue(FunctionManager.FUNCTIONS.isEmpty())
+    }
+
+    @Test
+    fun `keeps each calculation apart when many kinds run at the same time`() {
+        val pool = Executors.newFixedThreadPool(32)
+        try {
+            val calls =
+                (1..5000).map { n ->
+                    pool.submit<Pair<String?, String?>> {
+                        when (n % 5) {
+                            0 -> "$n.0" to service.evaluate("calcmixed(x)=x+$n;calcmixed(0)")
+                            1 -> "99.0" to service.evaluate("sin(x)=99;sin(0)")
+                            2 -> "0.0" to service.evaluate("sin(0)")
+                            3 -> "${n * 2}.0" to service.evaluate("calcmixedvar=$n;calcmixedvar*2")
+                            else -> null to service.evaluate("calcmixed(2)")
+                        }
+                    }
+                }
+            val wrong =
+                calls.map { it.get(60, TimeUnit.SECONDS) }.filter { (want, got) -> want != got }
+            assertEquals(emptyList<Pair<String?, String?>>(), wrong.take(20), "${wrong.size} wrong")
         } finally {
             pool.shutdownNow()
         }

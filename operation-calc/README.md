@@ -41,6 +41,17 @@ Some results come from ParserNG as they are:
 | `0/0` | `Infinity` (not `NaN`; ParserNG's behaviour) |
 | `sqrt(-1)` | `NaN` |
 
+### Upgrading ParserNG to 3.0.9.2
+
+ParserNG 3.0.9.2 adds `FunctionScope`, which gives each expression its own function store.
+We tested its `function-scope-branch` (`4022c78`) with these steps, and all tests passed:
+
+1. In `pom.xml`, change `parser-ng` to the new version.
+2. In `CalculatorService`, remove `alone`, `lock` and `forgetFunctionsAfter`. Call `solve`
+   directly, and create each expression with `MathExpression(expression, false, true, FunctionScope.create())`.
+3. In `CalculatorServiceTests`, change the `0/0` result to `NaN`, and in the table above, change it
+   to `NaN`. Then change this section and the "one calculation at a time" text above.
+
 ## Example Flows
 
 - Evaluate a simple expression:

@@ -35,13 +35,26 @@ class CalculatorService {
      */
     fun evaluate(expression: String): String? {
         if (expression.isBlank()) return null
-        return lock.withLock {
-            val defined = FunctionManager.FUNCTIONS.keys.toSet()
-            try {
-                solve(expression)
-            } finally {
-                forgetFunctionsAfter(defined)
-            }
+        return alone { solve(expression) }
+    }
+
+    /**
+     * Runs a calculation alone, and removes the functions that it defined when it ends.
+     *
+     * This is the only code that handles ParserNG's shared store. ParserNG 3.0.9.2 adds
+     * `FunctionScope`, which gives each expression its own store. When we use that version, remove
+     * this function, [lock] and [forgetFunctionsAfter], and give each expression a new scope in
+     * [solve]: `MathExpression(expression, false, true, FunctionScope.create())`.
+     *
+     * @param calculation the calculation to run
+     * @return the result of [calculation]
+     */
+    private fun alone(calculation: () -> String?): String? = lock.withLock {
+        val defined = FunctionManager.FUNCTIONS.keys.toSet()
+        try {
+            calculation()
+        } finally {
+            forgetFunctionsAfter(defined)
         }
     }
 
