@@ -6,7 +6,8 @@ It covers:
 
 - feed discovery and registration
 - destination subscriptions
-- feed polling in bounded, spread-out batches with backoff, and new-entry notifications
+- feed polling in bounded, spread-out batches with backoff, and new-entry notifications; an
+  entry's relative link (Atom allows them) is resolved against the feed's address (#290)
 - OPML export and import for the registered feed catalog
 - following the sites published posts link to (autosubscribe, #128)
 - admins' ratings of items (RATES, MIGHT, DULL), and the model's hidden guess at them (#187)
