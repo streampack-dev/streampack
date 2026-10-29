@@ -1,18 +1,17 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.hangman.service
 
-import dev.streampack.hangman.entity.BlockedWord
-import dev.streampack.hangman.repository.BlockedWordRepository
+import dev.streampack.core.service.ExtensionDataStore
+import dev.streampack.hangman.HangmanExtension
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
-/** Coordinates word selection with blocklist filtering */
+/**
+ * Coordinates word selection with blocklist filtering; the blocklist is in the server's store
+ * (#294)
+ */
 @Service
-class HangmanService(
-    private val wordSource: WordSource,
-    private val blockedWordRepository: BlockedWordRepository,
-) {
+class HangmanService(private val wordSource: WordSource, private val store: ExtensionDataStore) {
     private val logger = LoggerFactory.getLogger(HangmanService::class.java)
 
     /** Selects a random word that is not blocked, with a max-attempts guard */
@@ -29,22 +28,20 @@ class HangmanService(
         )
     }
 
-    fun isBlocked(word: String): Boolean = blockedWordRepository.existsByWord(word.lowercase())
+    fun isBlocked(word: String): Boolean =
+        store.get(HangmanExtension.NAME, BLOCKED, word.lowercase()) != null
 
-    @Transactional
     fun blockWord(word: String) {
-        val normalized = word.lowercase()
-        if (!blockedWordRepository.existsByWord(normalized)) {
-            blockedWordRepository.save(BlockedWord(word = normalized))
-        }
+        store.put(HangmanExtension.NAME, BLOCKED, word.lowercase(), emptyMap())
     }
 
-    @Transactional
     fun unblockWord(word: String) {
-        blockedWordRepository.deleteByWord(word.lowercase())
+        store.delete(HangmanExtension.NAME, BLOCKED, word.lowercase())
     }
 
     companion object {
         const val MAX_ATTEMPTS = 100
+        /** The blocked words, one empty document per word, by the word in lower case. */
+        const val BLOCKED = "blocked-words"
     }
 }

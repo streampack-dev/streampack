@@ -2,12 +2,10 @@
 package dev.streampack.hangman.service
 
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnResource
 import org.springframework.stereotype.Component
 
-/** Loads hangman words from a classpath resource file */
+/** Loads hangman words from hangman-words.txt, which ships in this jar */
 @Component
-@ConditionalOnResource(resources = ["classpath:hangman-words.txt"])
 class ResourceWordSource : WordSource {
     private val logger = LoggerFactory.getLogger(ResourceWordSource::class.java)
     private val words: List<String>
