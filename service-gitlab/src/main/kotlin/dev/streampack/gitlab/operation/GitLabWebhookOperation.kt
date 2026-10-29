@@ -12,6 +12,7 @@ import dev.streampack.core.parser.CommandMatchResult
 import dev.streampack.core.parser.CommandPattern
 import dev.streampack.core.parser.CommandPatternMatcher
 import dev.streampack.core.parser.StringArgType
+import dev.streampack.core.service.Egress
 import dev.streampack.core.service.TranslatingOperation
 import dev.streampack.forge.command.InstanceSelector
 import dev.streampack.gitlab.config.ConditionalOnGitLab
@@ -20,7 +21,6 @@ import dev.streampack.gitlab.entity.GitLabInstance
 import dev.streampack.gitlab.model.GitLabWebhookEnableRequest
 import dev.streampack.gitlab.service.GitLabWebhookAdminService
 import dev.streampack.gitlab.service.GitLabWebhookEnableOutcome
-import dev.streampack.polling.service.EgressNotifier
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component
 @ConditionalOnGitLab
 class GitLabWebhookOperation(
     private val adminService: GitLabWebhookAdminService,
-    private val notifier: EgressNotifier,
+    private val notifier: Egress,
     properties: StreampackProperties,
     gitLabProperties: GitLabProperties,
 ) : TranslatingOperation<GitLabWebhookEnableRequest>(GitLabWebhookEnableRequest::class) {

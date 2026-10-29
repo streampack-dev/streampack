@@ -2,10 +2,10 @@
 package dev.streampack.rss.service
 
 import com.rometools.rome.feed.synd.SyndEntry
+import dev.streampack.core.service.Egress
 import dev.streampack.polling.schedule.DueBatchPollingService
 import dev.streampack.polling.schedule.PollResult
 import dev.streampack.polling.schedule.PollSchedule
-import dev.streampack.polling.service.EgressNotifier
 import dev.streampack.rss.config.RssProperties
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.entity.RssFeed
@@ -29,7 +29,7 @@ class RssFeedPollingService(
     private val entryRepository: RssEntryRepository,
     private val subscriptionRepository: RssFeedSubscriptionRepository,
     private val discoveryService: FeedDiscoveryService,
-    private val egressNotifier: EgressNotifier,
+    private val egressNotifier: Egress,
     private val rssProperties: RssProperties,
     private val feedTags: FeedTagService,
     private val itemTexts: RssItemTextService,

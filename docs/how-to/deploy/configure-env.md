@@ -59,6 +59,7 @@ Optional integrations:
 |----------|---------|
 | `STREAMPACK_NAME` | The deployment's name, and the default for the site's name, the IRC identity, the karma-immune subjects and the user agent. |
 | `STREAMPACK_EXT_DIR` | The directory of extension jars and extra classpath files. See [Extend the Server with Jars](extend-the-server-with-jars.md). |
+| `STREAMPACK_HANGMAN_WORDS` | Hangman's word list. See [Use the Infobot](../infobot/use-the-infobot.md#hangman). |
 | `IRC_ENABLED` | Enables IRC adapter. |
 | `DISCORD_ENABLED` | Enables Discord adapter. |
 | `SLACK_ENABLED` | Enables Slack adapter. |

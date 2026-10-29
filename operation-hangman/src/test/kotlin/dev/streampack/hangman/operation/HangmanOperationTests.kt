@@ -1,29 +1,35 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.hangman.operation
 
-import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.json.JacksonMappers
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
-import dev.streampack.core.service.ProvenanceStateService
+import dev.streampack.core.testing.ExtensionHarness
 import dev.streampack.hangman.model.HangmanGameState
+import dev.streampack.hangman.service.HangmanService
+import dev.streampack.hangman.service.ResourceWordSource
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.support.MessageBuilder
 import tools.jackson.module.kotlin.convertValue
 
-@SpringBootTest
 class HangmanOperationTests {
+    private val harness = ExtensionHarness()
+    private val stateService = harness.state
+    private val hangmanService =
+        HangmanService(ResourceWordSource(ResourceWordSource.DEFAULT), harness.data)
+
+    init {
+        harness.use(
+            HangmanOperation(stateService, hangmanService),
+            HangmanAdminOperation(hangmanService),
+        )
+    }
+
     val logger = LoggerFactory.getLogger(HangmanOperationTests::class.java)
-
-    @Autowired lateinit var eventGateway: EventGateway
-
-    @Autowired lateinit var stateService: ProvenanceStateService
 
     private val objectMapper = JacksonMappers.standard()
 
@@ -44,7 +50,7 @@ class HangmanOperationTests {
 
     @Test
     fun `start new game creates state and shows masked word`() {
-        val result = eventGateway.process(hangmanMessage("hangman"))
+        val result = harness.dispatch(hangmanMessage("hangman"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("Hangman:"))
@@ -56,8 +62,8 @@ class HangmanOperationTests {
 
     @Test
     fun `hangman with active game shows current state`() {
-        eventGateway.process(hangmanMessage("hangman"))
-        val result = eventGateway.process(hangmanMessage("hangman"))
+        harness.dispatch(hangmanMessage("hangman"))
+        val result = harness.dispatch(hangmanMessage("hangman"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("Hangman:"))
@@ -73,7 +79,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman a"))
+        val result = harness.dispatch(hangmanMessage("hangman a"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("'a' is in the word"))
@@ -89,7 +95,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman z"))
+        val result = harness.dispatch(hangmanMessage("hangman z"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("No 'z'"))
@@ -105,7 +111,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman a"))
+        val result = harness.dispatch(hangmanMessage("hangman a"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("already guessed 'a'"))
@@ -120,7 +126,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman solve apple"))
+        val result = harness.dispatch(hangmanMessage("hangman solve apple"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("got it"))
@@ -139,7 +145,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman solve apple"))
+        val result = harness.dispatch(hangmanMessage("hangman solve apple"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         // Should NOT contain the normal "got it" - should be a playful suspicion
@@ -156,7 +162,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman solve apple"))
+        val result = harness.dispatch(hangmanMessage("hangman solve apple"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertFalse(payload.contains("got it"))
@@ -172,7 +178,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman solve orange"))
+        val result = harness.dispatch(hangmanMessage("hangman solve orange"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("is not the word"))
@@ -191,7 +197,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman concede"))
+        val result = harness.dispatch(hangmanMessage("hangman concede"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("concede"))
@@ -203,7 +209,7 @@ class HangmanOperationTests {
 
     @Test
     fun `concede with no active game returns graceful message`() {
-        val result = eventGateway.process(hangmanMessage("hangman concede"))
+        val result = harness.dispatch(hangmanMessage("hangman concede"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("No game in progress"))
@@ -218,7 +224,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman z"))
+        val result = harness.dispatch(hangmanMessage("hangman z"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("No lives left"))
@@ -237,7 +243,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman t"))
+        val result = harness.dispatch(hangmanMessage("hangman t"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("got it"))
@@ -249,7 +255,7 @@ class HangmanOperationTests {
 
     @Test
     fun `guess with no active game returns error`() {
-        val result = eventGateway.process(hangmanMessage("hangman a"))
+        val result = harness.dispatch(hangmanMessage("hangman a"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         assertTrue(message.contains("No game in progress"))
@@ -257,7 +263,7 @@ class HangmanOperationTests {
 
     @Test
     fun `solve with no active game returns error`() {
-        val result = eventGateway.process(hangmanMessage("hangman solve test"))
+        val result = harness.dispatch(hangmanMessage("hangman solve test"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         assertTrue(message.contains("No game in progress"))
@@ -265,7 +271,7 @@ class HangmanOperationTests {
 
     @Test
     fun `non-hangman message is not handled`() {
-        val result = eventGateway.process(hangmanMessage("calc 2+3"))
+        val result = harness.dispatch(hangmanMessage("calc 2+3"))
         // Should not be handled by HangmanOperation
         if (result is OperationResult.Success) {
             val payload = result.payload as String
@@ -283,7 +289,7 @@ class HangmanOperationTests {
         )
 
         // Hebrew alef should not be accepted as a valid guess
-        val result = eventGateway.process(hangmanMessage("hangman \u05D0"))
+        val result = harness.dispatch(hangmanMessage("hangman \u05D0"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         logger.info(message)
@@ -304,7 +310,7 @@ class HangmanOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(hangmanMessage("hangman solve wrong"))
+        val result = harness.dispatch(hangmanMessage("hangman solve wrong"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("No lives left"))

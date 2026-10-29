@@ -1,31 +1,35 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.hangman.operation
 
-import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
-import dev.streampack.core.service.ProvenanceStateService
+import dev.streampack.core.testing.ExtensionHarness
 import dev.streampack.hangman.model.HangmanGameState
 import dev.streampack.hangman.service.HangmanService
+import dev.streampack.hangman.service.ResourceWordSource
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.support.MessageBuilder
 
-@SpringBootTest
 class HangmanAdminOperationTests {
+    private val harness = ExtensionHarness()
+    private val stateService = harness.state
+    private val hangmanService =
+        HangmanService(ResourceWordSource(ResourceWordSource.DEFAULT), harness.data)
 
-    @Autowired lateinit var eventGateway: EventGateway
-    @Autowired lateinit var hangmanService: HangmanService
-    @Autowired lateinit var stateService: ProvenanceStateService
+    init {
+        harness.use(
+            HangmanOperation(stateService, hangmanService),
+            HangmanAdminOperation(hangmanService),
+        )
+    }
 
     private fun adminPrincipal() =
         UserPrincipal(
@@ -63,7 +67,7 @@ class HangmanAdminOperationTests {
 
     @Test
     fun `admin can block a word`() {
-        val result = eventGateway.process(message("hangman block badword", adminPrincipal()))
+        val result = harness.dispatch(message("hangman block badword", adminPrincipal()))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("Blocked"))
@@ -74,7 +78,7 @@ class HangmanAdminOperationTests {
     @Test
     fun `admin can unblock a word`() {
         hangmanService.blockWord("testblock")
-        val result = eventGateway.process(message("hangman unblock testblock", adminPrincipal()))
+        val result = harness.dispatch(message("hangman unblock testblock", adminPrincipal()))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("Unblocked"))
@@ -83,7 +87,7 @@ class HangmanAdminOperationTests {
 
     @Test
     fun `regular user cannot block a word`() {
-        val result = eventGateway.process(message("hangman block badword", userPrincipal()))
+        val result = harness.dispatch(message("hangman block badword", userPrincipal()))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val errorMessage = (result as OperationResult.Error).message
         assertTrue(errorMessage.contains("ADMIN"))
@@ -91,7 +95,7 @@ class HangmanAdminOperationTests {
 
     @Test
     fun `regular user cannot unblock a word`() {
-        val result = eventGateway.process(message("hangman unblock badword", userPrincipal()))
+        val result = harness.dispatch(message("hangman unblock badword", userPrincipal()))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val errorMessage = (result as OperationResult.Error).message
         assertTrue(errorMessage.contains("ADMIN"))

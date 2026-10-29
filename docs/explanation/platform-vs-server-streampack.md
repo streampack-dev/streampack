@@ -4,13 +4,14 @@ Streampack has three layers:
 
 | Layer | Examples | Responsibility |
 |-------|----------|----------------|
-| Platform core | `lib-core` | Operation contracts, event flow, provenance, users |
+| Extension API | `lib-extension-api` | Operation contracts and models, the command parser, channel state and the transformer chain as interfaces; no persistence |
+| Platform core | `lib-core` | Event flow, persistence, users, and the implementations of the extension API |
 | Capabilities | `operation-*`, `service-*`, feature libraries | Domain behavior and protocol adapters |
 | Distribution | `server-streampack` | Runnable Spring Boot application that assembles capabilities |
 
 `server-streampack` is a distribution. It is the server used by Bytecode.News, and it includes the infobot and site APIs. It is not the only possible Streampack application.
 
-If you are deploying the included system, follow the `server-streampack` deployment docs. If you are extending Streampack, start with `lib-core` and add operations or services in separate modules.
+If you are deploying the included system, follow the `server-streampack` deployment docs. If you are extending Streampack, start with `lib-extension-api` and add operations in separate modules; reach for `lib-core` only for what the API doesn't offer yet.
 
 ## Why This Matters
 

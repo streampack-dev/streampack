@@ -3,27 +3,21 @@ package dev.streampack.safecracker.service
 
 import dev.streampack.core.integration.TickListener
 import dev.streampack.core.json.JacksonMappers
-import dev.streampack.core.model.OperationResult
-import dev.streampack.core.model.Provenance
+import dev.streampack.core.service.Egress
 import dev.streampack.core.service.ProvenanceStateService
-import dev.streampack.core.service.TransformerChainService
 import dev.streampack.safecracker.model.SafecrackerGameState
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.messaging.MessageChannel
-import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 import tools.jackson.module.kotlin.convertValue
 
 /** Monitors active safecracker games for 30-second countdown and 5-minute timeout */
 @Component
 class SafecrackerTimerService(
-    @Qualifier("egressChannel") private val egressChannel: MessageChannel,
+    private val egress: Egress,
     private val stateService: ProvenanceStateService,
-    private val transformerChain: TransformerChainService,
 ) : TickListener {
 
     private val logger = LoggerFactory.getLogger(SafecrackerTimerService::class.java)
@@ -68,7 +62,7 @@ class SafecrackerTimerService(
         activeGames.remove(game.provenanceUri)
 
         val answer = state.combination.joinToString(" ")
-        sendToEgress("Time's up! The combination was: $answer", game.provenanceUri)
+        egress.send("Time's up! The combination was: $answer", game.provenanceUri)
         logger.info("Safecracker game timed out for {}", game.provenanceUri)
     }
 
@@ -83,25 +77,6 @@ class SafecrackerTimerService(
         val formatted = state.formatTimeRemaining(now)
         game.lastAnnouncementAt =
             game.lastAnnouncementAt.plus(SafecrackerGameState.ANNOUNCEMENT_INTERVAL)
-        sendToEgress("Safecracker: $formatted remaining!", game.provenanceUri)
-    }
-
-    private fun sendToEgress(text: String, destinationUri: String) {
-        try {
-            val provenance = Provenance.decode(destinationUri)
-            val raw = OperationResult.Success(text)
-            val transformed = transformerChain.apply(raw, provenance)
-            val message =
-                MessageBuilder.withPayload(transformed as Any)
-                    .setHeader(Provenance.HEADER, provenance)
-                    .build()
-            egressChannel.send(message)
-        } catch (e: Exception) {
-            logger.warn(
-                "Failed to send safecracker notification to {}: {}",
-                destinationUri,
-                e.message,
-            )
-        }
+        egress.send("Safecracker: $formatted remaining!", game.provenanceUri)
     }
 }

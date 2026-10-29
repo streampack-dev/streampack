@@ -1,5 +1,5 @@
 /* Joseph B. Ottinger (C)2026 */
-package dev.streampack.polling.service
+package dev.streampack.core.service
 
 import dev.streampack.core.integration.EgressSubscriber
 import dev.streampack.core.model.OperationResult
@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.messaging.SubscribableChannel
 
 @SpringBootTest
-class EgressNotifierTests {
+class ChannelEgressTests {
 
     @TestConfiguration
     class CapturingConfig {
@@ -41,13 +41,13 @@ class EgressNotifierTests {
         }
     }
 
-    @Autowired lateinit var egressNotifier: EgressNotifier
+    @Autowired lateinit var egress: Egress
     @Autowired lateinit var capturingSubscriber: CapturingSubscriber
 
     @Test
     fun `send delivers message with decoded provenance`() {
         val uri = "irc://libera/%23java"
-        egressNotifier.send("Hello from test", uri)
+        egress.send("Hello from test", uri)
 
         assertEquals(1, capturingSubscriber.captured.size)
         val (result, provenance) = capturingSubscriber.captured[0]
@@ -60,7 +60,7 @@ class EgressNotifierTests {
     @Test
     fun `send with invalid URI logs warning without throwing`() {
         // Should not throw - the error is logged
-        egressNotifier.send("Hello", "not-a-valid-uri")
+        egress.send("Hello", "not-a-valid-uri")
         // No assertion needed beyond not throwing
     }
 }

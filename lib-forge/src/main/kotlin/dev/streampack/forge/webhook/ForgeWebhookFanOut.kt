@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.webhook
 
+import dev.streampack.core.service.Egress
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.format.ForgeEventFormatter
 import dev.streampack.forge.model.ForgeEvent
@@ -9,14 +10,13 @@ import dev.streampack.forge.model.ForgeProject
 import dev.streampack.forge.model.ForgeSubscription
 import dev.streampack.forge.store.ForgeStore
 import dev.streampack.forge.subscription.SubscriptionEvents
-import dev.streampack.polling.service.EgressNotifier
 import org.slf4j.LoggerFactory
 
 /** Formats a webhook-derived event and delivers it to every active subscription of the project. */
 open class ForgeWebhookFanOut<I : ForgeInstance, P : ForgeProject, S : ForgeSubscription>(
     private val kind: ForgeKind,
     private val store: ForgeStore<I, P, S>,
-    private val notifier: EgressNotifier,
+    private val notifier: Egress,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
