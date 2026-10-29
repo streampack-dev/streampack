@@ -1,12 +1,12 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
+import dev.streampack.core.fetch.FetchProperties
+import dev.streampack.core.fetch.sendCapped
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
 import java.util.zip.GZIPInputStream
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
@@ -15,14 +15,8 @@ import org.springframework.stereotype.Component
 
 /** Default PageFetcher that retrieves page content over HTTP, handling gzip responses */
 @Component
-class HttpPageFetcher : PageFetcher {
+class HttpPageFetcher(private val properties: FetchProperties = FetchProperties()) : PageFetcher {
     private val logger = LoggerFactory.getLogger(HttpPageFetcher::class.java)
-
-    companion object {
-        private const val USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
-    }
 
     override fun fetch(url: String): String? = fetchResult(url).body
 
@@ -38,13 +32,13 @@ class HttpPageFetcher : PageFetcher {
             val client =
                 HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofSeconds(5))
+                    .connectTimeout(properties.connectTimeout)
                     .build()
             val request =
                 HttpRequest.newBuilder()
                     .uri(parsed)
-                    .timeout(Duration.ofSeconds(10))
-                    .header("User-Agent", USER_AGENT)
+                    .timeout(properties.readTimeout)
+                    .header("User-Agent", properties.pageUserAgent)
                     .header(
                         "Accept",
                         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -53,7 +47,7 @@ class HttpPageFetcher : PageFetcher {
                     .header("Accept-Encoding", "gzip")
                     .GET()
                     .build()
-            val response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
+            val response = client.sendCapped(request, Int.MAX_VALUE, properties.readTimeout)
             val finalUri = response.uri()
 
             if (response.statusCode() !in 200..299) {
@@ -71,11 +65,12 @@ class HttpPageFetcher : PageFetcher {
             }
 
             val encoding = response.headers().firstValue("Content-Encoding").orElse("")
+            val bytes = response.body().bytes
             val inputStream: InputStream =
                 if (encoding.equals("gzip", ignoreCase = true)) {
-                    GZIPInputStream(response.body())
+                    GZIPInputStream(bytes.inputStream())
                 } else {
-                    response.body()
+                    bytes.inputStream()
                 }
 
             val body = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }

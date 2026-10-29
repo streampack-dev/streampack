@@ -7,20 +7,17 @@ import java.time.Instant
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/**
- * Manages per-provenance runtime state as JSONB documents keyed by provenance URI and feature key
- */
+/** [ProvenanceStateService] as JSONB rows keyed by provenance URI and feature key. */
 @Service
-class ProvenanceStateService(private val repository: ProvenanceStateRepository) {
+class JpaProvenanceStateService(private val repository: ProvenanceStateRepository) :
+    ProvenanceStateService {
 
-    /** Returns the state data for a provenance/key pair, or null when no state exists */
-    fun getState(provenanceUri: String, key: String): Map<String, Any>? {
+    override fun getState(provenanceUri: String, key: String): Map<String, Any>? {
         return repository.findByProvenanceUriAndKey(provenanceUri, key)?.data
     }
 
-    /** Creates or updates the state data for a provenance/key pair */
     @Transactional
-    fun setState(provenanceUri: String, key: String, data: Map<String, Any>) {
+    override fun setState(provenanceUri: String, key: String, data: Map<String, Any>) {
         val existing = repository.findByProvenanceUriAndKey(provenanceUri, key)
         if (existing != null) {
             repository.save(existing.copy(data = data, updatedAt = Instant.now()))
@@ -29,9 +26,8 @@ class ProvenanceStateService(private val repository: ProvenanceStateRepository) 
         }
     }
 
-    /** Removes the state row for a provenance/key pair */
     @Transactional
-    fun clearState(provenanceUri: String, key: String) {
+    override fun clearState(provenanceUri: String, key: String) {
         repository.deleteByProvenanceUriAndKey(provenanceUri, key)
     }
 }

@@ -29,9 +29,9 @@ data class RssProperties(
      * call, at most [maxItemsPerRun] in a pass. Each is judged on up to 4,000 characters of its
      * text (about 1,000 tokens), hence the small chunks.
      *
-     * The prompt's examples are the editor's own most recent ratings; until there are at least
-     * [minRatedExamples] RATES among them, [seedExamples] are added: each a described exemplar,
-     * starting with its label (`RATES:`, `MIGHT:` or `DULL:`).
+     * The prompt's examples are the editor's own most recent ratings, as many of each as [examples]
+     * says; until there are at least [minRatedExamples] RATES among them, [seedExamples] are added:
+     * each a described exemplar, starting with its label (`RATES:`, `MIGHT:` or `DULL:`).
      */
     data class Rating(
         val modelGuess: Boolean = false,
@@ -40,6 +40,7 @@ data class RssProperties(
         val guessLookback: Duration = Duration.ofDays(2),
         val chunkSize: Int = 20,
         val maxItemsPerRun: Int = 200,
+        val examples: Examples = Examples(),
         val minRatedExamples: Int = 3,
         val seedExamples: List<String> =
             listOf(
@@ -53,6 +54,13 @@ data class RssProperties(
                     "marketing announcement.",
             ),
     )
+
+    /**
+     * How many of the editor's most recent ratings of each kind the guess is shown as examples
+     * (#289). An example is its item's title, feed and summary, about 100 tokens; the examples are
+     * the same in every call of a pass, so prompt caching serves them. Zero leaves a kind out.
+     */
+    data class Examples(val rates: Int = 30, val might: Int = 10, val dull: Int = 20)
 
     /**
      * A feed tag the vocabulary doesn't know waits until it's been seen on at least

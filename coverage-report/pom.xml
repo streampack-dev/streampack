@@ -49,6 +49,14 @@
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
+            <artifactId>lib-extension-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-extension-test</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.streampack</groupId>
             <artifactId>operation-calc</artifactId>
         </dependency>
         <dependency>

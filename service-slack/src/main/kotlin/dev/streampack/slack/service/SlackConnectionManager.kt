@@ -41,6 +41,8 @@ class SlackConnectionManager(
 
     override fun wouldTriggerIngress(text: String): Boolean = false
 
+    override fun botNick(serviceId: String?): String? = serviceId?.let { adapters[it]?.botNick }
+
     override fun sendReply(provenance: Provenance, text: String) {
         // Individual per-workspace SlackAdapters handle message delivery
     }

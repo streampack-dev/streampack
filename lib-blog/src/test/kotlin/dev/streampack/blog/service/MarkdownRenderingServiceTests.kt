@@ -291,8 +291,36 @@ class MarkdownRenderingServiceTests {
             )
 
         val result = rendererWithResolver.render("See [[thing]] now.")
-        assertTrue(result.contains("<a href=\"/factoids/thing\">thing</a>"))
+        assertTrue(
+            result.contains("<a href=\"/factoids/thing\" title=\"unsafe\">thing</a>"),
+            result,
+        )
         assertTrue(!result.contains("javascript:"))
+    }
+
+    @Test
+    fun `a factoid with text and no url titles its own link (#285)`() {
+        val rendererWithResolver =
+            MarkdownRenderingService(
+                excerptSummarizerService,
+                object : FactoidWikiLinkResolver {
+                    override fun resolve(selector: String): FactoidWikiLinkMetadata? =
+                        if (selector == "bus factor") {
+                            FactoidWikiLinkMetadata(title = "a measure of \"project\" risk")
+                        } else {
+                            null
+                        }
+                },
+            )
+
+        val result = rendererWithResolver.render("The [[bus factor]] and [[unknown]].")
+        assertTrue(
+            result.contains(
+                "<a href=\"/factoids/bus%20factor\" title=\"a measure of &quot;project&quot; risk\">bus factor</a>",
+            ),
+            result,
+        )
+        assertTrue(result.contains("<a href=\"/factoids/unknown\">unknown</a>"), result)
     }
 
     @Test

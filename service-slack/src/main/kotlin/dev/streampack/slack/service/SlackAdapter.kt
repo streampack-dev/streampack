@@ -44,6 +44,11 @@ class SlackAdapter(
     private lateinit var boltApp: App
     private lateinit var socketModeApp: SocketModeApp
     @Volatile private var botUserId: String? = null
+
+    /** What incoming messages carry as the bot's nick: its user id. */
+    val botNick: String?
+        get() = botUserId
+
     @Volatile private var botUserName: String? = null
     private val displayNameCache = ConcurrentHashMap<String, String>()
 

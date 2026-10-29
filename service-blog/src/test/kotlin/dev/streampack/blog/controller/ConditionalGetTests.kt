@@ -273,6 +273,18 @@ class ConditionalGetTests {
     }
 
     @Test
+    fun `the article ETag follows its HTML rendered again, when updatedAt doesn't move (#287)`() {
+        val url = "/posts/$path"
+        val tag = etag(url)
+
+        // As a startup pass renders a post again: new HTML, the same updatedAt.
+        postRepository.save(post.copy(renderedHtml = "<p>rendered again</p>"))
+
+        assertChanged(url, tag)
+        mockMvc.get(url) { header("If-None-Match", tag) }.andExpect { status { isOk() } }
+    }
+
+    @Test
     fun `search and taxonomy ETags follow new posts and retags`() {
         val search = etag("/posts/search?q=zeppelin")
         val taxonomy = etag("/taxonomy")

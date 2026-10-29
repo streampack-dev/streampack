@@ -10,12 +10,12 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.repository.UserRepository
+import dev.streampack.core.service.Egress
 import dev.streampack.core.service.JwtService
 import dev.streampack.core.service.Operation
 import dev.streampack.core.service.OperationService
 import dev.streampack.core.service.ThrottleService
 import dev.streampack.factoid.service.FactoidService
-import dev.streampack.polling.service.EgressNotifier
 import dev.streampack.test.ResetDatabaseBeforeEach
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -125,7 +125,7 @@ class WebConsoleFlowTests {
     @Autowired lateinit var throttleService: ThrottleService
     @Autowired lateinit var streams: WebConsoleStreams
     @Autowired lateinit var factoidService: FactoidService
-    @Autowired lateinit var notifier: EgressNotifier
+    @Autowired lateinit var notifier: Egress
 
     private lateinit var console: WebConsoleTestSupport
     private lateinit var adminId: java.util.UUID

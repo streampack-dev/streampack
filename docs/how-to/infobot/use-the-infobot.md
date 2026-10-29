@@ -172,6 +172,14 @@ hangman solve compiler
 hangman concede
 ```
 
+The words come from a list that ships with hangman. To use your own, put one word on each line of a text file in the deployment's `ext/` directory, for example `ext/words/hangman.txt`. Then set this in `.env` and recreate the server:
+
+```dotenv
+STREAMPACK_HANGMAN_WORDS=file:/opt/streampack/ext/words/hangman.txt
+```
+
+The path is the one inside the container. A missing or empty list stops the start, and the log names it.
+
 ### 21 Matches
 
 ```text

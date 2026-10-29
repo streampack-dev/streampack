@@ -2,16 +2,17 @@
 package dev.streampack.rss.service
 
 import com.rometools.rome.feed.synd.SyndEntry
+import dev.streampack.core.service.Egress
 import dev.streampack.polling.schedule.DueBatchPollingService
 import dev.streampack.polling.schedule.PollResult
 import dev.streampack.polling.schedule.PollSchedule
-import dev.streampack.polling.service.EgressNotifier
 import dev.streampack.rss.config.RssProperties
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.entity.RssFeed
 import dev.streampack.rss.repository.RssEntryRepository
 import dev.streampack.rss.repository.RssFeedRepository
 import dev.streampack.rss.repository.RssFeedSubscriptionRepository
+import java.net.URI
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
@@ -28,7 +29,7 @@ class RssFeedPollingService(
     private val entryRepository: RssEntryRepository,
     private val subscriptionRepository: RssFeedSubscriptionRepository,
     private val discoveryService: FeedDiscoveryService,
-    private val egressNotifier: EgressNotifier,
+    private val egressNotifier: Egress,
     private val rssProperties: RssProperties,
     private val feedTags: FeedTagService,
     private val itemTexts: RssItemTextService,
@@ -86,7 +87,7 @@ class RssFeedPollingService(
                 feed.title,
                 feed.feedUrl,
                 syndFeed.link,
-                fetchedEntries.mapNotNull { it.link ?: it.uri },
+                fetchedEntries.mapNotNull { linkOf(it, feed) ?: it.uri },
             )
             ?.let { logger.warn(it) }
         if (fetchedEntries.isEmpty()) {
@@ -129,7 +130,7 @@ class RssFeedPollingService(
         if (subscriptions.isNotEmpty() && newSyndEntries.isNotEmpty()) {
             for (entry in newSyndEntries) {
                 val title = entry.title ?: ""
-                val link = entry.link ?: entry.uri ?: ""
+                val link = linkOf(entry, feed) ?: entry.uri ?: ""
                 val message = formatNotification(feed.title, title, link)
                 for (subscription in subscriptions) {
                     egressNotifier.send(message, subscription.destinationUri)
@@ -145,7 +146,7 @@ class RssFeedPollingService(
 
     private fun toRssEntry(syndEntry: SyndEntry, feed: RssFeed): RssEntry? {
         val guid = syndEntry.uri ?: syndEntry.link ?: return null
-        val link = syndEntry.link ?: guid
+        val link = linkOf(syndEntry, feed) ?: guid
         val title = syndEntry.title ?: ""
         val receivedAt = Instant.now()
         return RssEntry(
@@ -192,6 +193,17 @@ class RssFeedPollingService(
     }
 
     companion object {
+        /**
+         * [entry]'s link, resolved against [feed]'s own address when it's relative, as Atom allows
+         * (#290): `/~yosh/blog/pratt.html` read from `https://www.unix.dog/~yosh/blog/feed.atom` is
+         * `https://www.unix.dog/~yosh/blog/pratt.html`. A link that isn't a valid URI is kept as
+         * given.
+         */
+        fun linkOf(entry: SyndEntry, feed: RssFeed): String? =
+            entry.link?.let { link ->
+                runCatching { URI(feed.feedUrl).resolve(link.trim()).toString() }.getOrDefault(link)
+            }
+
         /**
          * An entry's own time: `<published>` (or RSS `<pubDate>`), else Atom's `<updated>`, which
          * Atom requires when it makes `<published>` optional. Null when the feed gives neither, or

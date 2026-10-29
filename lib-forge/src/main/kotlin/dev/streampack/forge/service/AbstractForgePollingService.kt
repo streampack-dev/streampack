@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.service
 
+import dev.streampack.core.service.Egress
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
 import dev.streampack.forge.format.ForgeEventFormatter
@@ -19,7 +20,6 @@ import dev.streampack.forge.subscription.SubscriptionEvents
 import dev.streampack.polling.schedule.DueBatchPollingService
 import dev.streampack.polling.schedule.PollResult
 import dev.streampack.polling.schedule.PollSchedule
-import dev.streampack.polling.service.EgressNotifier
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.PlatformTransactionManager
@@ -41,7 +41,7 @@ abstract class AbstractForgePollingService<
     protected val kind: ForgeKind,
     protected val store: ForgeStore<I, P, S>,
     protected val client: ForgeClient,
-    private val egressNotifier: EgressNotifier,
+    private val egressNotifier: Egress,
     private val schedule: ForgePollingSchedule,
     private val secretLookup: SecretLookup,
     transactionManager: PlatformTransactionManager,

@@ -25,12 +25,12 @@
     <dependencies>
         <dependency>
             <groupId>dev.streampack</groupId>
-            <artifactId>lib-core</artifactId>
+            <artifactId>lib-extension-api</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
-            <artifactId>lib-testsupport</artifactId>
+            <artifactId>lib-extension-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

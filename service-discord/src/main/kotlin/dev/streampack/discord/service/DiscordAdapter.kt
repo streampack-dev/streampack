@@ -270,6 +270,9 @@ class DiscordAdapter(
         eventGateway.send(builder.build())
     }
 
+    override fun botNick(serviceId: String?): String? =
+        if (::jda.isInitialized) jda.selfUser.name else null
+
     override fun wouldTriggerIngress(text: String): Boolean {
         if (
             properties.signalCharacter.isNotEmpty() && text.startsWith(properties.signalCharacter)

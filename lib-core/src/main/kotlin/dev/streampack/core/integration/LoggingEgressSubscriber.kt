@@ -7,7 +7,9 @@ import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.MessageLogService
+import dev.streampack.core.service.ProtocolAdapter
 import dev.streampack.core.service.SecretScrubber
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.stereotype.Component
 
 /**
@@ -30,6 +32,7 @@ class LoggingEgressSubscriber(
     private val channelControlService: ChannelControlService,
     private val directConversations: DirectConversations,
     private val secretScrubber: SecretScrubber,
+    private val adapters: ObjectProvider<ProtocolAdapter>,
 ) : EgressSubscriber() {
 
     /** Matches all protocols; the per-channel `logged` flag is checked at delivery */
@@ -37,7 +40,7 @@ class LoggingEgressSubscriber(
 
     override fun deliver(result: OperationResult, provenance: Provenance) {
         if (!channelControlService.isLogged(provenance)) return
-        val sender = provenance.metadata[Provenance.BOT_NICK] as? String ?: "bot"
+        val sender = provenance.metadata[Provenance.BOT_NICK] as? String ?: adapterNick(provenance)
         val direct = directConversations.isDirect(provenance)
         if (provenance.protocol == Protocol.WEBCONSOLE) {
             val outcome =
@@ -72,4 +75,10 @@ class LoggingEgressSubscriber(
             is OperationResult.NotHandled -> {}
         }
     }
+
+    /** The adapter's own nick, for a message sent to a saved address that carries none (#298). */
+    private fun adapterNick(provenance: Provenance): String =
+        adapters
+            .filter { it.protocol == provenance.protocol }
+            .firstNotNullOfOrNull { it.botNick(provenance.serviceId) } ?: "bot"
 }

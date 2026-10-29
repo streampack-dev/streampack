@@ -47,6 +47,15 @@ Sign-in:
 | `DICTIONARY_TIMEOUT` | How long each dictionary is waited for before the next is asked. Defaults to `3s`. |
 | `DICTIONARY_BREAK_FOR` | How long a dictionary that failed is skipped. Defaults to `15m`. |
 
+Fetching from other sites (feeds, lookups, chat URL titles):
+
+| Variable | Purpose |
+|----------|---------|
+| `STREAMPACK_FETCH_USERAGENT` | The user agent for feeds and lookups. Defaults to the deployment's name and `BASE_URL`. |
+| `STREAMPACK_FETCH_PAGEUSERAGENT` | The user agent for page fetches, such as chat URL titles. Defaults to a current Chrome's. |
+| `STREAMPACK_FETCH_CONNECTTIMEOUT` | How long to wait to connect. Defaults to `5s`. |
+| `STREAMPACK_FETCH_READTIMEOUT` | How long a whole fetch may take, body included. Defaults to `10s`. |
+
 Channel logs:
 
 | Variable | Purpose |
@@ -59,6 +68,7 @@ Optional integrations:
 |----------|---------|
 | `STREAMPACK_NAME` | The deployment's name, and the default for the site's name, the IRC identity, the karma-immune subjects and the user agent. |
 | `STREAMPACK_EXT_DIR` | The directory of extension jars and extra classpath files. See [Extend the Server with Jars](extend-the-server-with-jars.md). |
+| `STREAMPACK_HANGMAN_WORDS` | Hangman's word list. See [Use the Infobot](../infobot/use-the-infobot.md#hangman). |
 | `IRC_ENABLED` | Enables IRC adapter. |
 | `DISCORD_ENABLED` | Enables Discord adapter. |
 | `SLACK_ENABLED` | Enables Slack adapter. |
