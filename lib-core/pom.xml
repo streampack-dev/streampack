@@ -12,6 +12,12 @@
     <artifactId>lib-core</artifactId>
 
     <dependencies>
+        <!-- The extension API (#294); lib-core implements its interfaces, and every module that
+             depends on lib-core still gets it. -->
+        <dependency>
+            <groupId>dev.streampack</groupId>
+            <artifactId>lib-extension-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>tools.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>

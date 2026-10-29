@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.gitlab.service
 
+import dev.streampack.core.service.Egress
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.secret.EnvironmentSecretLookup
 import dev.streampack.forge.service.AbstractForgePollingService
@@ -13,7 +14,6 @@ import dev.streampack.gitlab.config.GitLabProperties
 import dev.streampack.gitlab.entity.GitLabInstance
 import dev.streampack.gitlab.entity.GitLabProject
 import dev.streampack.gitlab.entity.GitLabSubscription
-import dev.streampack.polling.service.EgressNotifier
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.transaction.PlatformTransactionManager
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional
 class GitLabPollingService(
     store: GitLabForgeStore,
     client: GitLabForgeClient,
-    egressNotifier: EgressNotifier,
+    egressNotifier: Egress,
     properties: GitLabProperties,
     secretLookup: EnvironmentSecretLookup,
     transactionManager: PlatformTransactionManager,
@@ -52,7 +52,7 @@ class GitLabPollingService(
 /** Formats webhook events and emits notifications identical to polling output */
 @Service
 @ConditionalOnGitLab
-class GitLabWebhookService(store: GitLabForgeStore, notifier: EgressNotifier) :
+class GitLabWebhookService(store: GitLabForgeStore, notifier: Egress) :
     ForgeWebhookFanOut<GitLabInstance, GitLabProject, GitLabSubscription>(
         ForgeKind.GITLAB,
         store,

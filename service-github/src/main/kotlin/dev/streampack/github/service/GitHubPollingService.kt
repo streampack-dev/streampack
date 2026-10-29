@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.service
 
+import dev.streampack.core.service.Egress
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.secret.EnvironmentSecretLookup
 import dev.streampack.forge.service.AbstractForgePollingService
@@ -9,7 +10,6 @@ import dev.streampack.github.config.GitHubProperties
 import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.entity.GitHubRepo
 import dev.streampack.github.entity.GitHubSubscription
-import dev.streampack.polling.service.EgressNotifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.Transactional
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional
 class GitHubPollingService(
     store: GitHubForgeStore,
     client: GitHubForgeClient,
-    egressNotifier: EgressNotifier,
+    egressNotifier: Egress,
     gitHubProperties: GitHubProperties,
     secretLookup: EnvironmentSecretLookup,
     transactionManager: PlatformTransactionManager,

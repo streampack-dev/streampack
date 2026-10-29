@@ -5,7 +5,6 @@ import java.io.IOException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.net.http.HttpTimeoutException
 import java.nio.charset.Charset
 import org.springframework.beans.factory.annotation.Autowired
@@ -84,7 +83,7 @@ internal constructor(private val properties: FetchProperties, private val guard:
         headers.forEach { (name, value) -> builder.setHeader(name, value) }
         val response =
             try {
-                client.send(method(builder).build(), HttpResponse.BodyHandlers.ofInputStream())
+                client.sendCapped(method(builder).build(), maxBytes, properties.readTimeout)
             } catch (e: HttpTimeoutException) {
                 throw FetchFailed(uri, "timed out", e)
             } catch (e: IOException) {
@@ -93,21 +92,17 @@ internal constructor(private val properties: FetchProperties, private val guard:
                 Thread.currentThread().interrupt()
                 throw FetchFailed(uri, "interrupted", e)
             }
-        val (bytes, truncated) =
-            try {
-                response.body().use { input ->
-                    val read = input.readNBytes(maxBytes)
-                    read to (input.read() != -1)
-                }
-            } catch (e: IOException) {
-                throw FetchFailed(uri, "reading the response: ${e.message}", e)
-            }
+        val body = response.body()
         return FetchResponse(
             status = response.statusCode(),
             finalUri = uri,
             headers = response.headers(),
-            body = String(bytes, charset(response.headers().firstValue("Content-Type").orElse(""))),
-            truncated = truncated,
+            body =
+                String(
+                    body.bytes,
+                    charset(response.headers().firstValue("Content-Type").orElse("")),
+                ),
+            truncated = body.truncated,
         )
     }
 

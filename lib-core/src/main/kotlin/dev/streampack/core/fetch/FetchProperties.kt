@@ -17,6 +17,7 @@ data class FetchProperties(
     /** Allow private ranges: 10/8, 172.16/12, 192.168/16, 100.64/10, fc00::/7. */
     val allowPrivate: Boolean = false,
     val connectTimeout: Duration = Duration.ofSeconds(5),
+    /** How long a whole request may take, the body included (#296). */
     val readTimeout: Duration = Duration.ofSeconds(10),
     /** The most of a response body that is read; the rest is left unread. */
     val maxBytes: Int = 1_048_576,

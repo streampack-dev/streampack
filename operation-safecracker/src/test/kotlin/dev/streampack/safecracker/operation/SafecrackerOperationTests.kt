@@ -1,13 +1,12 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.safecracker.operation
 
-import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.json.JacksonMappers
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.UserPrincipal
-import dev.streampack.core.service.ProvenanceStateService
+import dev.streampack.core.testing.ExtensionHarness
 import dev.streampack.safecracker.model.SafecrackerGameState
 import dev.streampack.safecracker.service.SafecrackerTimerService
 import java.time.Duration
@@ -19,21 +18,17 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
 import tools.jackson.module.kotlin.convertValue
 
-@SpringBootTest
 class SafecrackerOperationTests {
+    private val harness = ExtensionHarness()
+    private val stateService = harness.state
+    private val timerService = SafecrackerTimerService(harness.egress, stateService)
 
-    @Autowired lateinit var eventGateway: EventGateway
-    @Autowired lateinit var stateService: ProvenanceStateService
-    @Autowired lateinit var timerService: SafecrackerTimerService
-
-    @Qualifier("tickChannel") @Autowired lateinit var tickChannel: MessageChannel
+    init {
+        harness.use(SafecrackerOperation(stateService, timerService), timerService)
+    }
 
     private val objectMapper = JacksonMappers.standard()
 
@@ -65,7 +60,7 @@ class SafecrackerOperationTests {
 
     @Test
     fun `start new game creates state and shows pattern`() {
-        val result = eventGateway.process(safecrackerMessage("safecracker"))
+        val result = harness.dispatch(safecrackerMessage("safecracker"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("safecracker pattern:"))
@@ -78,8 +73,8 @@ class SafecrackerOperationTests {
 
     @Test
     fun `safecracker with active game shows time remaining`() {
-        eventGateway.process(safecrackerMessage("safecracker"))
-        val result = eventGateway.process(safecrackerMessage("safecracker"))
+        harness.dispatch(safecrackerMessage("safecracker"))
+        val result = harness.dispatch(safecrackerMessage("safecracker"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("game in progress"))
@@ -95,7 +90,7 @@ class SafecrackerOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(safecrackerMessage("safecracker 1 2 3 4"))
+        val result = harness.dispatch(safecrackerMessage("safecracker 1 2 3 4"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("broken the code"))
@@ -114,7 +109,7 @@ class SafecrackerOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(safecrackerMessage("safecracker 3 5 1 9"))
+        val result = harness.dispatch(safecrackerMessage("safecracker 3 5 1 9"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("> = < >"))
@@ -131,7 +126,7 @@ class SafecrackerOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(safecrackerMessage("safecracker 0 0 0 0"))
+        val result = harness.dispatch(safecrackerMessage("safecracker 0 0 0 0"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("broken the code"))
@@ -139,7 +134,7 @@ class SafecrackerOperationTests {
 
     @Test
     fun `guess with no active game returns error`() {
-        val result = eventGateway.process(safecrackerMessage("safecracker 1 2 3 4"))
+        val result = harness.dispatch(safecrackerMessage("safecracker 1 2 3 4"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         assertTrue(message.contains("No game in progress"))
@@ -154,7 +149,7 @@ class SafecrackerOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(safecrackerMessage("safecracker 1 2 3"))
+        val result = harness.dispatch(safecrackerMessage("safecracker 1 2 3"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         assertTrue(message.contains("4 digits"))
@@ -169,7 +164,7 @@ class SafecrackerOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(safecrackerMessage("safecracker a b c d"))
+        val result = harness.dispatch(safecrackerMessage("safecracker a b c d"))
         assertInstanceOf(OperationResult.Error::class.java, result)
     }
 
@@ -182,7 +177,7 @@ class SafecrackerOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(safecrackerMessage("safecracker 1 2 3 10"))
+        val result = harness.dispatch(safecrackerMessage("safecracker 1 2 3 10"))
         assertInstanceOf(OperationResult.Error::class.java, result)
     }
 
@@ -195,7 +190,7 @@ class SafecrackerOperationTests {
             objectMapper.convertValue<Map<String, Any>>(state),
         )
 
-        val result = eventGateway.process(safecrackerMessage("safecracker concede"))
+        val result = harness.dispatch(safecrackerMessage("safecracker concede"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("concede"))
@@ -207,7 +202,7 @@ class SafecrackerOperationTests {
 
     @Test
     fun `concede with no active game returns graceful message`() {
-        val result = eventGateway.process(safecrackerMessage("safecracker concede"))
+        val result = harness.dispatch(safecrackerMessage("safecracker concede"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("No game in progress"))
@@ -215,7 +210,7 @@ class SafecrackerOperationTests {
 
     @Test
     fun `non-safecracker message is not handled`() {
-        val result = eventGateway.process(safecrackerMessage("calc 2+3"))
+        val result = harness.dispatch(safecrackerMessage("calc 2+3"))
         if (result is OperationResult.Success) {
             val payload = result.payload as String
             assertTrue(!payload.contains("safecracker", ignoreCase = true))
@@ -234,12 +229,13 @@ class SafecrackerOperationTests {
         )
         timerService.registerGame(provenanceUri, expiredStart)
 
-        // Send a tick to trigger timeout
-        tickChannel.send(MessageBuilder.withPayload(Instant.now()).build())
+        // A tick, as the server's one-second tick, finds it expired
+        harness.tick(Instant.now())
 
-        // State should be cleared
+        // State should be cleared, and the answer sent to the channel by the timer itself
         val cleared = stateService.getState(provenanceUri, SafecrackerGameState.STATE_KEY)
         assertNull(cleared)
+        assertTrue(harness.egress.texts == listOf("Time's up! The combination was: 4 5 6 7"))
     }
 
     @Test
@@ -252,17 +248,17 @@ class SafecrackerOperationTests {
         )
 
         // Guess lower in all positions
-        var result = eventGateway.process(safecrackerMessage("safecracker 1 1 1 1"))
+        var result = harness.dispatch(safecrackerMessage("safecracker 1 1 1 1"))
         var payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("< < < <"))
 
         // Guess higher in all positions
-        result = eventGateway.process(safecrackerMessage("safecracker 9 9 9 9"))
+        result = harness.dispatch(safecrackerMessage("safecracker 9 9 9 9"))
         payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("> > > >"))
 
         // Guess exact
-        result = eventGateway.process(safecrackerMessage("safecracker 5 5 5 5"))
+        result = harness.dispatch(safecrackerMessage("safecracker 5 5 5 5"))
         payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("broken the code"))
     }
