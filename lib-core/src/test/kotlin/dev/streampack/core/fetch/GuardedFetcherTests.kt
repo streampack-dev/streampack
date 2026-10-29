@@ -5,6 +5,9 @@ import com.sun.net.httpserver.HttpServer
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URI
+import java.time.Duration
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -24,13 +27,30 @@ class GuardedFetcherTests {
     @BeforeEach
     fun start() {
         server = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0)
+        // A stub that stalls holds its thread, so the others need their own.
+        server.executor = Executors.newCachedThreadPool()
         server.start()
         base = "http://127.0.0.1:${server.address.port}"
     }
 
     @AfterEach
     fun stop() {
+        stalled.countDown()
         server.stop(0)
+    }
+
+    /** Held by a stub that stalls, until the test ends. */
+    private val stalled = CountDownLatch(1)
+
+    /** Sends headers promising 100 bytes, and 10 of them, then nothing more. */
+    private fun stall(path: String) {
+        server.createContext(path) { exchange ->
+            exchange.sendResponseHeaders(200, 100)
+            exchange.responseBody.write(ByteArray(10) { 'x'.code.toByte() })
+            exchange.responseBody.flush()
+            stalled.await()
+            exchange.close()
+        }
     }
 
     private fun respond(
@@ -62,6 +82,34 @@ class GuardedFetcherTests {
         assertEquals(200, response.status)
         assertEquals("<p>hello</p>", response.body)
         assertEquals("<https://e.example/wm>; rel=\"webmention\"", response.header("Link"))
+        assertFalse(response.truncated)
+    }
+
+    @Test
+    fun `a body that stops arriving fails as timed out, within the read timeout (#296)`() {
+        stall("/slow")
+        val fetcher =
+            GuardedFetcher(
+                local.copy(
+                    connectTimeout = Duration.ofMillis(300),
+                    readTimeout = Duration.ofMillis(300),
+                ),
+            )
+
+        val started = System.nanoTime()
+        val e = assertThrows<FetchFailed> { fetcher.get("$base/slow") }
+
+        assertTrue(e.message!!.contains("timed out"), e.message)
+        assertTrue(Duration.ofNanos(System.nanoTime() - started) < Duration.ofSeconds(3))
+    }
+
+    @Test
+    fun `a body of exactly the most that is read isn't truncated`() {
+        respond("/exact", 200, "x".repeat(1000))
+
+        val response = GuardedFetcher(local.copy(maxBytes = 1000)).get("$base/exact")
+
+        assertEquals(1000, response.body.length)
         assertFalse(response.truncated)
     }
 

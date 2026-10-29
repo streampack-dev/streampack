@@ -1,11 +1,11 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
+import dev.streampack.core.fetch.sendCapped
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.zip.GZIPInputStream
 import javax.net.ssl.SSLException
@@ -53,7 +53,7 @@ class HttpPageFetcher : PageFetcher {
                     .header("Accept-Encoding", "gzip")
                     .GET()
                     .build()
-            val response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
+            val response = client.sendCapped(request, Int.MAX_VALUE, Duration.ofSeconds(10))
             val finalUri = response.uri()
 
             if (response.statusCode() !in 200..299) {
@@ -71,11 +71,12 @@ class HttpPageFetcher : PageFetcher {
             }
 
             val encoding = response.headers().firstValue("Content-Encoding").orElse("")
+            val bytes = response.body().bytes
             val inputStream: InputStream =
                 if (encoding.equals("gzip", ignoreCase = true)) {
-                    GZIPInputStream(response.body())
+                    GZIPInputStream(bytes.inputStream())
                 } else {
-                    response.body()
+                    bytes.inputStream()
                 }
 
             val body = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
