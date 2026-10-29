@@ -95,6 +95,7 @@ class NameSettingsBindingTests {
                     "IRC_IDENTITY" to "Gholem Bot",
                     "KARMA_IMMUNE_SUBJECTS" to "gholem,golem",
                     "STREAMPACK_FETCH_USERAGENT" to "custom/1.0",
+                    "STREAMPACK_FETCH_PAGEUSERAGENT" to "browser/2.0",
                 ),
             )
         assertEquals("Gholem News", b.of("streampack.blog", BlogProperties::class.java).siteName)
@@ -104,6 +105,10 @@ class NameSettingsBindingTests {
             b.of("streampack.karma", KarmaProperties::class.java).immuneSubjects,
         )
         assertEquals("custom/1.0", b.of("streampack.fetch", FetchProperties::class.java).userAgent)
+        assertEquals(
+            "browser/2.0",
+            b.of("streampack.fetch", FetchProperties::class.java).pageUserAgent,
+        )
     }
 
     @Test
