@@ -7,7 +7,6 @@ import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
-import java.time.Duration
 import java.util.zip.GZIPInputStream
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
@@ -33,12 +32,12 @@ class HttpPageFetcher(private val properties: FetchProperties = FetchProperties(
             val client =
                 HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofSeconds(5))
+                    .connectTimeout(properties.connectTimeout)
                     .build()
             val request =
                 HttpRequest.newBuilder()
                     .uri(parsed)
-                    .timeout(Duration.ofSeconds(10))
+                    .timeout(properties.readTimeout)
                     .header("User-Agent", properties.pageUserAgent)
                     .header(
                         "Accept",
@@ -48,7 +47,7 @@ class HttpPageFetcher(private val properties: FetchProperties = FetchProperties(
                     .header("Accept-Encoding", "gzip")
                     .GET()
                     .build()
-            val response = client.sendCapped(request, Int.MAX_VALUE, Duration.ofSeconds(10))
+            val response = client.sendCapped(request, Int.MAX_VALUE, properties.readTimeout)
             val finalUri = response.uri()
 
             if (response.statusCode() !in 200..299) {

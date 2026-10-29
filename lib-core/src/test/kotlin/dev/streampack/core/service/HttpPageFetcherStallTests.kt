@@ -2,6 +2,7 @@
 package dev.streampack.core.service
 
 import com.sun.net.httpserver.HttpServer
+import dev.streampack.core.fetch.FetchProperties
 import java.io.ByteArrayOutputStream
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -51,13 +52,14 @@ class HttpPageFetcherStallTests {
     }
 
     @Test
-    fun `a body that stops arriving fails within the request timeout`() {
+    fun `a body that stops arriving fails within the read timeout`() {
+        val fetcher = HttpPageFetcher(FetchProperties(readTimeout = Duration.ofMillis(300)))
         val started = System.nanoTime()
-        val result = HttpPageFetcher().fetchResult("$base/slow")
+        val result = fetcher.fetchResult("$base/slow")
 
         assertThat(result.body).isNull()
         assertThat(result.warnings.single()).startsWith("Failed to fetch URL")
-        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(15))
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(3))
     }
 
     @Test
