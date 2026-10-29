@@ -80,13 +80,10 @@ class CalculatorServiceTests {
         assertEquals(Math.PI.toString(), service.evaluate("pi"))
     }
 
-    /**
-     * ParserNG 3.0.9.1 gives Infinity for 0/0 (NaN before); pinned (#272). ParserNG 3.0.9.2 gives
-     * NaN again, so this test changes to NaN with that upgrade.
-     */
+    /** ParserNG 3.0.9.1 gave Infinity for 0/0; 3.0.9.2 gives NaN again (#272). */
     @Test
-    fun `gives infinity for zero over zero`() {
-        assertEquals("Infinity", service.evaluate("0/0"))
+    fun `gives NaN for zero over zero`() {
+        assertEquals("NaN", service.evaluate("0/0"))
     }
 
     @Test
