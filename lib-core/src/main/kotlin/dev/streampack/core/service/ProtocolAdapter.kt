@@ -27,4 +27,10 @@ interface ProtocolAdapter {
 
     /** Delivers a text reply to the destination identified by the given provenance */
     fun sendReply(provenance: Provenance, text: String)
+
+    /**
+     * The bot's own name on [serviceId], as its channels see it, or null when it isn't known. The
+     * message log uses it for messages that carry no nick, such as a game's timer (#298).
+     */
+    fun botNick(serviceId: String?): String? = null
 }

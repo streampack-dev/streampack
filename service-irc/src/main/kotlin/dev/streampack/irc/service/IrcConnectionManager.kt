@@ -46,6 +46,8 @@ class IrcConnectionManager(
 
     override fun wouldTriggerIngress(text: String): Boolean = false
 
+    override fun botNick(serviceId: String?): String? = serviceId?.let { adapters[it]?.nick }
+
     override fun sendReply(provenance: Provenance, text: String) {
         // Individual per-network IrcAdapters handle message delivery
     }

@@ -9,7 +9,9 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.repository.MessageLogRepository
+import dev.streampack.core.service.Egress
 import dev.streampack.core.service.Operation
+import dev.streampack.core.service.ProtocolAdapter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
@@ -54,12 +56,28 @@ class LoggingEgressSubscriberTests {
                 override fun execute(message: Message<*>): OperationOutcome =
                     OperationResult.Error((message.payload as String).removePrefix("fail ").trim())
             }
+
+        /** Knows its nick on services whose names start with "nicked" (#298). */
+        @Bean
+        fun loggingTestAdapter() =
+            object : ProtocolAdapter {
+                override val protocol = Protocol.MATTERMOST
+                override val serviceName = "mattermost"
+
+                override fun wouldTriggerIngress(text: String) = false
+
+                override fun sendReply(provenance: Provenance, text: String) {}
+
+                override fun botNick(serviceId: String?) =
+                    if (serviceId?.startsWith("nicked") == true) "nevet" else null
+            }
     }
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var messageLogRepository: MessageLogRepository
     @Autowired lateinit var messageLogService: dev.streampack.core.service.MessageLogService
     @Autowired lateinit var channelControlService: dev.streampack.core.service.ChannelControlService
+    @Autowired lateinit var egress: Egress
     @Autowired lateinit var jdbc: org.springframework.jdbc.core.JdbcTemplate
 
     private fun uniqueProvenance(): Provenance =
@@ -256,5 +274,37 @@ class LoggingEgressSubscriberTests {
         eventGateway.process(messageWith("echo for everyone", provenance))
 
         assertEquals(listOf("INBOUND" to false, "OUTBOUND" to false), loggedRows(provenance))
+    }
+
+    private fun sentBy(provenance: Provenance): List<String> =
+        messageLogRepository
+            .findByProvenanceUriOrderByTimestampDesc(provenance.encode(), PageRequest.of(0, 10))
+            .content
+            .map { it.sender }
+
+    @Test
+    fun `a message sent to a saved address is logged from the adapter's nick (#298)`() {
+        val provenance =
+            Provenance(
+                protocol = Protocol.MATTERMOST,
+                serviceId = "nicked-${System.nanoTime()}",
+                replyTo = "town-square",
+            )
+        egress.send("Safecracker: 4:29 remaining!", provenance.encode())
+
+        assertEquals(listOf("nevet"), sentBy(provenance))
+    }
+
+    @Test
+    fun `an adapter that doesn't know its nick leaves the sender as bot`() {
+        val provenance =
+            Provenance(
+                protocol = Protocol.MATTERMOST,
+                serviceId = "plain-${System.nanoTime()}",
+                replyTo = "town-square",
+            )
+        egress.send("tick", provenance.encode())
+
+        assertEquals(listOf("bot"), sentBy(provenance))
     }
 }
