@@ -19,7 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>dev.streampack</groupId>
-            <artifactId>lib-core</artifactId>
+            <artifactId>lib-extension-api</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>

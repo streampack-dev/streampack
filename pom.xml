@@ -57,6 +57,7 @@
         <module>lib-ai</module>
         <module>lib-blog</module>
         <module>lib-core</module>
+        <module>lib-extension-api</module>
         <module>lib-factoid</module>
         <module>lib-forge</module>
         <module>lib-generative</module>
@@ -368,6 +369,11 @@
             <dependency>
                 <groupId>dev.streampack</groupId>
                 <artifactId>lib-startrader</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.streampack</groupId>
+                <artifactId>lib-extension-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

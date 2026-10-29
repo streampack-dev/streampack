@@ -41,7 +41,7 @@ class GreetOperation : TypedOperation<String>(String::class) {
 - `canHandle` claims messages that start with `greet `.
 - `handle` answers them.
 
-Open `example-extension/pom.xml`. `lib-core` has the `provided` scope: the server has it already, so the jar holds only the extension's classes.
+Open `example-extension/pom.xml`. It depends on `lib-extension-api`, the part of streampack written for extensions, with the `provided` scope: the server has it already, so the jar holds only the extension's classes. Releases before the extension API (#294) use `lib-core` here instead.
 
 ## 3. Change the Answer
 
