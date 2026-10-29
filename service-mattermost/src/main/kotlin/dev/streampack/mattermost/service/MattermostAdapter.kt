@@ -90,6 +90,10 @@ class MattermostAdapter(
     @Volatile private var socket: WebSocket? = null
     @Volatile private var selfUser: MattermostUserView? = null
 
+    /** The bot's username here, once it is known. */
+    val botNick: String?
+        get() = selfUser?.username
+
     fun connect() {
         explicitDisconnect.set(false)
         identify()

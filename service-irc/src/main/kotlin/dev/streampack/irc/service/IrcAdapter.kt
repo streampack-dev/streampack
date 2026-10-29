@@ -56,6 +56,10 @@ class IrcAdapter(
 
     private val logger = LoggerFactory.getLogger(IrcAdapter::class.java)
 
+    /** The nick this network knows the bot by now. */
+    val nick: String
+        get() = client.nick
+
     init {
         client.eventManager.registerEventListener(this)
     }
