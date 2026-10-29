@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.service
 
+import dev.streampack.core.fetch.FetchProperties
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
@@ -15,14 +16,8 @@ import org.springframework.stereotype.Component
 
 /** Default PageFetcher that retrieves page content over HTTP, handling gzip responses */
 @Component
-class HttpPageFetcher : PageFetcher {
+class HttpPageFetcher(private val properties: FetchProperties = FetchProperties()) : PageFetcher {
     private val logger = LoggerFactory.getLogger(HttpPageFetcher::class.java)
-
-    companion object {
-        private const val USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
-    }
 
     override fun fetch(url: String): String? = fetchResult(url).body
 
@@ -44,7 +39,7 @@ class HttpPageFetcher : PageFetcher {
                 HttpRequest.newBuilder()
                     .uri(parsed)
                     .timeout(Duration.ofSeconds(10))
-                    .header("User-Agent", USER_AGENT)
+                    .header("User-Agent", properties.pageUserAgent)
                     .header(
                         "Accept",
                         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
