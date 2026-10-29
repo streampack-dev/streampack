@@ -542,7 +542,7 @@ Reconnecting starts a fresh stream: nothing missed is replayed, so a client shou
 may be a gap, and never resubmit commands to fill it.
 
 **Addresses.** An admin's console is `webconsole://web/users/<user id>`: anything sent there (by
-`EgressNotifier`, say) reaches their open streams while they're an admin. It can't be bridged, and
+`Egress`, say) reaches their open streams while they're an admin. It can't be bridged, and
 it's kept out of the public log browser. Its commands are logged, redacted, as other ingress is;
 its output is logged as its outcome only (`[web console: success]`), never its text, so
 log-derived context (Ask's) sees the commands but not their answers. From the console, `tell`

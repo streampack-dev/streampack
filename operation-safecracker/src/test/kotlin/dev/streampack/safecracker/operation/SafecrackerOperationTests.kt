@@ -24,8 +24,7 @@ import tools.jackson.module.kotlin.convertValue
 class SafecrackerOperationTests {
     private val harness = ExtensionHarness()
     private val stateService = harness.state
-    private val timerService =
-        SafecrackerTimerService(harness.egress, stateService, harness.transformers)
+    private val timerService = SafecrackerTimerService(harness.egress, stateService)
 
     init {
         harness.use(SafecrackerOperation(stateService, timerService), timerService)

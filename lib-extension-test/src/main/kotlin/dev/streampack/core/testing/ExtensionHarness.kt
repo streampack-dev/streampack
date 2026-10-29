@@ -29,7 +29,7 @@ class ExtensionHarness {
     val data = InMemoryExtensionDataStore()
     val state = InMemoryProvenanceStateService()
     val transformers = NoTransformers()
-    val egress = RecordingChannel()
+    val egress = RecordingEgress()
     var server: FixedServerInfo = FixedServerInfo()
 
     private val operations = mutableListOf<Operation>()

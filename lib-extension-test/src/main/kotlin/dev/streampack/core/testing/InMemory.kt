@@ -3,13 +3,12 @@ package dev.streampack.core.testing
 
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
+import dev.streampack.core.service.Egress
 import dev.streampack.core.service.ExtensionDataStore
 import dev.streampack.core.service.ProvenanceStateService
 import dev.streampack.core.service.ServerInfo
 import dev.streampack.core.service.TransformerChainService
 import java.util.concurrent.ConcurrentHashMap
-import org.springframework.messaging.Message
-import org.springframework.messaging.MessageChannel
 
 /** [ExtensionDataStore] in memory. */
 class InMemoryExtensionDataStore : ExtensionDataStore {
@@ -55,20 +54,20 @@ class NoTransformers : TransformerChainService {
 class FixedServerInfo(override val version: String? = null) : ServerInfo
 
 /**
- * The server's egress channel, which keeps what is sent to it: what an extension sends by itself,
- * such as a timer's message, in the order it was sent.
+ * An [Egress] that keeps what is sent: what an extension sends by itself, such as a timer's
+ * message, in the order it was sent, with no transformers applied.
  */
-class RecordingChannel : MessageChannel {
-    val messages: MutableList<Message<*>> = mutableListOf()
+class RecordingEgress : Egress {
+    val sent: MutableList<Pair<OperationResult, Provenance>> = mutableListOf()
 
     /** The text of each [OperationResult.Success] sent, in order. */
     val texts: List<String>
-        get() = messages.mapNotNull {
-            (it.payload as? OperationResult.Success)?.payload?.toString()
-        }
+        get() = sent.mapNotNull { (it.first as? OperationResult.Success)?.payload?.toString() }
 
-    override fun send(message: Message<*>, timeout: Long): Boolean {
-        messages += message
-        return true
+    override fun send(result: OperationResult, to: Provenance) {
+        sent += result to to
     }
+
+    override fun send(text: String, destinationUri: String) =
+        send(OperationResult.Success(text), Provenance.decode(destinationUri))
 }

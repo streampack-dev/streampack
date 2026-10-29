@@ -44,9 +44,9 @@ Inject these into your components. The server implements each one.
 |-----------|--------------|
 | `ExtensionDataStore` | Keeps your data, so your jar ships no SQL. Each document is a JSON object, found by your extension's name, a collection you name, and an id: `get`, `put`, `delete` and `list`. |
 | `ProvenanceStateService` | Keeps one document for each channel and key, such as a game in progress. |
-| `TransformerChainService` | Applies the server's egress transformers to a result you send by yourself, such as a timer's message. |
+| `TransformerChainService` | Applies the server's egress transformers to a result. `Egress` already does this; use it directly only to see a result as it would go out. |
 | `ServerInfo` | The server's `version`, and `isAtLeast("1.16.11")`. A development build has no version and counts as new enough. |
-| `MessageChannel` named `egressChannel` | Sends a message by itself, with no command to answer, such as a timer's. Inject it with `@Qualifier("egressChannel")`, and send a message whose payload is an `OperationResult` and whose `Provenance.HEADER` names the channel. Pass the result through `TransformerChainService` first. |
+| `Egress` | Sends a message by itself, with no command to answer, such as a timer's: `send(result, provenance)`, or `send(text, destinationUri)` with an encoded provenance. The server applies its egress transformers first. A failure is logged, not thrown. |
 
 ## Testing an Extension
 
@@ -63,7 +63,7 @@ assertThat(harness.reply("mygame start")).contains("started")
 | Member | What it is |
 |--------|------------|
 | `data`, `state`, `transformers` | In-memory `ExtensionDataStore` and `ProvenanceStateService`, and a `TransformerChainService` with no transformers. |
-| `egress` | A `MessageChannel` that keeps what is sent to it. Pass it where your component takes the server's `egressChannel`; `egress.texts` is what was said. |
+| `egress` | An `Egress` that keeps what is sent to it, with no transformers applied; `egress.texts` is what was said. |
 | `server` | A `ServerInfo`; `FixedServerInfo("1.16.11")` sets a version. |
 | `send(text, user, channel, addressed)` | The answer to a command. `ExtensionHarness.user(role = Role.ADMIN)` and `ExtensionHarness.channel(replyTo = "#games")` build the sender and the channel. |
 | `reply(text)` | The text of a successful answer, or null. |

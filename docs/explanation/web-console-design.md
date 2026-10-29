@@ -78,7 +78,7 @@ The UUID-based address refines the earlier `webconsole://web/<username>` suggest
 
 The same admin's windows share context, operation settings, and throttles; different admins have different contexts. This is an application destination, not an HTTP session. The request body cannot override protocol, service, user, destination, or internal message headers.
 
-Route outbound notifications by canonical destination, not by requiring `provenance.user` to be populated: `EgressNotifier` decodes stored URIs and produces a provenance without a principal. Resolve and authorize the destination's owner before browser delivery. A client can subscribe only to their own destination; there is no arbitrary user/channel selector on the stream URL.
+Route outbound notifications by canonical destination, not by requiring `provenance.user` to be populated: `Egress` (`ChannelEgress` in lib-core) decodes stored URIs and produces a provenance without a principal. Resolve and authorize the destination's owner before browser delivery. A client can subscribe only to their own destination; there is no arbitrary user/channel selector on the stream URL.
 
 Preserve correlation for output causally associated with a command where provenance is copied/rebuilt. Unsolicited poller/timer output legitimately has no command correlation ID. A correlation ID is not an authorization token or a stream-routing key.
 
@@ -177,7 +177,7 @@ Do not automatically add WEBCONSOLE to every hard-coded protocol allowlist. For 
 - [ ] Real factoid set/get works through POST + SSE, records the correct author, preserves both setter syntaxes, handles locked factoids, and renders existing see-also references without `{{ref:...}}` tokens.
 - [ ] Admission throttling is per immutable user across tabs/tokens. #116 prevents throttled Ask input from creating a factoid. Nonmatches still allow normal parser traversal.
 - [ ] Two admins cannot subscribe to/read each other's streams by guessing IDs or modifying parameters. Each admin's multiple windows receive the intended fan-out, with stable provenance across reconnects.
-- [ ] `EgressNotifier.send` to a canonical web-console URI reaches the owner's streams even with no principal/correlation on the notification. This proves the path can accept later poller/game output without implementing Startrader here.
+- [ ] `Egress.send` to a canonical web-console URI reaches the owner's streams even with no principal/correlation on the notification. This proves the path can accept later poller/game output without implementing Startrader here.
 - [ ] Immediate, delayed, multiple, unhandled, and unsolicited results are covered. Correlation survives relevant descendants; unsolicited output uses null correlation. Consumed events remain silent. Results arriving before the 202 response are handled by the documented client contract.
 - [ ] Reference rendering and text escaping are tested on the actual SSE wire format, including multiline output. No result is accidentally sent to stdin-console stdout.
 - [ ] Disconnect, expiry, revocation, emitter failure, overflow, connection limits, and shutdown clean up resources. A slow stream cannot stall other streams, egress, or command execution. A reconnect receives a fresh stream without a replay guarantee.
@@ -203,7 +203,7 @@ Starting points:
 - `service-blog/.../controller/{WebSecurityConfiguration,BlogProtocolAdapter,LogController}.kt`
 - `service-console/.../{ConsoleAdapter,ConsoleEgressSubscriber}.kt`
 - `operation-factoid/.../operation/{SetFactoidOperation,SetFactoidVerbOperation,GetFactoidOperation}.kt`
-- `lib-polling/.../service/EgressNotifier.kt`
+- `lib-core/.../service/ChannelEgress.kt` (`EgressNotifier` in lib-polling before #294)
 - `service-features/.../controller/FeaturesController.kt`
 
 Out of scope: Startrader UI/domain integration, non-admin application access policies, generative token-by-token output, WebSockets, durable replay/idempotency, distributed stream registries, a new authorization framework, and universal cancellation. An OperationResult is a finished operation output today; partial generative output is a separate protocol design. Keep this feature extensible without implementing those projects inside #115.

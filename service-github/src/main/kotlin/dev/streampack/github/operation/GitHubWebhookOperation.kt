@@ -12,6 +12,7 @@ import dev.streampack.core.parser.CommandMatchResult
 import dev.streampack.core.parser.CommandPattern
 import dev.streampack.core.parser.CommandPatternMatcher
 import dev.streampack.core.parser.StringArgType
+import dev.streampack.core.service.Egress
 import dev.streampack.core.service.TranslatingOperation
 import dev.streampack.forge.command.InstanceSelector
 import dev.streampack.github.config.GitHubProperties
@@ -19,7 +20,6 @@ import dev.streampack.github.entity.GitHubInstance
 import dev.streampack.github.model.GitHubWebhookEnableRequest
 import dev.streampack.github.service.GitHubWebhookAdminService
 import dev.streampack.github.service.WebhookEnableOutcome
-import dev.streampack.polling.service.EgressNotifier
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component
 @Component
 class GitHubWebhookOperation(
     private val adminService: GitHubWebhookAdminService,
-    private val notifier: EgressNotifier,
+    private val notifier: Egress,
     private val properties: StreampackProperties,
     private val gitHubProperties: GitHubProperties,
 ) : TranslatingOperation<GitHubWebhookEnableRequest>(GitHubWebhookEnableRequest::class) {
