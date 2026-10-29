@@ -1,11 +1,10 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.matches.operation
 
-import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
-import dev.streampack.core.service.ProvenanceStateService
+import dev.streampack.core.testing.ExtensionHarness
 import dev.streampack.matches.model.MatchesGameState
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -14,15 +13,15 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.support.MessageBuilder
 
-@SpringBootTest
 class MatchesOperationTests {
+    private val harness = ExtensionHarness()
+    private val stateService = harness.state
 
-    @Autowired lateinit var eventGateway: EventGateway
-    @Autowired lateinit var stateService: ProvenanceStateService
+    init {
+        harness.use(MatchesOperation(stateService))
+    }
 
     private val provenance =
         Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")
@@ -38,7 +37,7 @@ class MatchesOperationTests {
 
     @Test
     fun `start game creates state with 21 matches`() {
-        val result = eventGateway.process(matchesMessage("21 matches"))
+        val result = harness.dispatch(matchesMessage("21 matches"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("21"))
@@ -50,8 +49,8 @@ class MatchesOperationTests {
 
     @Test
     fun `start game when already active returns error`() {
-        eventGateway.process(matchesMessage("21 matches"))
-        val result = eventGateway.process(matchesMessage("21 matches"))
+        harness.dispatch(matchesMessage("21 matches"))
+        val result = harness.dispatch(matchesMessage("21 matches"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         assertTrue(message.contains("already in progress"))
@@ -59,8 +58,8 @@ class MatchesOperationTests {
 
     @Test
     fun `take valid number updates state correctly`() {
-        eventGateway.process(matchesMessage("21 matches"))
-        val result = eventGateway.process(matchesMessage("21 take 2"))
+        harness.dispatch(matchesMessage("21 matches"))
+        val result = harness.dispatch(matchesMessage("21 take 2"))
         assertInstanceOf(OperationResult.Success::class.java, result)
 
         // Player takes 2, bot takes 2 (4-2), so 21 - 2 - 2 = 17
@@ -71,22 +70,22 @@ class MatchesOperationTests {
 
     @Test
     fun `take zero returns error`() {
-        eventGateway.process(matchesMessage("21 matches"))
-        val result = eventGateway.process(matchesMessage("21 take 0"))
+        harness.dispatch(matchesMessage("21 matches"))
+        val result = harness.dispatch(matchesMessage("21 take 0"))
         assertInstanceOf(OperationResult.Error::class.java, result)
     }
 
     @Test
     fun `take four returns error`() {
-        eventGateway.process(matchesMessage("21 matches"))
-        val result = eventGateway.process(matchesMessage("21 take 4"))
+        harness.dispatch(matchesMessage("21 matches"))
+        val result = harness.dispatch(matchesMessage("21 take 4"))
         assertInstanceOf(OperationResult.Error::class.java, result)
     }
 
     @Test
     fun `take non-numeric returns error`() {
-        eventGateway.process(matchesMessage("21 matches"))
-        val result = eventGateway.process(matchesMessage("21 take abc"))
+        harness.dispatch(matchesMessage("21 matches"))
+        val result = harness.dispatch(matchesMessage("21 take abc"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         assertTrue(message.contains("number"))
@@ -94,12 +93,12 @@ class MatchesOperationTests {
 
     @Test
     fun `take more than remaining returns error`() {
-        eventGateway.process(matchesMessage("21 matches"))
+        harness.dispatch(matchesMessage("21 matches"))
         // Play down to 5 remaining: take 1 four times (each round removes 4 total)
-        eventGateway.process(matchesMessage("21 take 1")) // 21 -> 17
-        eventGateway.process(matchesMessage("21 take 1")) // 17 -> 13
-        eventGateway.process(matchesMessage("21 take 1")) // 13 -> 9
-        eventGateway.process(matchesMessage("21 take 1")) // 9 -> 5
+        harness.dispatch(matchesMessage("21 take 1")) // 21 -> 17
+        harness.dispatch(matchesMessage("21 take 1")) // 17 -> 13
+        harness.dispatch(matchesMessage("21 take 1")) // 13 -> 9
+        harness.dispatch(matchesMessage("21 take 1")) // 9 -> 5
 
         val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         assertNotNull(state)
@@ -109,7 +108,7 @@ class MatchesOperationTests {
         // instead directly set state to a low number
         stateService.setState(provenanceUri, MatchesGameState.STATE_KEY, mapOf("remaining" to 2))
 
-        val result = eventGateway.process(matchesMessage("21 take 3"))
+        val result = harness.dispatch(matchesMessage("21 take 3"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         assertTrue(message.contains("only 2"))
@@ -117,7 +116,7 @@ class MatchesOperationTests {
 
     @Test
     fun `take with no active game returns error`() {
-        val result = eventGateway.process(matchesMessage("21 take 2"))
+        val result = harness.dispatch(matchesMessage("21 take 2"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         assertTrue(message.contains("No game in progress"))
@@ -125,8 +124,8 @@ class MatchesOperationTests {
 
     @Test
     fun `concede active game clears state`() {
-        eventGateway.process(matchesMessage("21 matches"))
-        val result = eventGateway.process(matchesMessage("21 concede"))
+        harness.dispatch(matchesMessage("21 matches"))
+        val result = harness.dispatch(matchesMessage("21 concede"))
         assertInstanceOf(OperationResult.Success::class.java, result)
 
         val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
@@ -135,7 +134,7 @@ class MatchesOperationTests {
 
     @Test
     fun `concede with no active game returns graceful message`() {
-        val result = eventGateway.process(matchesMessage("21 concede"))
+        val result = harness.dispatch(matchesMessage("21 concede"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("No game in progress"))
@@ -143,17 +142,17 @@ class MatchesOperationTests {
 
     @Test
     fun `full game playthrough ends in bot victory`() {
-        eventGateway.process(matchesMessage("21 matches"))
+        harness.dispatch(matchesMessage("21 matches"))
 
         // Bot uses 4-N strategy, so each round removes exactly 4.
         // 21 -> 17 -> 13 -> 9 -> 5 -> 1 (bot wins)
         // Player takes 1 each time, bot takes 3 each time.
-        eventGateway.process(matchesMessage("21 take 1")) // 21 - 1 - 3 = 17
-        eventGateway.process(matchesMessage("21 take 1")) // 17 - 1 - 3 = 13
-        eventGateway.process(matchesMessage("21 take 1")) // 13 - 1 - 3 = 9
-        eventGateway.process(matchesMessage("21 take 1")) // 9 - 1 - 3 = 5
+        harness.dispatch(matchesMessage("21 take 1")) // 21 - 1 - 3 = 17
+        harness.dispatch(matchesMessage("21 take 1")) // 17 - 1 - 3 = 13
+        harness.dispatch(matchesMessage("21 take 1")) // 13 - 1 - 3 = 9
+        harness.dispatch(matchesMessage("21 take 1")) // 9 - 1 - 3 = 5
 
-        val result = eventGateway.process(matchesMessage("21 take 1")) // 5 - 1 - 3 = 1
+        val result = harness.dispatch(matchesMessage("21 take 1")) // 5 - 1 - 3 = 1
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(
@@ -168,7 +167,7 @@ class MatchesOperationTests {
 
     @Test
     fun `unknown subcommand returns usage hint`() {
-        val result = eventGateway.process(matchesMessage("21 foobar"))
+        val result = harness.dispatch(matchesMessage("21 foobar"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
         assertTrue(message.contains("Usage"))
@@ -176,7 +175,7 @@ class MatchesOperationTests {
 
     @Test
     fun `non-21 message is not handled`() {
-        val result = eventGateway.process(matchesMessage("calc 2+3"))
+        val result = harness.dispatch(matchesMessage("calc 2+3"))
         // Should not be handled by MatchesOperation
         val isNotMatches =
             result !is OperationResult.Success ||

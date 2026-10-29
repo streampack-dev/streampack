@@ -46,6 +46,30 @@ Inject these into your components. The server implements each one.
 | `ProvenanceStateService` | Keeps one document for each channel and key, such as a game in progress. |
 | `TransformerChainService` | Applies the server's egress transformers to a result you send by yourself, such as a timer's message. |
 | `ServerInfo` | The server's `version`, and `isAtLeast("1.16.11")`. A development build has no version and counts as new enough. |
+| `MessageChannel` named `egressChannel` | Sends a message by itself, with no command to answer, such as a timer's. Inject it with `@Qualifier("egressChannel")`, and send a message whose payload is an `OperationResult` and whose `Provenance.HEADER` names the channel. Pass the result through `TransformerChainService` first. |
+
+## Testing an Extension
+
+Add `lib-extension-test` with the `test` scope. It brings JUnit and AssertJ, and needs no server and no database. `ExtensionHarness` holds in-memory versions of the services above. Build your components with them, add them with `use`, and send commands:
+
+```kotlin
+val harness = ExtensionHarness()
+val game = MyGame(harness.state, harness.data)
+harness.use(game)
+
+assertThat(harness.reply("mygame start")).contains("started")
+```
+
+| Member | What it is |
+|--------|------------|
+| `data`, `state`, `transformers` | In-memory `ExtensionDataStore` and `ProvenanceStateService`, and a `TransformerChainService` with no transformers. |
+| `egress` | A `MessageChannel` that keeps what is sent to it. Pass it where your component takes the server's `egressChannel`; `egress.texts` is what was said. |
+| `server` | A `ServerInfo`; `FixedServerInfo("1.16.11")` sets a version. |
+| `send(text, user, channel, addressed)` | The answer to a command. `ExtensionHarness.user(role = Role.ADMIN)` and `ExtensionHarness.channel(replyTo = "#games")` build the sender and the channel. |
+| `reply(text)` | The text of a successful answer, or null. |
+| `tick(now)` | Calls every `TickListener` you added, as the server's one-second tick does. |
+
+`send` goes through your operations as the server does: in priority order, skipping one that needs to be addressed when the message isn't, and passing on when one returns null or `Declined`. It doesn't apply the server's own policies: throttling, operation groups turned off in a channel, timeouts and fan-out.
 
 ## Declaring a Minimum Server Version
 

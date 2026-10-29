@@ -2,24 +2,36 @@
 package dev.streampack.hangman.service
 
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.stereotype.Component
 
-/** Loads hangman words from hangman-words.txt, which ships in this jar */
+/**
+ * Loads hangman words, one to a line, from `streampack.hangman.words`: a resource location such as
+ * `file:/opt/streampack/ext/words/hangman.txt`. The default is the list that ships in this jar.
+ */
 @Component
-class ResourceWordSource : WordSource {
+class ResourceWordSource(@Value("\${streampack.hangman.words:$DEFAULT}") location: String) :
+    WordSource {
     private val logger = LoggerFactory.getLogger(ResourceWordSource::class.java)
     private val words: List<String>
 
     init {
+        val resource = DefaultResourceLoader(javaClass.classLoader).getResource(location)
+        check(resource.exists()) { "No hangman word list at $location" }
         words =
-            javaClass.classLoader
-                .getResourceAsStream("hangman-words.txt")!!
+            resource.inputStream
                 .bufferedReader()
                 .readLines()
                 .map { it.trim().lowercase() }
                 .filter { it.isNotBlank() }
-        logger.info("Loaded {} hangman words from classpath resource", words.size)
+        check(words.isNotEmpty()) { "The hangman word list at $location has no words" }
+        logger.info("Loaded {} hangman words from {}", words.size, location)
     }
 
     override fun randomWord(): String = words.random()
+
+    companion object {
+        const val DEFAULT = "classpath:hangman-words.txt"
+    }
 }
