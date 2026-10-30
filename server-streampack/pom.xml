@@ -74,10 +74,6 @@
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
-            <artifactId>operation-safecracker</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.streampack</groupId>
             <artifactId>operation-markov</artifactId>
         </dependency>
         <dependency>
