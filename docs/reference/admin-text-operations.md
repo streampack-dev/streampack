@@ -400,14 +400,8 @@ Notes:
 
 ## Game Moderation
 
-`ADMIN`:
-
-```text
-hangman block <word>
-hangman unblock <word>
-```
-
-These commands maintain the blocked-word list used by the hangman game.
+`hangman block <word>` and `hangman unblock <word>` (`ADMIN`) come with the hangman extension. See
+[operation-hangman](https://github.com/streampack-dev/operation-hangman#blocked-words).
 
 ## Bridge Operations
 
