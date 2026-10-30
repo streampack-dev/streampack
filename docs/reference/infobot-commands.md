@@ -17,7 +17,7 @@ For repository-facing operator and moderator commands, see:
 | Knowledge and lookup | `spring`, `define ubiquitous`, `rfc 2616`, `cve log4j`, `calc 2+3`, `weather Boston` |
 | Ambient behavior | `kotlin++`, paste a URL |
 | Messaging and channel tools | `tell alice hello`, `bridge provenance` |
-| Games | `hangman`, `21`, `safecracker` |
+| Games | `hangman`, `21`; `safecracker` when [its extension](https://github.com/streampack-dev/operation-safecracker) is installed |
 | AI and creative tools | `ask ...`, `poem ...`, `be alice` |
 | Idea capture | `article ...`, `content ...`, `logs ...`, `includeai`, `done`, `cancel` (see [operation-ideas](../../operation-ideas/README.md)) |
 

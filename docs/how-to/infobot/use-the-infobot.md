@@ -191,13 +191,8 @@ The path is the one inside the container. A missing or empty list stops the star
 
 ### Safecracker
 
-```text
-safecracker
-safecracker 3 0 3 0
-safecracker concede
-```
-
-Each game keeps independent state per channel or DM context.
+Safecracker is an extension, not part of the server: a server has it only when its jar is in the
+`ext/` directory. See [operation-safecracker](https://github.com/streampack-dev/operation-safecracker).
 
 ## AI and Creative Commands
 

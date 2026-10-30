@@ -83,7 +83,6 @@
         <module>operation-markov</module>
         <module>operation-moderation</module>
         <module>operation-poetry</module>
-        <module>operation-safecracker</module>
         <module>operation-sentiment</module>
         <module>operation-specs</module>
         <module>operation-tell</module>
@@ -455,11 +454,6 @@
             <dependency>
                 <groupId>dev.streampack</groupId>
                 <artifactId>operation-poetry</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.streampack</groupId>
-                <artifactId>operation-safecracker</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
