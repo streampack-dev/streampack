@@ -28,6 +28,12 @@
             <artifactId>lib-extension-api</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- For GreetController (#302); the server has Spring MVC already. -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>lib-extension-test</artifactId>

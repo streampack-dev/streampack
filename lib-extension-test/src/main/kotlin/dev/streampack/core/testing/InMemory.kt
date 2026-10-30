@@ -1,13 +1,16 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.testing
 
+import dev.streampack.core.model.Credential
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.Egress
 import dev.streampack.core.service.ExtensionDataStore
 import dev.streampack.core.service.ProvenanceStateService
+import dev.streampack.core.service.RequestCaller
 import dev.streampack.core.service.ServerInfo
 import dev.streampack.core.service.TransformerChainService
+import jakarta.servlet.http.HttpServletRequest
 import java.util.concurrent.ConcurrentHashMap
 
 /** [ExtensionDataStore] in memory. */
@@ -70,4 +73,12 @@ class RecordingEgress : Egress {
 
     override fun send(text: String, destinationUri: String) =
         send(OperationResult.Success(text), Provenance.decode(destinationUri))
+}
+
+/**
+ * A [RequestCaller] that says every request comes from [credential] (#302); null, the default, is
+ * nobody signed in. Set it before each request a test makes.
+ */
+class FixedRequestCaller(var credential: Credential? = null) : RequestCaller {
+    override fun resolve(request: HttpServletRequest) = credential
 }

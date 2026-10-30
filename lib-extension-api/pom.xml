@@ -34,6 +34,11 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-messaging</artifactId>
         </dependency>
+        <!-- RequestCaller takes the request a controller has (#302). The server has it at run time. -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

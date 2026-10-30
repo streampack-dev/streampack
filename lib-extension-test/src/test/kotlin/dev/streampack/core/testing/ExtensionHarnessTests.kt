@@ -5,11 +5,13 @@ import dev.streampack.core.integration.TickListener
 import dev.streampack.core.model.Declined
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.model.Role
 import dev.streampack.core.service.TypedOperation
 import java.time.Instant
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.messaging.Message
+import org.springframework.mock.web.MockHttpServletRequest
 
 class ExtensionHarnessTests {
     private class Answer(
@@ -65,5 +67,20 @@ class ExtensionHarnessTests {
             )
             .tick(now)
         assertThat(seen).containsExactly(now)
+    }
+
+    @Test
+    fun `signIn sets who every request comes from, and signOut clears it`() {
+        val harness = ExtensionHarness()
+        val request = MockHttpServletRequest()
+        assertThat(harness.caller.resolve(request)).isNull()
+
+        val admin = harness.signIn(ExtensionHarness.user("ada", Role.ADMIN), fromCookie = true)
+        val credential = harness.caller.resolve(request)!!
+        assertThat(credential.principal).isEqualTo(admin)
+        assertThat(credential.fromCookie).isTrue()
+
+        harness.signOut()
+        assertThat(harness.caller.resolve(request)).isNull()
     }
 }
