@@ -164,35 +164,13 @@ provenance and bridge state.
 
 ## Games
 
-### Hangman
+The games are extensions, not part of the server: a server has a game only when its jar is in the
+`ext/` directory. See each game's repository for its commands and settings:
 
-```text
-hangman
-hangman e
-hangman solve compiler
-hangman concede
-```
-
-The words come from a list that ships with hangman. To use your own, put one word on each line of a text file in the deployment's `ext/` directory, for example `ext/words/hangman.txt`. Then set this in `.env` and recreate the server:
-
-```dotenv
-STREAMPACK_HANGMAN_WORDS=file:/opt/streampack/ext/words/hangman.txt
-```
-
-The path is the one inside the container. A missing or empty list stops the start, and the log names it.
-
-### 21 Matches
-
-```text
-21
-21 take 2
-21 concede
-```
-
-### Safecracker
-
-Safecracker is an extension, not part of the server: a server has it only when its jar is in the
-`ext/` directory. See [operation-safecracker](https://github.com/streampack-dev/operation-safecracker).
+- [operation-hangman](https://github.com/streampack-dev/operation-hangman), with its word list
+  and blocked words
+- [operation-21](https://github.com/streampack-dev/operation-21)
+- [operation-safecracker](https://github.com/streampack-dev/operation-safecracker)
 
 ## AI and Creative Commands
 

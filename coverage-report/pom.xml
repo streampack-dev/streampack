@@ -113,14 +113,6 @@
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
-            <artifactId>operation-21</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.streampack</groupId>
-            <artifactId>operation-hangman</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.streampack</groupId>
             <artifactId>operation-ideas</artifactId>
         </dependency>
         <dependency>

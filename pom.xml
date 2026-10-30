@@ -71,13 +71,11 @@
         <module>lib-temperature</module>
         <module>lib-testsupport</module>
         <module>lib-web</module>
-        <module>operation-21</module>
         <module>operation-ask</module>
         <module>operation-cal</module>
         <module>operation-calc</module>
         <module>operation-dictionary</module>
         <module>operation-factoid</module>
-        <module>operation-hangman</module>
         <module>operation-ideas</module>
         <module>operation-karma</module>
         <module>operation-markov</module>
@@ -403,11 +401,6 @@
             </dependency>
             <dependency>
                 <groupId>dev.streampack</groupId>
-                <artifactId>operation-21</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.streampack</groupId>
                 <artifactId>operation-ask</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -429,11 +422,6 @@
             <dependency>
                 <groupId>dev.streampack</groupId>
                 <artifactId>operation-factoid</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.streampack</groupId>
-                <artifactId>operation-hangman</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
