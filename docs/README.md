@@ -48,6 +48,6 @@ For blog/site HTTP integration, including one-time-code sign-in over email or Ma
 For the bundled bot command surface, use:
 
 - [Use the Infobot](how-to/infobot/use-the-infobot.md) for the public user guide
-- [Use the Calculator](how-to/infobot/use-the-calculator.md) for `calc`: operators, `ans`, functions and errors
+- [Use the Calculator](https://github.com/streampack-dev/operation-calc/blob/main/docs/use-the-calculator.md) for `calc`, from the operation-calc extension: operators, `ans`, functions and errors
 - [Admin Text Operations](reference/admin-text-operations.md) for repository-facing operator commands
 - [Command Parser](reference/command-parser.md) for parser internals and grammar/help rendering

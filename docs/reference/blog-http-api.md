@@ -495,7 +495,7 @@ view; `totalCount` counts only what they let through. Searches are limited to 30
 ## Admin Web Console
 
 Streampack's text commands for signed-in administrators, typed in a browser (#115). Commands go in
-as at the stdin console (`aho-corasick`, `foo is bar`, `calc 2+2`: addressed, no prefix); output
+as at the stdin console (`aho-corasick`, `foo is bar`, `karma kotlin`: addressed, no prefix); output
 comes back on a server-sent event stream shared by all of that admin's windows. Both endpoints are
 for active `ADMIN` and `SUPER_ADMIN` accounts, checked against the user store on every request,
 and each command runs with the account's authority as it stands when the command runs.

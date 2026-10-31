@@ -72,8 +72,6 @@
         <module>lib-testsupport</module>
         <module>lib-web</module>
         <module>operation-ask</module>
-        <module>operation-cal</module>
-        <module>operation-calc</module>
         <module>operation-dictionary</module>
         <module>operation-factoid</module>
         <module>operation-ideas</module>
@@ -402,16 +400,6 @@
             <dependency>
                 <groupId>dev.streampack</groupId>
                 <artifactId>operation-ask</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.streampack</groupId>
-                <artifactId>operation-cal</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.streampack</groupId>
-                <artifactId>operation-calc</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

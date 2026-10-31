@@ -32,6 +32,7 @@ To use it, see [Extend the Server with Jars](../how-to/deploy/extend-the-server-
 ## Writing an Extension Jar
 
 - **Library.** Compile against `lib-extension-api` with the `provided` scope. It holds the operation contracts and models, the command parser, `JacksonMappers` and `TickListener`, and the services the server implements for extensions (below). It brings no database or persistence. If you need more, add other streampack libraries, `lib-core` included, also `provided`. The server already has all of them, so the jar holds only your own classes.
+- **Other libraries.** A library the server doesn't have goes inside your jar. Use the Maven Shade plugin, and relocate the library's packages under one of your own outside `dev.streampack`, such as `shaded.calc`. Then two extensions with different versions of it can't clash, and the server's scan skips it. [operation-calc](https://github.com/streampack-dev/operation-calc) shades ParserNG this way; see its `pom.xml`.
 - **Version.** Build against the version of the server you run. An extension built for another version may not load.
 - **Package.** Put components under `dev.streampack`, for example `dev.streampack.example`, so the server's scan finds them.
 - **HTTP endpoints.** Add `spring-webmvc`, also `provided`, and put controllers under `/ext/<name>/`. See [Add an HTTP Endpoint to an Extension](../how-to/develop/add-an-http-endpoint-to-an-extension.md).

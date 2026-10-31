@@ -99,9 +99,12 @@ tomorrow hebrew
 weather Boston
 ```
 
-Use these for quick utility lookups. For what `calc` accepts, see
-[Use the Calculator](use-the-calculator.md). `calendar` is another name for `today`: `calendar hebrew`
-gives today's date in the Hebrew calendar.
+Use these for quick utility lookups. `calc` and the date commands are extensions: a server has
+them only when [operation-calc](https://github.com/streampack-dev/operation-calc) or
+[operation-calendar](https://github.com/streampack-dev/operation-calendar) is installed. For what
+`calc` accepts, see
+[Use the Calculator](https://github.com/streampack-dev/operation-calc/blob/main/docs/use-the-calculator.md).
+`calendar` is another name for `today`: `calendar hebrew` gives today's date in the Hebrew calendar.
 
 ## Social and Messaging Tools
 

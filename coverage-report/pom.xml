@@ -57,14 +57,6 @@
         </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
-            <artifactId>operation-calc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.streampack</groupId>
-            <artifactId>operation-cal</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.streampack</groupId>
             <artifactId>operation-karma</artifactId>
         </dependency>
         <dependency>

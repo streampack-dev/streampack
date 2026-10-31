@@ -172,7 +172,6 @@ nothing, see [Deploy with Docker for Mattermost and GitLab](docs/tutorials/deplo
 | `lib-core` | Platform core: operations, provenance, protocols, users, event flow |
 | `lib-blog` | Blog domain entities and repositories |
 | `lib-testsupport` | Shared test infrastructure and HTTP-test reset support |
-| `operation-calc` | Calculator operation for algebraic expressions |
 | `service-blog` | HTTP adapter, REST controllers, blog operations |
 | `service-console` | Interactive console adapter |
 | `server-streampack` | Bundled runnable server distribution |

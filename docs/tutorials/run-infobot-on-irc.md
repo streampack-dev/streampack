@@ -76,7 +76,7 @@ In the channel:
 
 ```text
 !version
-!calc 2+3
+!karma kotlin
 nevet: version
 ```
 
