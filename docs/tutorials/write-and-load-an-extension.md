@@ -121,4 +121,5 @@ docker compose up -d --force-recreate server-streampack
 
 - [Write Your First Operation](write-your-first-operation.md): the kinds of operation, and their outcomes.
 - [Extend the Server with Jars](../how-to/deploy/extend-the-server-with-jars.md): banners and settings, too.
+- [Add an HTTP Endpoint to an Extension](../how-to/develop/add-an-http-endpoint-to-an-extension.md): the example's `GreetController`, explained.
 - [Extensions](../explanation/extensions.md): what an extension is trusted with.

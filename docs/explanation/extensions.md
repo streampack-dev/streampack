@@ -8,6 +8,12 @@ The server is a Spring Boot executable jar. Started with `java -jar`, it sees on
 
 From there, nothing is special. The server scans the package `dev.streampack` for components, so a component in an extension jar under that package is found like a built-in one. An operation joins the chain, a service can be injected, and a scheduled method runs.
 
+## HTTP Endpoints
+
+A controller is a component too, so an extension's `@RestController` under `dev.streampack` serves requests beside the server's own. The server's security lets every request reach a controller; each controller checks who is calling. An extension does that through `RequestCaller`, the same lookup the server's controllers use, so a user signs in once for both. Its endpoints also appear in the server's live OpenAPI document.
+
+Nothing keeps an extension's paths apart from the server's. The deployer trusts what is in `ext/`, so the convention is enough: an extension's endpoints go under `/ext/<name>/`. See [Add an HTTP Endpoint to an Extension](../how-to/develop/add-an-http-endpoint-to-an-extension.md).
+
 ## Why the Directory Comes First
 
 `PropertiesLauncher` puts `loader.path` ahead of the server's own classes. That's what makes `banner.txt` and `logback.xml` there replace the server's: when two resources share a name, the first one on the classpath wins.

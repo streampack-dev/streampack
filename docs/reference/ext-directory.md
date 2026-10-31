@@ -34,6 +34,7 @@ To use it, see [Extend the Server with Jars](../how-to/deploy/extend-the-server-
 - **Library.** Compile against `lib-extension-api` with the `provided` scope. It holds the operation contracts and models, the command parser, `JacksonMappers` and `TickListener`, and the services the server implements for extensions (below). It brings no database or persistence. If you need more, add other streampack libraries, `lib-core` included, also `provided`. The server already has all of them, so the jar holds only your own classes.
 - **Version.** Build against the version of the server you run. An extension built for another version may not load.
 - **Package.** Put components under `dev.streampack`, for example `dev.streampack.example`, so the server's scan finds them.
+- **HTTP endpoints.** Add `spring-webmvc`, also `provided`, and put controllers under `/ext/<name>/`. See [Add an HTTP Endpoint to an Extension](../how-to/develop/add-an-http-endpoint-to-an-extension.md).
 - **Example.** The repository's `example-extension` module is a complete example. See [Write and Load an Extension](../tutorials/write-and-load-an-extension.md).
 
 ## What the Server Gives an Extension
@@ -47,10 +48,11 @@ Inject these into your components. The server implements each one.
 | `TransformerChainService` | Applies the server's egress transformers to a result. `Egress` already does this; use it directly only to see a result as it would go out. |
 | `ServerInfo` | The server's `version`, and `isAtLeast("1.16.11")`. A development build has no version and counts as new enough. |
 | `Egress` | Sends a message by itself, with no command to answer, such as a timer's: `send(result, provenance)`, or `send(text, destinationUri)` with an encoded provenance. The server applies its egress transformers first. A failure is logged, not thrown. |
+| `RequestCaller` | Says who an HTTP request comes from, as the server's own controllers see it: `resolve(request)` returns a `Credential` (`principal`, `expiresAt`, `fromCookie`), or null when nobody valid is signed in. See [Add an HTTP Endpoint to an Extension](../how-to/develop/add-an-http-endpoint-to-an-extension.md). |
 
 ## Testing an Extension
 
-Add `lib-extension-test` with the `test` scope. It brings JUnit and AssertJ, and needs no server and no database. `ExtensionHarness` holds in-memory versions of the services above. Build your components with them, add them with `use`, and send commands:
+Add `lib-extension-test` with the `test` scope. It brings JUnit, AssertJ and Spring's test support (`MockMvc`, `MockHttpServletRequest`), and needs no server and no database. `ExtensionHarness` holds in-memory versions of the services above. Build your components with them, add them with `use`, and send commands:
 
 ```kotlin
 val harness = ExtensionHarness()
@@ -65,6 +67,7 @@ assertThat(harness.reply("mygame start")).contains("started")
 | `data`, `state`, `transformers` | In-memory `ExtensionDataStore` and `ProvenanceStateService`, and a `TransformerChainService` with no transformers. |
 | `egress` | An `Egress` that keeps what is sent to it, with no transformers applied; `egress.texts` is what was said. |
 | `server` | A `ServerInfo`; `FixedServerInfo("1.16.11")` sets a version. |
+| `caller`, `signIn(user, fromCookie)`, `signOut()` | A `RequestCaller` for controller tests. `signIn` makes every request come from `user` until `signOut`; `fromCookie = true` acts as a browser's cookie. |
 | `send(text, user, channel, addressed)` | The answer to a command. `ExtensionHarness.user(role = Role.ADMIN)` and `ExtensionHarness.channel(replyTo = "#games")` build the sender and the channel. |
 | `reply(text)` | The text of a successful answer, or null. |
 | `tick(now)` | Calls every `TickListener` you added, as the server's one-second tick does. |

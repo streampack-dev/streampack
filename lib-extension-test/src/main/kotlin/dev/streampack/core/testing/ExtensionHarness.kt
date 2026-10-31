@@ -2,6 +2,7 @@
 package dev.streampack.core.testing
 
 import dev.streampack.core.integration.TickListener
+import dev.streampack.core.model.Credential
 import dev.streampack.core.model.Declined
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
@@ -31,6 +32,7 @@ class ExtensionHarness {
     val transformers = NoTransformers()
     val egress = RecordingEgress()
     var server: FixedServerInfo = FixedServerInfo()
+    val caller = FixedRequestCaller()
 
     private val operations = mutableListOf<Operation>()
     private val tickListeners = mutableListOf<TickListener>()
@@ -56,6 +58,20 @@ class ExtensionHarness {
     /** The text of a [OperationResult.Success] answer to [text], or null for any other answer. */
     fun reply(text: String, user: UserPrincipal = user(), channel: Provenance = channel(user)) =
         (send(text, user, channel) as? OperationResult.Success)?.payload?.toString()
+
+    /**
+     * Makes every HTTP request [caller] sees come from [user], signed in for an hour, until
+     * [signOut] (#302). [fromCookie] is true for a browser's cookie, false for a bearer token.
+     */
+    fun signIn(user: UserPrincipal = user(), fromCookie: Boolean = false): UserPrincipal {
+        caller.credential = Credential(user, Instant.now().plusSeconds(3600), fromCookie)
+        return user
+    }
+
+    /** Makes HTTP requests come from nobody signed in. */
+    fun signOut() {
+        caller.credential = null
+    }
 
     /** Calls every [TickListener] with [now], as the server's one-second tick does. */
     fun tick(now: Instant) = tickListeners.forEach { it.onTick(now) }
