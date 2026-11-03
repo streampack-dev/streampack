@@ -51,3 +51,21 @@ MAVEN_DOCKER_SERVER_ID=some-id just docker-login
 ```
 
 If Maven uses encrypted passwords, run `docker login` manually or set `DOCKER_PASSWORD`.
+
+## Build Cache
+
+The multi-platform build runs in the `streampack-builder` buildx builder, which ui-pudl, ui-primate and ui-nextjs use too. Its cache is in the builder's own Docker volume, so `docker system df` and `docker system prune` do not see it.
+
+After each build, the image recipe trims that cache to 10 GB. It keeps the layers used most recently, so the next build stays fast.
+
+To see the cache size:
+
+```bash
+docker buildx du --builder streampack-builder
+```
+
+To clear all of the cache:
+
+```bash
+docker buildx prune --builder streampack-builder -f
+```

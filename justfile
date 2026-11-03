@@ -176,6 +176,9 @@ _image version mode:
       docker buildx build --platform "$platforms" "${labels[@]}" "${tags[@]}" --push .
       echo "Pushed ${image}:${version}$([[ "${DOCKER_PUSH_LATEST:-true}" == "true" ]] && printf ' and :latest')"
     fi
+    # The shared builder's cache lives in its own volume, which docker system prune never sees: keep
+    # the recent layers and drop the rest (#308).
+    docker buildx prune --builder "$builder" --max-used-space 10gb -f >/dev/null
 
 # Releases come from main, up to date with origin's: never from a feature branch.
 _on-main:
