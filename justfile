@@ -30,7 +30,7 @@ run:
     {{maven}} -pl server-streampack -am -DskipTests package
     {{app_env}} java --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -jar server-streampack/target/server-streampack-*-exec.jar
 
-# Replace Pele, the Mermaid renderer (#252), with an exact npm release: just update-pele 1.6.0.
+# Replace Pele, the Mermaid renderer (#252), with an exact npm release: just update-pele 1.13.0.
 # npm pack runs no package scripts; only the browser bundle and the licence are kept.
 update-pele version:
     #!/usr/bin/env bash

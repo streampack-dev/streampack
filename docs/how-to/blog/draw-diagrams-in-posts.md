@@ -39,7 +39,7 @@ flowchart LR
 If the diagram has a mistake, the post still saves. The block stays as code, with a line under it that says what's wrong:
 
 ```text
-This diagram wasn't drawn: Parse error on line 3: Expecting 'NODE_STRING', got 'EOF'
+This diagram wasn't drawn: Parse error on line 2: Expecting 'NODE_STRING', got 'EOF'
 ```
 
 Correct the diagram and save the post again.

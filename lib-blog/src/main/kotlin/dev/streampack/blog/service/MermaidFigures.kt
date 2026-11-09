@@ -88,6 +88,26 @@ object MermaidFigures {
             RegexOption.IGNORE_CASE,
         )
 
+    /**
+     * A paint that starts with a reference to a gradient (Pele's Sankey links, since 1.9:
+     * `url(#d1-sankey-…) var(--pele-series-1,…)`, the variable its fallback)
+     */
+    private val GRADIENT_PAINT = Regex("""^url\(#([A-Za-z0-9_-]+)\)""")
+
+    /**
+     * [value] without its leading gradient reference, when [attribute] is a paint and the reference
+     * names a gradient inside the same drawing as [el]; otherwise [value] as it is. What's left
+     * still has to pass [UNSAFE_VALUE], so a paint can point at nothing outside its own diagram.
+     */
+    private fun withoutOwnGradient(el: Element, attribute: String, value: String): String {
+        if (attribute != "fill" && attribute != "stroke") return value
+        val reference = GRADIENT_PAINT.find(value) ?: return value
+        val drawing = el.parents().lastOrNull { it.normalName() == "svg" } ?: return value
+        val target = drawing.getElementById(reference.groupValues[1]) ?: return value
+        if (target.normalName() != "lineargradient") return value
+        return value.substring(reference.range.last + 1)
+    }
+
     /** The CSS properties Pele writes inline; custom properties (`--…`) are its theme hooks */
     private val STYLE_PROPERTIES =
         setOf(
@@ -108,6 +128,7 @@ object MermaidFigures {
             "ry",
             "stroke",
             "stroke-dasharray",
+            "stroke-dashoffset",
             "stroke-opacity",
             "stroke-width",
             "text-decoration",
@@ -126,6 +147,7 @@ object MermaidFigures {
 
     private val PRESENTATION =
         arrayOf(
+            "baseline-shift",
             "class",
             "data-id",
             "data-icon",
@@ -145,11 +167,15 @@ object MermaidFigures {
             "stroke-width",
             "style",
             "text-anchor",
+            "text-decoration",
             "dominant-baseline",
             "transform",
         )
 
-    /** What Pele 1.6 writes across every diagram type, and nothing that links or loads */
+    /**
+     * What Pele 1.13 writes across every diagram type, and nothing that links or loads. A paint may
+     * point only at a gradient in its own drawing ([withoutOwnGradient]).
+     */
     private object SvgSafelist :
         Safelist(
             Safelist.none()
@@ -167,6 +193,9 @@ object MermaidFigures {
                     "path",
                     "text",
                     "tspan",
+                    "defs",
+                    "linearGradient",
+                    "stop",
                 )
                 .addAttributes(":all", *PRESENTATION)
                 .addAttributes(
@@ -193,11 +222,15 @@ object MermaidFigures {
                 .addAttributes("polygon", "points")
                 .addAttributes("path", "d")
                 .addAttributes("text", "x", "y", "dx", "dy", "xml:space")
-                .addAttributes("tspan", "x", "y", "dx", "dy"),
+                .addAttributes("tspan", "x", "y", "dx", "dy")
+                .addAttributes("linearGradient", "id", "gradientUnits", "x1", "y1", "x2", "y2")
+                .addAttributes("stop", "offset", "stop-color", "stop-opacity"),
         ) {
         override fun isSafeAttribute(tagName: String, el: Element, attr: Attribute): Boolean {
             if (!super.isSafeAttribute(tagName, el, attr)) return false
-            if (UNSAFE_VALUE.containsMatchIn(attr.value)) return false
+            if (UNSAFE_VALUE.containsMatchIn(withoutOwnGradient(el, attr.key, attr.value))) {
+                return false
+            }
             return attr.key != "style" || safeStyle(attr.value)
         }
     }

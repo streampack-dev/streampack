@@ -1,6 +1,6 @@
 # Diagram HTML
 
-A post's or comment's ```` ```mermaid ```` block is drawn when it's saved (#252), with [Pele](https://pele.run) 1.6, and stored in `renderedHtml`. This page describes that HTML, for front ends that show it. Authors' instructions are in [Draw Diagrams in Posts](../how-to/blog/draw-diagrams-in-posts.md).
+A post's or comment's ```` ```mermaid ```` block is drawn when it's saved (#252), with [Pele](https://pele.run) 1.13, and stored in `renderedHtml`. A diagram stays as it was drawn until its post or comment is saved again, so older ones may come from an earlier Pele. This page describes that HTML, for front ends that show it. Authors' instructions are in [Draw Diagrams in Posts](../how-to/blog/draw-diagrams-in-posts.md).
 
 ## A Drawn Diagram
 
@@ -29,7 +29,7 @@ A post's or comment's ```` ```mermaid ```` block is drawn when it's saved (#252)
   <pre><code class="language-mermaid">flowchart LR
   A --&gt;
 </code></pre>
-  <figcaption>This diagram wasn't drawn: Parse error on line 3: Expecting 'NODE_STRING', got 'EOF'</figcaption>
+  <figcaption>This diagram wasn't drawn: Parse error on line 2: Expecting 'NODE_STRING', got 'EOF'</figcaption>
 </figure>
 ```
 
@@ -71,8 +71,8 @@ Characters Plex doesn't have are measured in the server's fallback font, and cha
 
 [`RenderedHtmlSanitizer`](../../lib-blog/src/main/kotlin/dev/streampack/blog/service/RenderedHtmlSanitizer.kt) rebuilds every `figure.mermaid` from its parts, when a post is saved and when stored HTML is sanitized again at startup:
 
-- The SVG keeps only shapes (`g`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon`, `path`), text (`text`, `tspan`, `title`, `desc`), and their geometry and presentation attributes.
-- Inline `style` keeps only presentation properties and custom properties. No attribute may hold `url(`, a script scheme, or an escape.
+- The SVG keeps only shapes (`g`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon`, `path`), text (`text`, `tspan`, `title`, `desc`), gradients (`defs`, `linearGradient`, `stop`), and their geometry and presentation attributes.
+- Inline `style` keeps only presentation properties and custom properties. No attribute may hold `url(`, a script scheme, or an escape, with one exception: a `fill` or `stroke` may start with `url(#id)` when `id` names a `linearGradient` inside the same SVG. Pele colours Sankey links that way, with a theme variable after it as the fallback.
 - There are no links, images or `<use>` references. Pele is called with links and images turned off.
 - The source and the caption are text.
 
