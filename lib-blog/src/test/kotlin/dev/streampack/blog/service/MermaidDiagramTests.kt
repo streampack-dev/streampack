@@ -79,6 +79,73 @@ class MermaidDiagramTests {
     }
 
     @Test
+    fun `a Sankey diagram keeps its gradients, each link filled from one in the same drawing`() {
+        val svg = assertDrawn("sankey-beta\n  A,B,10\n  A,C,5", "sankey")
+        val links = svg.select("path.pele-sankey-link")
+        assertEquals(2, links.size, svg.outerHtml())
+        for (link in links) {
+            val id = Regex("""^url\(#([\w-]+)\) var\(--pele-series-\d+""").find(link.attr("fill"))
+            assertNotNull(id, link.outerHtml())
+            val gradient = svg.getElementById(id!!.groupValues[1])
+            assertEquals("lineargradient", gradient?.normalName(), svg.outerHtml())
+            assertEquals(
+                2,
+                gradient!!.select("stop[offset][stop-color]").size,
+                gradient.outerHtml(),
+            )
+        }
+        assertEquals(svg.outerHtml(), MermaidFigures.cleanSvg(svg.outerHtml())!!.outerHtml())
+    }
+
+    @Test
+    fun `a paint may point only at a gradient inside its own drawing`() {
+        val svg =
+            MermaidFigures.cleanSvg(
+                """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 9">""" +
+                    """<defs><linearGradient id="g1"><stop offset="0" stop-color="red"/></linearGradient></defs>""" +
+                    """<path class="own" d="M0 0" fill="url(#g1) var(--pele-series-1,#4c78a8)"/>""" +
+                    """<path class="elsewhere" d="M0 0" fill="url(#page-gradient) red"/>""" +
+                    """<path class="outside" d="M0 0" fill="url(https://evil.example/x#g1)"/>""" +
+                    """<path class="not-paint" d="M0 0" filter="url(#g1)"/>""" +
+                    """<rect class="shape" id="r1"/><path class="not-gradient" d="M0 0" stroke="url(#r1)"/>""" +
+                    """<path class="trailing" d="M0 0" fill="url(#g1) url(https://evil.example/y)"/></svg>""",
+            )!!
+        assertEquals(
+            "url(#g1) var(--pele-series-1,#4c78a8)",
+            svg.selectFirst(".own")!!.attr("fill"),
+        )
+        for (dropped in listOf(".elsewhere", ".outside", ".trailing")) {
+            assertFalse(svg.selectFirst(dropped)!!.hasAttr("fill"), svg.outerHtml())
+        }
+        assertFalse(svg.selectFirst(".not-paint")!!.hasAttr("filter"), svg.outerHtml())
+        assertFalse(svg.selectFirst(".not-gradient")!!.hasAttr("stroke"), svg.outerHtml())
+        assertFalse(svg.outerHtml().contains("evil"), svg.outerHtml())
+    }
+
+    @Test
+    fun `labels keep their subscripts, superscripts, underlines and dash offsets`() {
+        val svg =
+            assertDrawn(
+                "flowchart LR\n  A[\"x<sub>2</sub> e<sup>i</sup> <u>under</u>\"] --> B",
+                "flowchart",
+            )
+        val shifts = svg.select("tspan[baseline-shift]").map { it.attr("baseline-shift") }
+        assertEquals(2, shifts.size, svg.outerHtml())
+        assertEquals(
+            "underline",
+            svg.selectFirst("tspan[text-decoration]")?.attr("text-decoration"),
+        )
+        val dashed =
+            MermaidFigures.cleanSvg(
+                """<svg viewBox="0 0 9 9"><path d="M0 0" style="stroke-dasharray:4;stroke-dashoffset:2"/></svg>""",
+            )!!
+        assertEquals(
+            "stroke-dasharray:4;stroke-dashoffset:2",
+            dashed.selectFirst("path")!!.attr("style"),
+        )
+    }
+
+    @Test
     fun `a diagram that won't parse keeps its source and says why`() {
         val html = markdown.render(mermaid("flowchart LR\n  A -->"))
         val figure = figure(html)
