@@ -10,6 +10,7 @@ import dev.streampack.core.integration.EgressSubscriber
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.polling.schedule.PollResult
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.entity.RssFeed
 import dev.streampack.rss.entity.RssFeedSubscription
@@ -17,6 +18,7 @@ import dev.streampack.rss.repository.RssEntryRepository
 import dev.streampack.rss.repository.RssFeedRepository
 import dev.streampack.rss.repository.RssFeedSubscriptionRepository
 import dev.streampack.rss.service.FeedDiscoveryServiceTests.Companion.sampleRss
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
@@ -75,7 +77,7 @@ class RssFeedPollingServiceTests {
     @BeforeEach
     fun setUp() {
         capturingEgressSubscriber.clear()
-        httpServer = HttpServer.create(InetSocketAddress(0), 10)
+        httpServer = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 10)
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
     }
@@ -121,7 +123,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         val entries =
             entryRepository.findByFeedAndGuidIn(feed, (1..3).map { "http://example.com/entry/$it" })
@@ -129,6 +131,15 @@ class RssFeedPollingServiceTests {
     }
 
     /** What [action] logs at WARN from the polling service. */
+    /**
+     * Polls [feed] and fails at once when the poll fails, so a failed fetch is reported as itself
+     * and not as missing entries later (#313).
+     */
+    private fun poll(feed: RssFeed) {
+        val result = pollingService.pollFeed(feed)
+        assertTrue(result is PollResult.Success, "poll of ${feed.feedUrl} failed: $result")
+    }
+
     private fun warnings(action: () -> Unit): List<String> {
         val logger = LoggerFactory.getLogger(RssFeedPollingService::class.java) as Logger
         val appender = ListAppender<ILoggingEvent>().apply { start() }
@@ -162,8 +173,8 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        val first = warnings { pollingService.pollFeed(feed) }
-        val second = warnings { pollingService.pollFeed(feed) }
+        val first = warnings { poll(feed) }
+        val second = warnings { poll(feed) }
 
         val expected =
             "Feed \"Blog posts | RSS Feed\" ($baseUrl/localhost.xml): " +
@@ -192,7 +203,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        assertEquals(listOf<String>(), warnings { pollingService.pollFeed(feed) })
+        assertEquals(listOf<String>(), warnings { poll(feed) })
     }
 
     @Test
@@ -234,7 +245,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(duplicateGuidRss.toByteArray()) }
         }
 
-        pollingService.pollFeed(feed)
+        poll(feed)
         entryRepository.flush()
 
         val entries =
@@ -262,7 +273,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         assertEquals(entryCountBefore, entryRepository.count())
         val updatedFeed = feedRepository.findByFeedUrl(feed.feedUrl)
@@ -283,7 +294,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         // Should have 2 notifications (one per new entry)
         assertEquals(2, capturingEgressSubscriber.captured.size)
@@ -306,7 +317,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         // Entries stored
         val entries =
@@ -356,7 +367,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         val entries =
             entryRepository
@@ -409,7 +420,7 @@ class RssFeedPollingServiceTests {
             ),
         )
 
-        val logged = warnings { pollingService.pollFeed(feed) }
+        val logged = warnings { poll(feed) }
 
         val links =
             entryRepository
@@ -430,7 +441,7 @@ class RssFeedPollingServiceTests {
         val feed = createFeed("Atom updated", "/updated.xml")
         serve("/updated.xml", atom(atomEntry("only-updated", "2020-03-04T05:06:07Z")))
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         assertEquals(
             Instant.parse("2020-03-04T05:06:07Z"),
@@ -446,7 +457,7 @@ class RssFeedPollingServiceTests {
             atom(atomEntry("both", "2024-02-02T00:00:00Z", published = "2024-01-01T00:00:00Z")),
         )
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         assertEquals(Instant.parse("2024-01-01T00:00:00Z"), stored(feed, "both").publishedAt)
     }
@@ -462,7 +473,7 @@ class RssFeedPollingServiceTests {
             <pubDate>Tue, 03 Jun 2025 10:00:00 GMT</pubDate></item></channel></rss>""",
         )
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         assertEquals(Instant.parse("2025-06-03T10:00:00Z"), stored(feed, "rss").publishedAt)
     }
@@ -478,7 +489,7 @@ class RssFeedPollingServiceTests {
             ),
         )
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         assertNull(stored(feed, "future").publishedAt)
         assertNull(stored(feed, "future-updated").publishedAt)
@@ -509,7 +520,7 @@ class RssFeedPollingServiceTests {
             ),
         )
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         assertEquals(Instant.parse("2020-01-01T00:00:00Z"), stored(feed, "undated").publishedAt)
         assertEquals(Instant.parse("2021-01-01T00:00:00Z"), stored(feed, "future").publishedAt)
@@ -530,7 +541,7 @@ class RssFeedPollingServiceTests {
         )
         serve("/keep.xml", atom(atomEntry("keep", "2023-05-05T00:00:00Z")))
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         assertEquals(Instant.parse("2019-01-01T00:00:00Z"), stored(feed, "keep").publishedAt)
     }
@@ -572,7 +583,7 @@ class RssFeedPollingServiceTests {
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
 
-        pollingService.pollFeed(feed)
+        poll(feed)
 
         // Should have 2 notifications (one per subscriber)
         assertEquals(2, capturingEgressSubscriber.captured.size)

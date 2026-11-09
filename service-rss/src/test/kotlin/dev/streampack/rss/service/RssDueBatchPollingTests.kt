@@ -7,6 +7,7 @@ import dev.streampack.rss.repository.RssEntryRepository
 import dev.streampack.rss.repository.RssFeedRepository
 import dev.streampack.rss.repository.RssFeedSubscriptionRepository
 import dev.streampack.rss.service.FeedDiscoveryServiceTests.Companion.sampleRss
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Duration
 import java.time.Instant
@@ -41,7 +42,7 @@ class RssDueBatchPollingTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 10)
+        httpServer = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 10)
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
         hits.clear()
