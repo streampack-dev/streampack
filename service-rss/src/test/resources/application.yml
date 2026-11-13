@@ -24,6 +24,11 @@ streampack:
   security:
     enforce-external-secrets: false
   base-url: http://localhost:8080
+  # This file replaces lib-testsupport's application.yml, so it repeats that file's settings:
+  # tests send ticks themselves, and a running poller races them on the same feeds (#313).
+  tick:
+    scheduler:
+      enabled: false
 
 springdoc:
   api-docs:

@@ -10,6 +10,7 @@ import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.rss.service.FeedDiscoveryServiceTests.Companion.htmlWithFeedLink
 import dev.streampack.rss.service.FeedDiscoveryServiceTests.Companion.sampleRss
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.util.UUID
 import org.junit.jupiter.api.AfterEach
@@ -47,7 +48,7 @@ class AddFeedOperationTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 10)
+        httpServer = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 10)
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
     }

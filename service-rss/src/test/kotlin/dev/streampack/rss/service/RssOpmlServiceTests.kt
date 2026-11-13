@@ -4,6 +4,7 @@ package dev.streampack.rss.service
 import com.sun.net.httpserver.HttpServer
 import dev.streampack.rss.entity.RssFeed
 import dev.streampack.rss.repository.RssFeedRepository
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,7 +27,7 @@ class RssOpmlServiceTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 10)
+        httpServer = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 10)
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
     }

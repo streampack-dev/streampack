@@ -4,6 +4,7 @@ package dev.streampack.rss.service
 import com.sun.net.httpserver.HttpServer
 import dev.streampack.core.fetch.FetchProperties
 import dev.streampack.core.fetch.GuardedFetcher
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,7 +23,7 @@ class FeedDiscoveryServiceTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 10)
+        httpServer = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 10)
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
         service = FeedDiscoveryService(GuardedFetcher(FetchProperties(allowLoopback = true)))
