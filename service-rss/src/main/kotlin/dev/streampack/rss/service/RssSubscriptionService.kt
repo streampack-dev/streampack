@@ -2,6 +2,7 @@
 package dev.streampack.rss.service
 
 import com.rometools.rome.feed.synd.SyndEntry
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.polling.schedule.PollSchedule
 import dev.streampack.rss.config.RssProperties
 import dev.streampack.rss.entity.RssEntry
@@ -113,7 +114,12 @@ class RssSubscriptionService(
         val entries = entryRepository.saveAll(seeded.map { it.first })
         feedTags.record(entries.zip(seeded.map { it.second }))
         itemTexts.recordContent(entries.zip(seeded.map { it.second }))
-        logger.info("Added feed \"{}\" with {} entries", feed.title, entries.size)
+        logger.info(
+            "Added feed \"{}\" with {} {}",
+            feed.title,
+            entries.size,
+            "entry".pluralize(entries),
+        )
         SuspectLinks.warning(feed.title, feed.feedUrl, feed.siteUrl, entries.map { it.link })?.let {
             logger.warn(it)
         }
@@ -148,7 +154,11 @@ class RssSubscriptionService(
             added
         }
         if (duplicates > 0) {
-            logger.info("Ignored {} duplicate RSS entries during feed registration", duplicates)
+            logger.info(
+                "Ignored {} duplicate RSS {} during feed registration",
+                duplicates,
+                "entry".pluralize(duplicates),
+            )
         }
         return deduplicated
     }
@@ -215,9 +225,10 @@ class RssSubscriptionService(
         activeSubscriptions.forEach { subscriptionRepository.save(it.copy(active = false)) }
         feedRepository.save(feed.copy(active = false))
         logger.info(
-            "Removed feed \"{}\" and deactivated {} subscriptions",
+            "Removed feed \"{}\" and deactivated {} {}",
             feed.title,
             activeSubscriptions.size,
+            "subscription".pluralize(activeSubscriptions),
         )
         return RemoveFeedOutcome.Removed(feed, activeSubscriptions.size)
     }

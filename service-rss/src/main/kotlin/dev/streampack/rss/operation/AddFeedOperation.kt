@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.operation
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Role
@@ -35,7 +36,7 @@ class AddFeedOperation(private val feedService: RssSubscriptionService) :
         return when (val outcome = feedService.addFeed(payload.url)) {
             is AddFeedOutcome.Added ->
                 OperationResult.Success(
-                    "Added feed \"${outcome.feed.title}\" with ${outcome.entryCount} entries",
+                    "Added feed \"${outcome.feed.title}\" with ${outcome.entryCount} ${"entry".pluralize(outcome.entryCount)}",
                 )
             is AddFeedOutcome.AlreadyExists ->
                 OperationResult.Success("Feed \"${outcome.feed.title}\" already exists")

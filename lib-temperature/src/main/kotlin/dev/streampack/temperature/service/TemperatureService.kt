@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.temperature.service
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.temperature.config.TemperatureProperties
 import dev.streampack.temperature.entity.TemperatureBucket
 import dev.streampack.temperature.model.TemperatureRankingPage
@@ -171,7 +172,12 @@ class TemperatureService(
         val cutoff = asOf.minusDays(properties.retentionDays)
         val removed = repository.deleteByBucketDateBefore(cutoff)
         if (removed > 0) {
-            logger.info("Removed {} temperature bucket(s) older than {}", removed, cutoff)
+            logger.info(
+                "Removed {} temperature {} older than {}",
+                removed,
+                "bucket".pluralize(removed),
+                cutoff,
+            )
         }
     }
 }

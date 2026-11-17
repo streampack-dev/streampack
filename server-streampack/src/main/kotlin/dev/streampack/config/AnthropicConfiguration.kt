@@ -5,6 +5,7 @@ import com.anthropic.models.messages.OutputConfig
 import com.anthropic.models.messages.ThinkingConfigAdaptive
 import dev.streampack.ai.config.AiProperties
 import dev.streampack.ai.service.AiModelOptions
+import dev.streampack.core.extensions.pluralize
 import org.slf4j.LoggerFactory
 import org.springframework.ai.anthropic.AnthropicChatModel
 import org.springframework.ai.anthropic.AnthropicChatOptions
@@ -32,12 +33,12 @@ class AnthropicConfiguration {
 
         val options = chatOptions(properties, properties.model)
         logger.info(
-            "Anthropic chat model: {}, at most {} tokens, {} timeout, {} retr{}, thinking {}, effort {}; moderation model: {}",
+            "Anthropic chat model: {}, at most {} tokens, {} timeout, {} {}, thinking {}, effort {}; moderation model: {}",
             properties.model,
             properties.maxTokens,
             properties.timeout,
             properties.maxRetries,
-            if (properties.maxRetries == 1) "y" else "ies",
+            "retry".pluralize(properties.maxRetries),
             if (properties.thinking) "on" else "not asked for",
             effort(properties.effort)?.toString()?.lowercase() ?: "the model's default",
             properties.moderationModel,

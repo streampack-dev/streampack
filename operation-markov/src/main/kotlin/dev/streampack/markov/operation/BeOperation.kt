@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.markov.operation
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -52,9 +53,10 @@ class BeOperation(
         }
 
         logger.debug(
-            "Generated Markov sentence for {} from {} messages",
+            "Generated Markov sentence for {} from {} {}",
             payload.username,
             messages.size,
+            "message".pluralize(messages),
         )
         return OperationResult.Success("* channeling ${payload.username}: $generated")
     }

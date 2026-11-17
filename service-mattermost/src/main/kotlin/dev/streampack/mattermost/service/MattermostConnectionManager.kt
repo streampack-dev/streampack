@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.mattermost.service
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.ProtocolAdapter
@@ -46,8 +47,9 @@ class MattermostConnectionManager(
     override fun afterPropertiesSet() {
         val autoconnectServers = serverRepository.findByAutoconnectTrueAndDeletedFalse()
         logger.info(
-            "MattermostConnectionManager started, found {} autoconnect server(s)",
+            "MattermostConnectionManager started, found {} autoconnect {}",
             autoconnectServers.size,
+            "server".pluralize(autoconnectServers),
         )
         for (server in autoconnectServers) {
             /* One unreachable server must not stop the application, or the other servers */

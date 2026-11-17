@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.integration
 
+import dev.streampack.core.extensions.pluralize
 import jakarta.annotation.PostConstruct
 import java.time.Instant
 import org.slf4j.LoggerFactory
@@ -30,7 +31,7 @@ class TickListenerWiring(
             logger.debug("Registered tick listener: {}", listener::class.simpleName)
         }
         if (listeners.isNotEmpty()) {
-            logger.info("Registered {} tick listener(s)", listeners.size)
+            logger.info("Registered {} tick {}", listeners.size, "listener".pluralize(listeners))
         }
     }
 }

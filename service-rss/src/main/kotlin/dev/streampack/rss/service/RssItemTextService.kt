@@ -2,6 +2,7 @@
 package dev.streampack.rss.service
 
 import com.rometools.rome.feed.synd.SyndEntry
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.fetch.ArticleText
 import dev.streampack.core.fetch.GuardedFetcher
 import dev.streampack.rss.entity.RssEntry
@@ -66,7 +67,12 @@ class RssItemTextService(
         try {
             keepContent(stored, now)
         } catch (e: Exception) {
-            logger.warn("Couldn't keep the content of {} feed item(s): {}", stored.size, e.message)
+            logger.warn(
+                "Couldn't keep the content of {} feed {}: {}",
+                stored.size,
+                "item".pluralize(stored),
+                e.message,
+            )
         }
     }
 

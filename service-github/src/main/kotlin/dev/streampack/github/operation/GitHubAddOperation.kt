@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.operation
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.RedactionRule
@@ -76,9 +77,9 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
             is AddProjectOutcome.Added ->
                 OperationResult.Success(
                     "Watching ${outcome.project.displayName} " +
-                        "(${outcome.issueCount} issues, " +
-                        "${outcome.changeRequestCount} PRs, " +
-                        "${outcome.releaseCount} releases)" +
+                        "(${outcome.issueCount} ${"issue".pluralize(outcome.issueCount)}, " +
+                        "${outcome.changeRequestCount} ${"PR".pluralize(outcome.changeRequestCount)}, " +
+                        "${outcome.releaseCount} ${"release".pluralize(outcome.releaseCount)})" +
                         tokenExternalizationNote(payload.token, outcome.project),
                 )
             is AddProjectOutcome.AlreadyExists ->

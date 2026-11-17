@@ -1,0 +1,19 @@
+[
+  { "word": "entry", "count": 1, "expected": "entry" },
+  { "word": "entry", "count": 2, "expected": "entries" },
+  { "word": "entry", "count": 0, "expected": "entries" },
+  { "word": "key", "count": 2, "expected": "keys" },
+  { "word": "Type", "count": 2, "expected": "Types" },
+  { "word": "channel", "count": 3, "expected": "channels" },
+  { "word": "match", "count": 2, "expected": "matches" },
+  { "word": "dish", "count": 2, "expected": "dishes" },
+  { "word": "box", "count": 2, "expected": "boxes" },
+  { "word": "bus", "count": 2, "expected": "buses" },
+  { "word": "URL", "count": 2, "expected": "URLs" },
+  { "word": "feed tag", "count": 2, "expected": "feed tags" },
+  { "word": "child", "count": 2, "plural": "children", "expected": "children" },
+  { "word": "child", "count": 1, "plural": "children", "expected": "child" },
+  { "word": "entry", "count": 2, "collection": true, "expected": "entries" },
+  { "word": "entry", "count": 1, "collection": true, "expected": "entry" },
+  { "word": "person", "count": 0, "collection": true, "plural": "people", "expected": "people" }
+]

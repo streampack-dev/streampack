@@ -86,10 +86,10 @@ class FeedTagOperationTests {
     @Test
     fun `waiting feed tags are listed, and one is shown`() {
         val listed = run("feed tags")
-        assertTrue(listed.startsWith("3 feed tag(s) waiting"), listed)
+        assertTrue(listed.startsWith("3 feed tags waiting"), listed)
         assertTrue("golang (1/1)" in listed, listed)
         val shown = run("feed tag golang")
-        assertEquals("Feed tag 'golang': waiting, on 1 entries across 1 feeds. E.g. One (A)", shown)
+        assertEquals("Feed tag 'golang': waiting, on 1 entry across 1 feed. E.g. One (A)", shown)
     }
 
     @Test

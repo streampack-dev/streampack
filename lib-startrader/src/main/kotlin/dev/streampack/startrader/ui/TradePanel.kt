@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.startrader.ui
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.startrader.model.BuyOrder
 import dev.streampack.startrader.model.Commodity
 import dev.streampack.startrader.model.SellOrder
@@ -105,7 +106,7 @@ class TradePanel : JPanel(FlowLayout(FlowLayout.LEFT)) {
             } else {
                 val buys = pendingOrders.count { it is BuyOrder }
                 val sells = count - buys
-                "Pending: $count ($buys buys, $sells sells)"
+                "Pending: $count ($buys ${"buy".pluralize(buys)}, $sells ${"sell".pluralize(sells)})"
             }
     }
 }

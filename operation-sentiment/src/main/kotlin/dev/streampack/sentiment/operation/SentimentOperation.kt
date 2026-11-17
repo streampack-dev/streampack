@@ -2,6 +2,7 @@
 package dev.streampack.sentiment.operation
 
 import dev.streampack.ai.service.AiService
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.MessageDirection
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
@@ -84,7 +85,12 @@ class SentimentOperation(
         }
 
         val transcript = formatTranscript(messages, botNick)
-        logger.info("Analyzing sentiment for {} ({} messages)", payload.targetUri, messages.size)
+        logger.info(
+            "Analyzing sentiment for {} ({} {})",
+            payload.targetUri,
+            messages.size,
+            "message".pluralize(messages),
+        )
 
         val systemPrompt =
             //            """

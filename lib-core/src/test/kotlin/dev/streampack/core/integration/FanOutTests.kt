@@ -235,7 +235,7 @@ class FanOutTests {
         val result = eventGateway.process(buildMessage("failfan"))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
-        assertEquals("Dispatched 1 messages", (result as OperationResult.Success).payload)
+        assertEquals("Dispatched 1 message", (result as OperationResult.Success).payload)
         assertTrue(
             receivedPayloads.contains("child-survivor"),
             "surviving child should be received",

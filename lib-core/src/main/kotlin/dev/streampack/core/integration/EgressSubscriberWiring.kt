@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.integration
 
+import dev.streampack.core.extensions.pluralize
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -28,7 +29,11 @@ class EgressSubscriberWiring(
             logger.debug("Registered egress subscriber: {}", subscriber::class.simpleName)
         }
         if (subscribers.isNotEmpty()) {
-            logger.info("Registered {} egress subscriber(s)", subscribers.size)
+            logger.info(
+                "Registered {} egress {}",
+                subscribers.size,
+                "subscriber".pluralize(subscribers),
+            )
         }
     }
 }

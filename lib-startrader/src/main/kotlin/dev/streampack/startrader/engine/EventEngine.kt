@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.startrader.engine
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.startrader.config.SimulationConfig
 import dev.streampack.startrader.model.ActiveEvent
 import dev.streampack.startrader.model.Commodity
@@ -62,13 +63,14 @@ class EventEngine(private val random: Random = Random()) {
             planets[planetIndex] = planet.copy(supply = supply)
 
             logger.debug(
-                "Event {} at {}: consumption delta {:.2f}, production delta {:.2f} {} ({} ticks remaining)",
+                "Event {} at {}: consumption delta {:.2f}, production delta {:.2f} {} ({} {} remaining)",
                 event.event.id,
                 event.planet,
                 extraConsumption,
                 extraProduction,
                 commodity.displayName,
                 event.remainingTicks,
+                "tick".pluralize(event.remainingTicks),
             )
         }
 
@@ -112,7 +114,8 @@ class EventEngine(private val random: Random = Random()) {
         val activeEvent =
             ActiveEvent(event = event, planet = planet.name, remainingTicks = duration)
 
-        val msg = "Tick ${state.tickCount}: ${event.id} strikes ${planet.name} (${duration} ticks)"
+        val msg =
+            "Tick ${state.tickCount}: ${event.id} strikes ${planet.name} ($duration ${"tick".pluralize(duration)})"
         logger.info(msg)
 
         return state.copy(

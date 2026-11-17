@@ -181,7 +181,7 @@ class GetFactoidOperation(
         val factoid = factoidService.findFactoid(selector)
         return if (factoid != null && factoid.accessCount > 0) {
             OperationResult.Success(
-                "$selector has been accessed ${factoid.accessCount} time${if (factoid.accessCount != 1L) "s" else ""}, last accessed at ${factoid.lastAccessedAt}.",
+                "$selector has been accessed ${factoid.accessCount} ${"time".pluralize(factoid.accessCount)}, last accessed at ${factoid.lastAccessedAt}.",
             )
         } else {
             OperationResult.Success("$selector has never been accessed.")

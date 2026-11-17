@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.slack.service
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
@@ -53,8 +54,9 @@ class SlackConnectionManager(
     override fun afterPropertiesSet() {
         val autoconnectWorkspaces = workspaceRepository.findByAutoconnectTrueAndDeletedFalse()
         logger.info(
-            "SlackConnectionManager started, found {} autoconnect workspace(s)",
+            "SlackConnectionManager started, found {} autoconnect {}",
             autoconnectWorkspaces.size,
+            "workspace".pluralize(autoconnectWorkspaces),
         )
         for (workspace in autoconnectWorkspaces) {
             logger.info("Auto-connecting to Slack workspace '{}'", workspace.name)

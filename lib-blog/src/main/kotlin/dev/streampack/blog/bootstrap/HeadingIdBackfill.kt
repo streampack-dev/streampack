@@ -3,6 +3,7 @@ package dev.streampack.blog.bootstrap
 
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.service.MarkdownRenderingService
+import dev.streampack.core.extensions.pluralize
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -42,7 +43,8 @@ class HeadingIdBackfill(
             if (!posts.hasNext()) break
             page++
         }
-        if (changed > 0) logger.info("Gave {} post(s) heading ids (#270)", changed)
+        if (changed > 0)
+            logger.info("Gave {} {} heading ids (#270)", changed, "post".pluralize(changed))
         else logger.debug("Every post's headings have ids; no backfill needed")
     }
 

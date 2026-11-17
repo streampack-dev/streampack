@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.irc.service
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
@@ -193,7 +194,7 @@ class IrcConnectionManager(
 
         return adapters.entries.joinToString("\n") { (name, adapter) ->
             val channels = adapter.getJoinedChannels()
-            "  $name: ${channels.size} channel(s) [${channels.joinToString(", ")}]"
+            "  $name: ${channels.size} ${"channel".pluralize(channels)} [${channels.joinToString(", ")}]"
         }
     }
 

@@ -259,6 +259,6 @@ class GitHubInstanceOperationTests {
         val removed =
             assertInstanceOf(OperationResult.Success::class.java, remove).payload.toString()
         assertTrue(removed.contains("Removed ghe.example.com owner/repo"), removed)
-        assertTrue(removed.contains("1 subscriptions deactivated"), removed)
+        assertTrue(removed.contains("1 subscription deactivated"), removed)
     }
 }

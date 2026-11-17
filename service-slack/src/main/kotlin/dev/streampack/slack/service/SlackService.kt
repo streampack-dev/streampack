@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.slack.service
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.SecretRef
 import dev.streampack.core.service.ChannelControlService
 import dev.streampack.slack.entity.SlackChannel
@@ -218,7 +219,12 @@ class SlackService(
             channelRepository.save(channel.copy(deleted = true, updatedAt = Instant.now()))
         }
         workspaceRepository.save(workspace.copy(deleted = true, updatedAt = Instant.now()))
-        logger.info("Removed Slack workspace '{}' and {} channel(s)", name, channels.size)
+        logger.info(
+            "Removed Slack workspace '{}' and {} {}",
+            name,
+            channels.size,
+            "channel".pluralize(channels),
+        )
         return "Workspace '$name' removed"
     }
 

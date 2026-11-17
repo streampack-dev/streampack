@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.operation
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.forge.ForgeKind
@@ -115,7 +116,8 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
                 is RemoveProjectOutcome.Removed ->
                     OperationResult.Success(
                         "Removed ${outcome.project.displayName} " +
-                            "(${outcome.subscriptionsDeactivated} subscriptions deactivated)",
+                            "(${outcome.subscriptionsDeactivated} " +
+                            "${"subscription".pluralize(outcome.subscriptionsDeactivated)} deactivated)",
                     )
                 is RemoveProjectOutcome.ProjectNotFound -> notFound(outcome.identifier, instance)
                 is RemoveProjectOutcome.AlreadyInactive ->
