@@ -165,7 +165,7 @@ class AddFeedOperationTests {
 
             val result = eventGateway.process(message("feed add $baseUrl$path"))
             assertEquals(
-                "Added feed \"localhost\" with 1 entries",
+                "Added feed \"localhost\" with 1 entry",
                 (result as OperationResult.Success).payload,
             )
         }

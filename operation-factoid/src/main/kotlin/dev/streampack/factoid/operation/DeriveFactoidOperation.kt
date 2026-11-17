@@ -2,6 +2,7 @@
 package dev.streampack.factoid.operation
 
 import dev.streampack.ai.service.AiService
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.fetch.FetchException
 import dev.streampack.core.fetch.GuardedFetcher
 import dev.streampack.core.model.OperationOutcome
@@ -90,12 +91,13 @@ class DeriveFactoidOperation(
             }
         }
         logger.info(
-            "Drafted factoid '{}': text {} chars, line {} ({}), {} URL(s) kept, {} dropped",
+            "Drafted factoid '{}': text {} chars, line {} ({}), {} {} kept, {} dropped",
             selector,
             draft.text.length,
             draft.lineLength,
             if (draft.fits) "fits" else "too long",
             draft.urls.size,
+            "URL".pluralize(draft.urls),
             draft.droppedUrls.size,
         )
         return OperationResult.Success(draft)

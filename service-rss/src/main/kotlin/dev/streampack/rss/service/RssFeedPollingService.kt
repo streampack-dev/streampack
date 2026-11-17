@@ -2,6 +2,7 @@
 package dev.streampack.rss.service
 
 import com.rometools.rome.feed.synd.SyndEntry
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.service.Egress
 import dev.streampack.polling.schedule.DueBatchPollingService
 import dev.streampack.polling.schedule.PollResult
@@ -108,7 +109,12 @@ class RssFeedPollingService(
         val stored =
             if (newEntries.isNotEmpty()) {
                 entryRepository.saveAll(newEntries).also {
-                    logger.info("Stored {} new entries for feed \"{}\"", it.size, feed.title)
+                    logger.info(
+                        "Stored {} new {} for feed \"{}\"",
+                        it.size,
+                        "entry".pluralize(it),
+                        feed.title,
+                    )
                 }
             } else emptyList()
 
@@ -187,7 +193,11 @@ class RssFeedPollingService(
             added
         }
         if (duplicates > 0) {
-            logger.info("Ignored {} duplicate RSS entries while polling feed updates", duplicates)
+            logger.info(
+                "Ignored {} duplicate RSS {} while polling feed updates",
+                duplicates,
+                "entry".pluralize(duplicates),
+            )
         }
         return deduplicated
     }

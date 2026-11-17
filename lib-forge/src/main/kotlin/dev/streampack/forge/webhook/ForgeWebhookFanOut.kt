@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.webhook
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.service.Egress
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.format.ForgeEventFormatter
@@ -34,10 +35,11 @@ open class ForgeWebhookFanOut<I : ForgeInstance, P : ForgeProject, S : ForgeSubs
             return
         }
         logger.info(
-            "Delivering {} webhook notification for {} to {} active subscription(s)",
+            "Delivering {} webhook notification for {} to {} active {}",
             kind.displayName,
             project.displayName,
             subscriptions.size,
+            "subscription".pluralize(subscriptions),
         )
         val message = ForgeEventFormatter.format(kind, project.displayName, event)
         subscriptions.forEach { notifier.send(message, it.destinationUri) }

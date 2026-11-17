@@ -4,6 +4,7 @@ package dev.streampack.blog.bootstrap
 import dev.streampack.blog.repository.CommentRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.service.RenderedHtmlSanitizer
+import dev.streampack.core.extensions.pluralize
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
@@ -67,9 +68,11 @@ class RenderedHtmlSanitizationBackfill(
         }
         if (postsChanged > 0 || commentsChanged > 0) {
             logger.warn(
-                "Sanitized stored HTML on {} post(s) and {} comment(s) (issue #48 backfill)",
+                "Sanitized stored HTML on {} {} and {} {} (issue #48 backfill)",
                 postsChanged,
+                "post".pluralize(postsChanged),
                 commentsChanged,
+                "comment".pluralize(commentsChanged),
             )
         } else {
             logger.debug("Stored rendered HTML already clean; no backfill needed")

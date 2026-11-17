@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.operation
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.polling.operation.PollingSourceManagementOperation
@@ -75,7 +76,8 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
             is RemoveFeedOutcome.Removed ->
                 OperationResult.Success(
                     "Removed feed \"${outcome.feed.title}\" " +
-                        "(${outcome.subscriptionsDeactivated} subscriptions deactivated)",
+                        "(${outcome.subscriptionsDeactivated} " +
+                        "${"subscription".pluralize(outcome.subscriptionsDeactivated)} deactivated)",
                 )
             is RemoveFeedOutcome.FeedNotFound ->
                 OperationResult.Error("No registered feed found for ${outcome.url}")

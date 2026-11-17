@@ -3,6 +3,7 @@ package dev.streampack.blog.bootstrap
 
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.service.MarkdownRenderingService
+import dev.streampack.core.extensions.pluralize
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -43,7 +44,8 @@ class FactoidLinkTitleBackfill(
             if (!posts.hasNext()) break
             page++
         }
-        if (changed > 0) logger.info("Gave {} post(s) factoid link titles (#285)", changed)
+        if (changed > 0)
+            logger.info("Gave {} {} factoid link titles (#285)", changed, "post".pluralize(changed))
         else logger.debug("No post's factoid links need titles; no backfill needed")
     }
 

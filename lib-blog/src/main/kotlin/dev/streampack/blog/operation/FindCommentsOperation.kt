@@ -8,6 +8,7 @@ import dev.streampack.blog.model.FindCommentsRequest
 import dev.streampack.blog.repository.CommentRepository
 import dev.streampack.blog.repository.PostRepository
 import dev.streampack.blog.service.CommentAnchors
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -48,7 +49,12 @@ class FindCommentsOperation(
             }
         val tree = buildTree(allComments, principal, postText)
 
-        logger.debug("Found {} comments for post {}", allComments.size, post.id)
+        logger.debug(
+            "Found {} {} for post {}",
+            allComments.size,
+            "comment".pluralize(allComments),
+            post.id,
+        )
 
         return OperationResult.Success(
             CommentThreadResponse(

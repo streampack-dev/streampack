@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.karma.service
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.karma.config.KarmaProperties
 import dev.streampack.karma.entity.KarmaRecord
 import dev.streampack.karma.model.KarmaLeaderboardEntry
@@ -109,7 +110,12 @@ class KarmaService(
         val cutoff = LocalDate.now().minusYears(1)
         val removed = repository.deleteByRecordDateBefore(cutoff)
         if (removed > 0) {
-            logger.info("Removed {} karma record(s) older than {}", removed, cutoff)
+            logger.info(
+                "Removed {} karma {} older than {}",
+                removed,
+                "record".pluralize(removed),
+                cutoff,
+            )
         }
     }
 
@@ -117,8 +123,9 @@ class KarmaService(
         val removed = repository.purgeSubjectsLongerThan(karmaProperties.maxSubjectLength)
         if (removed > 0) {
             logger.info(
-                "Removed {} karma record(s) exceeding max subject length {}",
+                "Removed {} karma {} exceeding max subject length {}",
                 removed,
+                "record".pluralize(removed),
                 karmaProperties.maxSubjectLength,
             )
         }

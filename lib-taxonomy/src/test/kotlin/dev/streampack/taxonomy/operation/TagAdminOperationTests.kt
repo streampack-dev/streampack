@@ -87,11 +87,11 @@ class TagAdminOperationTests {
     fun `alias takes two words or an equals sign`() {
         vocabulary.accept("compiler", "post")
         assertEquals(
-            "'compiler' is now 'compilers': 0 post(s) and 0 factoid(s) re-pointed.",
+            "'compiler' is now 'compilers': 0 posts and 0 factoids re-pointed.",
             run("tag alias compiler compilers"),
         )
         assertEquals(
-            "'build tool' is now 'build tools': 0 post(s) and 0 factoid(s) re-pointed.",
+            "'build tool' is now 'build tools': 0 posts and 0 factoids re-pointed.",
             run("tag alias build tool = build tools"),
         )
         assertEquals(

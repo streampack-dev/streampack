@@ -2,6 +2,7 @@
 package dev.streampack.rss.service
 
 import com.rometools.rome.feed.synd.SyndEntry
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.rss.config.RssProperties
 import dev.streampack.rss.entity.RssEntry
 import dev.streampack.rss.entity.RssEntryCategory
@@ -138,10 +139,12 @@ class FeedTagService(
                             decidedAt = now,
                         )
                     log.info(
-                        "Feed tag '{}' promoted to a tag: {} entries across {} feeds",
+                        "Feed tag '{}' promoted to a tag: {} {} across {} {}",
                         name,
                         entryCount,
+                        "entry".pluralize(entryCount),
                         feedCount,
+                        "feed".pluralize(feedCount),
                     )
                 }
             }

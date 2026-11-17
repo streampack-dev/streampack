@@ -2,6 +2,7 @@
 package dev.streampack.ai.service
 
 import dev.streampack.ai.config.AiProperties
+import dev.streampack.core.extensions.pluralize
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.messages.SystemMessage
 import org.springframework.ai.chat.messages.UserMessage
@@ -116,7 +117,7 @@ open class AiService(
                 "$kind (${result.output.text?.length ?: 0} characters, finish " +
                     "${result.metadata.finishReason})"
             }
-        return "${response.results.size} result(s) [$results], usage ${response.metadata.usage}"
+        return "${response.results.size} ${"result".pluralize(response.results.size)} [$results], usage ${response.metadata.usage}"
     }
 
     /**

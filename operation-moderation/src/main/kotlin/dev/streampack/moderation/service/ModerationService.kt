@@ -2,6 +2,7 @@
 package dev.streampack.moderation.service
 
 import dev.streampack.core.entity.MessageLog
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.UserPrincipal
 import dev.streampack.core.repository.MessageLogRepository
@@ -144,7 +145,7 @@ class ModerationService(
         val type = if (hidden) ModerationActionType.HIDE else ModerationActionType.UNHIDE
         val provenance = lines.map { it.provenanceUri }.distinct().singleOrNull()
         val action = record(null, provenance, type, ids, actor, note, Instant.now())
-        logger.info("{} {} {} line(s)", actor.username, type, changed)
+        logger.info("{} {} {} {}", actor.username, type, changed, "line".pluralize(changed))
         return ModerationActionResult(view(action), changed)
     }
 
@@ -168,7 +169,14 @@ class ModerationService(
             reports.save(close(report, ReportStatus.ACTIONED, actor, now))
         }
         val action = record(report.id, report.provenanceUri, type, ids, actor, note, now)
-        logger.info("{} {} {} line(s) of report {}", actor.username, type, changed, report.id)
+        logger.info(
+            "{} {} {} {} of report {}",
+            actor.username,
+            type,
+            changed,
+            "line".pluralize(changed),
+            report.id,
+        )
         return ModerationActionResult(view(action), changed)
     }
 

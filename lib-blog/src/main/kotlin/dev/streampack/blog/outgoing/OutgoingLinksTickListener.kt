@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog.outgoing
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.integration.TickListener
 import java.time.Duration
 import java.time.Instant
@@ -31,7 +32,12 @@ class OutgoingLinksTickListener(
         Thread.ofVirtual().name("outgoing-links").start {
             try {
                 val handled = service.runBatch(now)
-                if (handled > 0) logger.debug("Handled the outgoing links of {} post(s)", handled)
+                if (handled > 0)
+                    logger.debug(
+                        "Handled the outgoing links of {} {}",
+                        handled,
+                        "post".pluralize(handled),
+                    )
             } catch (e: Exception) {
                 logger.warn("Outgoing links pass failed: {}", e.message)
             } finally {

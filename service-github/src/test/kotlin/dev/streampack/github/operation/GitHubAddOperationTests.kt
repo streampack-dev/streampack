@@ -105,8 +105,8 @@ class GitHubAddOperationTests {
         val payload = (result as OperationResult.Success).payload.toString()
         assertTrue(payload.contains("Watching owner/repo"))
         assertTrue(payload.contains("2 issues"))
-        assertTrue(payload.contains("1 PRs"))
-        assertTrue(payload.contains("1 releases"))
+        assertTrue(payload.contains("1 PR"))
+        assertTrue(payload.contains("1 release"))
     }
 
     @Test

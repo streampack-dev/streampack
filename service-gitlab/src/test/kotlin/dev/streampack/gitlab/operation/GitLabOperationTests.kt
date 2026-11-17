@@ -212,7 +212,7 @@ class GitLabOperationTests {
         val hostedPayload =
             assertInstanceOf(OperationResult.Success::class.java, hosted).payload.toString()
         assertTrue(
-            hostedPayload.contains("Watching group/project (1 issues, 1 MRs, 1 releases)"),
+            hostedPayload.contains("Watching group/project (1 issue, 1 MR, 1 release)"),
             hostedPayload,
         )
         val stored =
@@ -288,7 +288,7 @@ class GitLabOperationTests {
             assertInstanceOf(OperationResult.Success::class.java, removed).payload.toString()
         assertTrue(
             removedPayload.contains(
-                "Removed gitlab.example.com other/project (1 subscriptions deactivated)",
+                "Removed gitlab.example.com other/project (1 subscription deactivated)",
             ),
             removedPayload,
         )

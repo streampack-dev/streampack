@@ -4,6 +4,7 @@ package dev.streampack.blog.operation
 import dev.streampack.ai.service.AiService
 import dev.streampack.blog.model.DeriveTagsRequest
 import dev.streampack.blog.model.DeriveTagsResponse
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.json.JacksonMappers
 import dev.streampack.core.model.OperationOutcome
@@ -135,9 +136,11 @@ class DeriveTagsOperation(
         }
 
         logger.info(
-            "DeriveTagsOperation: selected {} tags from {} candidates: {}",
+            "DeriveTagsOperation: selected {} {} from {} {}: {}",
             tags.size,
+            "tag".pluralize(tags),
             candidateTags.size,
+            "candidate".pluralize(candidateTags),
             tags.joinToString(", "),
         )
         return OperationResult.Success(DeriveTagsResponse(tags))

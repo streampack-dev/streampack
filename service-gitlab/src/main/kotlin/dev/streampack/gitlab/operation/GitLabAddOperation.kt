@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.gitlab.operation
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.RedactionRule
@@ -75,9 +76,9 @@ class GitLabAddOperation(private val subscriptionService: GitLabSubscriptionServ
             is AddProjectOutcome.Added ->
                 OperationResult.Success(
                     "Watching ${outcome.project.displayName} " +
-                        "(${outcome.issueCount} issues, " +
-                        "${outcome.changeRequestCount} MRs, " +
-                        "${outcome.releaseCount} releases)" +
+                        "(${outcome.issueCount} ${"issue".pluralize(outcome.issueCount)}, " +
+                        "${outcome.changeRequestCount} ${"MR".pluralize(outcome.changeRequestCount)}, " +
+                        "${outcome.releaseCount} ${"release".pluralize(outcome.releaseCount)})" +
                         tokenExternalizationNote(payload.token, outcome.project),
                 )
             is AddProjectOutcome.AlreadyExists ->

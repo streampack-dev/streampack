@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.startrader.ui
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.startrader.config.ConfigLoader
 import dev.streampack.startrader.config.SimulationConfig
 import dev.streampack.startrader.engine.SimulationEngine
@@ -178,7 +179,8 @@ class StarTraderFrame(
                     },
             )
         lastEventLogSize = 0
-        eventLog.text = "Universe seeded with ${state.planets.size} planets\n"
+        eventLog.text =
+            "Universe seeded with ${state.planets.size} ${"planet".pluralize(state.planets)}\n"
         mapPanel.updateState(state)
         tradePanel.updateState(state)
         updateDisplay()

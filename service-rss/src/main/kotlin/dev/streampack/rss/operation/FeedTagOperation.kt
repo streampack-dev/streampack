@@ -2,6 +2,7 @@
 package dev.streampack.rss.operation
 
 import dev.streampack.core.extensions.compress
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -85,7 +86,7 @@ class FeedTagOperation(private val feedTags: FeedTagService) :
         if (page.tags.isEmpty()) return OperationResult.Success("No feed tags are waiting.")
         val listed = page.tags.joinToString("; ") { "${it.name} (${it.entries}/${it.feeds})" }
         return OperationResult.Success(
-            "${page.waitingCount} feed tag(s) waiting (entries/feeds; a tag at " +
+            "${page.waitingCount} ${"feed tag".pluralize(page.waitingCount)} waiting (entries/feeds; a tag at " +
                 "${page.promoteEntries}/${page.promoteFeeds}): $listed",
         )
     }
@@ -98,8 +99,8 @@ class FeedTagOperation(private val feedTags: FeedTagService) :
                 else -> "${entry.status.name.lowercase()} as '${entry.tag}'"
             }
         val examples = entry.examples.joinToString("; ") { "${it.title} (${it.feedTitle})" }
-        return "Feed tag '${entry.name}': $outcome, on ${entry.entries} entries across " +
-            "${entry.feeds} feeds" +
+        return "Feed tag '${entry.name}': $outcome, on ${entry.entries} ${"entry".pluralize(entry.entries)} " +
+            "across ${entry.feeds} ${"feed".pluralize(entry.feeds)}" +
             if (examples.isEmpty()) "." else ". E.g. $examples"
     }
 

@@ -179,7 +179,7 @@ class FeedManagementOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload.toString()
         assertTrue(payload.contains("Removed feed \"Remove Me\""))
-        assertTrue(payload.contains("1 subscriptions deactivated"))
+        assertTrue(payload.contains("1 subscription deactivated"))
     }
 
     @Test

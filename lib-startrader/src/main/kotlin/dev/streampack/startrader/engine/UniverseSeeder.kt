@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.startrader.engine
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.startrader.config.SimulationConfig
 import dev.streampack.startrader.model.Commodity
 import dev.streampack.startrader.model.Planet
@@ -28,7 +29,11 @@ class UniverseSeeder(private val random: Random = Random()) {
         val planets = placePlanets(config)
         val initializedPlanets = initializeSupplyAndPrices(planets, config)
 
-        logger.info("Seeded universe with {} planets", initializedPlanets.size)
+        logger.info(
+            "Seeded universe with {} {}",
+            initializedPlanets.size,
+            "planet".pluralize(initializedPlanets),
+        )
         return UniverseState(planets = initializedPlanets, tickCount = 0)
     }
 

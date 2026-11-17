@@ -3,6 +3,7 @@ package dev.streampack.blog.service
 
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.repository.PostRepository
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.integration.TickListener
 import java.time.Duration
 import java.time.Instant
@@ -43,9 +44,11 @@ class FactoidUpdatedPostRerenderTickListener(
         }
 
         logger.debug(
-            "Processed {} factoid selector(s) across {} candidate post(s)",
+            "Processed {} factoid {} across {} candidate {}",
             selectors.size,
+            "selector".pluralize(selectors),
             candidates.size,
+            "post".pluralize(candidates),
         )
     }
 

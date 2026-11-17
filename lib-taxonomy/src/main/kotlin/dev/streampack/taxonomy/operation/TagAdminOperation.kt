@@ -2,6 +2,7 @@
 package dev.streampack.taxonomy.operation
 
 import dev.streampack.core.extensions.compress
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
@@ -144,7 +145,8 @@ class TagAdminOperation(private val curation: TagCuration) : TypedOperation<Stri
 
     private fun changed(result: TagChangeResult): String =
         "'${result.tag}' is now ${result.now.joinToString(", ") { "'$it'" }}: " +
-            "${result.posts} post(s) and ${result.factoids} factoid(s) re-pointed."
+            "${result.posts} ${"post".pluralize(result.posts)} and " +
+            "${result.factoids} ${"factoid".pluralize(result.factoids)} re-pointed."
 
     /** `a = b`, or two single words `a b`. */
     private fun pair(text: String): Pair<String, String>? {

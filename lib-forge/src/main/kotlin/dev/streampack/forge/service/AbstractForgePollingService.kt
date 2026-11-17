@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.service
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.service.Egress
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
@@ -146,14 +147,16 @@ abstract class AbstractForgePollingService<
         if (events.isEmpty()) return
 
         logger.info(
-            "Found {} new issues, {} new {}s, {} new releases, {} closes or merges, " +
-                "{} settled pipelines for {}",
+            "Found {} new {}, {} new {}, {} new {}, {} closes or merges, " + "{} settled {} for {}",
             newIssues.size,
+            "issue".pluralize(newIssues),
             newChangeRequests.size,
-            kind.changeRequestNoun,
+            kind.changeRequestNoun.pluralize(newChangeRequests),
             newReleases.size,
+            "release".pluralize(newReleases),
             closureEvents.size,
             pipelineEvents.size,
+            "pipeline".pluralize(pipelineEvents),
             path,
         )
         if (subscriptions.isEmpty()) return

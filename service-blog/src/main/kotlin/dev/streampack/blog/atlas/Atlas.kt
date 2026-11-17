@@ -4,6 +4,7 @@ package dev.streampack.blog.atlas
 import dev.streampack.blog.repository.ContentValidators
 import dev.streampack.blog.repository.ContentValidators.Validator
 import dev.streampack.blog.repository.PostTagRepository
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
@@ -135,7 +136,7 @@ class Atlas(
         if (newcomers.isEmpty()) return stored
         if (stored.isEmpty) {
             store.replace(AtlasLayout.layout(catalog.ties(), catalog.tags() + live), now)
-            log.info("Atlas: laid out {} places", live.size)
+            log.info("Atlas: laid out {} {}", live.size, "place".pluralize(live))
         } else {
             placeNewcomers(newcomers, catalog.ties(), stored, now)
         }
@@ -159,7 +160,7 @@ class Atlas(
                 }
             }
         store.add(added, made, now)
-        log.info("Atlas: placed {} new tags", added.size)
+        log.info("Atlas: placed {} new {}", added.size, "tag".pluralize(added))
     }
 
     private fun assemble(stored: StoredMap, counts: Counts, catalog: Catalog): AtlasResponse {

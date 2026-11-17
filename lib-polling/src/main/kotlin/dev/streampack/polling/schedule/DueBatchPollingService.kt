@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.polling.schedule
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.integration.TickListener
 import java.time.Duration
 import java.time.Instant
@@ -56,7 +57,12 @@ abstract class DueBatchPollingService<T>(
     open fun pollDue(now: Instant = Instant.now()): Int {
         val due = findDue(now, batchSize)
         if (due.isEmpty()) return 0
-        logger.debug("Polling {} due source(s) (batch size {})", due.size, batchSize)
+        logger.debug(
+            "Polling {} due {} (batch size {})",
+            due.size,
+            "source".pluralize(due),
+            batchSize,
+        )
         for (source in due) {
             val result =
                 try {

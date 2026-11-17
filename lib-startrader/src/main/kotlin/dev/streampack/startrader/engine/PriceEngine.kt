@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.startrader.engine
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.startrader.config.SimulationConfig
 import dev.streampack.startrader.model.Commodity
 import dev.streampack.startrader.model.UniverseState
@@ -71,9 +72,10 @@ class PriceEngine {
 
                     if (maxDelta < CONVERGENCE_THRESHOLD) {
                         logger.debug(
-                            "Prices converged for {} after {} iterations",
+                            "Prices converged for {} after {} {}",
                             planet.name,
                             iteration,
+                            "iteration".pluralize(iteration),
                         )
                         break
                     }

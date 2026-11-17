@@ -3,6 +3,7 @@ package dev.streampack.rss.service
 
 import dev.streampack.ai.config.AiProperties
 import dev.streampack.ai.service.AiService
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.generative.service.GenerativePromptService
 import dev.streampack.rss.config.RssProperties
 import dev.streampack.rss.entity.RssEntry
@@ -128,8 +129,9 @@ class RssRatingGuessService(
         val ai = aiServiceProvider.getIfAvailable()
         if (ai == null) {
             logger.warn(
-                "RSS rating guess: {} item(s) to guess, but AI is off; skipped",
+                "RSS rating guess: {} {} to guess, but AI is off; skipped",
                 candidates.size,
+                "item".pluralize(candidates),
             )
             return RssRatingGuessRunResponse(candidates.size, 0, 0, candidates.size)
         }
@@ -159,7 +161,11 @@ class RssRatingGuessService(
                     null
                 }
             if (answer == null) {
-                logger.warn("RSS rating guess: no usable answer for {} item(s)", items.size)
+                logger.warn(
+                    "RSS rating guess: no usable answer for {} {}",
+                    items.size,
+                    "item".pluralize(items),
+                )
                 continue
             }
             stored +=
@@ -173,9 +179,11 @@ class RssRatingGuessService(
         }
         val skipped = candidates.size - stored
         logger.info(
-            "RSS rating guess: {} item(s), {} call(s), {} stored, {} skipped",
+            "RSS rating guess: {} {}, {} {}, {} stored, {} skipped",
             candidates.size,
+            "item".pluralize(candidates),
             calls,
+            "call".pluralize(calls),
             stored,
             skipped,
         )
@@ -351,7 +359,7 @@ rate it so, and a reason of one short sentence (under 20 words)."""
          * its text, and the text.
          */
         fun userPrompt(items: List<Pair<RssEntry, RssItemTextService.ItemText>>): String =
-            "Guess the editor's rating of each of these ${items.size} item(s).\n\n" +
+            "Guess the editor's rating of each of these ${items.size} ${"item".pluralize(items)}.\n\n" +
                 items.joinToString("\n\n") { (item, text) ->
                     val body = text.text.takeIf { it.isNotBlank() }?.let { "\ntext: $it" }.orEmpty()
                     "itemId: ${item.id}\nfeed: ${item.feed.title}\ntitle: ${item.title}\n" +

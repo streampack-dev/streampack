@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.operation
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Role
@@ -58,7 +59,7 @@ class ListUsersOperation(
                 if (emails && user.email.isNotEmpty()) append(", ${user.email}")
             }
         }
-        val count = if (users.size == 1) "1 user" else "${users.size} users"
+        val count = "${users.size} ${"user".pluralize(users)}"
         return OperationResult.Success("$count:\n" + lines.joinToString("\n"))
     }
 

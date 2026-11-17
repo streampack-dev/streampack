@@ -2,6 +2,7 @@
 package dev.streampack.core.service
 
 import dev.streampack.core.config.StreampackProperties
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.Consumed
 import dev.streampack.core.model.Declined
@@ -188,9 +189,10 @@ class OperationService(
                 }
                 if (result is FanOut) {
                     logger.debug(
-                        "Operation {} produced FanOut with {} messages",
+                        "Operation {} produced FanOut with {} {}",
                         op::class.simpleName,
                         result.messages.size,
+                        "message".pluralize(result.messages),
                     )
                     return dispatchFanOut(result, hopCount)
                 }
@@ -344,7 +346,7 @@ class OperationService(
                 logger.warn("Fan-out child message {} failed: {}", child.headers.id, e.message)
             }
         }
-        return OperationResult.Success("Dispatched $dispatched messages")
+        return OperationResult.Success("Dispatched $dispatched ${"message".pluralize(dispatched)}")
     }
 
     companion object {

@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.irc.service
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.SecretRef
 import dev.streampack.core.service.ChannelControlService
 import dev.streampack.core.service.ProvenanceStateService
@@ -214,7 +215,12 @@ class IrcService(
             channelRepository.save(channel.copy(deleted = true, updatedAt = Instant.now()))
         }
         networkRepository.save(network.copy(deleted = true, updatedAt = Instant.now()))
-        logger.info("Removed IRC network '{}' and {} channel(s)", name, channels.size)
+        logger.info(
+            "Removed IRC network '{}' and {} {}",
+            name,
+            channels.size,
+            "channel".pluralize(channels),
+        )
         return "Network '$name' removed"
     }
 

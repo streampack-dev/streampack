@@ -38,27 +38,4 @@ class CollectionExtensionsTests {
             listOf("alpha", "beta", "gamma", "delta").joinToStringWithAnd(),
         )
     }
-
-    // --- pluralize ---
-
-    @Test
-    fun `pluralize returns singular for single-element collection`() {
-        assertEquals("item", "item".pluralize(listOf("one")))
-    }
-
-    @Test
-    fun `pluralize returns plural for multi-element collection`() {
-        assertEquals("items", "item".pluralize(listOf("one", "two")))
-    }
-
-    @Test
-    fun `pluralize returns plural for empty collection`() {
-        assertEquals("items", "item".pluralize(emptyList<String>()))
-    }
-
-    @Test
-    fun `pluralize works with sets`() {
-        assertEquals("entry", "entry".pluralize(setOf("only")))
-        assertEquals("entrys", "entry".pluralize(setOf("a", "b")))
-    }
 }

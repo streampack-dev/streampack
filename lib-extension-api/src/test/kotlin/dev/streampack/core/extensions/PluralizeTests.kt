@@ -22,28 +22,9 @@ class PluralizeTests {
     @ParameterizedTest(name = "{0}")
     @MethodSource("cases")
     fun `word for count`(name: String, case: Case) {
-        // Called by name until the new signatures exist, so this file compiles before they do.
-        val functions = Class.forName("dev.streampack.core.extensions.CollectionExtensionsKt")
         val actual =
-            if (case.collection) {
-                functions
-                    .getMethod(
-                        "pluralize",
-                        String::class.java,
-                        Collection::class.java,
-                        String::class.java,
-                    )
-                    .invoke(null, case.word, List(case.count.toInt()) { it }, case.plural)
-            } else {
-                functions
-                    .getMethod(
-                        "pluralize",
-                        String::class.java,
-                        Long::class.javaPrimitiveType,
-                        String::class.java,
-                    )
-                    .invoke(null, case.word, case.count, case.plural)
-            }
+            if (case.collection) case.word.pluralize(List(case.count.toInt()) { it }, case.plural)
+            else case.word.pluralize(case.count, case.plural)
         assertEquals(case.expected, actual)
     }
 

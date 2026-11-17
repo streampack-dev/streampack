@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.forge.service
 
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.SecretRef
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.client.ForgeClient
@@ -132,13 +133,15 @@ abstract class AbstractForgeSubscriptionService<
             releases.forEach { store.saveRelease(project, it) }
 
             logger.info(
-                "Added {} project {} ({} issues, {} {}s, {} releases)",
+                "Added {} project {} ({} {}, {} {}, {} {})",
                 kind.displayName,
                 project.displayName,
                 issues.size,
+                "issue".pluralize(issues),
                 changeRequests.size,
-                kind.changeRequestNoun,
+                kind.changeRequestNoun.pluralize(changeRequests),
                 releases.size,
+                "release".pluralize(releases),
             )
             AddProjectOutcome.Added(project, issues.size, changeRequests.size, releases.size)
         } catch (e: Exception) {
@@ -220,10 +223,11 @@ abstract class AbstractForgeSubscriptionService<
         activeSubscriptions.forEach { store.setSubscriptionActive(it, false) }
         store.deactivateProject(project)
         logger.info(
-            "Removed {} project {} and deactivated {} subscriptions",
+            "Removed {} project {} and deactivated {} {}",
             kind.displayName,
             project.displayName,
             activeSubscriptions.size,
+            "subscription".pluralize(activeSubscriptions),
         )
         return RemoveProjectOutcome.Removed(project, activeSubscriptions.size)
     }

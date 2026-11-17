@@ -4,6 +4,7 @@ package dev.streampack.moderation.review
 import dev.streampack.ai.config.AiProperties
 import dev.streampack.ai.service.AiService
 import dev.streampack.core.entity.MessageLog
+import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.MessageDirection
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.ChannelControlService
@@ -48,7 +49,11 @@ class ModerationReviewService(
     fun review(now: Instant = Instant.now()): List<ModerationReport> {
         val candidates = scores.takeForReview(now)
         if (candidates.isEmpty()) return emptyList()
-        logger.info("Moderation review: {} person(s) to look at", candidates.size)
+        logger.info(
+            "Moderation review: {} {} to look at",
+            candidates.size,
+            "person".pluralize(candidates, "people"),
+        )
         return candidates.mapNotNull { candidate ->
             try {
                 review(candidate, now)
