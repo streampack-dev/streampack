@@ -136,3 +136,6 @@ func quote(s string) string {
 	r := strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`)
 	return `"` + r.Replace(s) + `"`
 }
+
+// DraftDir is not implemented yet.
+func DraftDir(dir string) string { return dir }
