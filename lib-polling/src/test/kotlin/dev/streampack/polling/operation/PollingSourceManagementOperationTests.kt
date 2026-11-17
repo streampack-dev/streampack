@@ -7,6 +7,7 @@ import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
 import dev.streampack.core.model.UserPrincipal
+import dev.streampack.core.service.DirectConversations
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -44,7 +45,8 @@ class PollingSourceManagementOperationTests {
         MessageBuilder.withPayload(text).setHeader(Provenance.HEADER, adminProvenance).build()
 
     /** Concrete test subclass that records calls to handler methods */
-    class TestManagementOperation : PollingSourceManagementOperation() {
+    class TestManagementOperation :
+        PollingSourceManagementOperation(DirectConversations(emptyList())) {
         override val commandPrefix = "test"
         override val priority = 50
 
@@ -140,7 +142,7 @@ class PollingSourceManagementOperationTests {
     @Test
     fun `the refusal names the subclass's own noun`() {
         val feeds =
-            object : PollingSourceManagementOperation() {
+            object : PollingSourceManagementOperation(DirectConversations(emptyList())) {
                 override val commandPrefix = "feed"
                 override val sourceNoun = "feeds"
                 override val priority = 50
@@ -174,11 +176,36 @@ class PollingSourceManagementOperationTests {
     }
 
     @Test
-    fun `list dispatches to onList`() {
-        val result = operation.handle("test list", adminMessage("test list"))
+    fun `list in a channel lists its subscriptions`() {
+        val result = operation.handle("test list", guestMessage("test list"))
+        assertEquals("subscriptions", operation.lastCall)
+        assertEquals(guestProvenance.encode(), operation.lastDestination)
+        assertEquals(
+            "subscriptions for ${guestProvenance.encode()}",
+            (result as OperationResult.Success).payload,
+        )
+    }
+
+    @Test
+    fun `list in a direct message lists everything`() {
+        val direct = guestProvenance.copy(replyTo = "dreamreal")
+        val message = MessageBuilder.withPayload("test list").setHeader(Provenance.HEADER, direct)
+        operation.handle("test list", message.build())
         assertEquals("list", operation.lastCall)
-        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    @Test
+    fun `list all lists everything`() {
+        assertTrue(operation.canHandle("test list all", guestMessage("test list all")))
+        val result = operation.handle("test list all", guestMessage("test list all"))
+        assertEquals("list", operation.lastCall)
         assertEquals("listed", (result as OperationResult.Success).payload)
+    }
+
+    @Test
+    fun `list without provenance lists everything`() {
+        operation.handle("test list", MessageBuilder.withPayload("test list").build())
+        assertEquals("list", operation.lastCall)
     }
 
     @Test

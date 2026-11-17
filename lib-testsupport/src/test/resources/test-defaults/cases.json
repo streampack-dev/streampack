@@ -16,5 +16,11 @@
     "moduleFile": "module-scheduler-on.yml",
     "key": "streampack.jwt.secret",
     "expected": "test-jwt-secret-not-for-production-0123456789"
+  },
+  {
+    "name": "a failed first connection is tried again for a minute",
+    "moduleFile": "module-other.yml",
+    "key": "spring.datasource.hikari.initialization-fail-timeout",
+    "expected": "60000"
   }
 ]

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.boot.WebApplicationType
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.context.annotation.Configuration
@@ -40,6 +41,23 @@ class TestDefaultsTests {
             )
             .run()
             .use { context -> assertEquals(expected, context.environment.getProperty(key)) }
+    }
+
+    @ParameterizedTest(name = "shared database {0}")
+    @ValueSource(booleans = [false, true])
+    fun `database url has timeouts`(shared: Boolean) {
+        SpringApplicationBuilder(Empty::class.java)
+            .web(WebApplicationType.NONE)
+            .properties(
+                "spring.config.location=classpath:/test-defaults/module-other.yml",
+                "streampack.test.shared-database=$shared",
+            )
+            .run()
+            .use { context ->
+                val url = context.environment.getProperty("spring.datasource.url").orEmpty()
+                assertTrue(url.contains("connectTimeout=10"), url)
+                assertTrue(url.contains("loginTimeout=10"), url)
+            }
     }
 
     @Test

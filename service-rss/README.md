@@ -17,7 +17,7 @@ It covers:
 | Operation | Command | Purpose |
 |-----------|---------|---------|
 | `AddFeedOperation` | `feed add <url>` | Registers a feed directly or discovers one from a site URL; requires `ADMIN`. |
-| `FeedManagementOperation` | `feed list`, `feed subscribe ...`, `feed unsubscribe ...`, `feed subscriptions`, `feed remove ...` | Lists feeds, manages subscriptions, and deactivates feeds. |
+| `FeedManagementOperation` | `feed list [all]`, `feed subscribe ...`, `feed unsubscribe ...`, `feed subscriptions`, `feed remove ...` | Lists feeds, manages subscriptions, and deactivates feeds. |
 | `LinkedSiteSubscriptionOperation` | (typed `LinkedSiteSubscriptionRequest`, from the blog) | Follows the site feed of a site a published post links to; see [Autosubscribe](#autosubscribe). |
 | `FeedTagOperation` | `feed tags`, `feed tag <name>`, `feed tag map <name> = <tag>`, `feed tag ignore <name>`, `feed tag create <name>` | Lists and decides feed tags the tag vocabulary doesn't know; requires `ADMIN`. See [Feed Tags](#feed-tags). |
 
@@ -39,13 +39,14 @@ If the URL points at a site page, Streampack tries autodiscovery through:
 - body wording that strongly suggests a feed link
 - common fallback paths such as `/feed.xml` and `/index.xml`
 
-### List Registered Feeds
+### List Feeds
 
 ```text
 feed list
+feed list all
 ```
 
-This shows known feed titles and URLs. Inactive feeds are marked as inactive.
+`feed list all` shows every known feed's title and URL. Inactive feeds are marked as inactive. In a channel, `feed list` lists the feeds that channel subscribes to, as `feed subscriptions` does. In a direct message, it lists every feed.
 
 ### Subscribe the Current Destination
 
@@ -86,7 +87,7 @@ This deactivates the feed and any active subscriptions attached to it.
 ## Permissions
 
 - `feed add`, `feed subscribe`, `feed unsubscribe`, and `feed remove` require `ADMIN`
-- `feed list` and `feed subscriptions` are readable without admin privileges
+- `feed list`, `feed list all` and `feed subscriptions` are readable without admin privileges
 
 ## HTTP API
 

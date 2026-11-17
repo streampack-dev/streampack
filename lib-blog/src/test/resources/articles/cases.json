@@ -1,0 +1,35 @@
+[
+  {"name": "newest posts, capped with a count of the rest", "command": "articles", "expected": [
+    "Virtual Threads - dreamreal - http://localhost:3001/posts/2026/11/virtual-threads",
+    "Records in Practice - Ada Lovelace - http://localhost:3001/posts/2026/11/records-in-practice",
+    "Pattern Matching - Other Writer - http://localhost:3001/posts/2026/10/pattern-matching",
+    "...and 2 more at http://localhost:3001"
+  ]},
+  {"name": "published name wins over a username", "command": "articles by dreamreal", "expected": [
+    "Virtual Threads - dreamreal - http://localhost:3001/posts/2026/11/virtual-threads",
+    "Sealed Types - dreamreal - http://localhost:3001/posts/2026/10/sealed-types"
+  ]},
+  {"name": "published name ignores case", "command": "articles by Ada LOVELACE", "expected": [
+    "Records in Practice - Ada Lovelace - http://localhost:3001/posts/2026/11/records-in-practice",
+    "Spring Notes - Ada Lovelace - http://localhost:3001/posts/2026/10/spring-notes"
+  ]},
+  {"name": "username when no published name matches", "command": "articles by ada", "expected": [
+    "Records in Practice - Ada Lovelace - http://localhost:3001/posts/2026/11/records-in-practice",
+    "Spring Notes - Ada Lovelace - http://localhost:3001/posts/2026/10/spring-notes"
+  ]},
+  {"name": "unknown author", "command": "articles by nobody", "expected": [
+    "No author named \"nobody\""
+  ]},
+  {"name": "by without an author", "command": "articles by", "expected": [
+    "Usage: articles by <author>"
+  ]},
+  {"name": "words search published posts", "command": "articles loom", "expected": [
+    "Virtual Threads - dreamreal - http://localhost:3001/posts/2026/11/virtual-threads"
+  ]},
+  {"name": "no match", "command": "articles zzzunmatched", "expected": [
+    "No articles match \"zzzunmatched\""
+  ]},
+  {"name": "drafts and scheduled posts are never shown", "command": "articles secret", "expected": [
+    "No articles match \"secret\""
+  ]}
+]

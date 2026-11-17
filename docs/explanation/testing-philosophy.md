@@ -14,6 +14,10 @@ The policy test in `lib-testsupport` rejects MockMvc tests that reintroduce prop
 
 `TestDefaultsEnvironmentPostProcessor` adds the file as the source with the lowest precedence. Every other source wins over it: a module's own `application.yml`, `@TestPropertySource`, and `@SpringBootTest(properties = …)`. To change one shared setting, set only that key in the module's file. The module keeps the other shared settings.
 
+Do not copy a shared setting into a module's file. A copy hides later changes to the shared value. lib-core is the one exception: lib-testsupport depends on lib-core, so lib-core's tests cannot use the shared file and repeat its datasource settings.
+
+The test database URLs set `connectTimeout=10` and `loginTimeout=10` (seconds), and Hikari's `initialization-fail-timeout` is 60000 ms. Without them, a connection that Docker drops makes a test wait forever. With them, Hikari tries again for a minute, then the context fails.
+
 ## Stub HTTP servers
 
 Create a test's stub server with `loopbackHttpServer()` from `lib-testsupport`. It binds the loopback address on a free port. Do not bind with `InetSocketAddress(port)`, which binds every address. `just test` runs modules in parallel, and on macOS a second server can then take `127.0.0.1` on the same port and receive the first test's requests.

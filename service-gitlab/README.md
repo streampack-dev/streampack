@@ -32,12 +32,14 @@ Registers a project by its full path and records its numeric GitLab id. Use `on 
 ### List, subscribe, unsubscribe, remove
 
 ```text
-gitlab list
+gitlab list [all]
 gitlab subscribe group/project [on <host>] [to <destination-uri>]
 gitlab unsubscribe group/project [on <host>] [from <destination-uri>]
 gitlab subscriptions [for <destination-uri>]
 gitlab remove group/project [on <host>]
 ```
+
+In a channel, `gitlab list` lists the projects that channel subscribes to, as `gitlab subscriptions` does. In a direct message, it lists every project. `gitlab list all` lists every project anywhere.
 
 ### Pipeline outcomes
 

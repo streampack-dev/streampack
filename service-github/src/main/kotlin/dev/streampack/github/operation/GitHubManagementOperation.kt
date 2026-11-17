@@ -4,6 +4,7 @@ package dev.streampack.github.operation
 import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.command.InstanceSelector
 import dev.streampack.forge.command.SubscribeSpec
@@ -21,8 +22,10 @@ import org.springframework.stereotype.Component
  * in `on <host>` to address a repository on an instance other than github.com.
  */
 @Component
-class GitHubManagementOperation(private val subscriptionService: GitHubSubscriptionService) :
-    PollingSourceManagementOperation() {
+class GitHubManagementOperation(
+    private val subscriptionService: GitHubSubscriptionService,
+    directConversations: DirectConversations,
+) : PollingSourceManagementOperation(directConversations) {
 
     override val commandPrefix: String = "github"
     override val sourceNoun: String = "GitHub repositories"
@@ -101,7 +104,7 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
     override fun onSubscriptions(destinationUri: String): OperationOutcome {
         val subscriptions = subscriptionService.listSubscriptions(destinationUri)
         if (subscriptions.isEmpty()) {
-            return OperationResult.Success("No active subscriptions for this channel")
+            return noSubscriptions()
         }
         val lines =
             subscriptions.joinToString(", ") {

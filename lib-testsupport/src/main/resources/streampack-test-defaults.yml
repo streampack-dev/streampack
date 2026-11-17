@@ -2,9 +2,12 @@ spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:tc:postgresql:@postgresVersion@://nevet
+    # The timeouts (seconds) and the retry window turn a connection that Docker drops into a
+    # retry or a failure, not a run that hangs for good (#325).
+    url: jdbc:tc:postgresql:@postgresVersion@://nevet?connectTimeout=10&loginTimeout=10
     hikari:
       maximum-pool-size: 2
+      initialization-fail-timeout: 60000
   jpa:
     hibernate:
       ddl-auto: validate

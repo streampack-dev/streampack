@@ -113,8 +113,8 @@ class GitHubManagementOperationTests {
     }
 
     @Test
-    fun `github list with no repos returns appropriate message`() {
-        val result = eventGateway.process(ircMessage("github list"))
+    fun `github list all with no repos returns appropriate message`() {
+        val result = eventGateway.process(ircMessage("github list all"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals(
             "No GitHub repositories registered",
@@ -123,9 +123,9 @@ class GitHubManagementOperationTests {
     }
 
     @Test
-    fun `github list with repos shows owner slash name`() {
+    fun `github list all with repos shows owner slash name`() {
         addRepo("owner", "repo")
-        val result = eventGateway.process(ircMessage("github list"))
+        val result = eventGateway.process(ircMessage("github list all"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("owner/repo"))
     }
@@ -191,7 +191,8 @@ class GitHubManagementOperationTests {
         val result = eventGateway.process(ircMessage("github subscriptions"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals(
-            "No active subscriptions for this channel",
+            "No GitHub repositories subscribed in this channel; " +
+                "\"github list all\" lists all GitHub repositories",
             (result as OperationResult.Success).payload,
         )
     }

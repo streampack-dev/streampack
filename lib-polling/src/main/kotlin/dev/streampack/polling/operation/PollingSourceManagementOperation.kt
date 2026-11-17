@@ -5,6 +5,7 @@ import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.TypedOperation
 import org.springframework.messaging.Message
 
@@ -17,7 +18,9 @@ import org.springframework.messaging.Message
  *
  * A mutation from a user who is not an admin gets a reply that says so, not silence.
  */
-abstract class PollingSourceManagementOperation : TypedOperation<String>(String::class) {
+abstract class PollingSourceManagementOperation(
+    protected val directConversations: DirectConversations,
+) : TypedOperation<String>(String::class) {
 
     /** Command prefix, e.g. "github" or "feed" */
     abstract val commandPrefix: String
@@ -37,6 +40,7 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
         // Read commands are open to everyone
         if (
             lower == "$prefix list" ||
+                lower == "$prefix list all" ||
                 lower == "$prefix subscriptions" ||
                 lower.startsWith("$prefix subscriptions for ")
         ) {
@@ -71,7 +75,8 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
         }
 
         return when {
-            lower == "$prefix list" -> onList()
+            lower == "$prefix list all" -> onList()
+            lower == "$prefix list" -> handleList(message)
             lower == "$prefix subscriptions" || lower.startsWith("$prefix subscriptions for ") ->
                 handleSubscriptions(trimmed, message)
             lower.startsWith("$prefix subscribe ") -> {
@@ -90,7 +95,7 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
         }
     }
 
-    /** List all registered sources */
+    /** List all registered sources: `<prefix> list all`, or `<prefix> list` in a direct message */
     abstract fun onList(): OperationOutcome
 
     /** Subscribe a destination to a source */
@@ -99,8 +104,28 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
     /** Unsubscribe a destination from a source */
     abstract fun onUnsubscribe(identifier: String, destinationUri: String): OperationOutcome
 
-    /** List subscriptions for a destination */
+    /**
+     * List subscriptions for a destination. With none, a subclass answers [noSubscriptions], so
+     * every source type gives the same hint.
+     */
     abstract fun onSubscriptions(destinationUri: String): OperationOutcome
+
+    /** The answer for a destination with no subscriptions: it names `list all`, the old `list`. */
+    protected fun noSubscriptions(): OperationOutcome =
+        OperationResult.Success(
+            "No $sourceNoun subscribed in this channel; \"$commandPrefix list all\" lists all $sourceNoun",
+        )
+
+    /**
+     * `<prefix> list`: in a channel, the channel's own subscriptions, as `subscriptions` gives; in
+     * a direct message, or without provenance, every source, as `list all` gives. A direct message
+     * has no subscriptions worth listing, and a catalogue there disturbs no one.
+     */
+    private fun handleList(message: Message<*>): OperationOutcome {
+        val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return onList()
+        if (directConversations.isDirect(provenance)) return onList()
+        return onSubscriptions(provenance.encode())
+    }
 
     /** Remove (deactivate) a source and its subscriptions */
     abstract fun onRemove(identifier: String): OperationOutcome

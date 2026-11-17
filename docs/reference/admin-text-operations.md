@@ -169,9 +169,12 @@ Readable without admin:
 
 ```text
 feed list
+feed list all
 feed subscriptions
 feed subscriptions for <destination-uri>
 ```
+
+`<prefix> list` in a channel lists that channel's subscriptions; in a direct message, and as `<prefix> list all`, it lists every source. This holds for `feed`, `github` and `gitlab`.
 
 Feed tags (#139), `ADMIN`:
 
@@ -332,6 +335,7 @@ Readable without admin:
 ```text
 github instance list
 github list
+github list all
 github subscriptions
 github subscriptions for <destination-uri>
 ```
@@ -369,6 +373,7 @@ Readable without admin:
 ```text
 gitlab instance list
 gitlab list
+gitlab list all
 gitlab subscriptions
 gitlab subscriptions for <destination-uri>
 ```

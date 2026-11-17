@@ -106,6 +106,16 @@ them only when [operation-calc](https://github.com/streampack-dev/operation-calc
 [Use the Calculator](https://github.com/streampack-dev/operation-calc/blob/main/docs/use-the-calculator.md).
 `calendar` is another name for `today`: `calendar hebrew` gives today's date in the Hebrew calendar.
 
+### Articles
+
+```text
+articles
+articles by Ada Lovelace
+articles virtual threads
+```
+
+`articles` lists the newest published posts, one line each: title, author and link. `articles by <author>` lists one author's posts; the author is matched first by the name they publish under (any case), then by username. `articles <words>` searches, as the site's search does. A reply has at most four lines: when more posts match, the fourth line counts them and links to the site.
+
 ## Social and Messaging Tools
 
 ### Karma
@@ -238,6 +248,8 @@ gitlab instance list
 gitlab list
 gitlab subscriptions
 ```
+
+In a channel, `feed list`, `github list` and `gitlab list` list what that channel subscribes to. In a direct message, they list everything registered. Add `all` (`feed list all`) to list everything anywhere.
 
 Operators may grant broader access in their own deployments, but the bundled defaults treat most
 registration and subscription changes as administrative work.

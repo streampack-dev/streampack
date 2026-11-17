@@ -2,10 +2,6 @@ spring:
   config:
     # The production logging settings, so LoggingTests checks them.
     import: classpath:streampack-logging.yml
-  datasource:
-    url: jdbc:tc:postgresql:@postgresVersion@://nevet
-    hikari:
-      maximum-pool-size: 2
   jpa:
     hibernate:
       ddl-auto: validate
