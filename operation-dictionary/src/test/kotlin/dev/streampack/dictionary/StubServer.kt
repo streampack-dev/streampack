@@ -1,8 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.dictionary
 
-import com.sun.net.httpserver.HttpServer
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.util.concurrent.Executors
 
 /**
@@ -12,7 +11,7 @@ import java.util.concurrent.Executors
 class StubServer : AutoCloseable {
     private val pool = Executors.newCachedThreadPool()
     private val server =
-        HttpServer.create(InetSocketAddress(0), 0).apply {
+        loopbackHttpServer().apply {
             executor = pool
             start()
         }

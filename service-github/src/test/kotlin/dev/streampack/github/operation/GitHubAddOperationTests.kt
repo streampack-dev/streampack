@@ -12,7 +12,7 @@ import dev.streampack.github.DefaultInstanceEndpoint
 import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.github.service.GitHubForgeStore
 import dev.streampack.test.TestSecurityConfiguration
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.util.UUID
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -56,7 +56,7 @@ class GitHubAddOperationTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         endpoint = DefaultInstanceEndpoint(instanceRepository, store)
         endpoint.pointAt("http://localhost:${httpServer.address.port}")

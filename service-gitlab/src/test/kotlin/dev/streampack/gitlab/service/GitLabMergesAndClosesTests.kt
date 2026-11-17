@@ -18,7 +18,7 @@ import dev.streampack.gitlab.repository.GitLabProjectRepository
 import dev.streampack.gitlab.repository.GitLabSubscriptionRepository
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -140,7 +140,7 @@ class GitLabMergesAndClosesTests {
     fun setUp() {
         capturing.captured.clear()
         queries.clear()
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         instanceRepository.save(
             store

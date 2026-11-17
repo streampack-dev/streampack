@@ -5,7 +5,7 @@ import com.sun.net.httpserver.HttpServer
 import dev.streampack.github.DefaultInstanceEndpoint
 import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.test.TestSecurityConfiguration
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -33,7 +33,7 @@ class GitHubApiClientTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         endpoint = DefaultInstanceEndpoint(instanceRepository, store)
         endpoint.pointAt("http://localhost:${httpServer.address.port}")

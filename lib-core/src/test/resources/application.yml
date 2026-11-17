@@ -22,3 +22,7 @@ streampack:
   security:
     enforce-external-secrets: false
   base-url: http://localhost:8080
+  # lib-testsupport depends on lib-core, so its shared test settings are not on this classpath.
+  tick:
+    scheduler:
+      enabled: false

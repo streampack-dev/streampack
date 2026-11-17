@@ -14,7 +14,7 @@ import dev.streampack.github.repository.GitHubInstanceRepository
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -57,7 +57,7 @@ class GitHubDueBatchPollingTests {
     @BeforeEach
     fun setUp() {
         hits.clear()
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         endpoint = DefaultInstanceEndpoint(instanceRepository, store)
         endpoint.pointAt("http://localhost:${httpServer.address.port}")

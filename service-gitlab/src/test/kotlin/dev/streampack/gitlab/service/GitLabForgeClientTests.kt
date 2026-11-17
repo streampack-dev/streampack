@@ -8,7 +8,7 @@ import dev.streampack.forge.model.ForgeEvent
 import dev.streampack.forge.model.ForgeItem
 import dev.streampack.gitlab.config.GitLabProperties
 import dev.streampack.gitlab.entity.GitLabInstance
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -28,7 +28,7 @@ class GitLabForgeClientTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         instance =
             GitLabInstance(

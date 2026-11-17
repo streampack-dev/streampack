@@ -13,7 +13,7 @@ import dev.streampack.gitlab.repository.GitLabProjectRepository
 import dev.streampack.gitlab.repository.GitLabSubscriptionRepository
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -69,7 +69,7 @@ class GitLabPollingServiceTests {
     @BeforeEach
     fun setUp() {
         capturing.captured.clear()
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         instanceRepository.save(
             store

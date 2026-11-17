@@ -3,7 +3,7 @@ package dev.streampack.specs.service
 
 import com.sun.net.httpserver.HttpServer
 import dev.streampack.specs.model.SpecType
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -23,7 +23,7 @@ class SpecLookupServiceTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
     }

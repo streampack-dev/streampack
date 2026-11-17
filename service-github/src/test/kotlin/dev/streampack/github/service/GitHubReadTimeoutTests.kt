@@ -1,10 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.github.service
 
-import com.sun.net.httpserver.HttpServer
 import dev.streampack.forge.client.ForgeApiException
 import dev.streampack.github.config.GitHubProperties
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.util.concurrent.Executors
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -20,7 +19,7 @@ import org.junit.jupiter.api.assertThrows
 class GitHubReadTimeoutTests {
     private val pool = Executors.newCachedThreadPool()
     private val server =
-        HttpServer.create(InetSocketAddress(0), 0).apply {
+        loopbackHttpServer().apply {
             executor = pool
             start()
         }

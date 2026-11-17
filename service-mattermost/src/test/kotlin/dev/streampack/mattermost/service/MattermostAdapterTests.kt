@@ -7,7 +7,7 @@ import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.service.UserResolutionService
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.time.Duration
 import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.AfterEach
@@ -58,7 +58,7 @@ class MattermostAdapterTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.createContext("/api/v4/users/me") { exchange ->
             authHeaders += exchange.requestHeaders.getFirst("Authorization")
             val body = """{"id": "botuser01", "username": "nevet"}"""

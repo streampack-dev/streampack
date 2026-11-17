@@ -6,9 +6,9 @@ import dev.streampack.core.integration.EventGateway
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.model.Provenance
+import dev.streampack.test.loopbackHttpServer
 import dev.streampack.weather.config.WeatherProperties
 import dev.streampack.weather.service.WeatherService
-import java.net.InetSocketAddress
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNull
@@ -35,7 +35,7 @@ class WeatherOperationTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
     }

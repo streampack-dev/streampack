@@ -3,7 +3,7 @@
 | Module | Role |
 |--------|------|
 | `lib-core` | Platform core: operations, event gateway, provenance, protocols, users, service bindings |
-| `lib-testsupport` | Shared test support, channel overrides, HTTP database reset utilities |
+| `lib-testsupport` | Shared test support: shared test settings, a loopback stub server, channel overrides, HTTP database reset utilities |
 | `lib-blog` | Blog/site domain model, repositories, and operations |
 | `lib-factoid` | Factoid domain library |
 | `lib-generative` | Shared generative prompt loading, filesystem overrides, and dynamic Clojure prompt evaluation |

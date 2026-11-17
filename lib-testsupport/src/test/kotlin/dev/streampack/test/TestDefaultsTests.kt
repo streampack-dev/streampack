@@ -44,11 +44,7 @@ class TestDefaultsTests {
 
     @Test
     fun `stub server binds loopback`() {
-        // Called by name until the helper exists, so this file compiles before it does.
-        val create =
-            Class.forName("dev.streampack.test.LoopbackHttpServerKt")
-                .getMethod("loopbackHttpServer")
-        val server = create.invoke(null) as com.sun.net.httpserver.HttpServer
+        val server = loopbackHttpServer()
         try {
             val address = server.address as InetSocketAddress
             assertTrue(address.address.isLoopbackAddress, "bound to ${address.address}")
