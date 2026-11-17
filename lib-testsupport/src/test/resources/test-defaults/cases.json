@@ -1,0 +1,20 @@
+[
+  {
+    "name": "a module file without the key keeps the default",
+    "moduleFile": "module-other.yml",
+    "key": "streampack.tick.scheduler.enabled",
+    "expected": "false"
+  },
+  {
+    "name": "a module file overrides the default",
+    "moduleFile": "module-scheduler-on.yml",
+    "key": "streampack.tick.scheduler.enabled",
+    "expected": "true"
+  },
+  {
+    "name": "an override keeps the other defaults",
+    "moduleFile": "module-scheduler-on.yml",
+    "key": "streampack.jwt.secret",
+    "expected": "test-jwt-secret-not-for-production-0123456789"
+  }
+]

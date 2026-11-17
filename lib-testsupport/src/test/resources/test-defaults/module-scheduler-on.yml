@@ -1,0 +1,5 @@
+# A module's own test configuration that turns the scheduler on.
+streampack:
+  tick:
+    scheduler:
+      enabled: true
