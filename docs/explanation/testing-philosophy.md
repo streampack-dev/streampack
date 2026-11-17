@@ -19,3 +19,11 @@ The policy test in `lib-testsupport` rejects MockMvc tests that reintroduce prop
 Create a test's stub server with `loopbackHttpServer()` from `lib-testsupport`. It binds the loopback address on a free port. Do not bind with `InetSocketAddress(port)`, which binds every address. `just test` runs modules in parallel, and on macOS a second server can then take `127.0.0.1` on the same port and receive the first test's requests.
 
 `lib-core` cannot use either, because `lib-testsupport` depends on it. Its own test `application.yml` turns the scheduler off, and its tests bind `InetAddress.getLoopbackAddress()` directly.
+
+## Log lines in tests
+
+Tests and the server log through Rainbow Gum; Logback is not on any classpath. To check what code logs, wrap it in `captureLog` from `lib-testsupport`. It returns the code's result and the `LogLine`s (level, logger, message) written at INFO or above. Filter them by logger, because other threads' lines are captured too.
+
+`captureLog` reads two sources. In a Spring test, it reads standard out, in the test console pattern from `streampack-test-defaults.yml`. Outside Spring, Rainbow Gum writes nothing to the console, so `captureLog` puts a Rainbow Gum that writes to a list in the global place for the length of the call. Do not use `captureLog` in tests that run in parallel in one JVM.
+
+Surefire sets the console to `follow` mode in the parent `pom.xml`, so a test that replaces `System.out` (Spring Boot's `CapturedOutput`, or `captureLog`) sees the log lines. Surefire also sets `STREAMPACK_LOG_DIR` to `target/test-logs`, so a test's log file stays out of the module directory.

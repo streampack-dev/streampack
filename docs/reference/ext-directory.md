@@ -11,7 +11,7 @@ To use it, see [Extend the Server with Jars](../how-to/deploy/extend-the-server-
 | `*.jar` | Goes on the classpath. Spring components under the package `dev.streampack` (operations, services, scheduled tasks) are found by the server's scan, and load like the built-in ones. |
 | `banner.txt` | Replaces the banner the server prints when it starts. |
 | `config/application.yml` | Adds settings, at a higher precedence than the server's built-in `application.yml`. The environment (`.env`) still wins over it. |
-| `logback.xml` | Replaces the server's logging configuration. |
+| `streampack-logging.yml` | Replaces the server's logging settings: levels, patterns and the log file. Copy the server's file and change it, because every setting it leaves out goes back to Spring Boot's default. To change one level only, set it in the environment, such as `LOGGING_LEVEL_DEV_STREAMPACK=DEBUG`. |
 | Any other file or directory | Becomes a classpath resource, by its path in the directory. A file with the same path as one in the server replaces it. |
 | `application.yml`, `application.yaml` or `application.properties` at the top | Stops the start. Such a file would replace the server's whole configuration, not just the settings in it. Move it to `config/`. |
 

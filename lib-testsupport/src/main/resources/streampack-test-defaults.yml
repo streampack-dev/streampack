@@ -33,3 +33,14 @@ streampack:
 springdoc:
   api-docs:
     enabled: true
+
+# Tests log to the console only, at DEBUG for streampack's own code. The console line is the
+# server's, with the full logger name, which captureLog reads.
+logging:
+  pattern:
+    console: "%-5level [%thread] %logger : %msg%n"
+  level:
+    dev.streampack: DEBUG
+    org.hibernate: WARN
+    org.hibernate.orm.jdbc.error: ERROR
+    com.github.dockerjava: WARN

@@ -21,6 +21,15 @@
             <groupId>dev.streampack</groupId>
             <artifactId>lib-core</artifactId>
         </dependency>
+        <!-- captureLog swaps in a Rainbow Gum that writes to a list. -->
+        <dependency>
+            <groupId>io.jstach.rainbowgum</groupId>
+            <artifactId>rainbowgum-spring-boot4-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jstach.rainbowgum</groupId>
+            <artifactId>rainbowgum-core</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

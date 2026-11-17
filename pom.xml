@@ -24,7 +24,7 @@
         <kotlinVersion>2.4.21</kotlinVersion>
         <!-- PostgreSQL major version production runs; Testcontainers URLs read it as @postgresVersion@. -->
         <postgresVersion>18</postgresVersion>
-        <logbackVersion>1.6.5</logbackVersion>
+        <rainbowgumVersion>1.0.1</rainbowgumVersion>
         <testcontainersVersion>2.0.5</testcontainersVersion>
         <springdocVersion>3.1.1</springdocVersion>
         <surefireVersion>3.6.0</surefireVersion>
@@ -143,15 +143,28 @@
                 <artifactId>kotlin-stdlib</artifactId>
                 <version>${kotlinVersion}</version>
             </dependency>
+            <!-- Rainbow Gum writes the logs, not Logback: every starter's copy of the Logback
+                 starter is excluded here, once. -->
             <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logbackVersion}</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${springBootVersion}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>${logbackVersion}</version>
+                <groupId>io.jstach.rainbowgum</groupId>
+                <artifactId>rainbowgum-spring-boot4-starter</artifactId>
+                <version>${rainbowgumVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jstach.rainbowgum</groupId>
+                <artifactId>rainbowgum-core</artifactId>
+                <version>${rainbowgumVersion}</version>
             </dependency>
             <dependency>
                 <groupId>org.springdoc</groupId>
@@ -545,6 +558,15 @@
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+        <!-- Every module's tests log through Rainbow Gum, as the server does. -->
+        <dependency>
+            <groupId>io.jstach.rainbowgum</groupId>
+            <artifactId>rainbowgum-spring-boot4-starter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
 
     <build>
         <resources>
@@ -619,6 +641,17 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefireVersion}</version>
+                <configuration>
+                    <environmentVariables>
+                        <!-- Tests' log files stay in the build directory, not the module's. -->
+                        <STREAMPACK_LOG_DIR>${project.build.directory}/test-logs</STREAMPACK_LOG_DIR>
+                    </environmentVariables>
+                    <systemPropertyVariables>
+                        <!-- Rainbow Gum binds standard out once; a test that captures it
+                             (CapturedOutput) swaps System.out, so the console follows it. -->
+                        <logging.appender.console.output.stdout.stream>follow</logging.appender.console.output.stdout.stream>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

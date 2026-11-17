@@ -1,16 +1,13 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.service
 
-import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.read.ListAppender
 import com.sun.net.httpserver.HttpServer
 import dev.streampack.rss.model.AddFeedOutcome
 import dev.streampack.rss.repository.RssEntryRepository
 import dev.streampack.rss.repository.RssFeedRepository
 import dev.streampack.rss.service.FeedDiscoveryServiceTests.Companion.htmlWithFeedLink
 import dev.streampack.rss.service.FeedDiscoveryServiceTests.Companion.sampleRss
+import dev.streampack.test.captureLog
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import org.junit.jupiter.api.AfterEach
@@ -18,7 +15,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
@@ -73,15 +69,7 @@ class RssSubscriptionServiceTests {
             exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
             exchange.responseBody.use { it.write(rss.toByteArray()) }
         }
-        val logger = LoggerFactory.getLogger(RssSubscriptionService::class.java) as Logger
-        val appender = ListAppender<ILoggingEvent>().apply { start() }
-        logger.addAppender(appender)
-        val outcome =
-            try {
-                feedService.addFeed("$baseUrl/dev.xml")
-            } finally {
-                logger.detachAppender(appender)
-            }
+        val (outcome, logged) = captureLog { feedService.addFeed("$baseUrl/dev.xml") }
 
         assertInstanceOf(AddFeedOutcome.Added::class.java, outcome)
         assertEquals(
@@ -89,7 +77,11 @@ class RssSubscriptionServiceTests {
                 "Feed \"Dev Build\" ($baseUrl/dev.xml): its site link looks wrong: " +
                     "http://localhost:3000 (a local host)",
             ),
-            appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage },
+            logged
+                .filter {
+                    it.logger == RssSubscriptionService::class.java.name && it.level == "WARN"
+                }
+                .map { it.message },
         )
     }
 

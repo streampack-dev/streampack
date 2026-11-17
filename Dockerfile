@@ -5,7 +5,7 @@ FROM eclipse-temurin:25-jre-resolute
 
 WORKDIR /opt/streampack
 
-RUN mkdir -p /opt/streampack/generative /opt/streampack/media /opt/streampack/ext
+RUN mkdir -p /opt/streampack/generative /opt/streampack/media /opt/streampack/ext /opt/streampack/logs
 
 # The executable jar is staged by the justfile so .dockerignore can keep the context small.
 COPY target/docker/server-streampack.jar /opt/streampack/server-streampack.jar
@@ -16,6 +16,9 @@ VOLUME ["/opt/streampack/generative"]
 # Uploaded media (#196). Not turned on here: set STREAMPACK_MEDIA_DIR=/opt/streampack/media in the
 # deployment, with a volume mounted on it, to turn it on.
 VOLUME ["/opt/streampack/media"]
+# The rolling log file: STREAMPACK_LOG_DIR, logs under the working directory by default. A volume,
+# so the history can outlive the container; whether it is mounted is deploy's choice.
+VOLUME ["/opt/streampack/logs"]
 
 # Extensions (#229): Spring Boot's PropertiesLauncher puts STREAMPACK_EXT_DIR's jars, and the
 # directory itself, on the classpath ahead of the server's own, so a jar there adds operations and a

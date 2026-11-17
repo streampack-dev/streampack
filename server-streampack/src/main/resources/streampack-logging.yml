@@ -1,0 +1,23 @@
+# The server's logging, read by Rainbow Gum through Spring Boot's own logging properties. The main
+# and the test application.yml both import this file, so the tests check the production settings.
+logging:
+  # STREAMPACK_LOG_DIR, logs under the working directory by default; the image declares
+  # /opt/streampack/logs a volume. Rainbow Gum rolls by size only: there is no daily file.
+  file:
+    name: ${STREAMPACK_LOG_DIR:logs}/streampack.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 5
+      total-size-cap: 20MB
+  # Docker stamps each console line with its own time, and the process id is always 1 in a
+  # container, so the console line starts with its level. The file spans days and keeps the date.
+  pattern:
+    console: "%-5level [%thread] %logger{39} : %msg%n"
+    file: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] %logger{39} : %msg%n"
+  level:
+    root: INFO
+    dev.streampack: INFO
+    org.hibernate: WARN
+    org.hibernate.orm.jdbc.error: ERROR
+    com.github.dockerjava: WARN
