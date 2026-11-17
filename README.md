@@ -176,6 +176,8 @@ nothing, see [Deploy with Docker for Mattermost and GitLab](docs/tutorials/deplo
 | `service-console` | Interactive console adapter |
 | `server-streampack` | Bundled runnable server distribution |
 
+Outside the Maven build, `cli/` holds `bcn`, a Go command-line client for the API (`just build-cli`; see [cli/README.md](cli/README.md)).
+
 ## Documentation
 
 Documentation is organized using the Diataxis model:

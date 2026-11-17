@@ -34,10 +34,17 @@ channel can resolve the identity: any plausible email address for email, or a us
 exists on the named connected server for Mattermost. Unknown servers and usernames get the same
 `202` with nothing sent.
 
-`POST /auth/otp/verify` answers `200` with a `LoginResponse` (`token`, `refreshToken`,
-`principal`) and sets the session cookies, `401` when the code is wrong, expired, or was
-issued for a different channel, or `429` when the identity has been tried too often (see below). Codes are scoped to the channel and recipient they were issued
+`POST /auth/otp/verify` answers `200` with a `LoginResponse` (`token` and `principal`) and
+sets the session cookies: `access_token` (the same JWT as `token`) and `refresh_token`. The
+refresh token is only in its cookie, never in the JSON. The answer is `401` when the code is
+wrong, expired, or was issued for a different channel, or `429` when the identity has been tried
+too often (see below). Codes are scoped to the channel and recipient they were issued
 for, so an email code cannot verify a Mattermost identity and vice versa.
+
+`POST /auth/refresh` exchanges the refresh token for a new session. It reads the token only from
+the `refresh_token` cookie; a client outside a browser sends it in a `Cookie` header. It answers
+`200` with a new `LoginResponse` and sets both cookies again, or `401` when the token is missing,
+expired or already used. Each refresh rotates the refresh token, so keep the new one.
 
 Accounts are created on first sign-in. An email sign-in converges on the account owning that
 address. A chat sign-in looks for an account bound to that server and user; when there is none it
