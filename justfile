@@ -19,6 +19,14 @@ build: clean
 test: clean
     {{maven}} package
 
+# Test the bcn command-line client (cli/, Go). Not part of build or test: the CLI is not in the server.
+test-cli:
+    cd cli && go vet ./... && go test ./...
+
+# Test, then build the bcn command-line client into cli/target/bcn
+build-cli: test-cli
+    cd cli && go build -o target/bcn .
+
 # Run tests and generate aggregate coverage report
 coverage:
     {{maven}} clean verify
