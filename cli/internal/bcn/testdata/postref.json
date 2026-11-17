@@ -1,0 +1,9 @@
+[
+  {"arg": "https://bytecode.news/posts/2026/11/where-does-the-experience-come-from", "year": 2026, "month": 11, "slug": "where-does-the-experience-come-from"},
+  {"arg": "https://bytecode.news/posts/2026/11/where-does-the-experience-come-from/", "year": 2026, "month": 11, "slug": "where-does-the-experience-come-from"},
+  {"arg": "2026/08/the-floor-and-the-multiplier", "year": 2026, "month": 8, "slug": "the-floor-and-the-multiplier"},
+  {"arg": "2026/8/the-floor", "year": 2026, "month": 8, "slug": "the-floor"},
+  {"arg": "the-floor", "error": true},
+  {"arg": "2026/13/the-floor", "error": true},
+  {"arg": "https://example.com/blog/x", "error": true}
+]

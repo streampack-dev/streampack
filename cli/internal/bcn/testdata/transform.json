@@ -1,0 +1,15 @@
+[
+  {"name": "factoid link becomes its selector", "input": "Use [[maven]] to build.", "expected": "Use maven to build."},
+  {"name": "factoid link with text becomes its text", "input": "See [[the build tool|maven]].", "expected": "See the build tool."},
+  {"name": "two factoid links on one line", "input": "[[java]] and [[kotlin]]", "expected": "java and kotlin"},
+  {"name": "factoid link in a code fence stays", "input": "```\nlist[[0]]\n```", "expected": "```\nlist[[0]]\n```"},
+  {"name": "factoid link in inline code stays", "input": "Write `[[x]]` for a link.", "expected": "Write `[[x]]` for a link."},
+  {"name": "leading title heading is dropped", "input": "# My Title\n\nFirst paragraph.", "expected": "First paragraph."},
+  {"name": "later level-one heading stays", "input": "Intro.\n\n# Part One", "expected": "Intro.\n\n# Part One"},
+  {"name": "site-relative link becomes absolute", "input": "Read [this](/posts/2026/08/the-floor).", "expected": "Read [this](https://bytecode.news/posts/2026/08/the-floor)."},
+  {"name": "site-relative image becomes absolute", "input": "![A chart](/media/posts/1/chart.png)", "expected": "![A chart](https://bytecode.news/media/posts/1/chart.png)"},
+  {"name": "absolute link stays", "input": "[Proton](https://proton.me/)", "expected": "[Proton](https://proton.me/)"},
+  {"name": "anchor link stays", "input": "[Back](#top)", "expected": "[Back](#top)"},
+  {"name": "footnotes stay", "input": "Text[^1].\n\n[^1]: A note.", "expected": "Text[^1].\n\n[^1]: A note."},
+  {"name": "mermaid block stays", "input": "```mermaid\ngraph LR\n  A --> B\n```", "expected": "```mermaid\ngraph LR\n  A --> B\n```"}
+]
