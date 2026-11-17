@@ -114,6 +114,20 @@ class OperationConfigAdminTests {
         assertFalse(config!!.enabled)
     }
 
+    @Test
+    fun `service enable and disable refuse the console`() {
+        for (verb in listOf("enable", "disable")) {
+            val result =
+                eventGateway.process(buildMessage("service $verb console", Role.SUPER_ADMIN))
+            assertEquals(
+                "The console follows CONSOLE_ENABLED, read at every start: set it and restart.",
+                assertInstanceOf(OperationResult.Error::class.java, result, verb).message,
+                verb,
+            )
+        }
+        assertEquals(null, configService.findConfig("", "service:console"))
+    }
+
     // -- OperationAdminOperation tests --
 
     @Test
