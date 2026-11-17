@@ -1,10 +1,6 @@
 spring:
   main:
     allow-bean-definition-overriding: true
-  datasource:
-    url: jdbc:tc:postgresql:@postgresVersion@://nevet
-    hikari:
-      maximum-pool-size: 2
   jpa:
     hibernate:
       ddl-auto: validate

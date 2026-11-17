@@ -107,7 +107,11 @@ object SharedTestDatabase {
                     }
                 },
             )
-        val url = "jdbc:postgresql://${container.host}:${container.firstMappedPort}/$name"
+        // As the jdbc:tc: URL in streampack-test-defaults.yml: a dropped connection fails, not
+        // hangs.
+        val url =
+            "jdbc:postgresql://${container.host}:${container.firstMappedPort}/$name" +
+                "?connectTimeout=10&loginTimeout=10"
         return Database(url, container.username, container.password)
     }
 

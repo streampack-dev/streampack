@@ -1,8 +1,11 @@
 spring:
+  # lib-testsupport depends on lib-core, so lib-core cannot use its shared test settings; this
+  # repeats their datasource, timeouts and retry window included (#325).
   datasource:
-    url: jdbc:tc:postgresql:@postgresVersion@://nevet
+    url: jdbc:tc:postgresql:@postgresVersion@://nevet?connectTimeout=10&loginTimeout=10
     hikari:
       maximum-pool-size: 2
+      initialization-fail-timeout: 60000
   jpa:
     hibernate:
       ddl-auto: validate
