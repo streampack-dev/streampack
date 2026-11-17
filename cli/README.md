@@ -31,13 +31,18 @@ bcn login
 
 ## Write a post as a foojay.io draft
 
-Run this in your foojay.io checkout:
+Give the post and your foojay.io checkout:
 
 ```bash
-bcn foojay https://bytecode.news/posts/2026/11/where-does-the-experience-come-from
+bcn foojay https://bytecode.news/posts/2026/11/where-does-the-experience-come-from ~/work/foojay
 ```
 
-The post can also be given as `2026/11/where-does-the-experience-come-from`. `bcn` writes `draft/bcn-<slug>/index.md`, in the format of foojay's `template/post.md`:
+The post can also be given as `2026/11/where-does-the-experience-come-from`. The directory is optional (default: the current directory):
+
+- A foojay checkout, known by its `draft/` directory: `bcn` writes `draft/bcn-<slug>/index.md` in it.
+- The `draft/` directory itself, or any other directory: `bcn` writes `bcn-<slug>/index.md` in it.
+
+The file has the format of foojay's `template/post.md`:
 
 - `title`, `description` (the post's excerpt) and `canonical` (the post's URL on bytecode.news) are filled in.
 - `authors`, `categories` and `image` keep foojay's placeholders: `your-author-slug`, `[]` and `""`. foojay's pull-request check rejects all three, so fill them in. A comment above `categories` lists the post's BCN tags as a hint. Put the image file in the same folder.
@@ -47,7 +52,6 @@ You must be signed in as an admin: the API gives a post's Markdown source only t
 
 Options:
 
-- `--out DIR`: the foojay checkout (default: the current directory).
 - `--site URL`: the site for `canonical` and absolute links (default `https://bytecode.news`).
 - `--force`: replace an existing `index.md`.
 

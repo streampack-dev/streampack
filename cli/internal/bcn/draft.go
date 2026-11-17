@@ -3,6 +3,8 @@ package bcn
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -137,5 +139,13 @@ func quote(s string) string {
 	return `"` + r.Replace(s) + `"`
 }
 
-// DraftDir is not implemented yet.
-func DraftDir(dir string) string { return dir }
+// DraftDir is the directory a draft folder goes in. A foojay checkout, known by its draft/
+// subdirectory, gives that draft/; any other directory, draft/ itself included, is used as it
+// is. The draft folder then goes one level inside: <DraftDir>/bcn-<slug>/index.md.
+func DraftDir(dir string) string {
+	draft := filepath.Join(dir, "draft")
+	if info, err := os.Stat(draft); err == nil && info.IsDir() {
+		return draft
+	}
+	return dir
+}

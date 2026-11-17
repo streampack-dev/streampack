@@ -24,9 +24,11 @@ const usage = `bcn: a command-line client for bytecode.news
 
 Usage:
   bcn login [--server URL]
-  bcn foojay [--out DIR] [--site URL] [--server URL] [--force] <post>
+  bcn foojay [--site URL] [--server URL] [--force] <post> [DIR]
 
 <post> is a post's URL, such as https://bytecode.news/posts/2026/11/slug, or 2026/11/slug.
+DIR is a foojay checkout, its draft directory, or any directory (default: the current one).
+The draft is written to DIR/bcn-<slug>/index.md, or DIR/draft/bcn-<slug>/index.md in a checkout.
 `
 
 func main() {
@@ -116,15 +118,18 @@ func prompt(reader *bufio.Reader, out io.Writer, label string) (string, error) {
 
 func foojay(args []string, out, errOut io.Writer) error {
 	flags := flag.NewFlagSet("foojay", flag.ContinueOnError)
-	dir := flags.String("out", ".", "the foojay checkout; the draft goes in its draft/ directory")
 	site := flags.String("site", defaultSite, "the site's URL, for canonical and absolute links")
 	server := flags.String("server", defaultServer, "the API's base URL")
 	force := flags.Bool("force", false, "replace an existing index.md")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if flags.NArg() != 1 {
-		return errors.New("give one post: its URL or year/month/slug")
+	if flags.NArg() < 1 || flags.NArg() > 2 {
+		return errors.New("give one post (its URL or year/month/slug) and, optionally, a directory")
+	}
+	dir := "."
+	if flags.NArg() == 2 {
+		dir = flags.Arg(1)
 	}
 	ref, err := bcn.ParsePostRef(flags.Arg(0))
 	if err != nil {
@@ -142,7 +147,7 @@ func foojay(args []string, out, errOut io.Writer) error {
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(*dir, "draft", folder, "index.md")
+	path := filepath.Join(bcn.DraftDir(dir), folder, "index.md")
 	if _, err := os.Stat(path); err == nil && !*force {
 		return fmt.Errorf("%s exists; add --force to replace it", path)
 	}
