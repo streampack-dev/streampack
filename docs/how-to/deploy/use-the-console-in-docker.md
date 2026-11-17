@@ -7,7 +7,8 @@ There are two other ways to give commands, which need neither: the [setup tool](
 ## Before You Start
 
 - A super-admin. On a fresh database, set `ADMIN_EMAIL` in `.env`; startup creates the account. Without one the console logs `No super-admin account, so the console can't start` and ends.
-- `CONSOLE_ENABLED=true` in `.env`.
+- `CONSOLE_ENABLED=true` in `.env`. The server reads it on every start.
+
 
 ## Give the Service a Terminal
 
@@ -48,3 +49,7 @@ Don't press **Ctrl-C**: in an attached container it stops the server. `exit` or 
 ## When Commands Store Credentials
 
 Commands such as `mattermost connect` and `gitlab add` store credentials in the database until they're moved into the environment, and the next start fails until they are. See [Move Credentials into the Environment](move-credentials-into-the-environment.md).
+
+## Turn the Console Off
+
+Set `CONSOLE_ENABLED=false` in `.env`, then recreate the container (`docker compose up -d`). `service disable console` does not work: the console follows the environment only.

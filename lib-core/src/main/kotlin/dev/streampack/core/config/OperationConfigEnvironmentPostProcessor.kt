@@ -14,6 +14,10 @@ import org.springframework.core.env.MapPropertySource
  *
  * Runs before any Spring beans are created. Uses raw JDBC to avoid depending on Spring Data.
  * Gracefully handles missing table (first startup before Flyway runs).
+ *
+ * The services in [ENVIRONMENT_ONLY] are left to the environment: a row for one is ignored. The
+ * console reads standard input, so whether it can run depends on how the server is started, with a
+ * terminal or without; a database value would outlive that and start a console with no input.
  */
 class OperationConfigEnvironmentPostProcessor : EnvironmentPostProcessor, Ordered {
     // Just before the tests' shared-database one (lib-testsupport), so in tests this one still
@@ -49,6 +53,7 @@ class OperationConfigEnvironmentPostProcessor : EnvironmentPostProcessor, Ordere
                             val group = rs.getString("operation_group")
                             val enabled = rs.getBoolean("enabled")
                             val serviceName = group.removePrefix("service:")
+                            if (serviceName in ENVIRONMENT_ONLY) continue
                             overrides["streampack.$serviceName.enabled"] = enabled.toString()
                         }
                     }
@@ -64,5 +69,12 @@ class OperationConfigEnvironmentPostProcessor : EnvironmentPostProcessor, Ordere
                 MapPropertySource("operationConfigOverrides", overrides),
             )
         }
+    }
+
+    companion object {
+        /**
+         * Services whose `streampack.<name>.enabled` only the environment sets, never the database.
+         */
+        val ENVIRONMENT_ONLY: Set<String> = setOf("console")
     }
 }

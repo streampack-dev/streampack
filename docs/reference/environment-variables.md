@@ -80,7 +80,7 @@ This reference covers the variables commonly used by `server-streampack`.
 | `ANTHROPIC_API_KEY` | Optional | Anthropic API key. |
 | `DICTIONARY_TIMEOUT` | Optional | How long `define` waits for each dictionary before asking the next (default `3s`). See [operation-dictionary](../../operation-dictionary/README.md). |
 | `DICTIONARY_BREAK_FOR` | Optional | How long a dictionary that failed is skipped before it is asked again (default `15m`). |
-| `AI_ENABLED` | Optional | Enables AI-backed features. |
+| `AI_ENABLED` | Optional | Enables AI-backed features. First start only; afterwards the database decides. See [Settings the Database Takes Over](#settings-the-database-takes-over). |
 | `AI_MODEL` | Optional | The Anthropic model for AI features: ask, summaries, derived factoids, poetry (default `claude-opus-5-5`). |
 | `AI_MODERATION_MODEL` | Optional | A cheaper model for high-volume or background work, such as abuse detection and `define`'s last-resort definitions (default `claude-haiku-4-5-20251001`). It shares the timeout, retries and token limit, but not `AI_THINKING` or `AI_EFFORT`, which apply to `AI_MODEL` only (Haiku 4.5 refuses an effort). |
 | `AI_MAX_TOKENS` | Optional | The most tokens an answer may have (default `1024`). |
@@ -102,22 +102,22 @@ This reference covers the variables commonly used by `server-streampack`.
 | `STREAMPACK_SPECS_CVE_MAVEN_SEARCH_GAP` | Optional | The least time between two Maven Central searches by `cve` (default `2s`). Only one search runs at a time; another asked meanwhile fails at once. |
 | `STREAMPACK_SPECS_CVE_MAVEN_BACK_OFF` | Optional | How long `cve` stops searching Maven Central after a 429 or 503 without a `Retry-After` (default `PT15M`); with one, it waits as long as that says, up to `STREAMPACK_SPECS_CVE_MAVEN_BACK_OFF_MAX` (default `PT24H`). Other lookups carry on. |
 | `BLOG_SUMMARY_PROMPT` | Optional | System prompt for admins' AI-derived post summaries. Empty uses the built-in stance: lead with the substance, never tease or bury the lede. |
-| `IRC_ENABLED` | Optional | Enables IRC adapter. |
+| `IRC_ENABLED` | Optional | Enables IRC adapter. First start only; afterwards the database decides. See [Settings the Database Takes Over](#settings-the-database-takes-over). |
 | `IRC_IDENTITY` | Optional | The bot's identity, as its CTCP `VERSION` answer (default *`STREAMPACK_NAME`* `IRC Bridge`, so `Nevet IRC Bridge` unset). |
 | `IRC_ADAPTIVE_SEND_DELAY_ENABLED` | Optional | Spaces outgoing IRC messages adaptively, growing the gap under a backlog (default `true`). |
 | `IRC_MIN_SEND_DELAY_MS`, `IRC_MAX_SEND_DELAY_MS` | Optional | Bounds of the adaptive gap (defaults `120` and `1000`). |
 | `IRC_SEND_DELAY_RAMP_UP_FACTOR`, `IRC_SEND_DELAY_RAMP_DOWN_FACTOR` | Optional | How fast the adaptive gap grows and shrinks (defaults `1.1` and `0.9`). |
 | `IRC_SEND_DELAY_MS` | Optional | Fixed gap between messages when adaptive sending is off (default `900`). |
 | `IRC_<NAME>_SASL_ACCOUNT`, `IRC_<NAME>_SASL_PASSWORD` | Per network | SASL credentials for the IRC network registered as `<name>`, e.g. `IRC_LIBERA_SASL_PASSWORD`. `irc connect` stores literals; with enforcement on, startup fails until the variables are set (values are never printed), after which the literals are rewritten to `env://` references. |
-| `DISCORD_ENABLED` | Optional | Enables Discord adapter. |
+| `DISCORD_ENABLED` | Optional | Enables Discord adapter. First start only; afterwards the database decides. See [Settings the Database Takes Over](#settings-the-database-takes-over). |
 | `DISCORD_APPLICATION_ID` | Optional | Discord application id. |
 | `DISCORD_PUBLIC_KEY` | Optional | Discord public key. |
 | `DISCORD_BOT_TOKEN` | Optional | Discord bot token. |
 | `DISCORD_PERMISSIONS_VALUE` | Optional | Discord permission integer, default `3072`. |
-| `SLACK_ENABLED` | Optional | Enables Slack adapter. |
+| `SLACK_ENABLED` | Optional | Enables Slack adapter. First start only; afterwards the database decides. See [Settings the Database Takes Over](#settings-the-database-takes-over). |
 | `SLACK_SIGNAL` | Optional | Signal that addresses the bot in Slack channels (default `!`); overridable per workspace with `slack signal`. |
 | `SLACK_<NAME>_BOT_TOKEN`, `SLACK_<NAME>_APP_TOKEN` | Per workspace | Bot (`xoxb-`) and app (`xapp-`) tokens for the Slack workspace registered as `<name>`, e.g. `SLACK_JVM_NEWS_BOT_TOKEN`. Externalized and enforced at startup like Mattermost tokens. |
-| `CONSOLE_ENABLED` | Optional | Enables the console adapter: commands read from standard input, sent as the super-admin. It starts once the server is ready, on a thread of its own. Under Docker Compose the service needs `stdin_open: true` and `tty: true`; see [Use the Console in Docker](../how-to/deploy/use-the-console-in-docker.md). |
+| `CONSOLE_ENABLED` | Optional | Enables the console adapter: commands read from standard input, sent as the super-admin. Read on every start; the database never overrides it, and `service enable console` and `service disable console` refuse. It starts once the server is ready, on a thread of its own. Under Docker Compose the service needs `stdin_open: true` and `tty: true`; see [Use the Console in Docker](../how-to/deploy/use-the-console-in-docker.md). |
 | `STREAMPACK_LOCAL_ADMIN_TOKEN_FILE` | Optional | A file to write a super-admin token to, for a setup tool on the same box ([The Local Admin Token](../explanation/local-admin-token.md)). Off while blank. Written when the server is ready and renewed at half its lifetime, readable by the server's user alone (mode `0600`), removed on shutdown; the token is never logged. Needs a super-admin (`ADMIN_EMAIL`). |
 | `STREAMPACK_LOCAL_ADMIN_TOKEN_LIFETIME` | Optional | How long each local admin token is valid, ISO-8601 duration (default `PT1H`). |
 | `CORS_ORIGINS` | Optional | Comma-separated browser origins trusted for credentialed cross-origin requests; also the origins a cookie-authenticated web console command must come from. |
@@ -126,3 +126,20 @@ This reference covers the variables commonly used by `server-streampack`.
 The per-credential variables above (`GITHUB_…_TOKEN`, `GITLAB_…_TOKEN`, `MATTERMOST_<NAME>_TOKEN`, `SLACK_<NAME>_…`, `IRC_<NAME>_SASL_…`) are listed by name, for a running server, by the console's `secrets` command and by `GET /admin/secrets` (super-admin): which ones the next start needs, and whether each is waiting in the database or referenced but not set. See [Move Credentials into the Environment](../how-to/deploy/move-credentials-into-the-environment.md).
 
 Each `AI_*` setting is also read as `STREAMPACK_AI_*` (e.g. `STREAMPACK_AI_MODEL`, `STREAMPACK_AI_MODERATION_MODEL`), the property's own name in the environment; where both are set, the `STREAMPACK_AI_*` one wins.
+
+## Settings the Database Takes Over
+
+`IRC_ENABLED`, `DISCORD_ENABLED`, `SLACK_ENABLED` and `AI_ENABLED` count only on the first start against an empty database.
+
+1. On that first start, the server copies each of the four values into the database, as the services `irc`, `discord`, `slack` and `ai`.
+2. On every later start, the server reads the database values before it starts any service. A database value wins over the environment, `.env` included.
+3. So after the first start, changing one of the four variables changes nothing.
+
+To turn one of the services on or off later:
+
+1. Run `service disable <name>` or `service enable <name>` as a super-admin, for example `service disable irc`. Use the console, the web console or the setup tool.
+2. Restart the server.
+
+`service list` shows the database values. The same rule holds for any service that a `service enable` or `service disable` command has named, `mattermost` among them: from then on, the database value wins over its `*_ENABLED` variable.
+
+`CONSOLE_ENABLED` is the exception. The console reads standard input, so whether it can run depends on how the server is started. The server reads `CONSOLE_ENABLED` on every start and ignores any database value for the console.
