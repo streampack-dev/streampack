@@ -8,7 +8,7 @@ import dev.streampack.core.model.CodeIdentity
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Protocol
 import dev.streampack.core.service.UserResolutionService
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.time.Duration
 import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.AfterEach
@@ -40,7 +40,7 @@ class MattermostCodeDeliveryTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.createContext("/api/v4/users/me") {
             json(it, 200, """{"id":"botuser01","username":"nevet"}""")
         }

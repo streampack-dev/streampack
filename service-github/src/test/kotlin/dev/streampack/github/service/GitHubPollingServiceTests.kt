@@ -14,7 +14,7 @@ import dev.streampack.github.repository.GitHubReleaseRepository
 import dev.streampack.github.repository.GitHubRepoRepository
 import dev.streampack.github.repository.GitHubSubscriptionRepository
 import dev.streampack.test.TestSecurityConfiguration
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.AfterEach
@@ -74,7 +74,7 @@ class GitHubPollingServiceTests {
     @BeforeEach
     fun setUp() {
         capturingEgressSubscriber.clear()
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         endpoint = DefaultInstanceEndpoint(instanceRepository, store)
         endpoint.pointAt("http://localhost:${httpServer.address.port}")

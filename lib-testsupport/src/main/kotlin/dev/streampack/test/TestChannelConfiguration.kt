@@ -11,8 +11,9 @@ import org.springframework.integration.channel.DirectChannel
  * allows @Transactional test rollback to work correctly -- the production ExecutorChannel
  * dispatches to virtual threads which cannot see uncommitted test data.
  *
- * The tick scheduler is disabled via application.yml (streampack.tick.scheduler.enabled=false).
- * Tests that need ticks should inject the tickChannel bean and publish Instant payloads manually.
+ * The tick scheduler is disabled by the shared test settings
+ * (streampack.tick.scheduler.enabled=false in streampack-test-defaults.yml). Tests that need ticks
+ * should inject the tickChannel bean and publish Instant payloads manually.
  */
 @Configuration
 class TestChannelConfiguration {

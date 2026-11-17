@@ -1,0 +1,3 @@
+# A module's own test configuration that does not mention the scheduler.
+streampack:
+  example: module-value

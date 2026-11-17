@@ -7,7 +7,7 @@ import dev.streampack.gitlab.repository.GitLabInstanceRepository
 import dev.streampack.gitlab.repository.GitLabProjectRepository
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
@@ -46,7 +46,7 @@ class GitLabDueBatchPollingTests {
     @BeforeEach
     fun setUp() {
         hits.clear()
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         instanceRepository.save(
             store

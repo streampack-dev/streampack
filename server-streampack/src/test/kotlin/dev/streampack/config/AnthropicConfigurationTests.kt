@@ -3,11 +3,9 @@ package dev.streampack.config
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.sun.net.httpserver.HttpServer
 import dev.streampack.ai.config.AiProperties
 import dev.streampack.ai.service.AiService
-import java.net.InetAddress
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNull
@@ -118,7 +116,7 @@ class AnthropicConfigurationTests {
      */
     private fun requestsSent(properties: AiProperties): List<JsonNode> {
         val bodies = mutableListOf<JsonNode>()
-        val server = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0)
+        val server = loopbackHttpServer()
         server.createContext("/v1/messages") { exchange ->
             val request = ObjectMapper().readTree(exchange.requestBody.readAllBytes())
             synchronized(bodies) { bodies.add(request) }

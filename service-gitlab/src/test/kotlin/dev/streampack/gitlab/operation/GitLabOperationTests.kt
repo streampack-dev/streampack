@@ -18,7 +18,7 @@ import dev.streampack.gitlab.service.GitLabForgeStore
 import dev.streampack.gitlab.service.GitLabWebhookSecretCipher
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.util.UUID
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -89,7 +89,7 @@ class GitLabOperationTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
     }
 

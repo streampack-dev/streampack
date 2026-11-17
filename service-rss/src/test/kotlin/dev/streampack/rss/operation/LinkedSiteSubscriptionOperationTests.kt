@@ -12,8 +12,7 @@ import dev.streampack.core.model.Provenance
 import dev.streampack.rss.config.RssProperties
 import dev.streampack.rss.repository.RssFeedRepository
 import dev.streampack.rss.service.FeedDiscoveryServiceTests.Companion.sampleRss
-import java.net.InetAddress
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -39,7 +38,7 @@ class LinkedSiteSubscriptionOperationTests {
 
     @BeforeEach
     fun start() {
-        server = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0)
+        server = loopbackHttpServer()
         server.start()
         // Not "localhost", which other tests' feeds may be on.
         base = "http://127.0.0.1:${server.address.port}"

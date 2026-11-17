@@ -12,7 +12,7 @@ import dev.streampack.specs.service.SpecLookupService
 import dev.streampack.specs.service.SpecLookupServiceTests.Companion.jepHtml
 import dev.streampack.specs.service.SpecLookupServiceTests.Companion.jsrHtml
 import dev.streampack.specs.service.SpecLookupServiceTests.Companion.rfcHtml
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -42,7 +42,7 @@ class SpecsOperationTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
         testLookupService.baseUrl = baseUrl

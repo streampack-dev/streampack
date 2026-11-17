@@ -1,2 +1,3 @@
 org.springframework.boot.EnvironmentPostProcessor=\
+  dev.streampack.test.TestDefaultsEnvironmentPostProcessor,\
   dev.streampack.test.SharedTestDatabaseEnvironmentPostProcessor

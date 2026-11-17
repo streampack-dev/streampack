@@ -19,8 +19,7 @@ import dev.streampack.factoid.model.FactoidDraft
 import dev.streampack.factoid.operation.DeriveFactoidOperation.Proposal
 import dev.streampack.factoid.repository.FactoidAttributeRepository
 import dev.streampack.factoid.repository.FactoidRepository
-import java.net.InetAddress
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.AfterEach
@@ -85,7 +84,7 @@ class DeriveFactoidOperationTests {
             "maven",
             "a build tool for Java projects, and the repository format most of them publish to.",
         )
-        server = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0)
+        server = loopbackHttpServer()
         server.createContext("/") { ex ->
             ex.sendResponseHeaders(if (ex.requestURI.path == "/missing") 404 else 200, -1)
             ex.close()

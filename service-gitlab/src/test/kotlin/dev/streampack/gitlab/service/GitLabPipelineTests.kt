@@ -16,7 +16,7 @@ import dev.streampack.gitlab.repository.GitLabInstanceRepository
 import dev.streampack.gitlab.repository.GitLabProjectRepository
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestSecurityConfiguration
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -114,7 +114,7 @@ class GitLabPipelineTests {
     @BeforeEach
     fun setUp() {
         capturing.captured.clear()
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = loopbackHttpServer()
         httpServer.start()
         instanceRepository.save(
             store

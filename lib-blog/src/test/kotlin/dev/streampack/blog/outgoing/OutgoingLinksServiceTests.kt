@@ -16,8 +16,7 @@ import dev.streampack.core.model.LinkedSiteSubscriptionRequest
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.service.TypedOperation
-import java.net.InetAddress
-import java.net.InetSocketAddress
+import dev.streampack.test.loopbackHttpServer
 import java.net.URLDecoder
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -88,7 +87,7 @@ class OutgoingLinksServiceTests {
     @BeforeEach
     fun start() {
         subscriptions.requests.clear()
-        server = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0)
+        server = loopbackHttpServer()
         server.start()
         base = "http://127.0.0.1:${server.address.port}"
         page("/wm-page", "<html>a post</html>", "Link" to "</wm-endpoint>; rel=\"webmention\"")
