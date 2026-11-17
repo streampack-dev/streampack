@@ -211,7 +211,7 @@ class GitHubInstanceOperationTests {
             gheSeen.toString(),
         )
 
-        val list = eventGateway.process(adminMessage("github list"))
+        val list = eventGateway.process(adminMessage("github list all"))
         val listed = assertInstanceOf(OperationResult.Success::class.java, list).payload.toString()
         assertTrue(listed.contains("ghe.example.com owner/repo"), listed)
 

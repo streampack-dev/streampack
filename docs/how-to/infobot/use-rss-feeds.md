@@ -56,6 +56,8 @@ Current destination:
 feed subscriptions
 ```
 
+In a channel, `feed list` gives the same answer. Use `feed list all` to see every registered feed.
+
 Explicit destination:
 
 ```text
@@ -82,7 +84,7 @@ This deactivates the feed and any active subscriptions attached to it.
 - `feed add`, `feed subscribe`, `feed unsubscribe`, and `feed remove` require `ADMIN`. Anyone
   else gets the reply "Only an admin can subscribe feeds" (or add, unsubscribe, remove). The
   `github` and `gitlab` commands answer the same way.
-- `feed list` and `feed subscriptions` are readable without admin privileges
+- `feed list`, `feed list all` and `feed subscriptions` are readable without admin privileges
 
 ## Practical Notes
 

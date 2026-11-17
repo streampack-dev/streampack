@@ -12,6 +12,12 @@ import org.springframework.data.jpa.repository.Query
 interface UserRepository : JpaRepository<User, UUID> {
     fun findByUsername(username: String): User?
 
+    /** Active users whose display name, the name they publish under, is [displayName], any case. */
+    @Query(
+        "SELECT u FROM User u WHERE lower(u.displayName) = lower(:displayName) AND u.status = dev.streampack.core.model.UserStatus.ACTIVE ORDER BY u.createdAt",
+    )
+    fun findActiveByDisplayName(displayName: String): List<User>
+
     fun findByEmail(email: String): User?
 
     fun existsByEmail(email: String): Boolean

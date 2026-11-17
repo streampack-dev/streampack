@@ -14,6 +14,7 @@ For repository-facing operator and moderator commands, see:
 
 | Area | Examples |
 |------|----------|
+| Articles | `articles`, `articles by Ada Lovelace`, `articles virtual threads` (see [Articles](../how-to/infobot/use-the-infobot.md#articles)) |
 | Knowledge and lookup | `spring`, `define ubiquitous`, `rfc 2616`, `cve log4j`, `weather Boston` |
 | Ambient behavior | `kotlin++`, paste a URL |
 | Messaging and channel tools | `tell alice hello`, `bridge provenance` |

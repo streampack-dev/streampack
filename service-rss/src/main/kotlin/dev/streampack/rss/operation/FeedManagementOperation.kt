@@ -68,7 +68,7 @@ class FeedManagementOperation(
     override fun onSubscriptions(destinationUri: String): OperationOutcome {
         val subscriptions = feedService.listSubscriptions(destinationUri)
         if (subscriptions.isEmpty()) {
-            return OperationResult.Success("No active subscriptions for this channel")
+            return noSubscriptions()
         }
         val lines = subscriptions.joinToString("\n") { it.feed.title + " - " + it.feed.feedUrl }
         return OperationResult.Success(lines)

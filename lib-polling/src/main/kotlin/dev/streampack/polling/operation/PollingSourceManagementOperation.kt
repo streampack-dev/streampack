@@ -40,6 +40,7 @@ abstract class PollingSourceManagementOperation(
         // Read commands are open to everyone
         if (
             lower == "$prefix list" ||
+                lower == "$prefix list all" ||
                 lower == "$prefix subscriptions" ||
                 lower.startsWith("$prefix subscriptions for ")
         ) {
@@ -74,7 +75,8 @@ abstract class PollingSourceManagementOperation(
         }
 
         return when {
-            lower == "$prefix list" -> onList()
+            lower == "$prefix list all" -> onList()
+            lower == "$prefix list" -> handleList(message)
             lower == "$prefix subscriptions" || lower.startsWith("$prefix subscriptions for ") ->
                 handleSubscriptions(trimmed, message)
             lower.startsWith("$prefix subscribe ") -> {
@@ -93,7 +95,7 @@ abstract class PollingSourceManagementOperation(
         }
     }
 
-    /** List all registered sources */
+    /** List all registered sources: `<prefix> list all`, or `<prefix> list` in a direct message */
     abstract fun onList(): OperationOutcome
 
     /** Subscribe a destination to a source */
@@ -102,8 +104,28 @@ abstract class PollingSourceManagementOperation(
     /** Unsubscribe a destination from a source */
     abstract fun onUnsubscribe(identifier: String, destinationUri: String): OperationOutcome
 
-    /** List subscriptions for a destination */
+    /**
+     * List subscriptions for a destination. With none, a subclass answers [noSubscriptions], so
+     * every source type gives the same hint.
+     */
     abstract fun onSubscriptions(destinationUri: String): OperationOutcome
+
+    /** The answer for a destination with no subscriptions: it names `list all`, the old `list`. */
+    protected fun noSubscriptions(): OperationOutcome =
+        OperationResult.Success(
+            "No $sourceNoun subscribed in this channel; \"$commandPrefix list all\" lists all $sourceNoun",
+        )
+
+    /**
+     * `<prefix> list`: in a channel, the channel's own subscriptions, as `subscriptions` gives; in
+     * a direct message, or without provenance, every source, as `list all` gives. A direct message
+     * has no subscriptions worth listing, and a catalogue there disturbs no one.
+     */
+    private fun handleList(message: Message<*>): OperationOutcome {
+        val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return onList()
+        if (directConversations.isDirect(provenance)) return onList()
+        return onSubscriptions(provenance.encode())
+    }
 
     /** Remove (deactivate) a source and its subscriptions */
     abstract fun onRemove(identifier: String): OperationOutcome

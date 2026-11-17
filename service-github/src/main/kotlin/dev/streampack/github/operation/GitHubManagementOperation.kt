@@ -104,7 +104,7 @@ class GitHubManagementOperation(
     override fun onSubscriptions(destinationUri: String): OperationOutcome {
         val subscriptions = subscriptionService.listSubscriptions(destinationUri)
         if (subscriptions.isEmpty()) {
-            return OperationResult.Success("No active subscriptions for this channel")
+            return noSubscriptions()
         }
         val lines =
             subscriptions.joinToString(", ") {

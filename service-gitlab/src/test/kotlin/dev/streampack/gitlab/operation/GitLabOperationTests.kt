@@ -265,7 +265,7 @@ class GitLabOperationTests {
         val list =
             assertInstanceOf(
                     OperationResult.Success::class.java,
-                    eventGateway.process(guestMessage("gitlab list")),
+                    eventGateway.process(guestMessage("gitlab list all")),
                 )
                 .payload
                 .toString()

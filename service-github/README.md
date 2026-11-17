@@ -36,7 +36,10 @@ Registers a repository for watching.
 
 ```text
 github list
+github list all
 ```
+
+In a channel, `github list` lists the repositories that channel subscribes to, as `github subscriptions` does. In a direct message, it lists every repository. `github list all` lists every repository anywhere.
 
 Shows all registered repositories.
 
@@ -142,5 +145,5 @@ This path trusts operator intent and waits for signed webhook deliveries to prov
 ```text
 github add openjdk/jdk
 github webhook openjdk/jdk
-github list
+github list all
 ```
