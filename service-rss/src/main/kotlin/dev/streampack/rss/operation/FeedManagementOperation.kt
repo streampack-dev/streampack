@@ -4,6 +4,7 @@ package dev.streampack.rss.operation
 import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.polling.operation.PollingSourceManagementOperation
 import dev.streampack.rss.model.RemoveFeedOutcome
 import dev.streampack.rss.model.SubscriptionOutcome
@@ -12,8 +13,10 @@ import org.springframework.stereotype.Component
 
 /** Handles feed management commands: list, subscribe, unsubscribe, subscriptions, remove */
 @Component
-class FeedManagementOperation(private val feedService: RssSubscriptionService) :
-    PollingSourceManagementOperation() {
+class FeedManagementOperation(
+    private val feedService: RssSubscriptionService,
+    directConversations: DirectConversations,
+) : PollingSourceManagementOperation(directConversations) {
 
     override val commandPrefix: String = "feed"
     override val sourceNoun: String = "feeds"

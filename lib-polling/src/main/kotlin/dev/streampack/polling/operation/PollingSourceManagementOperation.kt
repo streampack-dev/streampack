@@ -5,6 +5,7 @@ import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Provenance
 import dev.streampack.core.model.Role
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.core.service.TypedOperation
 import org.springframework.messaging.Message
 
@@ -17,7 +18,9 @@ import org.springframework.messaging.Message
  *
  * A mutation from a user who is not an admin gets a reply that says so, not silence.
  */
-abstract class PollingSourceManagementOperation : TypedOperation<String>(String::class) {
+abstract class PollingSourceManagementOperation(
+    protected val directConversations: DirectConversations,
+) : TypedOperation<String>(String::class) {
 
     /** Command prefix, e.g. "github" or "feed" */
     abstract val commandPrefix: String

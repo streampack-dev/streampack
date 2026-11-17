@@ -4,6 +4,7 @@ package dev.streampack.gitlab.operation
 import dev.streampack.core.extensions.pluralize
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
+import dev.streampack.core.service.DirectConversations
 import dev.streampack.forge.ForgeKind
 import dev.streampack.forge.command.InstanceSelector
 import dev.streampack.forge.command.SubscribeSpec
@@ -23,8 +24,10 @@ import org.springframework.stereotype.Component
  */
 @Component
 @ConditionalOnGitLab
-class GitLabManagementOperation(private val subscriptionService: GitLabSubscriptionService) :
-    PollingSourceManagementOperation() {
+class GitLabManagementOperation(
+    private val subscriptionService: GitLabSubscriptionService,
+    directConversations: DirectConversations,
+) : PollingSourceManagementOperation(directConversations) {
 
     override val commandPrefix: String = "gitlab"
     override val sourceNoun: String = "GitLab projects"

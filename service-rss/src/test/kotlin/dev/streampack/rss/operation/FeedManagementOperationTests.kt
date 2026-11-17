@@ -15,6 +15,7 @@ import java.net.InetSocketAddress
 import java.util.UUID
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -83,20 +84,31 @@ class FeedManagementOperationTests {
     }
 
     @Test
-    fun `feed list with no feeds returns appropriate message`() {
-        val result = eventGateway.process(message("feed list"))
+    fun `feed list all with no feeds returns appropriate message`() {
+        val result = eventGateway.process(message("feed list all"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals("No feeds registered", (result as OperationResult.Success).payload)
     }
 
     @Test
-    fun `feed list with feeds shows URLs and titles`() {
+    fun `feed list all with feeds shows URLs and titles`() {
         val feedUrl = addFeed("JVM News", 3)
-        val result = eventGateway.process(message("feed list"))
+        val result = eventGateway.process(message("feed list all"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload.toString()
         assertTrue(payload.contains("JVM News"))
         assertTrue(payload.contains(feedUrl))
+    }
+
+    @Test
+    fun `feed list shows only this channel's feeds`() {
+        val subscribed = addFeed("Channel Feed", 2)
+        addFeed("Other Feed", 2)
+        eventGateway.process(message("feed subscribe $subscribed"))
+        val result = eventGateway.process(message("feed list"))
+        val payload = (result as OperationResult.Success).payload.toString()
+        assertTrue(payload.contains("Channel Feed"), payload)
+        assertFalse(payload.contains("Other Feed"), payload)
     }
 
     @Test
@@ -166,7 +178,7 @@ class FeedManagementOperationTests {
         val result = eventGateway.process(message("feed subscriptions"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals(
-            "No active subscriptions for this channel",
+            "No feeds subscribed in this channel; \"feed list all\" lists all feeds",
             (result as OperationResult.Success).payload,
         )
     }
@@ -311,7 +323,7 @@ class FeedManagementOperationTests {
             eventGateway.process(consoleMessage("feed subscriptions for irc://libera/%23empty"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals(
-            "No active subscriptions for this channel",
+            "No feeds subscribed in this channel; \"feed list all\" lists all feeds",
             (result as OperationResult.Success).payload,
         )
     }
