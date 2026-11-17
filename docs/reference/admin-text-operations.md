@@ -90,6 +90,8 @@ channel set <group> <key> <value> [for <pattern>]
 Notes:
 
 - `service ...` mutations require `SUPER_ADMIN` and take effect after restart.
+- A `service enable` or `service disable` value wins over the service's `*_ENABLED` environment variable, on every later start. The first start copies `IRC_ENABLED`, `DISCORD_ENABLED`, `SLACK_ENABLED` and `AI_ENABLED` into these values. See [Settings the Database Takes Over](environment-variables.md#settings-the-database-takes-over).
+- `service enable console` and `service disable console` refuse: `CONSOLE_ENABLED` alone decides the console.
 - `operation ...` and `channel ...` mutations require `ADMIN`.
 - When `channel ... for` is omitted, the current provenance is used.
 

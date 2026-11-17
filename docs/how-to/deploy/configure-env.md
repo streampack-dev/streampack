@@ -68,11 +68,12 @@ Optional integrations:
 |----------|---------|
 | `STREAMPACK_NAME` | The deployment's name, and the default for the site's name, the IRC identity, the karma-immune subjects and the user agent. |
 | `STREAMPACK_EXT_DIR` | The directory of extension jars and extra classpath files. See [Extend the Server with Jars](extend-the-server-with-jars.md). |
-| `IRC_ENABLED` | Enables IRC adapter. |
-| `DISCORD_ENABLED` | Enables Discord adapter. |
-| `SLACK_ENABLED` | Enables Slack adapter. |
+| `IRC_ENABLED` | Enables IRC adapter. Counts on the first start only; then use `service enable` or `service disable` (see [Settings the Database Takes Over](../../reference/environment-variables.md#settings-the-database-takes-over)). |
+| `DISCORD_ENABLED` | Enables Discord adapter. Counts on the first start only; then use `service enable` or `service disable` (see [Settings the Database Takes Over](../../reference/environment-variables.md#settings-the-database-takes-over)). |
+| `SLACK_ENABLED` | Enables Slack adapter. Counts on the first start only; then use `service enable` or `service disable` (see [Settings the Database Takes Over](../../reference/environment-variables.md#settings-the-database-takes-over)). |
 | `MATTERMOST_ENABLED` | Enables Mattermost adapter. |
-| `AI_ENABLED` | Enables AI-backed features. |
+| `CONSOLE_ENABLED` | Enables the console adapter. Read on every start; the database never overrides it. |
+| `AI_ENABLED` | Enables AI-backed features. Counts on the first start only; then use `service enable` or `service disable` (see [Settings the Database Takes Over](../../reference/environment-variables.md#settings-the-database-takes-over)). |
 | `STREAMPACK_GENERATIVE_PROMPT_DIR` | Filesystem directory for prompt and mail template overrides. See [Customize Prompts and Messages](configure-generative-prompts.md). |
 | `STREAMPACK_LOG_DIR` | Directory of the server's log file, `streampack.log` (default `logs`, under the working directory). In the image that is `/opt/streampack/logs`, a declared volume; mount a host directory there to keep the history when the container is replaced. |
 | `STREAMPACK_MEDIA_DIR` | Writable directory for uploaded media, such as posts' recordings. Unset, media is off. See [Configure Media Storage](configure-media-storage.md). |

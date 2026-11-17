@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.core.operation
 
+import dev.streampack.core.config.OperationConfigEnvironmentPostProcessor
 import dev.streampack.core.model.OperationOutcome
 import dev.streampack.core.model.OperationResult
 import dev.streampack.core.model.Role
@@ -34,6 +35,16 @@ class ServiceAdminOperation(private val configService: OperationConfigService) :
             return it
         }
 
+        // A row for an environment-only service would be ignored at startup, so none is written.
+        if (
+            subcommand in setOf("enable", "disable") &&
+                tokens.getOrNull(1)?.lowercase() in
+                    OperationConfigEnvironmentPostProcessor.ENVIRONMENT_ONLY
+        ) {
+            return OperationResult.Error(
+                "The console follows CONSOLE_ENABLED, read at every start: set it and restart.",
+            )
+        }
         return when (subcommand) {
             "enable" -> handleEnable(tokens.drop(1))
             "disable" -> handleDisable(tokens.drop(1))

@@ -10,13 +10,17 @@ import org.springframework.stereotype.Component
  * Seeds service enablement configs from environment properties on first startup.
  *
  * Runs after Flyway migrations and JPA are ready. Only writes if no service:* rows exist yet, so
- * the DB matches the initial environment state.
+ * the DB matches the initial environment state. The services in
+ * [OperationConfigEnvironmentPostProcessor.ENVIRONMENT_ONLY] get no row.
  */
 @Component
 class OperationConfigSeeder(private val configService: OperationConfigService) {
 
     @EventListener(ApplicationReadyEvent::class)
     fun seed() {
-        configService.seedServiceConfigs(listOf("irc", "slack", "discord", "console", "ai"))
+        configService.seedServiceConfigs(
+            listOf("irc", "slack", "discord", "console", "ai") -
+                OperationConfigEnvironmentPostProcessor.ENVIRONMENT_ONLY,
+        )
     }
 }
