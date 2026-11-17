@@ -12,6 +12,11 @@
     <artifactId>server-streampack</artifactId>
 
     <dependencies>
+        <!-- Rainbow Gum writes the server's logs; the parent excludes Logback everywhere. -->
+        <dependency>
+            <groupId>io.jstach.rainbowgum</groupId>
+            <artifactId>rainbowgum-spring-boot4-starter</artifactId>
+        </dependency>
         <dependency>
             <groupId>dev.streampack</groupId>
             <artifactId>operation-karma</artifactId>

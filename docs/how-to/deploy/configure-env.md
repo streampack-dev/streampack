@@ -74,6 +74,7 @@ Optional integrations:
 | `MATTERMOST_ENABLED` | Enables Mattermost adapter. |
 | `AI_ENABLED` | Enables AI-backed features. |
 | `STREAMPACK_GENERATIVE_PROMPT_DIR` | Filesystem directory for prompt and mail template overrides. See [Customize Prompts and Messages](configure-generative-prompts.md). |
+| `STREAMPACK_LOG_DIR` | Directory of the server's log file, `streampack.log` (default `logs`). Set it to `/opt/streampack/logs` and mount a volume there to keep the history when the container is replaced. |
 | `STREAMPACK_MEDIA_DIR` | Writable directory for uploaded media, such as posts' recordings. Unset, media is off. See [Configure Media Storage](configure-media-storage.md). |
 | `BLOG_FEED_TITLE`, `BLOG_FEED_DESCRIPTION` | Every post feed's title (default `BLOG_SITE_NAME`) and description. |
 | `BLOG_MERMAID_ENABLED`, `BLOG_MERMAID_TIMEOUT` | Draw Mermaid blocks in posts as SVG (default `true`), and the longest one diagram may take (default `5s`). See [Draw Diagrams in Posts](../blog/draw-diagrams-in-posts.md). |

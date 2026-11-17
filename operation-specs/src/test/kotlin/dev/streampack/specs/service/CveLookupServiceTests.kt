@@ -1,10 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.specs.service
 
-import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.read.ListAppender
 import dev.streampack.specs.config.CveProperties
 import dev.streampack.specs.model.Ecosystem
 import dev.streampack.specs.model.PackageRef
@@ -13,6 +9,7 @@ import dev.streampack.specs.service.CveStubServer.Companion.cvePath
 import dev.streampack.specs.service.CveStubServer.Companion.fixture
 import dev.streampack.specs.service.CveStubServer.Companion.mavenSearch
 import dev.streampack.specs.service.CveStubServer.Reply
+import dev.streampack.test.captureLog
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -28,7 +25,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.slf4j.LoggerFactory
 
 /**
  * The upstream calls, against canned responses: parsing, caching, failure, and going easy on Maven
@@ -267,23 +263,18 @@ class CveLookupServiceTests {
         var reply = Reply(429, "slow down", headers = mapOf("Retry-After" to "120"))
         stub.routes[CveStubServer.MAVEN] = { reply }
         val service = service()
-        val logger = LoggerFactory.getLogger(CveLookupService::class.java) as Logger
-        val appender = ListAppender<ILoggingEvent>().apply { start() }
-        logger.addAppender(appender)
-        try {
-            assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
-            reply = Reply(200, mavenSearch("a:one"))
-            clock.now = clock.now.plusSeconds(119)
-            repeat(3) { assertThrows<CveLookupFailed> { service.mavenArtifacts("one") } }
-            assertEquals(1, stub.mavenSearches().size)
-            assertEquals(
-                1,
-                appender.list.count { it.level == Level.WARN },
-                appender.list.toString(),
-            )
-        } finally {
-            logger.detachAppender(appender)
+        val (_, logged) =
+            captureLog {
+                assertThrows<CveLookupFailed> { service.mavenArtifacts("one") }
+                reply = Reply(200, mavenSearch("a:one"))
+                clock.now = clock.now.plusSeconds(119)
+                repeat(3) { assertThrows<CveLookupFailed> { service.mavenArtifacts("one") } }
+            }
+        assertEquals(1, stub.mavenSearches().size)
+        val warnings = logged.filter {
+            it.logger == CveLookupService::class.java.name && it.level == "WARN"
         }
+        assertEquals(1, warnings.size, logged.toString())
 
         // The refused searches weren't kept: once the back-off ends, the name is searched.
         clock.now = clock.now.plusSeconds(1)

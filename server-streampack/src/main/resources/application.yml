@@ -5,6 +5,7 @@ spring:
       - optional:file:.env.properties
       - optional:file:../.env[.properties]
       - optional:file:../.env.properties
+      - classpath:streampack-logging.yml
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/nevet}
     username: ${DB_USERNAME:nevet}

@@ -16,7 +16,7 @@ Nothing keeps an extension's paths apart from the server's. The deployer trusts 
 
 ## Why the Directory Comes First
 
-`PropertiesLauncher` puts `loader.path` ahead of the server's own classes. That's what makes `banner.txt` and `logback.xml` there replace the server's: when two resources share a name, the first one on the classpath wins.
+`PropertiesLauncher` puts `loader.path` ahead of the server's own classes. That's what makes `banner.txt` and `streampack-logging.yml` there replace the server's: when two resources share a name, the first one on the classpath wins.
 
 The same rule makes `application.yml` dangerous. Spring reads `classpath:application.yml` from the first place it finds it, so a file there would replace the server's whole configuration, every default with it. The start would fail somewhere unrelated, such as the database connection. So the server checks for that file before reading any configuration, and stops with the reason. Spring also reads `classpath:config/application.yml`, on top of the main file and at a higher precedence, so `config/application.yml` in `ext/` is the place for added settings.
 

@@ -1,10 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.rss.service
 
-import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.read.ListAppender
 import com.sun.net.httpserver.HttpServer
 import dev.streampack.core.integration.EgressSubscriber
 import dev.streampack.core.model.OperationResult
@@ -18,6 +14,7 @@ import dev.streampack.rss.repository.RssEntryRepository
 import dev.streampack.rss.repository.RssFeedRepository
 import dev.streampack.rss.repository.RssFeedSubscriptionRepository
 import dev.streampack.rss.service.FeedDiscoveryServiceTests.Companion.sampleRss
+import dev.streampack.test.captureLog
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
@@ -29,7 +26,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
@@ -140,17 +136,13 @@ class RssFeedPollingServiceTests {
         assertTrue(result is PollResult.Success, "poll of ${feed.feedUrl} failed: $result")
     }
 
-    private fun warnings(action: () -> Unit): List<String> {
-        val logger = LoggerFactory.getLogger(RssFeedPollingService::class.java) as Logger
-        val appender = ListAppender<ILoggingEvent>().apply { start() }
-        logger.addAppender(appender)
-        try {
-            action()
-        } finally {
-            logger.detachAppender(appender)
-        }
-        return appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage }
-    }
+    private fun warnings(action: () -> Unit): List<String> =
+        captureLog(action)
+            .second
+            .filter {
+                it.logger == RssFeedPollingService::class.java.name && it.level == "WARN"
+            }
+            .map { it.message }
 
     @Test
     fun `a feed published with localhost links is warned about on each poll, and still stored`() {

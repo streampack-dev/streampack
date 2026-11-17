@@ -1,9 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package dev.streampack.blog
 
-import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.read.ListAppender
 import db.migration.V72__tag_cleanup
 import dev.streampack.blog.entity.Post
 import dev.streampack.blog.entity.Slug
@@ -21,13 +18,13 @@ import dev.streampack.core.repository.UserRepository
 import dev.streampack.taxonomy.TagVocabulary
 import dev.streampack.test.ResetDatabaseBeforeEach
 import dev.streampack.test.TestChannelConfiguration
+import dev.streampack.test.captureLog
 import java.time.Instant
 import java.util.UUID
 import javax.sql.DataSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -273,21 +270,11 @@ class TagCleanupMigrationTests {
     @Test
     fun `the cleanup applies the list, and a second run changes nothing`() {
         val keeperIds = keepers.associateWith { tag(it) }
-        val appender = ListAppender<ILoggingEvent>().apply { start() }
-        val logger = LoggerFactory.getLogger(V72__tag_cleanup::class.java) as Logger
-        val level = logger.level
-        logger.level = ch.qos.logback.classic.Level.INFO
-        logger.addAppender(appender)
-        val changes =
-            try {
-                cleanup()
-            } finally {
-                logger.detachAppender(appender)
-                logger.level = level
-            }
+        val (changes, lines) = captureLog { cleanup() }
 
         // It logged as it went: a start, a line per entry, and a summary.
-        val logged = appender.list.map { it.formattedMessage }
+        val logged =
+            lines.filter { it.logger == V72__tag_cleanup::class.java.name }.map { it.message }
         assertThat(logged.first()).isEqualTo("V72: start")
         assertThat(logged)
             .anyMatch { it.startsWith("V72: load-testing -> load testing: ") }

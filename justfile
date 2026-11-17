@@ -9,7 +9,6 @@ default:
     just --list
 
 clean:
-    find . -name "output.log*" -exec rm -rf {} \;
     {{maven}} clean
 
 # Build without tests
