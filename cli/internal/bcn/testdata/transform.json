@@ -1,15 +1,132 @@
 [
-  {"name": "factoid link becomes its selector", "input": "Use [[maven]] to build.", "expected": "Use maven to build."},
-  {"name": "factoid link with text becomes its text", "input": "See [[the build tool|maven]].", "expected": "See the build tool."},
-  {"name": "two factoid links on one line", "input": "[[java]] and [[kotlin]]", "expected": "java and kotlin"},
-  {"name": "factoid link in a code fence stays", "input": "```\nlist[[0]]\n```", "expected": "```\nlist[[0]]\n```"},
-  {"name": "factoid link in inline code stays", "input": "Write `[[x]]` for a link.", "expected": "Write `[[x]]` for a link."},
-  {"name": "leading title heading is dropped", "input": "# My Title\n\nFirst paragraph.", "expected": "First paragraph."},
-  {"name": "later level-one heading stays", "input": "Intro.\n\n# Part One", "expected": "Intro.\n\n# Part One"},
-  {"name": "site-relative link becomes absolute", "input": "Read [this](/posts/2026/08/the-floor).", "expected": "Read [this](https://bytecode.news/posts/2026/08/the-floor)."},
-  {"name": "site-relative image becomes absolute", "input": "![A chart](/media/posts/1/chart.png)", "expected": "![A chart](https://bytecode.news/media/posts/1/chart.png)"},
-  {"name": "absolute link stays", "input": "[Proton](https://proton.me/)", "expected": "[Proton](https://proton.me/)"},
-  {"name": "anchor link stays", "input": "[Back](#top)", "expected": "[Back](#top)"},
-  {"name": "footnotes stay", "input": "Text[^1].\n\n[^1]: A note.", "expected": "Text[^1].\n\n[^1]: A note."},
-  {"name": "mermaid block stays", "input": "```mermaid\ngraph LR\n  A --> B\n```", "expected": "```mermaid\ngraph LR\n  A --> B\n```"}
+  {
+    "name": "factoid link becomes its selector",
+    "input": "Use [[maven]] to build.",
+    "expected": "Use maven to build."
+  },
+  {
+    "name": "factoid link with text becomes its text",
+    "input": "See [[the build tool|maven]].",
+    "expected": "See the build tool."
+  },
+  {
+    "name": "two factoid links on one line",
+    "input": "[[java]] and [[kotlin]]",
+    "expected": "java and kotlin"
+  },
+  {
+    "name": "factoid link in a code fence stays",
+    "input": "```\nlist[[0]]\n```",
+    "expected": "```\nlist[[0]]\n```"
+  },
+  {
+    "name": "factoid link in inline code stays",
+    "input": "Write `[[x]]` for a link.",
+    "expected": "Write `[[x]]` for a link."
+  },
+  {
+    "name": "leading title heading is dropped",
+    "input": "# My Title\n\nFirst paragraph.",
+    "expected": "First paragraph."
+  },
+  {
+    "name": "later level-one heading stays",
+    "input": "Intro.\n\n# Part One",
+    "expected": "Intro.\n\n# Part One"
+  },
+  {
+    "name": "site-relative link becomes absolute",
+    "input": "Read [this](/posts/2026/08/the-floor).",
+    "expected": "Read [this](https://bytecode.news/posts/2026/08/the-floor)."
+  },
+  {
+    "name": "site-relative image becomes absolute",
+    "input": "![A chart](/media/posts/1/chart.png)",
+    "expected": "![A chart](https://bytecode.news/media/posts/1/chart.png)"
+  },
+  {
+    "name": "absolute link stays",
+    "input": "[Proton](https://proton.me/)",
+    "expected": "[Proton](https://proton.me/)"
+  },
+  {
+    "name": "anchor link stays",
+    "input": "[Back](#top)",
+    "expected": "[Back](#top)"
+  },
+  {
+    "name": "footnotes stay",
+    "input": "Text[^1].\n\n[^1]: A note.",
+    "expected": "Text[^1].\n\n[^1]: A note."
+  },
+  {
+    "name": "mermaid block stays",
+    "input": "```mermaid\ngraph LR\n  A --> B\n```",
+    "expected": "```mermaid\ngraph LR\n  A --> B\n```"
+  },
+  {
+    "name": "admonition becomes a foojay shortcode",
+    "input": "!!! note\n    Read this first.",
+    "expected": "{{< note >}}\nRead this first.\n{{< /note >}}"
+  },
+  {
+    "name": "admonition title becomes a bold line",
+    "input": "!!! warning \"Mind the gap\"\n    Step carefully.",
+    "expected": "{{< warning >}}\n**Mind the gap**\n\nStep carefully.\n{{< /warning >}}"
+  },
+  {
+    "name": "empty admonition title is dropped",
+    "input": "!!! tip \"\"\n    Short.",
+    "expected": "{{< tip >}}\nShort.\n{{< /tip >}}"
+  },
+  {
+    "name": "important and caution keep their kind",
+    "input": "!!! important\n    A.\n\n!!! caution\n    B.",
+    "expected": "{{< important >}}\nA.\n{{< /important >}}\n\n{{< caution >}}\nB.\n{{< /caution >}}"
+  },
+  {
+    "name": "collapsible admonition is shown open",
+    "input": "??? info \"More\"\n    Detail.",
+    "expected": "{{< note >}}\n**More**\n\nDetail.\n{{< /note >}}"
+  },
+  {
+    "name": "open collapsible danger becomes caution",
+    "input": "???+ danger\n    Hot.",
+    "expected": "{{< caution >}}\nHot.\n{{< /caution >}}"
+  },
+  {
+    "name": "other kinds map to the nearest",
+    "input": "!!! success\n    a\n\n!!! bug\n    b\n\n!!! example\n    c\n\n!!! custom\n    d",
+    "expected": "{{< tip >}}\na\n{{< /tip >}}\n\n{{< warning >}}\nb\n{{< /warning >}}\n\n{{< note >}}\nc\n{{< /note >}}\n\n{{< note >}}\nd\n{{< /note >}}"
+  },
+  {
+    "name": "admonition body keeps paragraphs and nested indent",
+    "input": "!!! note\n    First.\n\n    Second:\n\n        code line",
+    "expected": "{{< note >}}\nFirst.\n\nSecond:\n\n    code line\n{{< /note >}}"
+  },
+  {
+    "name": "admonition ends at the first unindented line",
+    "input": "!!! note\n    Inside.\n\nOutside.",
+    "expected": "{{< note >}}\nInside.\n{{< /note >}}\n\nOutside."
+  },
+  {
+    "name": "admonition body with a tab indent",
+    "input": "!!! note\n\tTabbed.",
+    "expected": "{{< note >}}\nTabbed.\n{{< /note >}}"
+  },
+  {
+    "name": "factoid link in an admonition becomes text",
+    "input": "!!! tip\n    Try [[maven]].",
+    "expected": "{{< tip >}}\nTry maven.\n{{< /tip >}}"
+  },
+  {
+    "name": "fenced code in an admonition stays",
+    "input": "!!! note\n    ```\n    [[x]]\n    ```",
+    "expected": "{{< note >}}\n```\n[[x]]\n```\n{{< /note >}}"
+  },
+  {
+    "name": "admonition marker in a code fence stays",
+    "input": "```\n!!! note\n    not an admonition\n```",
+    "expected": "```\n!!! note\n    not an admonition\n```"
+  }
 ]

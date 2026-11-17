@@ -1,12 +1,19 @@
 [
   {
-    "name": "a post becomes a foojay draft",
-    "ref": {"Year": 2026, "Month": 11, "Slug": "where-does-the-experience-come-from"},
+    "name": "a post becomes a foojay draft; the API slug holds the date",
+    "ref": {
+      "Year": 2026,
+      "Month": 11,
+      "Slug": "where-does-the-experience-come-from"
+    },
     "post": {
       "title": "Where Does The Experience Come From?",
-      "slug": "where-does-the-experience-come-from",
+      "slug": "2026/11/where-does-the-experience-come-from",
       "excerpt": "Expertise comes from experience.",
-      "tags": ["AI", "Testing"],
+      "tags": [
+        "AI",
+        "Testing"
+      ],
       "categories": [],
       "markdownSource": "# Where Does The Experience Come From?\n\nSee [[junit]].\n"
     },
@@ -16,10 +23,14 @@
   },
   {
     "name": "quotes, a backslash and Hebrew in the title are kept",
-    "ref": {"Year": 2026, "Month": 1, "Slug": "shalom"},
+    "ref": {
+      "Year": 2026,
+      "Month": 1,
+      "Slug": "shalom"
+    },
     "post": {
       "title": "Say \"שלום\" to C:\\Java",
-      "slug": "shalom",
+      "slug": "2026/01/shalom",
       "excerpt": "",
       "tags": [],
       "categories": [],
@@ -27,21 +38,31 @@
     },
     "folder": "bcn-shalom",
     "content": "---\ntitle: \"Say \\\"שלום\\\" to C:\\\\Java\"\ndescription: \"\"\nauthors:\n  - \"your-author-slug\"\n# BCN tags: none\ncategories: []\nimage: \"\"\ncanonical: \"https://bytecode.news/posts/2026/01/shalom\"\n---\n\nBody.\n",
-    "warnings": ["description is empty; foojay requires one"]
+    "warnings": [
+      "description is empty; foojay requires one"
+    ]
   },
   {
     "name": "a long description is warned about",
-    "ref": {"Year": 2026, "Month": 2, "Slug": "long"},
+    "ref": {
+      "Year": 2026,
+      "Month": 2,
+      "Slug": "long"
+    },
     "post": {
       "title": "Long",
       "slug": "long",
       "excerpt": "This excerpt is deliberately much longer than one hundred and sixty characters, so the export warns that foojay wants a description below that length on its cards.",
-      "tags": ["Java"],
+      "tags": [
+        "Java"
+      ],
       "categories": [],
       "markdownSource": "Body."
     },
     "folder": "bcn-long",
     "content": "---\ntitle: \"Long\"\ndescription: \"This excerpt is deliberately much longer than one hundred and sixty characters, so the export warns that foojay wants a description below that length on its cards.\"\nauthors:\n  - \"your-author-slug\"\n# BCN tags: Java\ncategories: []\nimage: \"\"\ncanonical: \"https://bytecode.news/posts/2026/02/long\"\n---\n\nBody.\n",
-    "warnings": ["description is 163 characters; foojay wants fewer than 160"]
+    "warnings": [
+      "description is 163 characters; foojay wants fewer than 160"
+    ]
   }
 ]
