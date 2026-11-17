@@ -46,7 +46,7 @@ The file has the format of foojay's `template/post.md`:
 
 - `title`, `description` (the post's excerpt) and `canonical` (the post's URL on bytecode.news) are filled in.
 - `authors`, `categories` and `image` keep foojay's placeholders: `your-author-slug`, `[]` and `""`. foojay's pull-request check rejects all three, so fill them in. A comment above `categories` lists the post's BCN tags as a hint. Put the image file in the same folder.
-- In the body, a leading `# ` title line is dropped, because foojay shows the title itself. Factoid links (`[[selector]]`, `[[text|selector]]`) become plain text. Links and images to a bytecode.news path become absolute URLs. Code, footnotes and mermaid blocks stay as they are.
+- In the body, a leading `# ` title line is dropped, because foojay shows the title itself. Factoid links (`[[selector]]`, `[[text|selector]]`) become plain text. Links and images to a bytecode.news path become absolute URLs. Admonitions (`!!! note`, `??? tip "Title"`) become foojay's shortcodes (`{{< note >}}` … `{{< /note >}}`): foojay has note, tip, important, warning and caution, so other kinds map to the nearest one. A title becomes a bold first line, and a collapsible block is shown open. Code, footnotes and mermaid blocks stay as they are.
 
 You must be signed in as an admin: the API gives a post's Markdown source only to admins.
 
