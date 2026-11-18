@@ -30,6 +30,31 @@
     ]
   },
   {
+    "id": "attribute-spaces",
+    "title": "Spaces around \"=\" after an attribute are allowed",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "rust=A systems language", "reply": "ok, alice: updated rust."},
+      {"say": "whatever nonsense.see = rust", "reply": "ok, alice: updated whatever nonsense."},
+      {"say": "whatever nonsense", "reply": "rust is A systems language."}
+    ]
+  },
+  {
+    "id": "attribute-spacing-variants",
+    "title": "Any spacing around \"=\" or \"is\" after an attribute",
+    "steps": [
+      {"say": "spring=A Java framework", "reply": "ok, alice: updated spring."},
+      {"say": "spring.url =https://spring.io", "reply": "ok, alice: updated spring."},
+      {"say": "spring.url", "reply": "URL: https://spring.io"},
+      {"say": "spring.url= https://spring.io/projects", "reply": "ok, alice: updated spring."},
+      {"say": "spring.url", "reply": "URL: https://spring.io/projects"},
+      {"say": "spring.tags   =   java", "reply": "ok, alice: updated spring."},
+      {"say": "spring.tags", "reply": "Tag: java"},
+      {"say": "spring.type  is  framework", "reply": "ok, alice: updated spring."},
+      {"say": "spring.type", "reply": "Type: framework"}
+    ]
+  },
+  {
     "id": "selector-case",
     "title": "A selector matches without regard to case",
     "steps": [
