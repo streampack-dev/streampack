@@ -40,6 +40,19 @@ A selector can have several words. Case does not matter when you read a factoid:
 <bot> spring boot is An opinionated framework.
 ```
 
+Spaces around `=` don't matter. `is` needs a space on each side, and more spaces don't matter. This
+is true after an attribute too:
+
+<!-- factoid-example: attribute-spaces -->
+```text
+<alice> rust=A systems language
+<bot> ok, alice: updated rust.
+<alice> whatever nonsense.see = rust
+<bot> ok, alice: updated whatever nonsense.
+<alice> whatever nonsense
+<bot> rust is A systems language.
+```
+
 With `is`, the value can hold `=`. With `=`, the value can hold the word `is`.
 
 <!-- factoid-example: is-value-with-equals -->
