@@ -130,7 +130,8 @@ Each `AI_*` setting is also read as `STREAMPACK_AI_*` (e.g. `STREAMPACK_AI_MODEL
 ## Java Options in the Image
 
 The image sets `JAVA_TOOL_OPTIONS=-XX:-UseBASE64Intrinsics`. The flag turns off the JIT's
-hand-written Base64 code, which has a CVE. The Java code does the same work, more slowly. At every
+hand-written Base64 code. The x86-64 version of that code has a CVE; the arm64 version does not,
+but the image sets the flag on both. The Java code does the same work, more slowly. At every
 start, the JVM logs `Picked up JAVA_TOOL_OPTIONS: -XX:-UseBASE64Intrinsics`.
 
 If you set `JAVA_TOOL_OPTIONS` in the deployment, your value replaces the image's. Keep

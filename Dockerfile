@@ -3,8 +3,9 @@
 # needs an x86-64-v3 processor (#238). This one needs only baseline x86-64, or arm64.
 FROM eclipse-temurin:25-jre-resolute
 
-# Turns off the JIT's hand-written Base64 code, which has a CVE; the plain Java code does the same
-# work more slowly. The JVM reads this variable at every start and logs "Picked up
+# Turns off the JIT's hand-written Base64 code. The x86-64 version has a CVE; the arm64 version
+# doesn't, but one image setting for both platforms is simpler, and the plain Java code does the
+# same work, more slowly. The JVM reads this variable at every start and logs "Picked up
 # JAVA_TOOL_OPTIONS". A deployment that sets its own JAVA_TOOL_OPTIONS replaces this value, so it
 # must keep the flag. Remove it when a Temurin release with the fix is the base.
 ENV JAVA_TOOL_OPTIONS="-XX:-UseBASE64Intrinsics"
