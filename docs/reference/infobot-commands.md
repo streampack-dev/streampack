@@ -28,6 +28,10 @@ For repository-facing operator and moderator commands, see:
 Most commands are addressed through the protocol adapter, such as `!weather Boston` or a bot mention.
 Some operations are ambient and react to normal conversation instead.
 
+## Factoids
+
+Every factoid command, attribute and text form is in [Factoids](factoids.md).
+
 ## Module References
 
 For module-local command details and implementation notes, see:
