@@ -24,38 +24,20 @@ These features react to normal conversation instead of a dedicated command:
 
 ### Factoids
 
-Use factoids for lightweight shared knowledge.
+Use factoids for short shared facts.
 
 ```text
-spring
 spring is A Java framework
+spring
 spring.tags=java,framework
-spring.tags
 search framework
 tag java
-spring.stats
 ```
 
-Common patterns:
-
-- `selector`
-  Read a factoid.
-- `selector is value` or `selector=value`
-  Create or update a factoid.
-- `selector.attribute=value`
-  Set an attribute such as `tags`. Tags are comma-separated and stored normalized: lowercased,
-  a leading `#` dropped, `-` and `_` as spaces, repeats removed (`#Java, load-testing` is stored
-  as `java,load testing`). See [Tag Names](../../reference/tags.md).
-- `factoid set selector.attribute value`
-  Explicit setter form for selectors or values that are awkward in shorthand.
-- `factoid unset selector.attribute`
-  Remove one attribute.
-- `search term`
-  Search factoid text.
-- `tag term`
-  Search by tag.
-- `selector.stats`
-  Show how often a factoid has been accessed.
+- To start, follow [Teach the Infobot a Factoid](../../tutorials/teach-the-infobot-a-factoid.md).
+- To change, forget, lock, alias or find factoids, see [Manage Factoids](manage-factoids.md).
+- For `<reply>`, `$1` arguments and random choices, see [Write Factoid Text](write-factoid-text.md).
+- For every command and attribute, see [Factoids](../../reference/factoids.md).
 
 ### Dictionary and Specifications
 

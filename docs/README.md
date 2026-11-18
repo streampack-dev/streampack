@@ -41,6 +41,8 @@ For Mermaid diagrams in posts, see [Draw Diagrams in Posts](how-to/blog/draw-dia
 
 For how the Atlas (the map of the site's tags) is laid out, and why it holds still, see [The Atlas](explanation/atlas.md).
 
+To learn factoids, follow [Teach the Infobot a Factoid](tutorials/teach-the-infobot-a-factoid.md). For tasks, see [Manage Factoids](how-to/infobot/manage-factoids.md), [Write Factoid Text](how-to/infobot/write-factoid-text.md) and [Link Factoids from Posts](how-to/blog/link-factoids-from-posts.md); for every command, [Factoids](reference/factoids.md); and for why the bot answers as it does, [How Factoids Work](explanation/factoids.md).
+
 For how tag names are normalized, what system tags such as `_idea` are, and who sees them, see [Tag Names](reference/tags.md).
 
 For blog/site HTTP integration, including one-time-code sign-in over email or Mattermost and the channel log endpoints, see [Blog HTTP API](reference/blog-http-api.md).

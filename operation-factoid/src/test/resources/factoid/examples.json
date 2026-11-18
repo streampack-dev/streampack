@@ -9,6 +9,18 @@
     ]
   },
   {
+    "id": "tutorial-alias",
+    "title": "Make an alias, then forget it",
+    "doc": "docs/tutorials/teach-the-infobot-a-factoid.md",
+    "steps": [
+      {"say": "spring=A Java framework", "reply": "ok, alice: updated spring."},
+      {"say": "springframework.see=spring", "reply": "ok, alice: updated springframework."},
+      {"say": "springframework", "reply": "spring is A Java framework."},
+      {"say": "forget springframework", "reply": "ok, forgot springframework."},
+      {"say": "springframework", "silent": true}
+    ]
+  },
+  {
     "id": "set-with-is",
     "title": "Set a factoid with \"is\"",
     "doc": "docs/how-to/infobot/manage-factoids.md",

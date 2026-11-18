@@ -2,6 +2,8 @@
 
 `operation-factoid` provides factoid storage, lookup, metadata, search, and taxonomy integration.
 
+The user docs start at [Factoids](../docs/reference/factoids.md). Their examples are `src/test/resources/factoid/examples.json`: `FactoidOperationTests` runs each one, and `FactoidExamplesDocsTests` checks that the pages quote them exactly. To change an example, change the JSON and the page together.
+
 ## Operations
 
 | Operation | Command / payload | Purpose |
