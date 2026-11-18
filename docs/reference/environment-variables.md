@@ -127,6 +127,15 @@ The per-credential variables above (`GITHUB_…_TOKEN`, `GITLAB_…_TOKEN`, `MAT
 
 Each `AI_*` setting is also read as `STREAMPACK_AI_*` (e.g. `STREAMPACK_AI_MODEL`, `STREAMPACK_AI_MODERATION_MODEL`), the property's own name in the environment; where both are set, the `STREAMPACK_AI_*` one wins.
 
+## Java Options in the Image
+
+The image sets `JAVA_TOOL_OPTIONS=-XX:-UseBASE64Intrinsics`. The flag turns off the JIT's
+hand-written Base64 code, which has a CVE. The Java code does the same work, more slowly. At every
+start, the JVM logs `Picked up JAVA_TOOL_OPTIONS: -XX:-UseBASE64Intrinsics`.
+
+If you set `JAVA_TOOL_OPTIONS` in the deployment, your value replaces the image's. Keep
+`-XX:-UseBASE64Intrinsics` in it.
+
 ## Settings the Database Takes Over
 
 `IRC_ENABLED`, `DISCORD_ENABLED`, `SLACK_ENABLED` and `AI_ENABLED` count only on the first start against an empty database.
