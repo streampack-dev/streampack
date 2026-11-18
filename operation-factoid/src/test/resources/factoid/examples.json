@@ -1,0 +1,555 @@
+[
+  {
+    "id": "create-and-read",
+    "title": "Create a factoid and read it back",
+    "doc": "docs/tutorials/teach-the-infobot-a-factoid.md",
+    "steps": [
+      {"say": "spring=A Java framework", "reply": "ok, alice: updated spring."},
+      {"say": "spring", "reply": "spring is A Java framework."}
+    ]
+  },
+  {
+    "id": "set-with-is",
+    "title": "Set a factoid with \"is\"",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "kotlin is A modern JVM language", "reply": "ok, alice: updated kotlin."},
+      {"say": "kotlin", "reply": "kotlin is A modern JVM language."}
+    ]
+  },
+  {
+    "id": "selector-case",
+    "title": "A selector matches without regard to case",
+    "steps": [
+      {"say": "Kotlin=A modern JVM language", "reply": "ok, alice: updated kotlin."},
+      {"say": "kotlin", "reply": "kotlin is A modern JVM language."}
+    ]
+  },
+  {
+    "id": "multi-word-selector",
+    "title": "A selector can have several words",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "spring boot=An opinionated framework", "reply": "ok, alice: updated spring boot."},
+      {"say": "spring boot", "reply": "spring boot is An opinionated framework."}
+    ]
+  },
+  {
+    "id": "is-value-with-equals",
+    "title": "With \"is\", the value can hold an equals sign",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "expression is 2+2=4", "reply": "ok, alice: updated expression."},
+      {"say": "expression", "reply": "expression is 2+2=4."}
+    ]
+  },
+  {
+    "id": "equals-value-with-is",
+    "title": "With \"=\", the value can hold the word \"is\"",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "motto=this is the way", "reply": "ok, alice: updated motto."},
+      {"say": "motto", "reply": "motto is this is the way."}
+    ]
+  },
+  {
+    "id": "attribute-split-first",
+    "title": "An attribute in the selector takes the text before \"=\" as the whole selector",
+    "steps": [
+      {"say": "foo is bar.text=baz", "reply": "ok, alice: updated foo is bar."}
+    ]
+  },
+  {
+    "id": "punctuation-kept",
+    "title": "A text that ends in punctuation gets no extra period",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "question=Is this a test?", "reply": "ok, alice: updated question."},
+      {"say": "question", "reply": "question is Is this a test?"}
+    ]
+  },
+  {
+    "id": "parentheses-without-choice",
+    "title": "Parentheses without a bar are plain text",
+    "steps": [
+      {"say": "note=(just a note)"},
+      {"say": "note", "reply": "note is (just a note)."}
+    ]
+  },
+  {
+    "id": "urls",
+    "title": "Add a URL and read it",
+    "doc": "docs/tutorials/teach-the-infobot-a-factoid.md",
+    "steps": [
+      {"say": "spring=A Java framework", "reply": "ok, alice: updated spring."},
+      {"say": "spring.url=https://spring.io", "reply": "ok, alice: updated spring."},
+      {"say": "spring.url", "reply": "URL: https://spring.io"},
+      {"say": "spring", "reply": "spring is A Java framework. URL: https://spring.io"}
+    ]
+  },
+  {
+    "id": "attribute-with-is",
+    "title": "Set an attribute with \"is\"",
+    "steps": [
+      {"say": "kotlin is A modern JVM language"},
+      {"say": "kotlin.url is https://kotlinlang.org", "reply": "ok, alice: updated kotlin."},
+      {"say": "kotlin.url", "reply": "URL: https://kotlinlang.org"}
+    ]
+  },
+  {
+    "id": "maven",
+    "title": "Maven coordinates link to mvnrepository and stay out of the answer",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "spring=A Java framework", "reply": "ok, alice: updated spring."},
+      {"say": "spring.maven=org.springframework:spring-core", "reply": "ok, alice: updated spring."},
+      {"say": "spring.maven", "reply": "Maven: org.springframework:spring-core https://mvnrepository.com/artifact/org.springframework/spring-core"},
+      {"say": "spring", "reply": "spring is A Java framework."}
+    ]
+  },
+  {
+    "id": "too-long-drops-tags",
+    "title": "An answer too long for one line leaves out the tags, not the text",
+    "doc": "docs/explanation/factoids.md",
+    "steps": [
+      {"say": "longish=a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework", "reply": "ok, alice: updated longish."},
+      {"say": "longish.url=https://longish.example", "reply": "ok, alice: updated longish."},
+      {"say": "longish.tags=one,two,three,four,five", "reply": "ok, alice: updated longish."},
+      {"say": "longish", "reply": "longish is a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework a framework. URL: https://longish.example"}
+    ]
+  },
+  {
+    "id": "info",
+    "title": "List a factoid's attributes",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "spring=A Java framework", "reply": "ok, alice: updated spring."},
+      {"say": "spring.url=https://spring.io", "reply": "ok, alice: updated spring."},
+      {"say": "spring.info", "startsWith": "The factoid for spring has the following attributes: text and urls, and was last modified at "}
+    ]
+  },
+  {
+    "id": "forget-attribute-form",
+    "title": "Forget a factoid with .forget",
+    "steps": [
+      {"say": "ephemeral=temporary"},
+      {"say": "ephemeral.forget", "reply": "ok, forgot ephemeral."},
+      {"say": "ephemeral", "silent": true}
+    ]
+  },
+  {
+    "id": "forget",
+    "title": "Forget a factoid",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "ephemeral=temporary", "reply": "ok, alice: updated ephemeral."},
+      {"say": "forget ephemeral", "reply": "ok, forgot ephemeral."},
+      {"say": "ephemeral", "silent": true}
+    ]
+  },
+  {
+    "id": "forget-one-attribute",
+    "title": "Forget one attribute",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "multi=some text", "reply": "ok, alice: updated multi."},
+      {"say": "multi.see=other", "reply": "ok, alice: updated multi."},
+      {"say": "forget multi.see", "reply": "ok, forgot see on multi."},
+      {"say": "multi", "reply": "multi is some text."}
+    ]
+  },
+  {
+    "id": "forget-missing",
+    "title": "Forgetting a factoid that does not exist",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "forget nonexistent", "error": "Factoid 'nonexistent' not found."}
+    ]
+  },
+  {
+    "id": "forget-missing-attribute",
+    "title": "Forgetting an attribute that does not exist",
+    "steps": [
+      {"say": "exists=value"},
+      {"say": "forget exists.see", "error": true}
+    ]
+  },
+  {
+    "id": "lock",
+    "title": "An admin locks a factoid; then nobody can change or forget it",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "keepsafe=Not to be lost", "reply": "ok, alice: updated keepsafe."},
+      {"say": "keepsafe.lock", "role": "ADMIN", "reply": "ok, keepsafe is now locked."},
+      {"say": "keepsafe=Something else", "error": "Factoid 'keepsafe' is locked."},
+      {"say": "forget keepsafe", "error": "Factoid 'keepsafe' is locked."},
+      {"say": "keepsafe", "reply": "keepsafe is Not to be lost."}
+    ]
+  },
+  {
+    "id": "lock-needs-admin",
+    "title": "Only an admin can lock a factoid",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "locktest=value", "reply": "ok, alice: updated locktest."},
+      {"say": "locktest.lock", "error": "Lock/unlock requires admin privileges."}
+    ]
+  },
+  {
+    "id": "unlock",
+    "title": "An admin unlocks a factoid",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "keepsafe=Not to be lost", "reply": "ok, alice: updated keepsafe."},
+      {"say": "keepsafe.lock", "role": "ADMIN", "reply": "ok, keepsafe is now locked."},
+      {"say": "keepsafe.unlock", "error": "Lock/unlock requires admin privileges."},
+      {"say": "keepsafe.unlock", "role": "ADMIN", "reply": "ok, keepsafe is now unlocked."}
+    ]
+  },
+  {
+    "id": "locked-refuses-every-change",
+    "title": "A locked factoid refuses every way of changing it",
+    "steps": [
+      {"say": "guarded=original"},
+      {"say": "guarded.lock", "role": "ADMIN"},
+      {"say": "factoid set guarded.text new value", "error": "Factoid 'guarded' is locked."},
+      {"say": "guarded.forget", "error": true},
+      {"say": "forget guarded.text", "error": true},
+      {"say": "guarded", "reply": "guarded is original."}
+    ]
+  },
+  {
+    "id": "unlock-missing",
+    "title": "Unlocking a factoid that does not exist",
+    "steps": [
+      {"say": "ghost.unlock", "role": "ADMIN", "error": "Factoid 'ghost' not found."}
+    ]
+  },
+  {
+    "id": "reply",
+    "title": "<reply> says the text as it is",
+    "doc": "docs/how-to/infobot/write-factoid-text.md",
+    "steps": [
+      {"say": "greet=<reply>Hello there!", "reply": "ok, alice: updated greet."},
+      {"say": "greet", "reply": "Hello there!"}
+    ]
+  },
+  {
+    "id": "argument",
+    "title": "$1 takes the word after the selector",
+    "doc": "docs/how-to/infobot/write-factoid-text.md",
+    "steps": [
+      {"say": "ask=Please ask $1 for help", "reply": "ok, alice: updated ask."},
+      {"say": "ask joe", "reply": "ask is Please ask joe for help."},
+      {"say": "ask", "error": "ask: Not enough arguments to replace placeholder."}
+    ]
+  },
+  {
+    "id": "argument-not-wanted",
+    "title": "Words after a selector without $1 are not a lookup",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "simple=Just a value", "reply": "ok, alice: updated simple."},
+      {"say": "simple extra words", "silent": true}
+    ]
+  },
+  {
+    "id": "choice",
+    "title": "(a|b) picks one choice each time",
+    "doc": "docs/how-to/infobot/write-factoid-text.md",
+    "steps": [
+      {"say": "coin=<reply>(heads|tails)", "reply": "ok, alice: updated coin."},
+      {"say": "coin", "oneOf": ["heads.", "tails."], "repeat": 20}
+    ]
+  },
+  {
+    "id": "choice-framed",
+    "title": "A choice inside framed text",
+    "steps": [
+      {"say": "greeting=(hello|world)"},
+      {"say": "greeting", "oneOf": ["greeting is hello.", "greeting is world."], "repeat": 20}
+    ]
+  },
+  {
+    "id": "choices-independent",
+    "title": "Each choice group picks on its own",
+    "steps": [
+      {"say": "combo=<reply>(a|b) and (c|d)"},
+      {"say": "combo", "oneOf": ["a and c.", "a and d.", "b and c.", "b and d."], "repeat": 20}
+    ]
+  },
+  {
+    "id": "choice-with-argument",
+    "title": "A choice and $1 together",
+    "doc": "docs/how-to/infobot/write-factoid-text.md",
+    "steps": [
+      {"say": "farewell=<reply>(hello|goodbye) $1", "reply": "ok, alice: updated farewell."},
+      {"say": "farewell world", "oneOf": ["hello world.", "goodbye world."], "repeat": 10}
+    ]
+  },
+  {
+    "id": "choices-nested",
+    "title": "Choice groups can nest",
+    "doc": "docs/how-to/infobot/write-factoid-text.md",
+    "steps": [
+      {"say": "8ball=<reply>(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)|It's (unclear|unknowable)).", "reply": "ok, alice: updated 8ball."},
+      {"say": "8ball", "oneOf": ["Yes.", "No.", "Maybe.", "Ask me tomorrow.", "Ask me again.", "Ask me again tomorrow.", "It's unclear.", "It's unknowable."], "repeat": 50}
+    ]
+  },
+  {
+    "id": "choice-empty",
+    "title": "An empty choice says nothing but the period",
+    "steps": [
+      {"say": "maybe=<reply>(something|)"},
+      {"say": "maybe", "oneOf": ["something.", "."], "repeat": 20}
+    ]
+  },
+  {
+    "id": "reference",
+    "title": "~name in a choice says another factoid's text",
+    "doc": "docs/how-to/infobot/write-factoid-text.md",
+    "steps": [
+      {"say": "target=<reply>resolved", "reply": "ok, alice: updated target."},
+      {"say": "ref=<reply>(~target|literal)", "reply": "ok, alice: updated ref."},
+      {"say": "ref", "oneOf": ["resolved.", "literal."], "repeat": 20}
+    ]
+  },
+  {
+    "id": "reference-missing",
+    "title": "~name for a missing factoid says nothing",
+    "steps": [
+      {"say": "ref=<reply>(~nonexistent|fallback)"},
+      {"say": "ref", "oneOf": [".", "fallback."], "repeat": 20}
+    ]
+  },
+  {
+    "id": "literal",
+    "title": ".literal shows the text as it was set",
+    "doc": "docs/how-to/infobot/write-factoid-text.md",
+    "steps": [
+      {"say": "ask=Please ask $1 for help", "reply": "ok, alice: updated ask."},
+      {"say": "ask.literal", "reply": "Please ask $1 for help"}
+    ]
+  },
+  {
+    "id": "literal-choices",
+    "title": ".literal does not pick a choice",
+    "steps": [
+      {"say": "8ball=<reply>(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)|It's (unclear|unknowable))."},
+      {"say": "8ball.literal", "reply": "<reply>(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)|It's (unclear|unknowable))."}
+    ]
+  },
+  {
+    "id": "literal-with-url",
+    "title": ".literal shows only the text",
+    "steps": [
+      {"say": "urlonly=temp"},
+      {"say": "urlonly.url=https://example.com"},
+      {"say": "urlonly.literal", "reply": "temp"}
+    ]
+  },
+  {
+    "id": "see-alias",
+    "title": ".see makes one factoid an alias for another",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "jdk=the Java Development Kit", "reply": "ok, alice: updated jdk."},
+      {"say": "java development kit.see=jdk", "reply": "ok, alice: updated java development kit."},
+      {"say": "java development kit", "reply": "jdk is the Java Development Kit."}
+    ]
+  },
+  {
+    "id": "see-alias-verb",
+    "title": "factoid set makes an alias too",
+    "steps": [
+      {"say": "destination=the real value"},
+      {"say": "factoid set alias.see destination"},
+      {"say": "alias", "reply": "destination is the real value."}
+    ]
+  },
+  {
+    "id": "see-chain",
+    "title": "An alias can point at another alias",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "a=placeholder", "reply": "ok, alice: updated a."},
+      {"say": "b=placeholder", "reply": "ok, alice: updated b."},
+      {"say": "c=final value", "reply": "ok, alice: updated c."},
+      {"say": "a.see=b", "reply": "ok, alice: updated a."},
+      {"say": "b.see=c", "reply": "ok, alice: updated b."},
+      {"say": "a", "reply": "c is final value."}
+    ]
+  },
+  {
+    "id": "see-missing",
+    "title": "An alias to a missing factoid says nothing",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "foo=placeholder", "reply": "ok, alice: updated foo."},
+      {"say": "foo.see=nonexistent", "reply": "ok, alice: updated foo."},
+      {"say": "foo", "silent": true}
+    ]
+  },
+  {
+    "id": "see-cycle",
+    "title": "Aliases that point at each other say nothing",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "foo=placeholder", "reply": "ok, alice: updated foo."},
+      {"say": "bar=placeholder", "reply": "ok, alice: updated bar."},
+      {"say": "foo.see=bar", "reply": "ok, alice: updated foo."},
+      {"say": "bar.see=foo", "reply": "ok, alice: updated bar."},
+      {"say": "foo", "silent": true}
+    ]
+  },
+  {
+    "id": "see-own-attribute",
+    "title": "Asking for an alias's attribute reads the alias itself",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "foo=own text", "reply": "ok, alice: updated foo."},
+      {"say": "foo.see=bar", "reply": "ok, alice: updated foo."},
+      {"say": "bar=bar text", "reply": "ok, alice: updated bar."},
+      {"say": "foo", "reply": "bar is bar text."},
+      {"say": "foo.text", "reply": "foo is own text."}
+    ]
+  },
+  {
+    "id": "see-removed",
+    "title": "Forgetting .see brings back the factoid's own text",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "a=goodbye", "reply": "ok, alice: updated a."},
+      {"say": "b=hello", "reply": "ok, alice: updated b."},
+      {"say": "a.see=b", "reply": "ok, alice: updated a."},
+      {"say": "a", "reply": "b is hello."},
+      {"say": "forget a.see", "reply": "ok, forgot see on a."},
+      {"say": "a", "reply": "a is goodbye."}
+    ]
+  },
+  {
+    "id": "see-also",
+    "title": "See-also names related factoids; known ones become links",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "java=A programming language", "reply": "ok, alice: updated java."},
+      {"say": "kotlin=A modern JVM language", "reply": "ok, alice: updated kotlin."},
+      {"say": "java.seealso=kotlin,python", "reply": "ok, alice: updated java."},
+      {"say": "java.seealso", "reply": "See also: {{ref:kotlin}} and python"},
+      {"say": "java", "reply": "java is A programming language. See also: {{ref:kotlin}} and python"}
+    ]
+  },
+  {
+    "id": "factoid-set",
+    "title": "factoid set sets an attribute when the shorthand is awkward",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "factoid set spring boot.text An opinionated framework", "reply": "ok, alice: updated spring boot."},
+      {"say": "spring boot", "reply": "spring boot is An opinionated framework."}
+    ]
+  },
+  {
+    "id": "factoid-set-plain",
+    "title": "factoid set without the text attribute",
+    "steps": [
+      {"say": "factoid set target.text hello world"},
+      {"say": "target", "reply": "target is hello world."}
+    ]
+  },
+  {
+    "id": "factoid-set-needs-attribute",
+    "title": "factoid set needs an attribute",
+    "steps": [
+      {"say": "factoid set noattr", "silent": true}
+    ]
+  },
+  {
+    "id": "set-needs-factoid",
+    "title": "A bare set or unset is not a factoid command",
+    "steps": [
+      {"say": "set target.text hello world", "silent": true},
+      {"say": "unset project.tags", "silent": true}
+    ]
+  },
+  {
+    "id": "factoid-unset",
+    "title": "factoid unset removes one attribute",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "project=sample", "reply": "ok, alice: updated project."},
+      {"say": "project.tags=foo,bar", "reply": "ok, alice: updated project."},
+      {"say": "factoid unset project.tags", "reply": "ok, unset tags on project."},
+      {"say": "project.tags", "silent": true}
+    ]
+  },
+  {
+    "id": "factoid-unset-seealso",
+    "title": "factoid unset removes see-also",
+    "steps": [
+      {"say": "project=sample"},
+      {"say": "project.seealso=foo,bar"},
+      {"say": "factoid unset project.seealso", "reply": "ok, unset seealso on project."},
+      {"say": "project.seealso", "silent": true}
+    ]
+  },
+  {
+    "id": "factoid-unset-needs-attribute",
+    "title": "factoid unset needs an attribute",
+    "steps": [
+      {"say": "factoid unset project", "error": true}
+    ]
+  },
+  {
+    "id": "search",
+    "title": "Search factoid text",
+    "doc": "docs/how-to/infobot/manage-factoids.md",
+    "steps": [
+      {"say": "spring=A Java framework", "reply": "ok, alice: updated spring."},
+      {"say": "spring boot=Opinionated Spring", "reply": "ok, alice: updated spring boot."},
+      {"say": "search spring", "reply": "Search for 'spring' matched: {{ref:spring}} and {{ref:spring boot}}"},
+      {"say": "search zzzznonexistent", "reply": "No factoids found searching for 'zzzznonexistent'."}
+    ]
+  },
+  {
+    "id": "tags",
+    "title": "Tag factoids and find them by tag",
+    "doc": "docs/tutorials/teach-the-infobot-a-factoid.md",
+    "steps": [
+      {"say": "intellij=A Java IDE", "reply": "ok, alice: updated intellij."},
+      {"say": "intellij.tags=ide, jetbrains", "reply": "ok, alice: updated intellij."},
+      {"say": "eclipse=Another Java IDE", "reply": "ok, alice: updated eclipse."},
+      {"say": "eclipse.tags=ide, eclipse-foundation", "reply": "ok, alice: updated eclipse."},
+      {"say": "spring=A Java framework", "reply": "ok, alice: updated spring."},
+      {"say": "spring.tags=framework", "reply": "ok, alice: updated spring."},
+      {"say": "tag ide", "reply": "Factoids tagged 'ide': {{ref:eclipse}} and {{ref:intellij}}"},
+      {"say": "tag zzzznonexistent", "reply": "No factoids found with tag 'zzzznonexistent'."}
+    ]
+  },
+  {
+    "id": "tag-needs-term",
+    "title": "tag alone is not a tag search",
+    "steps": [
+      {"say": "tag", "silent": true}
+    ]
+  },
+  {
+    "id": "stats",
+    "title": ".stats says how often a factoid was read",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "popular=interesting factoid", "reply": "ok, alice: updated popular."},
+      {"say": "popular.stats", "reply": "popular has never been accessed."},
+      {"say": "popular", "reply": "popular is interesting factoid."},
+      {"say": "popular", "reply": "popular is interesting factoid."},
+      {"say": "popular.stats", "startsWith": "popular has been accessed 2 times, last accessed at "}
+    ]
+  },
+  {
+    "id": "not-a-factoid",
+    "title": "Words that name no factoid get no reply",
+    "doc": "docs/reference/factoids.md",
+    "steps": [
+      {"say": "just a random message that matches nothing", "silent": true}
+    ]
+  }
+]
